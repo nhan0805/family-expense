@@ -1,0 +1,20 @@
+project_id = "family-expense"
+
+[auth]
+enabled = true
+site_url = "https://family-expense-8fo.pages.dev"
+additional_redirect_urls = [
+  "https://family-expense-8fo.pages.dev/**",
+  "https://84cefd79.family-expense-8fo.pages.dev/**",
+  "http://127.0.0.1:5173/**",
+]
+
+[auth.email]
+max_frequency = "1m"
+otp_length = 8
+
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
+[functions.parse-expense]
+verify_jwt = true

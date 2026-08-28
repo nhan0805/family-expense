@@ -1,0 +1,219 @@
+import { z } from 'zod';
+import {
+  statuses,
+  transactionTypes,
+  type CatalogItem,
+  type Transaction,
+} from './domain';
+const templateTransactionTypes = ['Tiền ra', 'Tiền vào'] as const;
+
+export const templateHeaders = [
+  'Ngày',
+  'Số tiền (VND)',
+  'Loại giao dịch',
+  'Trạng thái',
+  'Nội dung',
+  'Phương thức thanh toán',
+  'Mục đích',
+  'Danh mục',
+  'Ghi chú',
+] as const;
+export type TemplateRow = {
+  rowNumber: number;
+  transactionDate: string;
+  amount: number;
+  transactionType: (typeof transactionTypes)[number];
+  status: (typeof statuses)[number];
+  description: string;
+  paymentMethodId: string;
+  purposeId: string;
+  expenseTypeId: string;
+  note: string;
+  duplicate: boolean;
+};
+export type TemplateError = { rowNumber: number; messages: string[] };
+const schema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  amount: z.number().int().positive(),
+  type: z.enum(templateTransactionTypes),
+  status: z.enum(statuses),
+  description: z.string().trim().min(1).max(500),
+  payment: z.string().min(1),
+  purpose: z.string().min(1),
+  expense: z.string().min(1),
+  note: z.string().max(2000),
+});
+const norm = (v: unknown) => String(v ?? '').trim();
+const dateValue = (v: unknown) =>
+  v instanceof Date
+    ? v.toISOString().slice(0, 10)
+    : norm(v).match(/^\d{4}-\d{2}-\d{2}/)?.[0] ||
+      norm(v).split('/').reverse().join('-');
+
+export async function createTemplate(
+  purposes: CatalogItem[],
+  expenseTypes: CatalogItem[],
+  paymentMethods: CatalogItem[],
+) {
+  const { default: ExcelJS } = await import('exceljs');
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet('Giao dịch', {
+    views: [{ state: 'frozen', ySplit: 1 }],
+  });
+  const lists = wb.addWorksheet('Danh mục');
+  const guide = wb.addWorksheet('Hướng dẫn');
+  ws.addRow([...templateHeaders]);
+  ws.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+  ws.getRow(1).fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: 'FF155E46' },
+  };
+  ws.autoFilter = 'A1:I1001';
+  ws.columns = [14, 18, 20, 16, 36, 26, 28, 26, 36].map((width) => ({ width }));
+  lists.addRow([
+    'Loại giao dịch',
+    'Trạng thái',
+    'Phương thức thanh toán',
+    'Mục đích',
+    'Danh mục',
+  ]);
+  const max = Math.max(
+    templateTransactionTypes.length,
+    statuses.length,
+    paymentMethods.length,
+    purposes.length,
+    expenseTypes.length,
+  );
+  for (let i = 0; i < max; i++)
+    lists.addRow([
+      templateTransactionTypes[i] || '',
+      statuses[i] || '',
+      paymentMethods[i]?.name || '',
+      purposes[i]?.name || '',
+      expenseTypes[i]?.name || '',
+    ]);
+  lists.state = 'veryHidden';
+  guide.addRows([
+    ['HƯỚNG DẪN IMPORT'],
+    ['Mỗi dòng là một giao dịch; không đổi tên sheet hoặc tiêu đề.'],
+    ['Số tiền là số nguyên dương, không nhập ký hiệu đ.'],
+    ['Chọn các giá trị danh mục từ dropdown.'],
+    ['Tối đa 1.000 dòng mỗi file.'],
+  ]);
+  guide.getColumn(1).width = 90;
+  guide.getRow(1).font = { bold: true, size: 16 };
+  for (let row = 2; row <= 1001; row++) {
+    ws.getCell(`A${row}`).numFmt = 'dd/mm/yyyy';
+    ws.getCell(`A${row}`).dataValidation = {
+      type: 'date',
+      operator: 'between',
+      formulae: [new Date(2000, 0, 1), new Date(2200, 11, 31)],
+      showErrorMessage: true,
+      error: 'Ngày không hợp lệ',
+    };
+    ws.getCell(`B${row}`).numFmt = '#,##0';
+    ws.getCell(`B${row}`).dataValidation = {
+      type: 'whole',
+      operator: 'greaterThan',
+      formulae: [0],
+      showErrorMessage: true,
+      error: 'Số tiền phải là số nguyên lớn hơn 0',
+    };
+    [
+      ['C', 1, templateTransactionTypes.length],
+      ['D', 2, statuses.length],
+      ['F', 3, paymentMethods.length],
+      ['G', 4, purposes.length],
+      ['H', 5, expenseTypes.length],
+    ].forEach(([col, index, count]) => {
+      ws.getCell(`${col}${row}`).dataValidation = {
+        type: 'list',
+        allowBlank: false,
+        formulae: [
+          `'Danh mục'!$${String.fromCharCode(64 + Number(index))}$2:$${String.fromCharCode(64 + Number(index))}$${Number(count) + 1}`,
+        ],
+        showErrorMessage: true,
+        error: 'Hãy chọn giá trị trong danh sách',
+      };
+    });
+  }
+  return wb.xlsx.writeBuffer();
+}
+
+export async function parseTemplate(
+  buffer: ArrayBuffer,
+  purposes: CatalogItem[],
+  expenseTypes: CatalogItem[],
+  paymentMethods: CatalogItem[],
+  transactions: Transaction[],
+) {
+  const { default: ExcelJS } = await import('exceljs');
+  const wb = new ExcelJS.Workbook();
+  await wb.xlsx.load(buffer);
+  const ws = wb.getWorksheet('Giao dịch');
+  if (!ws) throw new Error('Không tìm thấy sheet “Giao dịch”.');
+  const header = ws.getRow(1).values as unknown[];
+  if (templateHeaders.some((h, i) => norm(header[i + 1]) !== h))
+    throw new Error('Tiêu đề cột không đúng template.');
+  const valid: TemplateRow[] = [];
+  const errors: TemplateError[] = [];
+  const lookup = (items: CatalogItem[], name: string) =>
+    items.find(
+      (x) =>
+        x.name.trim().toLocaleLowerCase('vi-VN') ===
+        name.toLocaleLowerCase('vi-VN'),
+    )?.id;
+  ws.eachRow((row, n) => {
+    if (n === 1) return;
+    const values = row.values as unknown[];
+    if (values.slice(1).every((v) => norm(v) === '')) return;
+    const raw = {
+      date: dateValue(values[1]),
+      amount: Number(values[2]),
+      type: norm(values[3]),
+      status: norm(values[4]),
+      description: norm(values[5]),
+      payment: norm(values[6]),
+      purpose: norm(values[7]),
+      expense: norm(values[8]),
+      note: norm(values[9]),
+    };
+    const parsed = schema.safeParse(raw);
+    const messages = parsed.success
+      ? []
+      : parsed.error.issues.map((i) => String(i.path[0]) + ': ' + i.message);
+    const paymentMethodId = lookup(paymentMethods, raw.payment),
+      purposeId = lookup(purposes, raw.purpose),
+      expenseTypeId = lookup(expenseTypes, raw.expense);
+    if (!paymentMethodId) messages.push('Phương thức thanh toán không tồn tại');
+    if (!purposeId) messages.push('Mục đích không tồn tại');
+    if (!expenseTypeId) messages.push('Danh mục không tồn tại');
+    if (messages.length) {
+      errors.push({ rowNumber: n, messages });
+      return;
+    }
+    const duplicate = transactions.some(
+      (t) =>
+        !t.deletedAt &&
+        t.transactionDate === raw.date &&
+        t.amount === raw.amount &&
+        t.description.trim().toLocaleLowerCase('vi-VN') ===
+          raw.description.toLocaleLowerCase('vi-VN'),
+    );
+    valid.push({
+      rowNumber: n,
+      transactionDate: raw.date,
+      amount: raw.amount,
+      transactionType: (raw.type === 'Tiền ra' ? 'Chi tiêu' : 'Thu nhập') as TemplateRow['transactionType'],
+      status: raw.status as TemplateRow['status'],
+      description: raw.description,
+      paymentMethodId: paymentMethodId!,
+      purposeId: purposeId!,
+      expenseTypeId: expenseTypeId!,
+      note: raw.note,
+      duplicate,
+    });
+  });
+  return { valid, errors };
+}

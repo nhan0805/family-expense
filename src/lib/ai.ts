@@ -1,0 +1,3 @@
+import { z } from 'zod';
+export const aiSuggestionSchema=z.object({date:z.string(),description:z.string(),amount:z.number().positive().nullable(),transactionType:z.enum(['Chi tiêu','Thu nhập']),status:z.enum(['Thực tế','Dự kiến']),purposeId:z.string().nullable(),purposeName:z.string().nullable(),expenseTypeId:z.string().nullable(),expenseTypeName:z.string().nullable(),paymentMethodId:z.string().nullable(),paymentMethodName:z.string().nullable(),confidence:z.number().min(0).max(1),warnings:z.array(z.string())});
+export const aiResponseSchema=z.object({suggestion:aiSuggestionSchema}); export type AiSuggestion=z.infer<typeof aiSuggestionSchema>;

@@ -1,0 +1,867 @@
+# Nhật ký thay đổi Family Expense
+
+## 2026-08-29
+
+### Bổ sung vận hành, PWA kiểm thử và phân trang Thùng rác
+
+- Sau thay đổi: Thêm RPC `list_deleted_transactions` phân trang/lọc phía server; bổ sung runbook monitoring không PII, synthetic smoke, alert escalation, backup/restore drill, retention và kiểm thử cài/offline iOS.
+- Kỹ thuật: `supabase/migrations/202608290002_trash_pagination.sql`, `src/lib/transactionsApi.ts`, `src/pages/Transactions.tsx`, `docs/OPERATIONS_RUNBOOK.md`.
+- Triển khai: Chưa deploy production; cần apply migration trước khi bật Thùng rác server-side.
+
+### Chuẩn bị Git, CI, Cloudflare preview và staging governance
+
+- Sau thay đổi: Thêm workflow CI cho pull request/main, workflow Cloudflare Pages preview theo PR, hướng dẫn branch protection, mẫu biến môi trường staging và runbook migration rehearsal/production approval.
+- Kỹ thuật: `.github/workflows/ci.yml`, `.github/workflows/cloudflare-preview.yml`, `.github/branch-protection.md`, `.env.staging.example`, `scripts/migration-rehearsal.sh`, `docs/RELEASE_GOVERNANCE.md`.
+- Lưu ý: Không thể ghi metadata `.git` trong sandbox hiện tại; cần chạy `git init -b main` một lần trên máy người dùng hoặc CI runner.
+- Triển khai: Chưa cấu hình GitHub secrets/Cloudflare project/Supabase staging thật.
+
+### Bổ sung tenant foreign keys và negative security tests
+
+- Sau thay đổi: Thêm composite foreign keys `(family_id, id)` cho các danh mục được giao dịch/budget tham chiếu, ngăn dữ liệu chéo gia đình ở tầng PostgreSQL; bổ sung bộ kiểm tra pgTAP cho FK/RPC authorization.
+- Kỹ thuật: `supabase/migrations/202608290001_composite_tenant_foreign_keys.sql`, `supabase/tests/tenant_security.sql`. AI đã giữ contract chỉ `Chi tiêu`/`Thu nhập` từ thay đổi trước.
+- Kiểm thử: Kiểm tra cú pháp/đọc migration; test pgTAP cần chạy trong Supabase local có extension pgTAP.
+- Triển khai: Chưa áp dụng migration lên production.
+
+## 2026-08-28
+
+### Hoàn tất quality gates và cập nhật E2E
+
+- Sau thay đổi: Đồng bộ kiểu `aiTone`, test labels theo UI hiện tại, sửa cảnh báo dependency của `useMemo`, cập nhật template-import test và E2E flow đăng nhập/mở form giao dịch.
+- Kỹ thuật: Cập nhật `src/pages/TransactionForm.tsx`, `src/pages/Catalogs.test.tsx`, `src/lib/templateImport.test.ts`, `src/pages/Transactions.tsx`, `tests/e2e/main-flow.spec.ts`.
+- Kiểm thử: Typecheck đạt; ESLint đạt với `--max-warnings=0`; Vitest đạt 43/43; Vite production build đạt.
+- Triển khai: Chưa deploy production.
+
+### Siết quyền cập nhật giao dịch và đồng bộ loại giao dịch hiện hành
+
+- Sau thay đổi: Member chỉ sửa được giao dịch do mình tạo; owner vẫn sửa được toàn bộ. Dashboard chỉ tính `Chi tiêu`/`Thu nhập`, loại legacy `Hoàn tiền`/`Tạm ứng` không còn ảnh hưởng KPI, biểu đồ hoặc giao dịch gần đây. AI chỉ trả về hai loại này và không ghi raw response lỗi Gemini vào log.
+- Kỹ thuật: Thêm migration `supabase/migrations/202608280001_member_update_and_dashboard_legacy.sql`; cập nhật `src/lib/ai.ts`, `supabase/functions/parse-expense/index.ts`.
+- Kiểm thử: Đã chạy typecheck; cần chạy tiếp lint, Vitest và build sau khi hoàn thiện bộ kiểm thử liên quan.
+- Triển khai: Chưa deploy production; migration và Edge Function cần được áp dụng cùng lúc.
+
+### Bổ sung Handoff Markdown mới nhất
+
+- Sau thay đổi: Có `HANDOFF.md` tại thư mục gốc để đội tiếp nhận tra cứu nhanh trạng thái, kiến trúc, môi trường, deploy, secret, dữ liệu, runbook, technical debt và checklist ký nhận.
+- Kỹ thuật: Nội dung đồng bộ với SAD/Handoff bản Word và trạng thái dự án ngày 28/08/2026; các thông tin chưa có được đánh dấu `TBD`, không chứa secret thật.
+- Kiểm thử: Rà soát liên kết tương đối, cấu trúc heading, bảng và checklist Markdown.
+- Triển khai: Không cần deploy ứng dụng; đây là thay đổi tài liệu.
+
+### Bổ sung bộ tài liệu kiến trúc và bàn giao
+
+- Sau thay đổi: Có SAD tiếng Việt phản ánh kiến trúc hiện tại/mục tiêu và Handoff Document dạng checklist để đội tiếp nhận vận hành, xử lý sự cố, quản lý secret và ký nhận.
+- Kỹ thuật: Tạo `docs/Solution_Architecture_Document_Family_Expense.docx`, `docs/Handoff_Document_Family_Expense.docx` cùng hai script tái lập trong `scripts/`; không thay đổi ứng dụng, database hay API.
+- Kiểm thử: Render DOCX sang PNG và kiểm tra trực quan toàn bộ trang trước bàn giao.
+- Triển khai: Không cần deploy ứng dụng; đây là thay đổi tài liệu.
+
+### Tự làm mới phiên đăng nhập khi PWA quay lại
+
+- Sau thay đổi: Khi app được mở lại hoặc quay lại foreground, Supabase session được refresh để giảm lỗi JWT issued at future sau thời gian chạy nền.
+- Kỹ thuật: Cập nhật `src/context/AppContext.tsx`; không đổi dữ liệu hay API.
+- Kiểm thử: TypeScript strict và Vite production build/PWA thành công.
+- Triển khai: Đã deploy Cloudflare Pages tại `https://4dbaf0ff.family-expense-8fo.pages.dev`.
+
+Tài liệu này là nguồn thông tin nối tiếp giữa các code assistant. Mục mới nhất nằm trên cùng trong từng ngày. Ngày được ghi theo múi giờ `Asia/Ho_Chi_Minh`.
+
+## 2026-08-27
+
+### Rút gọn loại giao dịch còn Tiền ra và Tiền vào
+
+- Sau thay đổi: Ẩn Hoàn tiền và Tạm ứng khỏi form/bộ lọc; Excel template chỉ tạo lựa chọn Tiền ra/Tiền vào và tự ánh xạ về giá trị dữ liệu cũ khi import. File Excel xuất dùng nhãn mới cho các cột giao diện.
+- Kỹ thuật: Cập nhật `src/pages/TransactionForm.tsx`, `src/pages/Transactions.tsx`, `src/lib/templateImport.ts`, `src/pages/ImportExport.tsx`; không đổi enum database để bảo toàn dữ liệu cũ.
+- Kiểm thử: TypeScript strict và Vite production build/PWA thành công.
+- Triển khai: Đã deploy Cloudflare Pages tại `https://907ee433.family-expense-8fo.pages.dev`.
+
+### Đổi nhãn phân loại giao dịch thành Tiền ra/Tiền vào
+
+- Sau thay đổi: Nhãn hiển thị `Chi tiêu` thành `Tiền ra` và `Thu nhập` thành `Tiền vào` trên form, bộ lọc, card/bảng giao dịch và biểu đồ; giá trị nghiệp vụ cũ vẫn giữ để tương thích dữ liệu.
+- Kỹ thuật: Cập nhật `src/lib/domain.ts`, `src/pages/TransactionForm.tsx`, `src/pages/Transactions.tsx`, `src/pages/Dashboard.tsx`.
+- Kiểm thử: TypeScript strict và Vite production build/PWA sẽ chạy trước deploy.
+
+### Ngăn nút Tháng trước xuống dòng
+
+- Sau thay đổi: Nút `Tháng trước` và `Tháng này` giữ nội dung trên một dòng, tránh làm vỡ cụm chọn kỳ trên dashboard.
+- Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx`; không thay đổi logic.
+- Kiểm thử: Vite production build/PWA thành công.
+- Triển khai: Đã deploy Cloudflare Pages tại `https://ebccc93b.family-expense-8fo.pages.dev`.
+
+### Đổi tên Mục đích và Danh mục trên toàn ứng dụng
+
+- Sau thay đổi: `Mục đích chi` đổi thành `Mục đích`; `Loại chi phí` đổi thành `Danh mục` trên màn hình giao dịch, form, danh mục, file Excel xuất và template.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`, `src/pages/TransactionForm.tsx`, `src/pages/Catalogs.tsx`, `src/pages/ImportExport.tsx`, `src/lib/templateImport.ts` và test liên quan. Giữ nguyên tên cột database/import Excel cũ để tương thích dữ liệu nguồn.
+- Kiểm thử: TypeScript strict và Vite production build/PWA thành công.
+- Triển khai: Đã deploy Cloudflare Pages tại `https://fd2ea270.family-expense-8fo.pages.dev`.
+
+### Đổi thẻ Chi ròng thành Giá trị ròng theo bộ lọc
+
+- Sau thay đổi: Dùng gradient đỏ khi giá trị dương, gradient xanh khi giá trị âm, gradient trung tính khi cân bằng; số hiển thị tuyệt đối kèm nhãn Chi nhiều hơn/Thu nhiều hơn/Cân bằng.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`; không thay đổi công thức dữ liệu.
+- Kiểm thử: Vite production build/PWA thành công.
+- Triển khai: Đã deploy Cloudflare Pages tại `https://c6b40836.family-expense-8fo.pages.dev`.
+
+### Cân bằng cỡ chữ nội dung các cột
+
+- Sau thay đổi: Cột Nội dung và Số tiền dùng cùng cỡ chữ với các cột phân loại; số tiền vẫn được in đậm.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`; không thay đổi dữ liệu.
+- Kiểm thử: Chưa deploy.
+
+### Tăng nhẹ và đồng bộ cỡ chữ header bảng
+
+- Sau thay đổi: Tiêu đề cột dùng cỡ chữ `text-sm` đồng nhất và khoảng đệm lớn hơn nhẹ để dễ đọc.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`; không thay đổi dữ liệu.
+- Kiểm thử: Chưa deploy.
+
+### Rút gọn tên cột Phương thức
+
+- Sau thay đổi: Tiêu đề cột `Phương thức thanh toán` trong bảng giao dịch được rút gọn thành `Phương thức`.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`; không thay đổi dữ liệu hay validation.
+- Kiểm thử: Chưa deploy.
+
+### Thu gọn cột bảng giao dịch
+
+- Sau thay đổi: Giảm chiều rộng tối thiểu, khoảng cách và kích thước các cột desktop để hiển thị nhiều thông tin hơn mà ít phải cuộn ngang.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`; không thay đổi dữ liệu.
+- Kiểm thử: TypeScript strict và Vite production build/PWA thành công.
+- Triển khai: Đã deploy Cloudflare Pages tại `https://6b3f1212.family-expense-8fo.pages.dev`.
+
+### Sửa overlay modal phủ toàn màn hình
+
+- Sau thay đổi: Nền làm mờ phủ cả sidebar và toàn bộ viewport; chỉ modal được dịch nhẹ sang tâm vùng nội dung trên desktop.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`; không thay đổi logic.
+- Kiểm thử: Vite production build/PWA thành công.
+- Triển khai: Đã deploy Cloudflare Pages tại `https://a1698d31.family-expense-8fo.pages.dev`.
+
+### Căn modal sửa hàng loạt theo vùng nội dung
+
+- Sau thay đổi: Trên desktop, modal được căn giữa vùng nội dung Giao dịch sau sidebar; trên mobile vẫn dùng toàn bộ màn hình.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`; không thay đổi logic.
+- Kiểm thử: Vite production build/PWA thành công.
+- Triển khai: Đã deploy Cloudflare Pages tại `https://fb2e897f.family-expense-8fo.pages.dev`.
+
+### Refactor toolbar chọn nhiều của màn hình Giao dịch
+
+- Sau thay đổi: Thanh chọn nhiều được đặt trực tiếp trước lưới giao dịch trong DOM, thu gọn chiều cao, đồng bộ nền và kích thước icon; không còn phụ thuộc vào vị trí cuối trang.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`; giữ nguyên nghiệp vụ và database.
+- Kiểm thử: TypeScript strict đạt; Vitest đạt 43/43; Vite production build/PWA thành công.
+- Triển khai: Đã deploy Cloudflare Pages tại `https://41aead46.family-expense-8fo.pages.dev`.
+
+### Cải thiện UI form sửa hàng loạt
+
+- Sau thay đổi: Modal gọn hơn, nền overlay nhẹ hơn, khoảng cách field cân bằng và dòng xem trước ngắn gọn; tối ưu hiển thị desktop/mobile.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`; không thay đổi logic.
+- Kiểm thử: TypeScript strict và Vite production build/PWA thành công.
+- Triển khai: Đã deploy Cloudflare Pages tại `https://d3901e1c.family-expense-8fo.pages.dev`.
+
+### Đặt form sửa hàng loạt bên dưới thanh chọn
+
+- Sau thay đổi: Form sửa 4 trường bắt buộc chừa khoảng phía trên để không che thanh “Đã chọn…”, đặc biệt trên mobile.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`; không thay đổi logic.
+- Kiểm thử: Vite production build/PWA thành công.
+- Triển khai: Đã deploy Cloudflare Pages tại `https://aa94e092.family-expense-8fo.pages.dev`.
+
+### Đưa form sửa hàng loạt lên phía trên
+
+- Sau thay đổi: Hộp thoại sửa 4 trường bắt buộc bắt đầu gần phía trên màn hình, dễ thao tác hơn trên mobile.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`; không thay đổi logic.
+- Kiểm thử: Chưa deploy.
+
+### Căn giữa form sửa hàng loạt
+
+- Sau thay đổi: Form chỉnh 4 trường bắt buộc mở giữa màn hình trên cả mobile và desktop, không còn dạng bottom sheet ở cuối viewport.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`; không thay đổi logic cập nhật.
+- Kiểm thử: Chưa deploy.
+
+### Sắp xếp lại cụm danh sách giao dịch
+
+- Sau thay đổi: Thứ tự hiển thị là Bộ lọc → Chi ròng → Danh sách giao dịch với Chọn tất cả/Xóa → danh sách → Tải thêm ở cuối.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`; không thay đổi logic.
+- Kiểm thử: Vite production build/PWA thành công.
+- Triển khai: Đã deploy Cloudflare Pages tại `https://d161e730.family-expense-8fo.pages.dev`.
+
+### Đưa thanh thao tác chọn nhiều lên trước danh sách
+
+- Sau thay đổi: Thanh Chọn tất cả và các nút sửa/xóa/khôi phục được đưa lên trước lưới giao dịch, không còn nằm cuối trang trên mobile.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`; không thay đổi logic.
+- Kiểm thử: Vite production build/PWA thành công.
+- Triển khai: Đã deploy Cloudflare Pages tại `https://82c7f66d.family-expense-8fo.pages.dev`.
+
+### Đưa Bộ lọc lên trước Chi ròng
+
+- Sau thay đổi: Cụm Tìm kiếm/Bộ lọc hiển thị trước; thẻ Chi ròng nằm ngay phía trên danh sách giao dịch.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`; không thay đổi logic.
+- Kiểm thử: Chưa deploy.
+
+### Tách Chi ròng và Bộ lọc thành hai hàng
+
+- Sau thay đổi: Khôi phục bố cục ổn định với thẻ Chi ròng ở hàng riêng và cụm Tìm kiếm/Bộ lọc ở hàng bên dưới.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`; không thay đổi logic dữ liệu.
+- Kiểm thử: Chưa deploy.
+
+### Sửa bố cục thẻ Chi ròng
+
+- Sau thay đổi: Tăng chiều rộng tối thiểu của cột Chi ròng trên desktop và chống xuống dòng tiêu đề/số tiền, tránh chồng lấn.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`; không thay đổi logic dữ liệu.
+- Kiểm thử: Vite production build/PWA thành công.
+- Triển khai: Đã deploy Cloudflare Pages tại `https://33347b70.family-expense-8fo.pages.dev`.
+
+### Thu gọn cụm Chi ròng và bộ lọc
+
+- Sau thay đổi: Cụm Chi ròng và Tìm kiếm/Bộ lọc nằm cùng hàng trên màn hình lớn; mobile vẫn responsive. Bỏ dòng chú thích công thức dưới Chi ròng.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`; không thay đổi logic dữ liệu.
+- Kiểm thử: TypeScript strict và Vite production build/PWA đạt.
+- Triển khai: Đã deploy Cloudflare Pages tại `https://35f0c988.family-expense-8fo.pages.dev`.
+
+### Đồng bộ tiêu đề và khoảng cách icon danh sách giao dịch
+
+- Sau thay đổi: Cỡ chữ tiêu đề được đồng bộ; các icon Chọn nhiều và Đã xóa đặt sát nhau hơn.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`; không thay đổi logic.
+- Kiểm thử: Chưa deploy.
+
+### Căn đồng đều tiêu đề và nội dung bảng giao dịch
+
+- Sau thay đổi: Header thêm cùng khoảng cách cột như phần nội dung, giúp các tiêu đề thẳng hàng với dữ liệu bên dưới.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`; không thay đổi logic.
+- Kiểm thử: Vite production build/PWA thành công.
+- Triển khai: Đã deploy Cloudflare Pages tại `https://0b001077.family-expense-8fo.pages.dev`.
+
+### Thêm nút xóa tất cả trong Thùng rác
+
+- Sau thay đổi: Khi mở Thùng rác, thanh thao tác có icon xóa vĩnh viễn các giao dịch đang hiển thị; luôn yêu cầu xác nhận.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`; dùng RPC xóa vĩnh viễn.
+- Kiểm thử: Chưa deploy.
+
+### Đồng bộ chiều rộng header và thân bảng giao dịch
+
+- Sau thay đổi: Header và các dòng giao dịch dùng cùng chiều rộng lưới 1150px, phủ đủ cột thao tác và giữ thẳng hàng.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`; không thay đổi dữ liệu.
+- Kiểm thử: Vite production build/PWA thành công.
+- Triển khai: Đã deploy Cloudflare Pages tại `https://ea44da79.family-expense-8fo.pages.dev`.
+
+### Đổi nút mở Thùng rác thành Đã xóa
+
+- Sau thay đổi: Dùng icon lưu trữ/khôi phục và nhãn `Đã xóa` trên màn hình lớn, tránh nhầm với thao tác xóa dữ liệu.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`; không thay đổi database.
+- Kiểm thử: TypeScript strict và Vite production build/PWA đạt.
+- Triển khai: Đã deploy Cloudflare Pages tại `https://a46443c8.family-expense-8fo.pages.dev`.
+
+### Đưa thanh thao tác chọn nhiều lên đầu danh sách
+
+- Sau thay đổi: Thanh `Chọn tất cả`, sửa và xóa được đặt sticky ngay dưới tiêu đề danh sách, thuận tiện trên mobile và desktop.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`; không thay đổi logic chọn hoặc mutation.
+- Kiểm thử: Chưa deploy.
+
+### Kéo dài nền header phủ đủ cột thao tác
+
+- Sau thay đổi: Nền hàng tiêu đề danh sách giao dịch tự giãn theo toàn bộ lưới, bao gồm cột Sao chép và Thùng rác.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`; không thay đổi dữ liệu.
+- Kiểm thử: Vite production build/PWA thành công.
+- Triển khai: Đã deploy Cloudflare Pages tại `https://3a2655fd.family-expense-8fo.pages.dev`; kiểm tra HTTP 200.
+
+### Tinh gọn header danh sách giao dịch
+
+- Sau thay đổi: Bỏ nền màu quanh icon Thùng rác trong header; trạng thái vẫn thể hiện bằng màu icon, tooltip và `aria-pressed`.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`; không thay đổi logic giao dịch.
+- Kiểm thử: Chưa deploy.
+
+### Căn lại icon Khôi phục trong Thùng rác
+
+- Sau thay đổi: Icon Khôi phục được căn sát cạnh số tiền thay vì dạt về mép phải của bảng.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`; không thay đổi logic.
+- Kiểm thử: Chưa deploy.
+
+### Hiển thị nút xóa vĩnh viễn trực tiếp trong Thùng rác
+
+- Sau thay đổi: Mỗi giao dịch trong Thùng rác có icon Khôi phục và icon Xóa vĩnh viễn ngay trên card/bảng, không cần bật Chọn nhiều.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`; dùng RPC xóa vĩnh viễn đã triển khai.
+- Kiểm thử: TypeScript strict đạt. Chưa deploy.
+
+### Bộ lọc và xóa vĩnh viễn trong Thùng rác
+
+- Sau thay đổi: Bộ lọc tìm kiếm, phân loại, tháng/năm, khoảng ngày và sắp xếp áp dụng cho cả Thùng rác; thêm RPC xóa vĩnh viễn giao dịch đã xóa mềm.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`; thêm migration `202608270003_permanently_delete_transactions.sql`.
+- Kiểm thử: TypeScript strict và Vite production build/PWA đạt.
+- Triển khai: Đã áp dụng migration production và deploy Cloudflare Pages tại `https://21e847c2.family-expense-8fo.pages.dev`.
+
+### Tinh gọn nút xóa thành viên
+
+- Sau thay đổi: Nút xóa thành viên chỉ hiển thị icon thùng rác; vẫn giữ tooltip và accessible name để người dùng nhận biết thao tác.
+- Kỹ thuật: Cập nhật `src/pages/Members.tsx`; không thay đổi logic phân quyền hoặc database.
+- Kiểm thử: Test thành viên đạt 2/2; TypeScript strict đạt; Vite production build/PWA thành công.
+- Triển khai: Đã deploy Cloudflare Pages tại `https://da84379e.family-expense-8fo.pages.dev`; kiểm tra HTTP 200.
+
+### Hoàn thiện Thùng rác giao dịch
+
+- Sau thay đổi: Màn hình giao dịch có thể chuyển sang Thùng rác để xem các giao dịch đã soft-delete; hỗ trợ chọn nhiều và khôi phục, không xóa vĩnh viễn.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`; không thêm migration vì dùng cột `deleted_at` hiện có.
+- Kiểm thử: TypeScript strict đạt; Vitest đạt 43/43; Vite production build/PWA thành công.
+- Triển khai: Đã deploy Cloudflare Pages tại `https://0839d034.family-expense-8fo.pages.dev`; domain chính `https://family-expense-8fo.pages.dev` tiếp tục được giữ nguyên.
+
+### Đổi nút sửa hàng loạt thành icon
+
+- Yêu cầu: Đổi nút `Sửa` trong thanh chọn nhiều thành icon gọn hơn.
+- Sau thay đổi: Nút sửa dùng icon bút chì đặt cạnh nút thùng rác, có kích thước chạm 44 px, trạng thái disabled, tooltip và accessible name `Sửa các giao dịch đã chọn`.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx` và `src/pages/Transactions.ui.test.tsx`; không thay đổi logic bulk update hoặc database.
+- Kiểm thử: Test giao dịch đạt 11/11; ESLint đạt 0 warning; TypeScript strict đạt.
+- Triển khai: Chưa deploy; cần xác nhận trước khi đưa bản UI mới lên Cloudflare Pages.
+
+### Đổi Chọn nhiều thành icon và thêm xóa hàng loạt
+
+- Yêu cầu: Đưa thao tác chọn nhiều sát lưới danh sách dưới dạng icon đẹp hơn và cho phép chọn nhiều giao dịch để xóa.
+- Sau thay đổi: Thêm toolbar `Danh sách giao dịch` ngay trên lưới với icon `ListChecks`, trạng thái active, tooltip và accessible name. Thanh chọn nhiều giữ chọn tối đa 100 dòng, thêm nút thùng rác màu đỏ; xóa là soft delete, luôn có xác nhận và chỉ bật khi toàn bộ giao dịch được chọn thuộc quyền xóa của user. Dialog sửa hàng loạt vẫn chỉ gồm bốn trường bắt buộc.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx` và `src/pages/Transactions.ui.test.tsx`; không thay đổi migration/database mới ngoài RPC bulk update đã áp dụng trước đó.
+- Kiểm thử: Vitest đạt 43/43; ESLint đạt 0 warning; TypeScript strict đạt; Vite production build/PWA thành công.
+- Triển khai: Đã deploy Cloudflare Pages tại `https://84498d9a.family-expense-8fo.pages.dev`; domain chính `https://family-expense-8fo.pages.dev` trả HTTP 200.
+
+### Sửa hàng loạt bốn trường bắt buộc của giao dịch
+
+- Yêu cầu: Cho phép chọn và sửa nhiều giao dịch cùng lúc; sau khi tinh gọn phạm vi, chỉ giữ bốn trường bắt buộc gồm `Mục đích chi`, `Loại chi phí`, `Phương thức thanh toán` và `Trạng thái`, bỏ ba trường tùy chọn.
+- Sau thay đổi: Thêm chế độ `Chọn nhiều`, checkbox trên card mobile và bảng desktop, chọn tất cả các dòng đang tải, giới hạn 100 giao dịch/lần và thanh thao tác responsive. Dialog sửa hàng loạt dùng `Không thay đổi` làm mặc định cho từng field, hiển thị xem trước số giao dịch/số trường bị ảnh hưởng và chỉ bật xác nhận khi có ít nhất một thay đổi. Không field bắt buộc nào có lựa chọn xóa/rỗng.
+- Bảo mật: Thêm migration `202608270002_bulk_update_transactions.sql` với RPC `bulk_update_transactions`. RPC kiểm tra membership, family, danh sách ID không trùng, giới hạn 1–100, đúng bốn key cho phép, danh mục đang active thuộc đúng gia đình và toàn bộ giao dịch còn tồn tại trước khi update nguyên tử; chỉ grant execute cho `authenticated`.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`, `src/pages/Transactions.ui.test.tsx` và migration mới; demo/local vẫn cập nhật state sau khi xác nhận, production chỉ cập nhật cache sau khi RPC thành công.
+- Kiểm thử: Vitest đạt 42/42; ESLint đạt 0 warning; TypeScript strict đạt; Vite production build/PWA thành công.
+- Triển khai: Đã áp dụng migration `202608270002_bulk_update_transactions.sql` lên Supabase production và deploy frontend tại `https://7d5dadb8.family-expense-8fo.pages.dev`; domain chính `https://family-expense-8fo.pages.dev` trả HTTP 200.
+
+### Thay đường kẻ giao dịch bằng card tách lớp trên mobile
+
+- Yêu cầu: Thay đường kẻ ngang cứng giữa các giao dịch bằng thiết kế mềm và hiện đại hơn.
+- Sau thay đổi: Mobile bỏ hoàn toàn đường kẻ giữa các giao dịch; mỗi giao dịch là card độc lập bo 16 px, cách nhau 8 px, có viền/shadow nhẹ và hover nâng rất nhỏ. Gradient tiếp tục nằm riêng trong từng card. Desktop giữ bảng gọn nhưng separator đổi thành hairline `black/5`/`white/5` và có hover brightness nhẹ.
+- Kỹ thuật: Cập nhật responsive container/card trong `src/pages/Transactions.tsx` và regression test accessibility/bố cục trong `src/pages/Transactions.ui.test.tsx`; không thay đổi dữ liệu, lọc, sort hoặc database.
+- Kiểm thử: Vitest đạt 41/41; ESLint đạt 0 warning; TypeScript strict đạt; Vite production build/PWA thành công.
+- Triển khai: Đã deploy Cloudflare Pages tại `https://15046396.family-expense-8fo.pages.dev`; domain chính `https://family-expense-8fo.pages.dev` trả HTTP 200. Không cần migration database.
+
+### Tinh gọn màu card giao dịch và tăng tương phản tag
+
+- Yêu cầu: Bỏ dải màu đậm bên trái danh sách giao dịch và làm tag trong card nổi rõ hơn trên nền gradient.
+- Trước thay đổi: Mỗi loại giao dịch có viền trái 4 px khá nặng; tag phân loại dùng nền surface trong suốt và chữ muted nên bị chìm vào nền màu của card.
+- Sau thay đổi: Bỏ toàn bộ `border-left` theo loại giao dịch nhưng giữ gradient nhẹ và màu số tiền. Badge loại giao dịch có viền, nền đậm hơn và shadow; các tag mục đích chi, loại chi phí và phương thức thanh toán dùng nền trắng gần đặc, chữ đậm, viền/shadow rõ ràng cùng dark variant tương phản cao.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`, `src/index.css` và regression test `src/pages/Transactions.test.ts`; không thay đổi dữ liệu, truy vấn hoặc database.
+- Kiểm thử: Vitest đạt 41/41; ESLint đạt 0 warning; TypeScript strict đạt; Vite production build/PWA thành công.
+- Triển khai: Đã deploy Cloudflare Pages tại `https://8da0cae4.family-expense-8fo.pages.dev`; domain chính `https://family-expense-8fo.pages.dev` trả HTTP 200. Không cần migration database.
+
+### Ngăn icon micro đè lên nội dung nhập
+
+- Yêu cầu: Sửa icon micro đang chồng lên chữ trong ô `Nội dung` trên mobile.
+- Nguyên nhân: Utility padding phải của Tailwind bị khai báo `.field` dùng padding shorthand ghi đè, nên Safari/iOS không chừa đủ vùng cho nút tuyệt đối.
+- Sau thay đổi: Thêm class `field-with-trailing-action` có `padding-inline-end: 3.5rem` với độ ưu tiên rõ ràng; nội dung luôn dừng trước vùng icon micro và hỗ trợ cả hướng chữ theo inline axis.
+- Kỹ thuật: Cập nhật `src/index.css`, `src/pages/TransactionForm.tsx` và regression test `src/pages/TransactionForm.test.tsx`; không thay đổi nhận dạng giọng nói, AI hoặc database.
+- Kiểm thử: Vitest đạt 41/41; ESLint đạt 0 warning; TypeScript strict đạt; Vite production build/PWA thành công.
+- Triển khai: Đã deploy Cloudflare Pages tại `https://b7e020b6.family-expense-8fo.pages.dev`; domain chính `https://family-expense-8fo.pages.dev` trả HTTP 200. Không cần migration database.
+
+### Bỏ placeholder ở Nội dung và Số tiền
+
+- Yêu cầu: Bỏ nội dung gợi ý nằm trong hai ô `Nội dung` và `Số tiền` của form giao dịch.
+- Sau thay đổi: Hai input không còn placeholder; label bắt buộc, hướng dẫn nhập tay/micro/AI và validation tiếng Việt vẫn được giữ nguyên.
+- Kỹ thuật: Cập nhật `src/pages/TransactionForm.tsx` và regression test `src/pages/TransactionForm.test.tsx`; không thay đổi logic lưu, AI, giọng nói hoặc database.
+- Kiểm thử: Vitest đạt 41/41; ESLint đạt 0 warning; TypeScript strict đạt; Vite production build/PWA thành công.
+- Triển khai: Đã deploy Cloudflare Pages tại `https://4f826500.family-expense-8fo.pages.dev`; domain chính `https://family-expense-8fo.pages.dev` trả HTTP 200. Không cần migration database.
+
+### Nhập nội dung giao dịch bằng giọng nói
+
+- Yêu cầu: Thêm icon micro trong ô `Nội dung`, dùng phương án không phát sinh phí API và deploy cùng các cải tiến phản hồi AI.
+- Sau thay đổi: Trên trình duyệt hỗ trợ Web Speech API, ô Nội dung hiển thị nút micro để nhận dạng tiếng Việt `vi-VN`. Khi nghe, nút chuyển đỏ và pulse; nhấn lại để dừng. Transcript được nối vào nội dung hiện có, có toast yêu cầu kiểm tra, không tự gọi Gemini và không tự lưu giao dịch. App không lưu audio. Nút tự ẩn trên trình duyệt không hỗ trợ; lỗi quyền micro/nhận dạng được thông báo bằng tiếng Việt.
+- Kỹ thuật: Cập nhật `src/pages/TransactionForm.tsx` và test trong `src/pages/TransactionForm.test.tsx`; không thêm dependency, API key, backend, Edge Function hoặc database.
+- Kiểm thử: Vitest đạt 41/41; ESLint đạt 0 warning; TypeScript strict đạt; Vite production build/PWA thành công. Web Speech API vẫn phụ thuộc mức hỗ trợ và dịch vụ nhận dạng của trình duyệt/hệ điều hành.
+- Triển khai: Đã deploy Cloudflare Pages tại `https://1a8af870.family-expense-8fo.pages.dev`; domain chính `https://family-expense-8fo.pages.dev` trả HTTP 200. Không cần migration database.
+
+### Làm rõ phản hồi và các trường do AI đề xuất
+
+- Yêu cầu: Tạo màu nhận diện cho nút AI, thông báo khi phân tích hoàn tất, chỉ rõ field đã được AI điền và bổ sung khối tóm tắt kết quả có thể ẩn.
+- Trước thay đổi: Nút AI dùng kiểu nút phụ trung tính; sau khi Gemini trả kết quả chỉ có một dòng ghi chú chung nên người dùng khó biết tác vụ đã xong và những trường nào đã thay đổi.
+- Sau thay đổi: Nút `Gợi ý AI` dùng gradient tím–xanh, spinner khi xử lý và trạng thái dấu tích `Đã điền` sau thành công. Toast phân biệt thành công, thiếu dữ liệu, lỗi thường và rate limit 429. Chỉ các field thực sự được Gemini điền mới có badge `AI đề xuất`, viền/nền nhận diện; confidence dưới 90% dùng màu vàng. Khối tóm tắt liệt kê số lượng, tên field, confidence và warnings, đồng thời cho phép ẩn toàn bộ tóm tắt/đánh dấu. AI vẫn không tự lưu giao dịch.
+- Kỹ thuật: Cập nhật `src/pages/TransactionForm.tsx` và regression test `src/pages/TransactionForm.test.tsx`; không thay đổi Edge Function, JSON schema, database hoặc RLS.
+- Kiểm thử: Vitest đạt 40/40; ESLint đạt 0 warning; TypeScript strict đạt; Vite production build/PWA thành công. Kiểm tra trình duyệt local bị dừng tại màn hình đăng nhập vì không sử dụng thông tin đăng nhập của người dùng.
+- Triển khai: Đã deploy cùng bản nhập giọng nói tại `https://1a8af870.family-expense-8fo.pages.dev`; domain chính trả HTTP 200. Không cần migration database.
+
+### Cập nhật hướng dẫn sử dụng và tài liệu bàn giao v1.1
+
+- Yêu cầu: Đồng bộ tài liệu người dùng và tài liệu handoff với phiên bản ứng dụng production hiện tại.
+- Trước thay đổi: Hướng dẫn Word còn mô tả hai tab nhập thủ công/AI và chưa phản ánh bộ lọc thu gọn, tìm kiếm không dấu, bố cục Dashboard mobile cùng các cải tiến UI mới; handoff chỉ có baseline `v1.0`.
+- Sau thay đổi: Cập nhật `Huong-dan-su-dung-Family-Expense.docx` lên phiên bản 1.1, mô tả form giao dịch hợp nhất với nút `Gợi ý AI`, bộ lọc chi tiết, tìm kiếm không dấu, trạng thái nâng cao và điều khiển Dashboard responsive. Thêm `HANDOFF-v1.1.md` với trạng thái release, kiến trúc, migration production, quality gate, deploy/rollback, biến môi trường, rủi ro và ưu tiên tiếp theo; giữ nguyên `HANDOFF-v1.0.md` làm baseline bất biến.
+- Kỹ thuật: Cập nhật nguồn tạo tài liệu `docs-assets/build_user_guide.py`, bổ sung header metadata cho bảng để trình đọc màn hình nhận diện đúng và render bộ kiểm tra tại `docs-assets/rendered-v1.1`.
+- Kiểm tra: DOCX render thành công 13 trang và đã kiểm tra trực quan toàn bộ; accessibility audit đạt 0 lỗi high/medium/low. Nội dung handoff đã đối chiếu với `CHANGELOG.md`, migration và trạng thái triển khai gần nhất.
+- Triển khai: Chỉ thay đổi tài liệu; không deploy frontend, không chạy migration và không thay đổi dữ liệu production.
+
+### Hợp nhất nhập thủ công và nhập bằng AI
+
+- Yêu cầu: Bỏ hai màn hình/tab nhập riêng; người dùng nhập nội dung trong form và nhấn nút icon AI để nhận gợi ý.
+- Trước thay đổi: Form có hai tab `Nhập thông thường` và `Nhập bằng AI`; câu tiếng Việt nằm trong textarea riêng, sau phân tích mới chuyển lại tab thủ công.
+- Sau thay đổi: Chỉ còn một form. Ô `Nội dung` nằm đầu phần thông tin chính, dùng cho cả nhập tay và câu tiếng Việt tự nhiên; nút `Gợi ý AI` có icon nằm ngay bên cạnh, chỉ bật khi có nội dung. Gemini điền đề xuất vào chính form, hiển thị cảnh báo/confidence hiện tại và không tự lưu; người dùng vẫn chỉnh sửa rồi nhấn xác nhận. Mobile chỉ hiện icon để tiết kiệm chiều ngang, accessible name vẫn đầy đủ.
+- Kỹ thuật: Cập nhật `src/pages/TransactionForm.tsx`, gỡ state/tab/textarea AI riêng và thêm `src/pages/TransactionForm.test.tsx`. Không thay đổi Edge Function, schema response hoặc database.
+- Kiểm thử: Vitest đạt 39/39; ESLint đạt 0 warning; TypeScript strict đạt; Vite production build/PWA thành công.
+- Triển khai: Đã deploy Cloudflare Pages tại `https://756a9b75.family-expense-8fo.pages.dev`; domain chính `https://family-expense-8fo.pages.dev` trả HTTP 200.
+
+### Căn bộ chọn kỳ Dashboard trên một hàng mobile
+
+- Yêu cầu: Nút chọn tháng/năm bị xuống hàng so với `Tháng trước/Tháng này` trên điện thoại.
+- Sau thay đổi: Cụm điều khiển dùng lưới ba phần trên mobile gồm `Trước/Nay`, `Tháng`, `Năm`; tất cả căn đáy và nằm cùng một hàng. Nhãn nút rút gọn trên mobile, desktop vẫn hiển thị đầy đủ và accessible name không đổi.
+- Kỹ thuật: Cập nhật responsive layout trong `src/pages/Dashboard.tsx`; không thay đổi truy vấn hoặc số liệu.
+- Kiểm thử: Nằm trong quality gate 39/39 test, ESLint/TypeScript/build đều đạt.
+- Triển khai: Đã deploy Cloudflare Pages tại `https://756a9b75.family-expense-8fo.pages.dev`; domain chính trả HTTP 200.
+
+### Tận dụng chiều ngang của form tạo giao dịch
+
+- Yêu cầu: Form tạo mới bị dài và chưa tận dụng khoảng trống trên màn hình rộng.
+- Trước thay đổi: Form chỉ có hai cột từ tablet/desktop; nhóm phân loại có ba trường nên trường cuối chiếm một hàng riêng, trong khi các tiêu đề và nội dung chưa trải theo nhịp lưới tối ưu.
+- Sau thay đổi: Form dùng lưới ba cột từ breakpoint tablet/desktop: `Ngày`, `Số tiền`, `Loại giao dịch` cùng một hàng; `Phương thức thanh toán`, `Mục đích chi`, `Loại chi phí` cùng một hàng. Nội dung, tiêu đề nhóm, cảnh báo, tùy chọn nâng cao và thanh nút trải toàn chiều rộng. Mobile vẫn một cột để thao tác bằng một tay.
+- Kỹ thuật: Cập nhật responsive grid trong `src/pages/TransactionForm.tsx`; không thay đổi validation, lưu dữ liệu hoặc database.
+- Kiểm thử: Vitest đạt 38/38; ESLint đạt 0 warning; TypeScript strict đạt; Vite production build/PWA thành công.
+- Triển khai: Đã deploy cùng release Cloudflare Pages tại `https://07d03e95.family-expense-8fo.pages.dev`; domain chính `https://family-expense-8fo.pages.dev` trả HTTP 200.
+
+### Thu gọn bộ lọc chi tiết bằng nút mở rộng nhanh
+
+- Yêu cầu: Bộ lọc hiển thị trực tiếp quá dài trên mobile; cần nút mở rộng dễ dùng nhưng không tái diễn độ trễ của bottom sheet.
+- Trước thay đổi: Tìm kiếm, sắp xếp và tám điều kiện lọc luôn hiển thị, đẩy danh sách giao dịch xuống rất xa trên màn hình dọc.
+- Sau thay đổi: Giữ `Tìm kiếm` và `Sắp xếp` luôn hiện. Các điều kiện còn lại nằm trong vùng native `details/summary` với nút `Bộ lọc chi tiết`, mũi tên xoay và số điều kiện đang chọn. Vùng mở tại chỗ, không overlay, không sticky và không dùng React state nên không render lại danh sách khi đóng/mở. Chip điều kiện đã chọn vẫn hiển thị để xóa nhanh.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx` và regression test trong `src/pages/Transactions.ui.test.tsx`; không thay đổi truy vấn hoặc database.
+- Kiểm thử: Vitest đạt 38/38; ESLint đạt 0 warning; TypeScript strict đạt; Vite production build/PWA thành công.
+- Triển khai: Đã deploy cùng release Cloudflare Pages tại `https://07d03e95.family-expense-8fo.pages.dev`; domain chính trả HTTP 200. Migration tìm kiếm không dấu cũng đã chạy production.
+
+### Ngăn bộ lọc phủ lên danh sách trên màn hình điện thoại dọc
+
+- Yêu cầu: Khối bộ lọc đang đè lên danh sách giao dịch khi xem điện thoại theo chiều dọc.
+- Nguyên nhân: Card tìm kiếm/bộ lọc vẫn dùng `position: sticky` và `z-index` trên mobile; sau khi đưa toàn bộ trường lọc ra ngoài, chiều cao card lớn khiến nó phủ lên nội dung khi cuộn.
+- Sau thay đổi: Bỏ hoàn toàn sticky/z-index khỏi card bộ lọc trên mọi kích thước. Bộ lọc nằm trong luồng trang bình thường và danh sách luôn bắt đầu sau card; bổ sung accessible name cho vùng tìm kiếm/bộ lọc.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx` và regression test trong `src/pages/Transactions.ui.test.tsx`; không thay đổi dữ liệu, truy vấn hoặc database.
+- Kiểm thử: Vitest đạt 38/38; ESLint đạt 0 warning; TypeScript strict đạt; Vite production build/PWA thành công.
+- Triển khai: Đã deploy cùng release Cloudflare Pages tại `https://07d03e95.family-expense-8fo.pages.dev`; domain chính trả HTTP 200.
+
+### Tìm giao dịch tiếng Việt bằng từ khóa không dấu
+
+- Yêu cầu: Gõ từ khóa không dấu vẫn tìm được nội dung giao dịch có dấu, ví dụ `dien nuoc da nang` tìm `Điện nước Đà Nẵng`.
+- Trước thay đổi: Demo/local đã bỏ phần lớn dấu Unicode nhưng xử lý sai `Đ` viết hoa; production RPC dùng `ILIKE` trực tiếp nên từ khóa không dấu không khớp dữ liệu có dấu.
+- Sau thay đổi: Chuẩn hóa frontend chuyển chữ thường trước khi đổi `đ` thành `d`. Production RPC chuẩn hóa cả từ khóa, mô tả và ghi chú bằng extension PostgreSQL `unaccent`, giữ tìm kiếm không phân biệt hoa/thường, bộ lọc, phân trang và tổng tiền hiện tại.
+- Kỹ thuật: Cập nhật `src/lib/domain.ts`, test domain/giao dịch và thêm migration mới `supabase/migrations/202608270001_accent_insensitive_transaction_search.sql`. RPC vẫn là `security definer set search_path=''`, kiểm tra membership, schema-qualify function/object và chỉ grant cho `authenticated`.
+- Kiểm thử: Vitest đạt 38/38, gồm `Đ` viết hoa và tìm chuỗi không dấu; ESLint đạt 0 warning; TypeScript strict đạt; Vite production build/PWA thành công. `supabase db push` xác nhận migration được áp dụng thành công.
+- Triển khai: Đã áp dụng migration `202608270001_accent_insensitive_transaction_search.sql` lên Supabase production và deploy frontend tại `https://07d03e95.family-expense-8fo.pages.dev`; domain chính `https://family-expense-8fo.pages.dev` trả HTTP 200. Không thay đổi dữ liệu giao dịch.
+
+### Đưa bộ lọc giao dịch trở lại giao diện trực tiếp
+
+- Yêu cầu: Bottom sheet bộ lọc trên điện thoại vẫn mở chậm; đưa các trường lọc ra ngoài như phiên bản cũ.
+- Trước thay đổi: Mobile cần nhấn nút `Bộ lọc` để dựng và mở panel phủ phía dưới, tạo cảm giác chờ trên thiết bị có danh sách lớn.
+- Sau thay đổi: Bỏ hoàn toàn nút mở, overlay và bottom sheet. Tìm kiếm, sắp xếp và toàn bộ trường lọc luôn hiển thị trực tiếp trong card; `Trạng thái` vẫn được ẩn theo quyết định trước đó. Desktop và mobile dùng cùng một cấu trúc responsive, không còn thao tác mở panel.
+- Kỹ thuật: Gỡ component/state/ref dành cho mobile filter khỏi `src/pages/Transactions.tsx`, đơn giản hóa CSS bundle và cập nhật `src/pages/Transactions.ui.test.tsx`. Không thay đổi truy vấn, API hoặc database.
+- Kiểm thử: Vitest đạt 36/36; ESLint đạt 0 warning; TypeScript strict đạt; Vite production build/PWA thành công. Chunk trang Giao dịch giảm từ khoảng 23,5 kB xuống 20,6 kB trước gzip.
+- Triển khai: Đã deploy Cloudflare Pages production tại `https://056cd60b.family-expense-8fo.pages.dev`; domain chính `https://family-expense-8fo.pages.dev`. Cả hai URL trả HTTP 200 sau triển khai. Không cần migration database.
+
+### Tinh gọn trạng thái giao dịch khỏi giao diện chính
+
+- Yêu cầu: Giảm thông tin trạng thái vì ngày giao dịch đã giúp nhận biết phần lớn giao dịch quá khứ/tương lai.
+- Trước thay đổi: `Trạng thái` xuất hiện trong bottom sheet bộ lọc, card giao dịch mobile và khu vực thông tin chính của form, làm giao diện dày hơn dù app đã tự chọn trạng thái theo ngày khi tạo mới.
+- Sau thay đổi: Ẩn trạng thái khỏi danh sách và bỏ bộ lọc trạng thái. Form vẫn tự đặt ngày hiện tại/quá khứ là `Thực tế`, ngày tương lai là `Dự kiến`; trường trạng thái được chuyển vào `Tùy chọn nâng cao` để xử lý ngoại lệ như thanh toán trước hoặc giao dịch quá hạn chưa phát sinh. Khi sửa giao dịch có trạng thái khác quy tắc ngày, phần nâng cao tự mở. Dashboard và bước xác nhận giao dịch dự kiến không thay đổi.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`, `src/pages/TransactionForm.tsx` và test UI giao dịch; giữ nguyên cột `status`, API, import/AI, database và RLS.
+- Kiểm thử: Vitest đạt 36/36; ESLint đạt 0 warning; TypeScript strict đạt; Vite production build/PWA thành công.
+- Triển khai: Chưa deploy; chờ xác nhận triển khai Cloudflare Pages. Không cần migration database.
+
+### Tăng tốc mở bộ lọc giao dịch trên điện thoại
+
+- Yêu cầu: Nút `Bộ lọc` trên điện thoại phản hồi chậm sau khi danh sách có nhiều giao dịch.
+- Nguyên nhân: Trạng thái mở/đóng bottom sheet nằm trong component trang, nên mỗi lần nhấn nút làm toàn bộ danh sách card và bảng giao dịch render lại. Lớp `backdrop-blur` trên overlay cũng làm tăng chi phí dựng hình trên Safari mobile.
+- Sau thay đổi: Tách trạng thái mở/đóng vào component `MobileFilterPanel` độc lập; nhấn nút chỉ cập nhật panel và tái sử dụng cây danh sách hiện tại. Nút `Bộ lọc` vẫn nằm cùng hàng với `Sắp xếp`, có label, chiều rộng và chiều cao field đồng đều. Overlay dùng nền mờ màu đơn, không chạy bộ lọc blur GPU. Hành vi lọc, sắp xếp và dữ liệu không thay đổi.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`; không đổi API, database hoặc RLS.
+- Kiểm thử: Vitest đạt 36/36; ESLint đạt 0 warning; TypeScript strict đạt; Vite production build/PWA thành công.
+- Triển khai: Đã deploy Cloudflare Pages production tại `https://8e82601e.family-expense-8fo.pages.dev`; domain chính `https://family-expense-8fo.pages.dev`. Cả hai URL trả HTTP 200 sau triển khai. Không cần migration database.
+
+### Đồng bộ và nâng cấp trải nghiệm UI toàn ứng dụng
+
+- Yêu cầu: Thực hiện toàn bộ nhóm cải tiến UI đã đề xuất cho danh sách/form giao dịch, Dashboard, phản hồi hệ thống, điều hướng mobile và chuyển động.
+- Trước thay đổi: Bộ lọc giao dịch chiếm nhiều chiều cao trên điện thoại; danh sách dùng bảng rộng; các thao tác xác nhận còn dựa vào hộp thoại trình duyệt; form dài và thiếu phân nhóm; KPI, điều hướng và trạng thái tương tác chưa có một ngôn ngữ thị giác thống nhất.
+- Sau thay đổi: Bộ lọc mobile mở dạng bottom sheet, có chip điều kiện đang chọn và thanh tìm kiếm/sắp xếp sticky; giao dịch mobile hiển thị thành card gradient với menu ba chấm, trong khi desktop giữ bảng đầy đủ. Form được chia thành `Thông tin chính`, `Phân loại` và phần thông tin bổ sung có thể thu gọn. Dashboard có nút chuyển nhanh kỳ, KPI kèm icon/màu ngữ nghĩa và liên kết xem giao dịch từ biểu đồ. Điều hướng dưới dùng active pill, màn hình có chuyển động nhẹ và tự tắt animation theo `prefers-reduced-motion`.
+- Phản hồi và thiết kế: Thêm `FeedbackProvider` dùng chung cho toast và hộp xác nhận accessible, thay xác nhận trình duyệt ở các thao tác giao dịch chính. Bổ sung design token CSS, chip dùng chung, focus/loading/hover và dark mode đồng bộ hơn.
+- Kỹ thuật: Thêm `src/components/Feedback.tsx`, `src/components/Feedback.test.tsx`, `src/pages/Transactions.ui.test.tsx`; cập nhật `src/main.tsx`, `src/index.css`, `src/components/Layout.tsx`, `src/pages/Transactions.tsx`, `src/pages/TransactionForm.tsx` và `src/pages/Dashboard.tsx`. Không thay đổi schema, dữ liệu hay Supabase API.
+- Kiểm thử: Vitest đạt 36/36; ESLint đạt 0 warning; TypeScript strict đạt; Vite production build/PWA thành công. Build còn cảnh báo kích thước một số chunk lớn hơn 500 kB vốn cần tối ưu riêng, không làm thất bại build.
+- Triển khai: Đã deploy Cloudflare Pages production tại `https://225ca711.family-expense-8fo.pages.dev`; domain chính `https://family-expense-8fo.pages.dev`. Cả hai URL trả HTTP 200 sau triển khai. Không cần migration database.
+
+### Làm đẹp màu giao dịch bằng gradient
+
+- Yêu cầu: Thay nền màu phẳng của bốn loại giao dịch bằng gradient nhẹ, vẫn dễ đọc trên mobile và dark mode.
+- Sau thay đổi: `Chi tiêu` dùng rose, `Tạm ứng` dùng amber, `Thu nhập` dùng emerald và `Hoàn tiền` dùng sky; mỗi dòng có viền màu 4 px bên trái, nền đậm nhẹ ở phía nội dung rồi mờ dần sang phải. Badge và màu số tiền hiện tại được giữ để không phụ thuộc riêng vào màu nền.
+- Kỹ thuật: Cập nhật helper `getTransactionListTone` trong `src/pages/Transactions.tsx`; không thay đổi dữ liệu hoặc cách tính giao dịch.
+- Kiểm thử: Cập nhật unit test để bắt buộc đủ gradient, viền trái và dark variant cho cả bốn loại. Vitest đạt 34/34; ESLint đạt 0 warning; TypeScript strict và Vite production build/PWA thành công.
+- Triển khai: Đã deploy Cloudflare Pages production tại `https://b1bdbf60.family-expense-8fo.pages.dev`; domain chính: `https://family-expense-8fo.pages.dev`. Không cần migration database.
+
+### Sửa chiều rộng ô ngày trên iPhone và tinh gọn header
+
+- Yêu cầu: Hai ô `Từ ngày`/`Đến ngày` ở bộ lọc và ô `Ngày` trong form giao dịch bị dài hơn các field khác trên iPhone; bỏ bộ chọn dark mode khỏi header.
+- Trước thay đổi: Date input dùng kích thước nội tại của Safari iOS nên có thể tràn khỏi card dù `.field` đặt `width: 100%`; desktop header luôn chiếm chỗ cho bộ chọn theme.
+- Sau thay đổi: Mọi `.field` bị giới hạn theo inline size/container và date input dùng appearance nhất quán trên iOS; wrapper field trong form và hai label lọc ngày cho phép co trong grid. Header không còn bộ chọn theme, nhưng mục `Giao diện` vẫn có trong menu bên để giữ chức năng Sáng/Tối/Theo thiết bị.
+- Kỹ thuật: Cập nhật `src/index.css`, `src/pages/Transactions.tsx`, `src/pages/TransactionForm.tsx` và `src/components/Layout.tsx`; không thay đổi dữ liệu hoặc Supabase.
+- Kiểm thử: Vitest đạt 34/34; ESLint đạt 0 warning; TypeScript strict và Vite production build/PWA thành công.
+- Triển khai: Đã deploy Cloudflare Pages production tại `https://7c59e992.family-expense-8fo.pages.dev`; domain chính: `https://family-expense-8fo.pages.dev`. Không cần migration database.
+
+### Dark mode và trạng thái tải/trống nhất quán
+
+- Yêu cầu: Hoàn thiện dark mode và chuẩn hóa empty state/loading skeleton giữa các trang.
+- Trước thay đổi: Code có một số class `dark:*` nhưng không có bộ chọn theme hoặc logic áp class; Dashboard hiển thị KPI `0 ₫` trong lúc request đang tải, còn nhiều trang chỉ hiện dòng chữ loading hoặc vùng danh sách trống.
+- Sau thay đổi: Thêm ba chế độ `Theo thiết bị`, `Sáng`, `Tối`; lựa chọn được lưu trên thiết bị, áp trước khi React render để tránh nháy nền và đồng bộ `theme-color` của trình duyệt/PWA. Thêm skeleton/empty state dùng chung, áp dụng cho bootstrap/layout, lazy route, Dashboard, danh sách và form giao dịch, Danh mục, Thành viên; empty state có mô tả và hành động phù hợp.
+- Kỹ thuật: Thêm `ThemeContext`, `ThemeSelect`, `AsyncStates`; cập nhật `index.html`, `index.css`, `main.tsx`, `App.tsx`, `Layout.tsx` và các page liên quan. Skeleton có accessible status, `aria-live` và tắt animation khi `prefers-reduced-motion`; không thay đổi database hay Supabase API.
+- Kiểm thử: Bổ sung test lưu/xóa theme preference và cập nhật test empty Dashboard. Vitest đạt 34/34; ESLint đạt 0 warning; TypeScript strict và Vite production build/PWA đạt. QA local ở viewport mobile 390×844 xác nhận dark mode khởi tạo trước render, không tràn ngang và console không có lỗi.
+- Triển khai: Đã deploy Cloudflare Pages production tại `https://854e7d71.family-expense-8fo.pages.dev`; domain chính: `https://family-expense-8fo.pages.dev`. Không cần migration database.
+
+## 2026-08-26
+
+### Thêm tài liệu hướng dẫn deploy thủ công
+
+- Yêu cầu: Viết tài liệu để developer/đội vận hành tự triển khai thay đổi code lên production.
+- Nội dung: Thêm `HUONG-DAN-DEPLOY-THU-CONG.md` tại root, mô tả chuẩn bị môi trường, quality gate, deploy Cloudflare Pages, migration Supabase, Edge Function AI, biến môi trường theo tên, thứ tự triển khai, hậu kiểm, lỗi thường gặp, rollback frontend và checklist release.
+- An toàn: Không đọc hoặc ghi giá trị `.env`, token hay secret; tài liệu nhấn mạnh không dùng lệnh phá hoại và không rollback migration dữ liệu tùy tiện.
+- Kiểm thử: Rà soát command theo `package.json`, `AGENTS.md`, `supabase/config.toml` và cấu trúc code hiện tại. Thay đổi chỉ là tài liệu, không cần chạy runtime build.
+- Triển khai: File tài liệu nội bộ trong workspace; không cần deploy frontend/backend.
+
+### v1.1.0 — Sửa bố cục thao tác giao dịch trên mobile
+
+#### Đồng bộ chiều cao nút xóa giao dịch
+
+- Yêu cầu: Nút `Xóa` trên form sửa giao dịch thấp hơn hai nút `Lưu thay đổi` và `Hủy` ở mobile.
+- Sau thay đổi: Cả ba nút thao tác dùng cùng chiều cao cố định 48 px, vẫn nằm trên một hàng và giữ kích thước vùng bấm thân thiện với màn hình cảm ứng.
+- Kỹ thuật: Đồng bộ class `h-12` trong `src/pages/TransactionForm.tsx`; không đổi hành vi lưu/hủy/xóa hay phân quyền.
+- Kiểm thử: Vitest đạt 32/32, ESLint đạt 0 warning, TypeScript và Vite production build/PWA thành công.
+- Triển khai: Đã deploy cùng bản nhận diện bốn loại giao dịch lên Cloudflare Pages production tại `https://dc84ff81.family-expense-8fo.pages.dev`; domain chính: `https://family-expense-8fo.pages.dev`.
+
+#### Phân biệt bốn loại giao dịch trong danh sách
+
+- Yêu cầu: Cả bốn loại `Chi tiêu`, `Tạm ứng`, `Thu nhập` và `Hoàn tiền` cần có dấu hiệu khác để dễ nhận biết trong danh sách.
+- Sau thay đổi: Chi tiêu dùng nền/số tiền đỏ nhạt; Tạm ứng dùng cam/vàng; Thu nhập dùng xanh lá; Hoàn tiền dùng xanh dương. Mỗi dòng có badge ghi rõ loại giao dịch trên desktop và mobile, nên vẫn phân biệt được khi người dùng khó nhận biết màu.
+- Kỹ thuật: Thêm helper `getTransactionListTone` và áp dụng class sáng/tối trong `src/pages/Transactions.tsx`; không đổi dữ liệu hay cách tính chi ròng.
+- Kiểm thử: Bổ sung test mapping màu cho đủ bốn loại; Vitest đạt 32/32, ESLint đạt 0 warning, TypeScript và Vite production build/PWA thành công.
+- Triển khai: Bản mở rộng đủ bốn loại đã deploy Cloudflare Pages production tại `https://dc84ff81.family-expense-8fo.pages.dev`; domain chính: `https://family-expense-8fo.pages.dev`.
+
+#### Mặc định hiển thị giao dịch của tháng hiện tại
+
+- Yêu cầu: Màn hình Giao dịch khi mở lần đầu chỉ hiển thị dữ liệu của tháng hiện tại.
+- Sau thay đổi: Nếu URL không truyền kỳ, bộ lọc tự chọn tháng và năm theo ngày trên thiết bị; URL có `month`/`year` hợp lệ vẫn được ưu tiên và nút `Xóa bộ lọc` vẫn cho phép xem toàn bộ dữ liệu. Danh sách năm luôn bổ sung năm mặc định kể cả khi tháng hiện tại chưa có giao dịch.
+- Kỹ thuật: Thêm helper có thể kiểm thử `getInitialTransactionPeriod` trong `src/pages/Transactions.tsx`; không đổi RPC/database.
+- Kiểm thử: Bổ sung 2 test cho kỳ mặc định và URL override; Vitest đạt 31/31, ESLint đạt 0 warning, TypeScript và Vite production build/PWA thành công.
+- Triển khai: Đã deploy Cloudflare Pages production tại `https://bff03944.family-expense-8fo.pages.dev`; domain chính: `https://family-expense-8fo.pages.dev`.
+
+- Yêu cầu: Nút thêm giao dịch đang chạm thanh điều hướng dưới trên iPhone; nút xóa ở form sửa giao dịch bị xuống hàng.
+- Trước thay đổi: FAB dùng `bottom-20` cố định, không tính `safe-area-inset-bottom`; nhóm nút form dùng `flex-wrap` và nhãn xóa dài nên bị tách thành hàng riêng trên màn hình hẹp.
+- Sau thay đổi: FAB cách thanh điều hướng theo chiều cao menu cộng vùng an toàn của thiết bị. Ba thao tác Lưu/Hủy/Xóa luôn nằm cùng hàng; mobile dùng nhãn `Xóa`, từ breakpoint `md` giữ nhãn đầy đủ `Xóa giao dịch`.
+- Kỹ thuật: Cập nhật responsive class trong `src/components/Layout.tsx`, `src/pages/TransactionForm.tsx`; tăng version package từ `1.0.0` lên `1.1.0`. Không thay đổi database, quyền xóa hay tài liệu baseline `HANDOFF-v1.0.md`.
+- Kiểm thử: Vitest đạt 29/29; ESLint đạt 0 warning; TypeScript đạt; Vite production build/PWA thành công. CSS đầu ra có đúng công thức `bottom: calc(4.5rem + max(1rem, env(safe-area-inset-bottom)))`.
+- Triển khai: Đã deploy Cloudflare Pages production thành công tại `https://7395ee48.family-expense-8fo.pages.dev`; domain chính: `https://family-expense-8fo.pages.dev`.
+
+### Chốt tài liệu bàn giao baseline v1.0
+
+- Yêu cầu: Tạo tài liệu handoff tiếng Việt cho đội vận hành/dev/client chưa biết project, đóng băng trạng thái sản phẩm v1.0 và quy định mọi thay đổi sau mốc này phải thành version mới có changelog riêng.
+- Kỹ thuật: Thêm `HANDOFF-v1.0.md` tại root, tổng hợp từ `AGENTS.md` theo scope, `package.json`, Vite/TypeScript/Supabase config, source frontend/Edge Function, 24 migration và changelog production. Tài liệu gồm kiến trúc Mermaid, folder map, env chỉ theo tên, setup/deploy, schema/RLS, quyền, technical debt, đề xuất và quy tắc Semantic Versioning.
+- Git: Workspace không có `.git`; `git rev-parse HEAD` và `git tag` đều báo không phải repository. Handoff ghi `[CẦN BỔ SUNG]` thay vì đoán commit/tag và đề xuất tag `v1.0.0` sau khi đưa đúng baseline vào repository.
+- An toàn: Không đọc `.env`/`.env.*`, không truy xuất secret và không thay đổi runtime/database/deployment.
+- Kiểm thử: Đã rà soát đủ 11 mục yêu cầu, xác nhận file tồn tại/không rỗng, 24 migration được liệt kê đúng thứ tự và thống kê toàn bộ 12 marker `[CẦN BỔ SUNG]`. Không đọc file env và không có runtime change cần test/build.
+- Triển khai: Tài liệu nội bộ trong workspace; không cần deploy frontend/backend.
+
+### Cập nhật hướng dẫn người dùng theo đầy đủ tính năng v1.0
+
+- Yêu cầu: Cập nhật tài liệu Word hướng dẫn end-user đã tạo trước đó theo trạng thái app hiện tại.
+- Nội dung mới: Bổ sung card Chi ròng và công thức dấu, biểu đồ loại chi phí dạng cột, quyền xóa owner/member, import template Excel và lỗi sai template, quản lý/tạo/xóa gia đình, quản lý thành viên, cài PWA iOS/Android và FAQ tương ứng.
+- Kỹ thuật: Cập nhật source `docs-assets/build_user_guide.py`, tái tạo `Huong-dan-su-dung-Family-Expense.docx` theo style hiện có và giữ hai ảnh minh họa cũ có alt text.
+- Kiểm thử: DOCX mới render thành 12 trang bằng LibreOffice; đã kiểm tra trực quan đủ 12 ảnh PNG ở kích thước gốc, không clipping/overlap/bảng vỡ hoặc trang thừa. Accessibility audit có 0 lỗi high; 14 cảnh báo medium đều là callout một ô dùng làm note box không có header row, không phải bảng dữ liệu. Hai bảng dữ liệu thật có header lặp và ảnh đăng nhập có alt text.
+- Triển khai: Artifact người dùng trong workspace; không cần deploy app.
+
+### Làm rõ tổng tiền giao dịch và tính theo chi ròng
+
+- Yêu cầu: Thiết kế lại tổng số tiền ở màn hình Giao dịch cho dễ nhìn; giao dịch `Thu nhập` và `Hoàn tiền` phải trừ khỏi tổng thay vì cộng.
+- Trước thay đổi: Tổng tiền là một dòng chữ nhỏ dưới tiêu đề và cộng trực tiếp `amount` của mọi loại giao dịch, nên thu nhập/hoàn tiền làm tổng tăng sai. Chế độ Supabase tính tổng ở RPC, chế độ demo tính riêng trên frontend.
+- Sau thay đổi: Thêm card KPI nổi bật “Chi ròng theo bộ lọc”, có icon, số VND lớn, số giao dịch phù hợp và chú thích công thức `Chi tiêu + Tạm ứng − Thu nhập − Hoàn tiền`. Card responsive và hỗ trợ dark mode.
+- Kỹ thuật: Thêm helper `getTransactionTotalImpact` dùng cho dữ liệu local. Migration `202608260020_net_transaction_list_total.sql` định nghĩa lại RPC `list_family_transactions`; `totalAmount` dùng dấu âm cho `Thu nhập`/`Hoàn tiền` và dấu dương cho `Chi tiêu`/`Tạm ứng`, vẫn áp dụng toàn bộ bộ lọc phía server trước khi tính.
+- Kiểm thử: Unit test xác nhận đủ bốn loại giao dịch; Vitest đạt 29/29, TypeScript đạt, ESLint đạt 0 warning và Vite production build/PWA thành công. `supabase db push --dry-run` chỉ liệt kê migration `202608260020` trước khi áp dụng.
+- Triển khai: Đã áp `202608260020_net_transaction_list_total.sql` lên Supabase production và deploy Cloudflare Pages thành công tại `https://694f58e5.family-expense-8fo.pages.dev`; domain chính: `https://family-expense-8fo.pages.dev`.
+
+### Sửa lệch một ngày của dữ liệu migration ban đầu
+
+- Yêu cầu: Toàn bộ giao dịch từ đợt migration Excel ban đầu đang sớm hơn dữ liệu thật một ngày; cộng thêm đúng 1 ngày cho nhóm dữ liệu này.
+- Phạm vi xác minh: Truy vấn tổng hợp trên Supabase production tìm thấy đúng 2.083 dòng có `source='excel_import'`, `source_reference` khác null và không mang prefix `template:`. Khoảng ngày trước sửa là 31/12/2023–28/02/2027; dữ liệu nhập thủ công, AI và import bằng template end-user không thuộc phạm vi.
+- Kỹ thuật: Migration `202608260019_shift_legacy_import_dates.sql` cập nhật `transaction_date = transaction_date + 1`. Migration kiểm tra cứng số dòng và khoảng ngày trước khi ghi, đồng thời kiểm tra số dòng thực sự được update; nếu production khác kết quả preview thì toàn bộ transaction SQL bị hủy thay vì cập nhật nhầm.
+- Kết quả dự kiến: 2.083 dòng chuyển sang khoảng ngày 01/01/2024–01/03/2027. Bao gồm cả dòng migration ban đầu đã soft-delete để lịch sử vẫn nhất quán; không đổi `created_by`, `source_reference` hay nội dung giao dịch.
+- Kiểm thử: Preview production trước migration xác nhận 2.083 dòng, khoảng ngày 31/12/2023–28/02/2027. `supabase db push --dry-run` chỉ liệt kê migration `202608260019`; sau khi áp dụng, truy vấn hậu kiểm vẫn có đúng 2.083 dòng và khoảng ngày đã thành 01/01/2024–01/03/2027.
+- Triển khai: Đã áp `202608260019_shift_legacy_import_dates.sql` lên Supabase production thành công. Không đổi frontend nên không cần deploy Cloudflare Pages.
+
+### Tối ưu hiệu năng khi số lượng giao dịch tăng
+
+- Yêu cầu: Thực thi phương án tối ưu để app không tải/ch xử lý toàn bộ giao dịch trong trình duyệt khi dữ liệu gia tăng.
+- Trước thay đổi: Sau đăng nhập, `AppContext` đọc toàn bộ bảng `transactions` theo batch 1.000 dòng và giữ một mảng toàn cục. Dashboard lọc/tổng hợp chart trên toàn bộ mảng; danh sách tìm kiếm, filter, sort cũng chạy client-side. Mọi page được import eager nên bundle khởi động chứa cả Recharts và thư viện Excel.
+- Sau thay đổi: Với Supabase, login chỉ tải session/family/catalog. Dashboard nhận một JSON tổng hợp theo tháng/năm; danh sách filter/sort tại PostgreSQL và tải 50 dòng mỗi trang bằng nút `Tải thêm`; tìm kiếm debounce 300 ms; tổng tiền/số dòng lấy từ server. Route chi tiết tự tải đúng một giao dịch. Tạo/sửa/xóa/sao chép/xác nhận giao dịch invalidates cache liên quan; chế độ demo vẫn dùng state cục bộ. Import chỉ tải fingerprint giao dịch khi user chọn file để giữ kiểm tra trùng; export vẫn tải toàn bộ theo batch nhưng chỉ khi user chủ động xuất.
+- Kỹ thuật database: Migration `202608260018_transaction_query_performance.sql` thêm partial composite indexes `transactions_family_date_cursor_idx`, `transactions_family_status_date_idx`; RPC `list_family_transactions` (RLS membership, filter/sort/page/total), `get_transaction_years` và `get_dashboard_summary` (KPI, hai chart, xu hướng, 5 giao dịch gần nhất và tối đa 20 giao dịch dự kiến đến hạn). RPC `security definer`, `search_path=''`, quyền execute chỉ cho `authenticated`.
+- Kỹ thuật frontend: Thêm `src/lib/transactionsApi.ts`; dùng TanStack `useQuery`/`useInfiniteQuery` trong Dashboard, Transactions và TransactionForm. `AppContext` không còn đọc transaction cloud lúc bootstrap. `App.tsx` dùng `React.lazy`/`Suspense` để tách từng page; Dashboard/Recharts và Dữ liệu/XLSX/ExcelJS không còn nằm trong chunk khởi động.
+- Kiểm thử: Vitest đạt 28/28; TypeScript (`tsc -b`) đạt; ESLint đạt 0 warning; Vite production build/PWA thành công. Build trước route splitting có main bundle khoảng 1.373 kB (gzip 414 kB); build mới có main chunk `index-CV-Jo0hz.js` khoảng 563 kB (gzip 165 kB), giảm xấp xỉ 59–60%. Dashboard và Excel nằm ở chunk riêng; Supabase chấp nhận migration/RPC không báo lỗi SQL.
+- Triển khai: Đã áp migration `202608260018_transaction_query_performance.sql` lên Supabase production thành công, sau đó mới deploy frontend để tránh gọi RPC chưa tồn tại. Cloudflare Pages deployment: `https://675f4dfc.family-expense-8fo.pages.dev`; domain chính: `https://family-expense-8fo.pages.dev`.
+
+### Giảm latency phân tích AI bằng Flash-Lite
+
+- Yêu cầu: Luồng Phân tích giao dịch bằng AI lại chậm; cần tối ưu thời gian phản hồi production.
+- Chẩn đoán: Frontend chỉ thực hiện một lần invoke; Edge Function đã gộp auth/membership/rate-limit/catalog vào một RPC. Phần còn lại chủ yếu là cold start và thời gian sinh structured JSON của `gemini-3.6-flash`. Tác vụ là extraction/classification ngắn, không cần năng lực reasoning của Flash đầy đủ.
+- Sau thay đổi: Chuyển model production sang stable `gemini-3.1-flash-lite`, model được Google định vị cho high-throughput/low-latency extraction. Vẫn giữ structured JSON, `thinkingLevel: MINIMAL`, validation Zod, kiểm tra catalog ID và cơ chế user xác nhận trước khi lưu.
+- Kỹ thuật: `parse-expense/index.ts` bỏ `userId` khỏi catalog gửi Gemini, rút gọn prompt, giảm `maxOutputTokens` từ 1.024 xuống 512 và cố định một candidate. Thêm log `AI_TIMING` chỉ chứa `contextMs`, `geminiMs`, `totalMs`, model và edge region để phân biệt chậm ở RPC hay Gemini; không log prompt/nội dung tài chính. README cập nhật cách gọi HTTP và model mặc định hiện hành.
+- Kiểm thử: Vitest đạt 28/28; TypeScript (`tsc -b`) đạt; ESLint đạt với 0 warning. Supabase API bundling/deploy function thành công. Chưa đo end-to-end Gemini sau deploy vì phiên browser kiểm thử không có đăng nhập; dùng log `AI_TIMING` của request thật để đánh giá tiếp.
+- Triển khai: Đã cập nhật Supabase production secret `GEMINI_MODEL=gemini-3.1-flash-lite` mà không đọc/hiển thị secret khác. Đã deploy `parse-expense` production thành công; function đang `ACTIVE`, version 6, `verify_jwt=true`. Frontend và database không đổi nên không cần deploy/migration.
+
+### Xóa giao dịch tại màn hình chi tiết và giới hạn quyền member
+
+- Yêu cầu: Cho phép xóa giao dịch ngay tại màn hình chi tiết/sửa; member chỉ được xóa giao dịch do chính mình tạo, không được xóa giao dịch của owner hoặc member khác.
+- Trước thay đổi: Chỉ danh sách giao dịch có nút xóa; mọi member nhìn thấy nút này trên mọi dòng và policy update hiện tại cho phép member gửi soft-delete cho giao dịch bất kỳ trong gia đình.
+- Sau thay đổi: Màn hình sửa giao dịch có nút `Xóa giao dịch` kèm icon và xác nhận trước khi xóa mềm. Owner có thể xóa mọi giao dịch trong gia đình; member chỉ thấy và dùng nút xóa với giao dịch có `created_by` là tài khoản hiện tại. Danh sách giao dịch áp cùng quy tắc. Nếu không đủ quyền hoặc dòng đã bị xóa, state không đổi và UI báo lỗi.
+- Kỹ thuật: Thêm helper `canDeleteTransaction` trong `src/lib/domain.ts`, dùng chung tại `Transactions.tsx` và `TransactionForm.tsx`. Cả hai luồng ghi `deleted_at`/`updated_by` vào Supabase trước khi cập nhật state và scope theo `id`, `family_id`; query của member thêm `created_by`. Migration mới `202608260017_restrict_member_transaction_delete.sql` thêm trigger `transactions_guard_creator_and_delete`: khóa bất biến `created_by` để không thể chiếm quyền sở hữu rồi xóa, đồng thời chặn soft-delete khi actor không phải owner hoặc người tạo.
+- Kiểm thử: Bổ sung unit test quyền owner/member; Vitest đạt 28/28, TypeScript (`tsc -b`) đạt, ESLint đạt với 0 warning, Vite production build/PWA thành công. Bundle: `dist/assets/index-BBI9SZ38.js`, `dist/assets/exceljs.min-B3LRNg1J.js`, CSS `dist/assets/index-whab7BnD.css`.
+- Triển khai: Đã áp migration `202608260017_restrict_member_transaction_delete.sql` lên Supabase production thành công. Đã deploy Cloudflare Pages production: `https://9401950b.family-expense-8fo.pages.dev`; domain chính: `https://family-expense-8fo.pages.dev`.
+
+### Chuẩn hóa hướng dẫn Codex theo phạm vi project
+
+- Yêu cầu: Phân tích codebase và tạo chuỗi `AGENTS.md` ngắn gọn để các phiên Codex sau nắm context, command, convention, review và safety mà không scan lại toàn bộ project.
+- Trước thay đổi: `AGENTS.md` gốc chỉ mô tả quy trình changelog, chưa tóm tắt kiến trúc, command, coding/review/safety rule và chưa có hướng dẫn riêng cho Supabase.
+- Sau thay đổi: `AGENTS.md` gốc mô tả React/PWA + Supabase/Gemini, lệnh pnpm/Supabase thực tế, pattern frontend, checklist review và giới hạn an toàn; quy tắc changelog bắt buộc được giữ nhưng rút gọn. Thêm `supabase/AGENTS.md` cho migration/RLS/RPC và `supabase/functions/AGENTS.md` cho Deno Edge Function/Gemini; file con chỉ chứa rule riêng và kế thừa file cha.
+- Kỹ thuật: Quy tắc được rút ra từ `package.json`, TypeScript/ESLint/Vite config, AppContext/form/test hiện tại, migrations, `supabase/config.toml` và `parse-expense`. Tổng chuỗi trên mọi đường dẫn nhỏ hơn giới hạn 32 KiB.
+- Kiểm thử: Thay đổi chỉ là tài liệu; đã kiểm tra file tồn tại, kích thước và nội dung theo phạm vi. Không chạy build runtime.
+- Triển khai: Không cần triển khai frontend/backend.
+
+### Thiết kế lại màn hình Dữ liệu và cảnh báo file sai template
+
+- Yêu cầu: Làm màn hình Dữ liệu trực quan hơn bằng icon và báo lỗi rõ khi người dùng chọn file Excel không đúng template.
+- Trước thay đổi: Ba thao tác tải template, import và xuất dữ liệu là các card chữ đơn giản; mọi kết quả đọc file dùng chung một dòng trạng thái nên lỗi sai định dạng/sai template khó nhận biết.
+- Sau thay đổi: Màn hình có phần giới thiệu, hai card tác vụ Tải template/Xuất dữ liệu và khu Import riêng với icon Lucide, màu nhận diện và vùng chọn file dạng kéo-thả trực quan. File không phải `.xlsx`, file thiếu sheet `Giao dịch`, sai tiêu đề cột hoặc workbook bị hỏng đều bị từ chối trước khi import và hiển thị hộp cảnh báo đỏ ngay dưới vùng chọn file. File lỗi không giữ preview/dữ liệu hợp lệ từ lần chọn trước.
+- Kỹ thuật: `src/pages/ImportExport.tsx` bổ sung component `DataCard`, các icon `FileSpreadsheet`, `Database`, `Upload`, `Download`, `FileCheck2`, `CheckCircle2`, `AlertTriangle`; thêm state `fileError`, kiểm tra phần mở rộng trước parser và ánh xạ lỗi parser thành thông báo hướng dẫn người dùng tải lại template. Không thay đổi database hoặc cấu trúc template.
+- Kiểm thử: Vitest đạt 27/27; TypeScript (`tsc -b`) đạt; ESLint đạt với 0 warning; Vite production build/PWA thành công. Bundle: `dist/assets/index-DeNgGxRp.js`, `dist/assets/exceljs.min-CgsyiHDa.js`, CSS `dist/assets/index-whab7BnD.css`.
+- Triển khai: Đã triển khai Cloudflare Pages production: `https://91303490.family-expense-8fo.pages.dev`; domain chính: `https://family-expense-8fo.pages.dev`.
+
+### Import giao dịch bằng template Excel có validation
+
+- Yêu cầu: Triển khai proposal import Excel: tải template từ app, chỉ có field của form tạo giao dịch, validation/dropdown, preview lỗi/trùng và xác nhận trước khi ghi.
+- Trước thay đổi: Màn hình Dữ liệu chỉ xuất Excel; parser cũ phục vụ workbook migration `Giao dịch chuẩn hóa`, chưa có UI import cho end user.
+- Sau thay đổi: User tải template động theo danh mục family, điền tối đa 1.000 dòng rồi chọn file để kiểm tra. UI thống kê hợp lệ/có thể trùng/lỗi, preview tối đa 100 dòng, mặc định bỏ qua dòng trùng và cho phép xác nhận import. Chỉ dòng hợp lệ được gửi database.
+- Kỹ thuật: Thêm `exceljs` để tạo `.xlsx` có sheet `Giao dịch`, sheet `Danh mục` veryHidden, sheet `Hướng dẫn`, date/whole-number/list validation, freeze header và autofilter. `src/lib/templateImport.ts` tạo/parse template và map tên danh mục sang UUID. `src/pages/ImportExport.tsx` thêm download, file picker, preview và RPC. Migration `202608260016_excel_template_import.sql` thêm `import_template_transactions(uuid,text,jsonb)`, giới hạn 1–1.000 dòng, kiểm tra membership/catalog active, insert nguyên tử và ghi `import_batches`.
+- Kiểm thử: Vitest đạt 27/27, gồm test tạo workbook có list validation và parse/mapping dòng hợp lệ; TypeScript (`tsc -b`) đạt; ESLint đạt với 0 warning; Vite production build/PWA thành công. ExcelJS được dynamic import thành chunk riêng để không làm bundle khởi động vượt giới hạn PWA. Bundle: `dist/assets/index-Co2Mh68N.js`, `dist/assets/exceljs.min-BauDN1Gm.js`, CSS `dist/assets/index-0yBWmKW1.css`.
+- Triển khai: Đã chạy `supabase db push` thành công cho migration `202608260016_excel_template_import.sql`. Đã triển khai Cloudflare Pages production: `https://9c9c4e85.family-expense-8fo.pages.dev`; domain chính: `https://family-expense-8fo.pages.dev`.
+
+### Đăng xuất từ màn hình tạo gia đình
+
+- Yêu cầu: Thêm chức năng đăng xuất ở màn hình onboarding Tạo gia đình.
+- Trước thay đổi: User đã đăng nhập nhưng chưa có membership bị giữ ở `/tao-gia-dinh` và không có cách đổi tài khoản từ giao diện.
+- Sau thay đổi: Form Tạo gia đình có nút **Đăng xuất** thứ cấp với icon; nút gọi Supabase Auth, hiển thị “Đang đăng xuất…” và chuyển về `/dang-nhap` khi thành công. Lỗi sign-out được hiển thị ngay trên form.
+- Kỹ thuật: `src/pages/CreateFamily.tsx` thêm `supabase.auth.signOut`, state `signingOut` và khóa đồng thời hai thao tác tạo/đăng xuất. `CreateFamily.test.tsx` kiểm tra nút xuất hiện.
+- Kiểm thử: Vitest đạt 26/26, gồm assertion nút Đăng xuất trên onboarding; TypeScript (`tsc -b`) đạt; ESLint đạt với 0 warning; Vite production build thành công. Bundle mới: `dist/assets/index-DAfFtr3l.js`, `dist/assets/index-DXnkBH_z.css`.
+- Triển khai: Đã triển khai Cloudflare Pages production: `https://0e583646.family-expense-8fo.pages.dev`; domain chính: `https://family-expense-8fo.pages.dev`. Không cần migration database.
+
+### Cho phép xóa sau khi đã xóa mềm toàn bộ giao dịch
+
+- Yêu cầu: Sau khi xóa hết giao dịch trên giao diện, phải xóa được gia đình và danh mục.
+- Trước thay đổi: Các guard tính cả transaction có `deleted_at`, nên giao dịch đã xóa mềm vẫn chặn family/catalog; FK RESTRICT cũng giữ tham chiếu lịch sử.
+- Sau thay đổi: Chỉ transaction chưa xóa mới chặn. Xóa danh mục đã từng dùng sẽ đặt `active=false` để ẩn khỏi UI nhưng giữ khóa tham chiếu của lịch sử. Xóa family khi không còn transaction hoạt động sẽ purge vĩnh viễn các transaction đã xóa mềm rồi xóa family; hộp thoại cảnh báo rõ không thể hoàn tác.
+- Kỹ thuật: Migration `202608260015_allow_delete_after_soft_delete.sql` định nghĩa lại `can_delete_family`, `delete_empty_family`, hai trigger guard và `delete_catalog_item`. RPC family hard-delete các dòng `deleted_at is not null` trước để thỏa FK `ON DELETE RESTRICT`. Frontend cập nhật thông báo theo khái niệm giao dịch hoạt động.
+- Kiểm thử: Vitest đạt 26/26; TypeScript (`tsc -b`) đạt; ESLint đạt với 0 warning; Vite production build thành công. `supabase db push` áp dụng migration không báo lỗi SQL. Bundle mới: `dist/assets/index-DFsLbKlE.js`, `dist/assets/index-DXnkBH_z.css`.
+- Triển khai: Sau khi người dùng xác nhận rõ việc purge vĩnh viễn giao dịch đã xóa mềm, đã triển khai Supabase production migration `202608260015_allow_delete_after_soft_delete.sql`. Đã triển khai Cloudflare Pages production: `https://9b86c133.family-expense-8fo.pages.dev`; domain chính: `https://family-expense-8fo.pages.dev`.
+
+### Gia cố chặn xóa danh mục đang được sử dụng
+
+- Sự cố: Người dùng kiểm tra và báo vẫn xóa được danh mục đã có giao dịch tham chiếu.
+- Trước thay đổi: RPC `delete_catalog_item` có kiểm tra usage nhưng chạy `security invoker`, nên phụ thuộc vào ngữ cảnh RLS; frontend chỉ biết item đang dùng sau khi gọi xóa. FK mặc định là lớp bảo vệ nhưng chưa có guard nghiệp vụ thống nhất cho mọi đường xóa.
+- Sau thay đổi: Mọi lệnh DELETE trực tiếp trên Mục đích chi, Loại chi phí hoặc Phương thức thanh toán đều bị trigger từ chối với `CATALOG_IN_USE` nếu có bất kỳ giao dịch nào tham chiếu, kể cả giao dịch xóa mềm. Danh mục chưa dùng vẫn xóa được.
+- Kỹ thuật: Migration `202608260014_enforce_catalog_usage_guard.sql` thêm ba `BEFORE DELETE` trigger dùng chung function `guard_catalog_delete_in_use()`. RPC `delete_catalog_item` được định nghĩa lại thành `security definer`, `search_path=''`, dùng alias rõ ràng và vẫn kiểm tra family owner trước mọi thao tác.
+- Kiểm thử: `supabase db push` kết nối production và tạo thành công ba trigger cùng RPC đã gia cố, không báo lỗi SQL. Frontend không đổi nên không cần chạy lại build.
+- Triển khai: Đã triển khai Supabase production migration `202608260014_enforce_catalog_usage_guard.sql`. Cloudflare Pages không cần deploy lại.
+
+### Hotfix sao chép giao dịch trên Supabase
+
+- Yêu cầu: Sửa luôn thao tác còn lại sau audit là nút Sao chép giao dịch.
+- Trước thay đổi: Sao chép chỉ thêm một object mới vào React state, nên bản sao mất sau reload/logout và không ảnh hưởng database.
+- Sau thay đổi: Nút Sao chép insert bản ghi mới vào Supabase trước, sau đó dùng `id/created_at` trả về để cập nhật danh sách. Nếu insert lỗi, không tạo bản sao giả trên UI và hiển thị thông báo.
+- Kỹ thuật: `src/pages/Transactions.tsx` thêm `copyTransaction`. Bản sao giữ ngày, số tiền, phân loại, thanh toán và ghi chú; nội dung thêm “(bản sao)”. Source được đặt `manual`, `source_reference=null` và `ai_generated=false` để không xung đột unique key của giao dịch import/AI. Gửi đầy đủ `family_id`, `created_by`, `updated_by`; nút bị khóa trong lúc xử lý.
+- Kiểm thử: Vitest đạt 26/26; TypeScript (`tsc -b`) đạt; ESLint đạt với 0 warning; Vite production build thành công. Bundle mới: `dist/assets/index-CwVQljZ9.js`, `dist/assets/index-DXnkBH_z.css`.
+- Triển khai: Đã triển khai Cloudflare Pages production: `https://c8b6a603.family-expense-8fo.pages.dev`; domain chính: `https://family-expense-8fo.pages.dev`. Không cần migration mới.
+
+### Hotfix xóa giao dịch trên Supabase
+
+- Sự cố: Nút xóa giao dịch chỉ làm dòng biến mất tạm thời; logout/login có thể thấy lại vì database chưa được cập nhật.
+- Nguyên nhân: `Transactions.remove` chỉ gán `deletedAt` trong React state, không gửi `UPDATE` tới `public.transactions`.
+- Sau thay đổi: Xóa thực hiện soft-delete trên Supabase bằng `deleted_at` và `updated_by`, giới hạn theo cả `id`, `family_id` và trạng thái chưa xóa. State chỉ cập nhật sau khi database trả bản ghi thành công. Nếu lỗi, dòng vẫn còn và màn hình hiển thị thông báo; nút xóa bị khóa trong lúc xử lý.
+- Kỹ thuật: `src/pages/Transactions.tsx` lấy `familyId/currentUserId`, gọi Supabase update và giữ hành vi cục bộ chỉ khi app không cấu hình Supabase.
+- Kiểm thử: Vitest đạt 26/26; TypeScript (`tsc -b`) đạt; ESLint đạt với 0 warning; Vite production build thành công. Bundle mới: `dist/assets/index-CN7TvAk-.js`, `dist/assets/index-DXnkBH_z.css`.
+- Triển khai: Đã triển khai Cloudflare Pages production: `https://4bd2e9a0.family-expense-8fo.pages.dev`; domain chính: `https://family-expense-8fo.pages.dev`. Không cần migration mới vì cột `deleted_at` và RLS update đã tồn tại.
+
+### Hotfix lưu giao dịch mới vào Supabase
+
+- Sự cố: Giao dịch tạo trên family mới hiển thị ngay nhưng biến mất sau khi logout/login. Đây cũng là nguyên nhân database coi family chưa có giao dịch và trước đó vẫn cho phép xóa.
+- Nguyên nhân: `TransactionForm.onSubmit` chỉ cập nhật `setTransactions` trong bộ nhớ React và điều hướng về danh sách; không có `INSERT` hoặc `UPDATE` tới bảng `public.transactions`.
+- Sau thay đổi: Tạo/sửa giao dịch ghi Supabase trước, chỉ cập nhật state và điều hướng sau khi database trả về thành công. Nếu ghi thất bại, người dùng ở lại form và thấy lỗi; nút lưu hiển thị trạng thái đang xử lý. Chế độ demo không cấu hình Supabase vẫn dùng state cục bộ.
+- Kỹ thuật: `src/pages/TransactionForm.tsx` map đầy đủ camelCase sang các cột snake_case, gửi `family_id`, `created_by`/`updated_by`, lấy `id` và `created_at` do database trả về. Update giới hạn đồng thời theo `id` và `family_id`.
+- Kiểm thử: Vitest đạt 26/26; TypeScript (`tsc -b`) đạt; ESLint đạt với 0 warning; Vite production build thành công. Bundle mới: `dist/assets/index-DIRdJXEP.js`, `dist/assets/index-DXnkBH_z.css`.
+- Triển khai: Đã triển khai Cloudflare Pages production: `https://c4d4e1cc.family-expense-8fo.pages.dev`; domain chính: `https://family-expense-8fo.pages.dev`. Không cần migration mới vì bảng/RLS giao dịch đã tồn tại.
+- Lưu ý: Giao dịch chỉ từng tồn tại trong state trước hotfix không thể tự khôi phục sau logout; cần nhập lại nếu không còn trong database.
+
+### Đổi khóa ngoại giao dịch từ CASCADE sang RESTRICT
+
+- Sự cố tiếp diễn: Người dùng kiểm tra database và xác nhận family vẫn đã bị xóa dù có giao dịch. Schema dump production qua CLI chưa thực hiện được vì môi trường không chạy Docker, nhưng migration gốc xác nhận FK `transactions.family_id` đang dùng `ON DELETE CASCADE`.
+- Khắc phục mạnh hơn: PostgreSQL phải từ chối xóa family khi còn bất kỳ transaction nào, thay vì cho phép cascade xóa transaction.
+- Kỹ thuật: Migration `202608260013_restrict_family_transaction_delete.sql` thay constraint `transactions_family_id_fkey` từ `ON DELETE CASCADE` sang `ON DELETE RESTRICT`. Đây là invariant cấp khóa ngoại và áp dụng cho RPC, SQL trực tiếp, Table Editor và mọi code path thông thường. Trigger guard và kiểm tra frontend/RPC vẫn được giữ.
+- Kiểm thử: `supabase db push` kết nối production và thay khóa ngoại thành công, không báo lỗi SQL. Việc dump schema read-only trước đó thất bại do Supabase CLI yêu cầu Docker daemon, không phải lỗi database.
+- Triển khai: Đã triển khai Supabase production migration `202608260013_restrict_family_transaction_delete.sql`. Frontend không đổi nên không cần deploy Cloudflare Pages.
+- Lưu ý phục hồi: Thay đổi này ngăn mất dữ liệu trong tương lai nhưng không tự phục hồi family/transactions đã cascade trước đó.
+
+### Frontend vô hiệu hóa xóa family đã có giao dịch
+
+- Phản hồi: Sau hotfix database, frontend vẫn hiển thị nút xóa như có thể thao tác trên family đã có giao dịch.
+- Trước thay đổi: Nút **Xóa gia đình** luôn bật với owner; database chỉ báo lỗi sau khi owner bấm và xác nhận.
+- Sau thay đổi: Khi mở màn hình Thành viên, frontend hỏi database về điều kiện xóa. Nút bị khóa trong lúc kiểm tra và tiếp tục bị khóa với thông báo rõ ràng nếu family có bất kỳ giao dịch nào; chỉ family trống mới bật nút.
+- Kỹ thuật: Migration `202608260012_family_delete_eligibility.sql` thêm RPC owner-only `can_delete_family(uuid)` kiểm tra trực tiếp toàn bộ `transactions`, bao gồm dòng xóa mềm. `Members.tsx` thêm state ba trạng thái `null/false/true`; kiểm tra lại điều kiện trong handler trước xác nhận. Trigger từ migration `202608260011` vẫn là lớp bảo vệ cuối.
+- Kiểm thử: Vitest đạt 26/26; TypeScript (`tsc -b`) đạt; ESLint đạt với 0 warning; Vite production build thành công. Bundle mới: `dist/assets/index-D-7vBZJc.js`, `dist/assets/index-DXnkBH_z.css`.
+- Triển khai: Đã chạy `supabase db push` thành công cho migration `202608260012_family_delete_eligibility.sql`. Đã triển khai Cloudflare Pages production: `https://e431710a.family-expense-8fo.pages.dev`; domain chính: `https://family-expense-8fo.pages.dev`.
+
+### Hotfix bắt buộc chặn xóa gia đình có giao dịch
+
+- Sự cố: Người dùng xác nhận một gia đình đã có giao dịch vẫn bị xóa dù RPC dự kiến phải chặn. Xóa `families` có cascade nên đây là sự cố toàn vẹn dữ liệu nghiêm trọng.
+- Khắc phục: Bổ sung guard ở cấp bảng để mọi lệnh xóa family, không chỉ RPC từ frontend, đều bị PostgreSQL từ chối nếu tồn tại bất kỳ dòng `transactions` nào.
+- Kỹ thuật: Migration `202608260011_enforce_family_transaction_delete_guard.sql` tạo `BEFORE DELETE` trigger `guard_family_delete_with_transactions` và function cùng tên. Đồng thời gia cố `delete_empty_family(uuid)` bằng row lock `FOR UPDATE`, kiểm tra transaction có alias rõ ràng và lỗi nếu family không tồn tại. Trigger chạy trước cascade nên kiểm tra khi các giao dịch con vẫn còn.
+- Kiểm thử: `supabase db push` kết nối production và áp dụng thành công trigger/RPC trong migration, không báo lỗi SQL. Frontend không thay đổi nên không cần build lại.
+- Triển khai: Đã triển khai Supabase production migration `202608260011_enforce_family_transaction_delete_guard.sql`. Cloudflare Pages không cần triển khai lại.
+- Lưu ý phục hồi: Family đã bị xóa trước hotfix có thể đã cascade xóa giao dịch; cần kiểm tra backup/PITR của Supabase nếu cần khôi phục.
+
+### Xóa gia đình chưa có giao dịch
+
+- Yêu cầu: Cho phép xóa gia đình nhưng chỉ khi chưa có dữ liệu giao dịch.
+- Trước thay đổi: Không có thao tác xóa gia đình; user đã tạo nhầm gia đình không thể quay lại onboarding.
+- Sau thay đổi: Owner có vùng nguy hiểm **Xóa gia đình** ở cuối màn hình Thành viên. Sau xác nhận, gia đình chỉ bị xóa nếu chưa từng có giao dịch; owner được chuyển về màn hình tạo gia đình mới. Member không thấy thao tác này.
+- Kỹ thuật: Thêm migration `202608260010_delete_empty_family.sql` với RPC `delete_empty_family(uuid)`. RPC kiểm tra owner và chặn nếu tồn tại bất kỳ dòng `transactions` nào của family, kể cả `deleted_at` khác null. Xóa `families` cascade membership/danh mục; không xóa `auth.users`. `AppContext` thêm `deleteFamily`; `Members.tsx` thêm vùng nguy hiểm và xác nhận.
+- Kiểm thử: Vitest đạt 26/26; test màn hình xác nhận owner thấy và member không thấy nút xóa gia đình. TypeScript (`tsc -b`) đạt; ESLint đạt với 0 warning; Vite production build thành công. Bundle mới: `dist/assets/index-j4zaiOh1.js`, `dist/assets/index-BgCpdftd.css`.
+- Triển khai: Đã chạy `supabase db push` thành công cho migration `202608260010_delete_empty_family.sql`. Đã triển khai Cloudflare Pages production: `https://33d9eebe.family-expense-8fo.pages.dev`; domain chính: `https://family-expense-8fo.pages.dev`.
+
+### Onboarding tạo gia đình mới
+
+- Yêu cầu: Tài khoản đăng ký mới có thể tự tạo một gia đình theo luồng đã thống nhất.
+- Trước thay đổi: `AppContext` coi việc không tìm thấy membership là lỗi; frontend không có màn hình tạo gia đình dù database đã có các RPC nền tảng.
+- Sau thay đổi: User đã đăng nhập nhưng chưa thuộc gia đình tự động được chuyển đến `/tao-gia-dinh`. User nhập tên, trở thành owner, nhận danh mục mặc định và được chuyển vào Dashboard. User đã có membership không thể mở onboarding hoặc tạo gia đình thứ hai.
+- Kỹ thuật: Thêm migration `202608260009_create_family_onboarding.sql` với RPC `create_family_with_defaults(text)` bọc `create_family` và `seed_family_defaults` trong cùng transaction, kiểm tra JWT, tên và membership hiện hữu. `AppContext` phân biệt trạng thái chưa có gia đình với lỗi tải, thêm `createFamily`. Thêm `src/pages/CreateFamily.tsx`, route công khai có auth guard, redirect trong `Layout` và test onboarding.
+- Kiểm thử: Vitest đạt 26/26, gồm test mới cho form onboarding; TypeScript (`tsc -b`) đạt; ESLint đạt với 0 warning; Vite production build thành công. Bundle mới: `dist/assets/index-D6IuF5zk.js`, `dist/assets/index-DcFDcUAo.css`.
+- Triển khai: Đã chạy `supabase db push` thành công cho migration `202608260009_create_family_onboarding.sql`. Đã triển khai Cloudflare Pages production: `https://2793260d.family-expense-8fo.pages.dev`; domain chính: `https://family-expense-8fo.pages.dev`.
+
+### Sửa tên gia đình và rút gọn icon chỉnh sửa
+
+- Yêu cầu: Nút sửa tên gia đình và sửa tên thành viên chỉ hiển thị icon.
+- Trước thay đổi: Chưa có thao tác sửa tên gia đình; nút đổi tên thành viên gồm icon và chữ “Đổi tên”.
+- Sau thay đổi: Owner có icon bút chì cạnh tên gia đình để mở form sửa inline. Nút sửa tên thành viên chỉ còn icon bút chì. Cả hai icon có tooltip và `aria-label`; member không thấy icon sửa tên gia đình.
+- Kỹ thuật: Thêm migration `202608260008_update_family_name.sql` với RPC owner-only `update_family_name(uuid,text)`; chuẩn hóa khoảng trắng, chặn tên rỗng và tên dài hơn 100 ký tự. `AppContext` thêm `updateFamilyName` và cập nhật state ngay sau lưu. `src/pages/Members.tsx` thêm form tên gia đình và đổi nút tên thành viên sang icon-only.
+- Kiểm thử: Vitest đạt 25/25; TypeScript (`tsc -b`) đạt; ESLint đạt với 0 warning; Vite production build thành công. Bundle mới: `dist/assets/index-BDFUc3g_.js`, `dist/assets/index-CozCPhim.css`.
+- Triển khai: Đã chạy `supabase db push` thành công cho migration `202608260008_update_family_name.sql`. Đã triển khai Cloudflare Pages production: `https://c2a66ba0.family-expense-8fo.pages.dev`; domain chính: `https://family-expense-8fo.pages.dev`.
+
+### Owner xóa thành viên khỏi gia đình
+
+- Yêu cầu: Bổ sung chức năng remove thành viên còn thiếu.
+- Trước thay đổi: Owner có thể thêm và đổi tên member nhưng không thể thu hồi quyền truy cập của member.
+- Sau thay đổi: Owner thấy nút **Xóa** trên từng dòng có role `member`. Sau hộp thoại xác nhận, member bị xóa khỏi `family_members` và mất quyền truy cập khi đăng nhập/tải lại; giao dịch lịch sử vẫn được giữ nguyên.
+- Kỹ thuật: Thêm migration `202608260007_remove_family_member.sql` với RPC `remove_family_member(uuid,uuid)`. RPC kiểm tra owner ở database và từ chối xóa target có role `owner`. `src/pages/Members.tsx` thêm nút xóa, xác nhận và thông báo kết quả.
+- Kiểm thử: Vitest đạt 25/25; TypeScript (`tsc -b`) đạt; ESLint đạt với 0 warning; Vite production build thành công. Bundle mới: `dist/assets/index-CRNE-1-r.js`, `dist/assets/index-DACs-KJb.css`.
+- Triển khai: Đã chạy `supabase db push` thành công cho migration `202608260007_remove_family_member.sql`. Đã triển khai Cloudflare Pages production: `https://4367e2c9.family-expense-8fo.pages.dev`; domain chính: `https://family-expense-8fo.pages.dev`.
+
+### Cho phép đổi tên hiển thị thành viên
+
+- Yêu cầu: Cho phép đổi tên Chủ gia đình đang mặc định hiển thị email, đồng thời hỗ trợ tên hiển thị của các member.
+- Trước thay đổi: Tên chỉ được đặt lúc tạo gia đình/thêm member; màn hình Thành viên không có thao tác chỉnh sửa.
+- Sau thay đổi: Mỗi người có nút **Đổi tên** ở dòng của chính mình; owner thấy nút này trên mọi dòng và có thể đổi tên cho tất cả thành viên. Form chỉnh sửa hiển thị ngay trong danh sách.
+- Kỹ thuật: Thêm migration `202608260006_update_member_name.sql` với RPC `update_family_member_name(uuid,uuid,text)`. RPC cho phép khi target là `auth.uid()` hoặc người gọi là owner, đồng thời chặn tên rỗng. `AppContext` công khai `currentUserId` cho kiểm tra hiển thị nút; `src/pages/Members.tsx` thêm form đổi tên inline.
+- Kiểm thử: Vitest đạt 25/25; TypeScript (`tsc -b`) đạt; ESLint đạt với 0 warning; Vite production build thành công. Bundle mới: `dist/assets/index-UDEtSW-z.js`, `dist/assets/index-5TdIBG17.css`.
+- Triển khai: Đã chạy `supabase db push` thành công cho migration `202608260006_update_member_name.sql`. Đã triển khai Cloudflare Pages production: `https://3b19e964.family-expense-8fo.pages.dev`; domain chính: `https://family-expense-8fo.pages.dev`.
+
+### Sửa RPC không tải được danh sách thành viên
+
+- Yêu cầu: Màn hình Thành viên không hiện danh sách và báo `structure of query does not match function result type`.
+- Nguyên nhân: `get_family_members(uuid)` khai báo cột `email` trả về là `text`, nhưng `auth.users.email` trong Supabase là `varchar`; PostgreSQL `RETURN QUERY` yêu cầu kiểu cột khớp chính xác và không tự chuyển kiểu trong trường hợp này.
+- Sau thay đổi: RPC ép `coalesce(u.email, '')` sang `text`, nên danh sách owner/member có thể trả về đúng cấu trúc đã công bố cho frontend.
+- Kỹ thuật: Thêm migration nối tiếp `202608260005_fix_family_member_result.sql`; không chỉnh migration `202608260004_family_members.sql` đã chạy production.
+- Kiểm thử: `supabase db push` kết nối production và áp dụng migration thành công, không báo lỗi SQL. Không thay đổi frontend nên bộ test/build hiện tại không cần tạo lại.
+- Triển khai: Đã triển khai Supabase production migration `202608260005_fix_family_member_result.sql`. Cloudflare Pages không cần triển khai lại vì mã giao diện không đổi.
+
+### Quản lý thành viên tối giản
+
+- Yêu cầu: Rút gọn proposal quản lý thành viên để triển khai nhanh; owner chỉ cần thêm member vào gia đình và member đăng nhập có thể xem dữ liệu gia đình.
+- Trước thay đổi: Database có `family_members` và RLS theo owner/member nhưng chưa có giao diện hoặc API để owner thêm tài khoản khác. Bản migration đang phát triển từng dự kiến có link mời, token, hết hạn, đổi quyền và vô hiệu hóa nhưng chưa từng được chạy production.
+- Sau thay đổi: Có màn hình **Thành viên** trên desktop/mobile. Owner nhập email của tài khoản đã đăng ký và tên hiển thị tùy chọn để thêm với role `member`, status `active`; member xem được danh sách nhưng không thấy form thêm. Khi member đăng nhập, luồng tải membership hiện có tự chọn gia đình và tải chung Dashboard, danh mục và giao dịch.
+- Kỹ thuật: Migration `202608260004_family_members.sql` được rút gọn còn RPC `get_family_members(uuid)` và `add_family_member(uuid,text,text)`, đều `security definer` và tự kiểm tra membership/owner. RPC không đưa quyền đọc `auth.users` trực tiếp cho frontend. Thêm `src/pages/Members.tsx`, route `/thanh-vien`, menu desktop/mobile và `src/pages/Members.test.tsx`. Chặn email chưa đăng ký, thành viên trùng và tài khoản đang thuộc gia đình khác.
+- Kiểm thử: Vitest đạt 25/25 (gồm 2 test mới cho quyền owner/member trên màn hình Thành viên); TypeScript (`tsc -b`) đạt; ESLint đạt với 0 warning; Vite production build thành công. Bundle mới: `dist/assets/index-DcRJXrhV.js` và `dist/assets/index-BLnABmK1.css`.
+- Triển khai: Đã chạy `supabase db push` thành công cho migration `202608260004_family_members.sql`. Đã triển khai Cloudflare Pages production: `https://798ed391.family-expense-8fo.pages.dev`; domain chính: `https://family-expense-8fo.pages.dev`.
+- Lưu ý cho lần sau: Không có link/email mời, xóa thành viên, đổi vai trò hoặc vô hiệu hóa. Người được thêm phải tự đăng ký trước; ứng dụng hiện hỗ trợ một tài khoản thuộc một gia đình hoạt động.
+
+### Dashboard: ngăn biểu đồ làm tràn màn hình điện thoại
+
+- Yêu cầu: Sửa Dashboard khi xem dọc trên điện thoại, phần biểu đồ đang kéo chiều rộng trang và tràn sang bên phải.
+- Trước thay đổi: Các card biểu đồ là grid item có kích thước tối thiểu mặc định theo nội dung Recharts; biểu đồ cột còn có canvas tối thiểu 520px. Trình duyệt có thể mở rộng cả grid/page thay vì chỉ cho vùng biểu đồ cột cuộn ngang.
+- Sau thay đổi: Mọi card và khung biểu đồ được phép co theo chiều rộng màn hình. Phần dư của biểu đồ tròn và xu hướng bị giới hạn trong card; riêng biểu đồ cột vẫn cuộn ngang bên trong card để giữ tên loại chi phí dễ đọc nhưng không còn làm toàn trang tràn ngang.
+- Kỹ thuật: `src/pages/Dashboard.tsx` thêm `min-w-0`, `max-w-full` và `overflow-hidden` tại grid item/khung Recharts; vùng biểu đồ cột dùng `w-full overflow-x-auto overscroll-x-contain` để cô lập thao tác cuộn.
+- Kiểm thử: Vitest đạt 23/23; TypeScript (`tsc -b`) đạt; ESLint đạt với 0 warning; Vite production build thành công. Kiểm tra trình duyệt ở viewport dọc 390×844 ghi nhận `documentScrollWidth` và `bodyScrollWidth` đều bằng 390px, không còn overflow ngang toàn trang.
+- Triển khai: Đã triển khai Cloudflare Pages production. Deployment: `https://d9bb10fc.family-expense-8fo.pages.dev`; domain chính: `https://family-expense-8fo.pages.dev`.
+- Lưu ý cho lần sau: Migration quản lý thành viên `202608260004_family_members.sql` đang được phát triển riêng và chưa được đẩy database; không chạy `supabase db push` trong bản sửa giao diện Dashboard này.
+
+### Dashboard: đổi biểu đồ loại chi phí sang biểu đồ cột
+
+- Yêu cầu: Chuyển biểu đồ “Chi tiêu theo loại chi phí” từ biểu đồ tròn sang biểu đồ cột.
+- Trước thay đổi: Cả Mục đích chi và Loại chi phí đều dùng component biểu đồ tròn `ExpensePieChart`, khiến hai góc nhìn có cách trình bày giống nhau và khó so sánh độ lớn giữa nhiều loại chi phí.
+- Sau thay đổi: Mục đích chi vẫn là biểu đồ tròn. Loại chi phí dùng biểu đồ cột đứng với trục số tiền, nhãn VND rút gọn trên đầu cột và tooltip số tiền đầy đủ. Tên loại chi phí được xoay để dễ đọc; nếu có nhiều loại, vùng biểu đồ cho phép cuộn ngang trên màn hình hẹp thay vì ép các cột chồng lên nhau. Dữ liệu, bộ lọc tháng/năm và quy tắc chỉ tính giao dịch `Thực tế` không thay đổi.
+- Kỹ thuật: `src/pages/Dashboard.tsx` bổ sung `BarChart`/`Bar` của Recharts và component `ExpenseBarChart`; chiều rộng tối thiểu được tính theo số loại chi phí. `src/pages/Dashboard.test.tsx` kiểm tra tiêu đề biểu đồ mới vẫn xuất hiện sau khi lọc kỳ.
+- Kiểm thử: `vitest run` đạt 23/23; TypeScript (`tsc -b`) đạt; ESLint đạt với 0 warning; Vite production build thành công. Bundle mới tạo `dist/assets/index-Dwpb1zjB.js` và `dist/assets/index-CDb2RFQN.css`.
+- Triển khai: Đã triển khai Cloudflare Pages production. Deployment: `https://de5fcd08.family-expense-8fo.pages.dev`; domain chính: `https://family-expense-8fo.pages.dev`.
+
+### Thiết lập quy trình ghi nhật ký bắt buộc
+
+- Yêu cầu: Mọi thay đổi từ thời điểm này phải được ghi log theo ngày và mô tả đủ kỹ để code assistant khác có thể tiếp tục dự án.
+- Trước thay đổi: Project chưa có `AGENTS.md` ở thư mục gốc và chưa có changelog tập trung; ngữ cảnh thay đổi chủ yếu nằm trong lịch sử hội thoại.
+- Sau thay đổi: Thêm `AGENTS.md` với quy tắc bắt buộc đọc README/changelog trước khi làm việc và cập nhật changelog trong cùng lượt thay đổi. Thêm file `CHANGELOG.md` này làm nguồn bàn giao kỹ thuật liên tục.
+- Kỹ thuật: Quy ước log bao gồm yêu cầu, hành vi trước/sau, file hoặc database object liên quan, kiểm thử, trạng thái triển khai và lưu ý cho lần sau. Không được ghi secret hoặc dữ liệu nhạy cảm.
+- Kiểm thử: Không thay đổi runtime; đã kiểm tra nội dung file và vị trí ở root để các agent tự động phát hiện.
+- Triển khai: Chỉ là tài liệu trong workspace, không cần triển khai frontend/backend.
+
+### Dashboard: hai biểu đồ phân loại chi tiêu
+
+- Yêu cầu: Hiển thị thống kê chi tiêu theo cả Mục đích chi và Loại chi phí.
+- Trước thay đổi: Dashboard chỉ có biểu đồ tròn “Theo mục đích trong tháng” và biểu đồ đường “Xu hướng 5 tháng”.
+- Sau thay đổi: Có hai biểu đồ tròn riêng “Chi tiêu theo mục đích chi” và “Chi tiêu theo loại chi phí”. Cả hai dùng cùng bộ lọc tháng/năm của Dashboard, chỉ lấy giao dịch không bị xóa có trạng thái `Thực tế`, dùng chi ròng và chỉ hiển thị nhóm có giá trị dương. Tooltip hiển thị số VND đầy đủ; nhãn trên lát biểu đồ dùng K/M để tránh chồng chữ. Biểu đồ xu hướng 5 tháng được giữ lại và chiếm toàn bộ hàng bên dưới trên desktop.
+- Kỹ thuật: `src/pages/Dashboard.tsx` lấy thêm `expenseTypes` từ `useApp`, tạo `byExpenseType`, dùng component dùng chung `ExpensePieChart` và palette `chartColors`. `src/pages/Dashboard.test.tsx` bổ sung mock loại chi phí và kiểm tra hai trạng thái trống.
+- Kiểm thử: `vitest run` đạt 23/23; ESLint đạt; TypeScript đạt sau khi thêm fallback màu; Vite production build thành công.
+- Triển khai: Đã triển khai Cloudflare Pages production. Deployment: `https://05e9d2ad.family-expense-8fo.pages.dev`; domain chính: `https://family-expense-8fo.pages.dev`.
+
+### Ẩn trạng thái khỏi từng dòng danh sách giao dịch
+
+- Yêu cầu: Không hiển thị dòng “Thực tế/Dự kiến” bên dưới nội dung ở danh sách giao dịch.
+- Trước thay đổi: Mỗi dòng giao dịch hiển thị mô tả và một dòng phụ chứa trạng thái.
+- Sau thay đổi: Dòng trạng thái được ẩn khỏi danh sách để giao diện gọn hơn. Trạng thái vẫn tồn tại trong dữ liệu, biểu mẫu, bộ lọc, Dashboard và quy trình xác nhận giao dịch dự kiến.
+- Kỹ thuật: Xóa phần render `transaction.status` trong `src/pages/Transactions.tsx`; không thay đổi schema hoặc backend.
+- Kiểm thử: Vitest đạt 23/23; TypeScript và ESLint đạt; Vite build thành công.
+- Triển khai: Đã triển khai Cloudflare Pages production. Deployment: `https://20e88659.family-expense-8fo.pages.dev`.
+
+### Tối ưu tốc độ phân tích giao dịch bằng AI
+
+- Yêu cầu: Giảm thời gian chờ khoảng 5 giây khi dùng “Nhập bằng AI”.
+- Trước thay đổi: Edge Function lần lượt gọi xác thực user, kiểm tra membership, đếm rate limit và tải ba danh mục; bundle còn phụ thuộc SDK `@google/genai`.
+- Sau thay đổi: Trước khi gọi Gemini chỉ còn một lượt RPC database. Edge Function gọi Gemini GenerateContent bằng HTTP trực tiếp, dùng structured JSON output và `thinkingLevel: MINIMAL`. Log thành công vẫn chạy nền; giới hạn 10 request/user/phút và kiểm tra membership vẫn giữ nguyên.
+- Kỹ thuật: `supabase/functions/parse-expense/index.ts` bỏ `@google/genai` và `db.auth.getUser()`. RPC `public.get_ai_request_context(uuid)` trả `userId`, danh sách purposes, expense types và payment methods sau khi kiểm tra `auth.uid()`, membership và rate limit. Thêm migrations `202608260002_ai_request_context.sql` và `202608260003_ai_context_user.sql`. Supabase Function vẫn bật `verify_jwt = true`.
+- Kiểm thử: Vitest đạt 23/23; TypeScript đạt. Endpoint warm không xác thực phản hồi khoảng 0,37–0,41 giây; cold start đo được khoảng 2,6 giây. Đây chỉ là thời gian khởi động/route, không đại diện toàn bộ thời gian Gemini sinh kết quả.
+- Triển khai: Đã chạy `supabase db push` cho cả hai migration và deploy `parse-expense` production, function version 3 tại thời điểm kiểm tra.
+- Lưu ý cho lần sau: README cũ có thể còn mô tả Edge Function dùng SDK Google; mã nguồn và mục changelog này là trạng thái mới hơn.
+
+### Hoàn thiện bộ lọc tháng/năm và số liệu Dashboard
+
+- Dashboard có hai bộ chọn độc lập Tháng và Năm; danh sách giao dịch cũng lọc độc lập theo tháng và năm.
+- KPI hiển thị số VND đầy đủ, không rút gọn K/M. Nhãn trên chart có thể viết tắt để giữ khả năng đọc.
+- Dashboard chỉ tính giao dịch `Thực tế`; danh sách “Giao dịch dự kiến đến hạn” cho phép xác nhận thủ công để chuyển sang `Thực tế`.
+- Khi chọn “Xem tất cả”, Dashboard truyền cả `month` và `year` sang màn hình Giao dịch.
+- Kiểm thử liên quan nằm trong `src/pages/Dashboard.test.tsx` và `src/pages/Transactions.test.ts`.
+- Triển khai: Đã có trên domain production trước các deployment được ghi phía trên.
+
+### Hoàn thiện biểu mẫu giao dịch
+
+- Bỏ field Tài khoản/Thẻ khỏi giao diện và cân lại bố cục form; schema vẫn còn `accountId` optional để tương thích dữ liệu cũ.
+- Bỏ ký tự `đ` trong ô nhập số tiền; người dùng nhập số và giao diện tự định dạng dấu phân cách hàng nghìn.
+- Các trường bắt buộc có dấu sao: Ngày, Số tiền, Loại giao dịch, Trạng thái, Nội dung, Phương thức thanh toán, Mục đích chi và Loại chi phí.
+- Phương thức thanh toán là bắt buộc và mặc định chọn “Chuyển khoản” khi tạo mới.
+- Khi tạo giao dịch mới, trạng thái tự đổi theo ngày: ngày tương lai là `Dự kiến`; ngày hiện tại/quá khứ là `Thực tế`. Người dùng vẫn có thể chỉnh lại trạng thái trong form.
+- Giao dịch dự kiến không tự chuyển im lặng khi đến hạn; người dùng phải xác nhận trên Dashboard.
+- Triển khai: Đã có trên production trước các deployment được ghi phía trên.
+
+### Quản lý danh mục và tài liệu người dùng cuối
+
+- Màn hình Danh mục hỗ trợ ba nhóm: Mục đích chi, Loại chi phí và Phương thức thanh toán.
+- Owner có thể thêm, đổi tên và xóa danh mục chưa được sử dụng; member chỉ xem. Xóa danh mục đã được giao dịch tham chiếu sẽ bị chặn.
+- Tạo tài liệu Word `Huong-dan-su-dung-Family-Expense.docx` gồm 10 trang, mô tả đăng nhập, Dashboard, giao dịch, AI, giao dịch dự kiến, danh mục, Excel và xử lý sự cố. Tài liệu đã render kiểm tra toàn bộ trang; ảnh có alt text.
+- Triển khai: Tính năng danh mục đã có trên production; file hướng dẫn là artifact trong workspace, không được phục vụ trực tiếp từ website.
+
+## 2026-08-25
+
+### Khởi tạo và đưa Family Expense lên production
+
+- Thiết lập frontend React 19 + TypeScript + Vite, giao diện mobile-first, React Router, Tailwind CSS, Recharts và PWA.
+- Thiết lập Supabase Auth, PostgreSQL/RLS, Edge Function phân tích giao dịch bằng Gemini và các migration dữ liệu ban đầu.
+- Thiết lập các màn hình Tổng quan, Giao dịch, biểu mẫu giao dịch, Danh mục và Dữ liệu/Excel.
+- Frontend được host trên Cloudflare Pages project `family-expense`; domain chính `https://family-expense-8fo.pages.dev`.
+- Supabase project ref: `przgwlpbhldxruyvlsnm`. Không ghi credentials hoặc secret vào changelog.

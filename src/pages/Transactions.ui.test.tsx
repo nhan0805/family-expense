@@ -1,0 +1,72 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
+import { FeedbackProvider } from '../components/Feedback';
+import { useApp } from '../context/AppContext';
+import { Transactions } from './Transactions';
+
+vi.mock('../context/AppContext', () => ({ useApp: vi.fn() }));
+vi.mock('../lib/supabase', () => ({ isSupabaseConfigured: false, supabase: {} }));
+
+describe('Giao dịch mobile', () => {
+  afterEach(() => { cleanup(); vi.clearAllMocks(); });
+  it('hiển thị bộ lọc trực tiếp và menu ba chấm trên card', () => {
+    const setTransactions = vi.fn();
+    vi.mocked(useApp).mockReturnValue({
+      transactions: [{ id: 't1', transactionDate: '2026-08-27', transactionType: 'Chi tiêu', status: 'Thực tế', description: 'Đi chợ', amount: 250000, purposeId: 'p1', expenseTypeId: 'e1', paymentMethodId: 'm1', source: 'manual', aiGenerated: false, createdBy: 'u1' }],
+      setTransactions, purposes: [{ id: 'p1', name: 'Sinh hoạt' }, { id: 'p2', name: 'Du lịch' }], expenseTypes: [{ id: 'e1', name: 'Thực phẩm' }], paymentMethods: [{ id: 'm1', name: 'Tiền mặt' }], familyId: 'f1', currentUserId: 'u1', currentUserRole: 'owner',
+    } as unknown as ReturnType<typeof useApp>);
+    render(<FeedbackProvider><QueryClientProvider client={new QueryClient()}><MemoryRouter><Transactions/></MemoryRouter></QueryClientProvider></FeedbackProvider>);
+    expect(screen.getByRole('region', { name: 'Tìm kiếm và bộ lọc giao dịch' })).not.toHaveClass('sticky');
+    const filterToggle = screen.getByText(/Bộ lọc chi tiết/);
+    const filterDetails = filterToggle.closest('details');
+    expect(filterDetails).not.toHaveAttribute('open');
+    fireEvent.click(filterToggle);
+    expect(filterDetails).toHaveAttribute('open');
+    expect(screen.getByLabelText('Loại giao dịch')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Trạng thái')).not.toBeInTheDocument();
+    const transactionCard = screen.getByRole('article', { name: 'Giao dịch Đi chợ' });
+    expect(transactionCard).toHaveClass('rounded-2xl', 'shadow-sm');
+    expect(transactionCard).not.toHaveClass('border-t');
+    fireEvent.click(screen.getByRole('button', { name: 'Thao tác với Đi chợ' }));
+    expect(screen.getByText('Sao chép')).toBeInTheDocument();
+    expect(screen.getAllByText((content) => content.includes('250.000')).length).toBeGreaterThan(0);
+  });
+
+  it('chọn nhiều và chỉ sửa bốn trường bắt buộc', async () => {
+    const setTransactions = vi.fn();
+    vi.mocked(useApp).mockReturnValue({
+      transactions: [{ id: 't1', transactionDate: '2026-08-27', transactionType: 'Chi tiêu', status: 'Thực tế', description: 'Đi chợ', amount: 250000, purposeId: 'p1', expenseTypeId: 'e1', paymentMethodId: 'm1', source: 'manual', aiGenerated: false, createdBy: 'u1' }],
+      setTransactions, purposes: [{ id: 'p1', name: 'Sinh hoạt' }, { id: 'p2', name: 'Du lịch' }], expenseTypes: [{ id: 'e1', name: 'Thực phẩm' }], paymentMethods: [{ id: 'm1', name: 'Tiền mặt' }], familyId: 'f1', currentUserId: 'u1', currentUserRole: 'owner',
+    } as unknown as ReturnType<typeof useApp>);
+    render(<FeedbackProvider><QueryClientProvider client={new QueryClient()}><MemoryRouter><Transactions/></MemoryRouter></QueryClientProvider></FeedbackProvider>);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Chọn nhiều giao dịch' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Chọn giao dịch Đi chợ' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Sửa các giao dịch đã chọn' }));
+    const dialog = screen.getByRole('dialog', { name: 'Sửa 1 giao dịch' });
+    expect(within(dialog).getByLabelText('Mục đích')).toBeInTheDocument();
+    expect(within(dialog).getByLabelText('Danh mục')).toBeInTheDocument();
+    expect(within(dialog).getByLabelText('Phương thức thanh toán')).toBeInTheDocument();
+    expect(within(dialog).getByLabelText('Trạng thái')).toBeInTheDocument();
+    expect(within(dialog).queryByLabelText('Sự kiện/Kế hoạch')).not.toBeInTheDocument();
+    expect(within(dialog).queryByLabelText('Người hưởng lợi')).not.toBeInTheDocument();
+    expect(within(dialog).queryByLabelText('Tài khoản/Thẻ')).not.toBeInTheDocument();
+    fireEvent.change(within(dialog).getByLabelText('Mục đích'), { target: { value: 'p2' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Xác nhận cập nhật' }));
+    await waitFor(() => expect(setTransactions).toHaveBeenCalled());
+    expect(screen.getByText('Đã cập nhật 1 giao dịch.')).toBeInTheDocument();
+  });
+
+  it('hiển thị nút xóa hàng loạt khi đã chọn giao dịch có quyền xóa', () => {
+    vi.mocked(useApp).mockReturnValue({
+      transactions: [{ id: 't1', transactionDate: '2026-08-27', transactionType: 'Chi tiêu', status: 'Thực tế', description: 'Đi chợ', amount: 250000, purposeId: 'p1', expenseTypeId: 'e1', paymentMethodId: 'm1', source: 'manual', aiGenerated: false, createdBy: 'u1' }],
+      setTransactions: vi.fn(), purposes: [{ id: 'p1', name: 'Sinh hoạt' }], expenseTypes: [{ id: 'e1', name: 'Thực phẩm' }], paymentMethods: [{ id: 'm1', name: 'Tiền mặt' }], familyId: 'f1', currentUserId: 'u1', currentUserRole: 'owner',
+    } as unknown as ReturnType<typeof useApp>);
+    render(<FeedbackProvider><QueryClientProvider client={new QueryClient()}><MemoryRouter><Transactions/></MemoryRouter></QueryClientProvider></FeedbackProvider>);
+    fireEvent.click(screen.getByRole('button', { name: 'Chọn nhiều giao dịch' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Chọn giao dịch Đi chợ' }));
+    expect(screen.getByRole('button', { name: 'Xóa các giao dịch đã chọn' })).toBeEnabled();
+  });
+});
