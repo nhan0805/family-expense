@@ -5,7 +5,7 @@
 ### Cập nhật GitHub Actions lên Node.js 24
 
 - Sau thay đổi: `checkout` và `setup-node` dùng major version mới tương thích Node.js 24, loại bỏ cảnh báo deprecation Node.js 20 trên GitHub Actions.
-- Kỹ thuật: Cập nhật `.github/workflows/ci.yml` và `.github/workflows/cloudflare-preview.yml`; `pnpm/action-setup@v4` vẫn là major ổn định hiện hành.
+- Kỹ thuật: Cập nhật `.github/workflows/ci.yml` và `.github/workflows/cloudflare-preview.yml` dùng `checkout@v5`, `setup-node@v5` và `pnpm/action-setup@v6`, tương thích runtime Node.js 24.
 - Triển khai: Áp dụng tự động ở lần chạy workflow tiếp theo.
 
 ### Bổ sung vận hành, PWA kiểm thử và phân trang Thùng rác
