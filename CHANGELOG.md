@@ -2,6 +2,14 @@
 
 ## 2026-08-29
 
+### Bổ sung kéo-thả file Excel từ Finder
+
+- Triệu chứng: Sau khi file picker đóng, macOS chuyển focus sang Excel và trang vẫn báo chưa chọn file, cho thấy file có thể bị mở bằng Excel thay vì được trả cho Chrome.
+- Sau thay đổi: Vùng import nhận file `.xlsx` bằng drag-and-drop trực tiếp từ Finder và dùng chung `processImportFile`, không phụ thuộc file picker.
+- Kỹ thuật: Cập nhật `src/pages/ImportExport.tsx`; không thay đổi database hoặc API.
+- Kiểm thử: Chờ CI chạy typecheck/lint/test/build; cần smoke test kéo-thả trên production sau deploy.
+- Triển khai: Chờ CI, merge PR và Cloudflare production deploy.
+
 ### Thay parser import Excel để xử lý ổn định trong trình duyệt
 
 - Trước thay đổi: Sau khi Finder trả file, UI bắt đầu kiểm tra rồi mất kết quả; parser dùng dynamic import `exceljs`. File xuất rút gọn cũng không còn được nhận diện vì logic cũ phụ thuộc cột `ID giao dịch` đã bị loại bỏ.
