@@ -77,6 +77,7 @@ describe('Dashboard', () => {
     expect(screen.getByText('Tổng chi').parentElement).toHaveTextContent(
       '250.000',
     );
+    expect(screen.getByText('Giá trị ròng').parentElement?.parentElement?.firstElementChild).toHaveClass('bg-rose-100');
     expect(screen.getByText('Chi tháng 2')).toBeInTheDocument();
     expect(screen.queryByText('Chi tháng 1')).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Xem tất cả' })).toHaveAttribute(

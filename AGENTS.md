@@ -6,6 +6,7 @@
 - Frontend: React 19, TypeScript strict, Vite, React Router, Tailwind CSS, React Hook Form + Zod, Recharts.
 - Backend: Supabase Auth/PostgreSQL/RLS/RPC/Edge Functions; Gemini chỉ đề xuất dữ liệu, user phải xác nhận trước khi lưu.
 - Production: Cloudflare Pages; đọc mục mới nhất trong `CHANGELOG.md` trước khi sửa vì mới hơn README.
+- Quy trình deploy bắt buộc: production chỉ deploy qua Git bằng Cloudflare Pages Git integration sau khi thay đổi được push/merge vào `main`; PR dùng preview deployment. Không chạy `wrangler pages deploy` trực tiếp cho production.
 
 ## Commands
 
@@ -40,4 +41,5 @@
 - Không đọc hoặc in nội dung `.env`, `.env.*`, token hay secret; chỉ tham chiếu tên biến.
 - Không chạy `drop database`, `rm -rf`, force push/reset, sửa/xóa production data hoặc lệnh phá hoại.
 - Hỏi trước khi cài package, truy cập mạng ngoài/gọi API bên thứ ba, deploy hoặc chạy migration production.
+- Ngoại lệ deploy: chỉ dùng deploy thủ công khi Git/Cloudflare integration không khả dụng và người dùng xác nhận rõ trong cùng lượt; sau đó phải ghi lý do, commit/branch và URL deployment vào `CHANGELOG.md`.
 - Không dùng project production để test mutation; ưu tiên demo/local/test project và thao tác có thể hoàn tác.

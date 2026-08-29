@@ -283,7 +283,12 @@ export function Dashboard() {
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <Kpi label="Tổng thu" value={totalIncome} icon={ArrowDownToLine} tone="emerald" />
         <Kpi label="Tổng chi" value={totalExpense} icon={ArrowUpFromLine} tone="rose" />
-        <Kpi label="Giá trị ròng" value={totalIncome - totalExpense} icon={Scale} tone="sky" />
+        <Kpi
+          label="Giá trị ròng"
+          value={totalIncome - totalExpense}
+          icon={Scale}
+          tone={totalIncome > totalExpense ? 'emerald' : totalIncome < totalExpense ? 'rose' : 'sky'}
+        />
       </section>
       {dueTransactions.length > 0 && (
         <section className="card border-amber-300 p-4 dark:border-amber-700">
