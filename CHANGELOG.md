@@ -2,6 +2,13 @@
 
 ## 2026-08-29
 
+### Giữ kết quả kiểm tra file Excel hiển thị ổn định
+
+- Sau thay đổi: Trạng thái đang kiểm tra được quản lý riêng; sau khi xử lý xong app vẫn hiển thị kết quả hoặc thông báo rõ khi sheet `Giao dịch` không có dòng dữ liệu, không để vùng upload tự trống.
+- Kỹ thuật: Cập nhật `src/pages/ImportExport.tsx`; không thay đổi database hoặc API.
+- Kiểm thử: Rà soát luồng file hợp lệ, file không có dữ liệu và lỗi parse.
+- Triển khai: Chưa deploy production.
+
 ### Hiển thị lỗi cụ thể khi upload Excel
 
 - Sau thay đổi: Trạng thái kiểm tra được hiển thị ngay dưới vùng chọn file; lỗi đọc file, sheet/header hoặc validation được hiển thị rõ thay vì chỉ im lặng quay về trạng thái trống.

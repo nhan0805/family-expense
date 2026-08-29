@@ -33,6 +33,7 @@ export function ImportExport() {
   const [exporting, setExporting] = useState(false);
   const [message, setMessage] = useState('');
   const [templateBusy, setTemplateBusy] = useState(false);
+  const [checkingFile, setCheckingFile] = useState(false);
   const [importBusy, setImportBusy] = useState(false);
   const [fileName, setFileName] = useState('');
   const [fileError, setFileError] = useState('');
@@ -79,6 +80,7 @@ export function ImportExport() {
       event.currentTarget.value = '';
       return;
     }
+    setCheckingFile(true);
     setMessage('Đang kiểm tra file…');
     try {
       let duplicateTransactions = transactions;
@@ -124,7 +126,9 @@ export function ImportExport() {
       setValidRows(result.valid);
       setImportErrors(result.errors);
       setMessage(
-        `Đã kiểm tra ${result.valid.length + result.errors.length} dòng.`,
+        result.valid.length + result.errors.length > 0
+          ? `Đã kiểm tra ${result.valid.length + result.errors.length} dòng.`
+          : 'Không tìm thấy dòng dữ liệu nào trong sheet “Giao dịch”.',
       );
     } catch (e) {
       setFileName('');
@@ -142,6 +146,8 @@ export function ImportExport() {
             : 'Không thể đọc file Excel. File có thể bị hỏng hoặc không phải định dạng .xlsx hợp lệ.',
       );
       event.currentTarget.value = '';
+    } finally {
+      setCheckingFile(false);
     }
   };
   const confirmImport = async () => {
@@ -385,7 +391,7 @@ export function ImportExport() {
           </label>
           {message && (
             <p className="flex items-center gap-2 text-sm" role="status" aria-live="polite">
-              <CheckCircle2 className="text-[#187653]" size={18} />
+              {checkingFile ? <Upload className="animate-pulse text-[#187653]" size={18} /> : <CheckCircle2 className="text-[#187653]" size={18} />}
               {message}
             </p>
           )}
