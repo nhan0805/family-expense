@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase';
 import { PageSkeleton } from './AsyncStates';
 import { ThemeSelect } from './ThemeSelect';
 
-const links = [['/', 'Tổng quan', House], ['/giao-dich', 'Giao dịch', WalletCards], ['/danh-muc', 'Danh mục', Tags], ['/thanh-vien', 'Thành viên', UsersRound], ['/du-lieu', 'Dữ liệu', BookOpen]] as const;
+const links = [['/', 'Tổng quan', House], ['/giao-dich', 'Giao dịch', WalletCards], ['/danh-muc', 'Danh mục', Tags], ['/thanh-vien', 'Thành viên', UsersRound], ['/du-lieu', 'Quản lý dữ liệu', BookOpen]] as const;
 
 export function Layout() {
   const [open, setOpen] = useState(false);

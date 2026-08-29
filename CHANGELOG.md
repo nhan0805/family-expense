@@ -2,6 +2,13 @@
 
 ## 2026-08-29
 
+### Đổi nhãn tab Dữ liệu thành Quản lý dữ liệu
+
+- Sau thay đổi: Đổi nhãn điều hướng và tiêu đề trang `/du-lieu` thành `Quản lý dữ liệu` để kiểm tra trực quan bản deploy mới.
+- Kỹ thuật: Cập nhật `src/components/Layout.tsx` và `src/pages/ImportExport.tsx`; không thay đổi database hoặc API.
+- Kiểm thử: Rà soát nhãn trên navigation và tiêu đề trang.
+- Triển khai: Chờ merge PR và Cloudflare deploy production.
+
 ### Sửa vùng chọn file Excel không phản hồi
 
 - Sau thay đổi: Input file phủ toàn bộ vùng upload, có accessible name rõ ràng và vẫn cho phép chọn lại cùng file; thao tác chọn file sẽ kích hoạt kiểm tra ổn định hơn trên Chrome, Safari và PWA.
