@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import ExcelJS from 'exceljs';
+import * as XLSX from 'xlsx';
 import { createTemplate, parseTemplate } from './templateImport';
 const purposes = [{ id: 'p1', name: 'Sinh hoạt' }],
   types = [{ id: 'e1', name: 'Ăn uống' }],
@@ -18,5 +19,27 @@ describe('template import', () => {
     const result = await parseTemplate(edited, purposes, types, methods, []);
     expect(result.errors).toHaveLength(0);
     expect(result.valid[0]?.purposeId).toBe('p1');
+  });
+
+  it('đọc ngày serial và file xuất rút gọn theo tên cột', async () => {
+    const ws = XLSX.utils.aoa_to_sheet([
+      ['Ngày', 'Loại giao dịch', 'Trạng thái', 'Nội dung', 'Số tiền', 'Mục đích', 'Danh mục', 'Phương thức thanh toán', 'Ghi chú', 'Nguồn'],
+      [45316, 'Tiền vào', 'Thực tế', 'Salary', 57683000, 'Sinh hoạt', 'Ăn uống', 'Chuyển khoản', '', 'manual'],
+    ]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Giao dịch');
+    const result = await parseTemplate(
+      XLSX.write(wb, { type: 'array', bookType: 'xlsx' }),
+      purposes,
+      types,
+      methods,
+      [],
+    );
+    expect(result.errors).toHaveLength(0);
+    expect(result.valid[0]).toMatchObject({
+      transactionDate: '2024-01-25',
+      transactionType: 'Thu nhập',
+      amount: 57683000,
+    });
   });
 });
