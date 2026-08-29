@@ -134,7 +134,7 @@ pnpm test:e2e
 
 | Dịch vụ | Mục đích | Cần theo dõi |
 |---|---|---|
-| Supabase Cloud | Auth, PostgreSQL, RLS, RPC, Edge Function | Quota, backup/PITR, egress, email rate limit |
+| Supabase Cloud | Auth, PostgreSQL, RLS, RPC, Edge Function và GitHub deploy workflow | Quota, backup/PITR, egress, email rate limit |
 | Cloudflare Pages | Hosting, CDN, PWA deployment | Build quota, domain và API token |
 | Google AI Studio/Gemini | Structured AI suggestion | Quota/429, privacy policy và model lifecycle |
 | npm ecosystem | Runtime/build dependencies | License, vulnerability và deprecation |
