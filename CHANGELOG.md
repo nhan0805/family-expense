@@ -2,6 +2,13 @@
 
 ## 2026-08-29
 
+### Giữ tên file khi Excel kiểm tra thất bại
+
+- Sau thay đổi: Khi parser gặp lỗi, tên file vẫn được giữ và bảng kết quả hiển thị lỗi chi tiết, không quay về trạng thái `Chưa chọn file Excel`.
+- Kỹ thuật: Cập nhật nhánh lỗi trong `src/pages/ImportExport.tsx`; không thay đổi database hoặc API.
+- Kiểm thử: Rà soát file hợp lệ, sai template và file hỏng/không đọc được.
+- Triển khai: Chờ CI, merge PR và Cloudflare deploy production.
+
 ### Sửa nút chọn file Excel trên Chrome macOS
 
 - Sau thay đổi: Dùng nút chọn file riêng kết hợp input ẩn được kích hoạt bằng `ref`, tránh trạng thái trình duyệt vẫn hiển thị `No file chosen` dù người dùng đã chọn file.

@@ -134,10 +134,8 @@ export function ImportExport() {
           : 'Không tìm thấy dòng dữ liệu nào trong sheet “Giao dịch”.',
       );
     } catch (e) {
-      setFileName('');
       setValidRows([]);
       setImportErrors([]);
-      setMessage('Không thể kiểm tra file Excel.');
       const detail = e instanceof Error ? e.message : '';
       const wrongTemplate =
         detail.includes('sheet') || detail.includes('Tiêu đề cột');
@@ -148,6 +146,7 @@ export function ImportExport() {
             ? `Không thể đọc file Excel: ${detail}`
             : 'Không thể đọc file Excel. File có thể bị hỏng hoặc không phải định dạng .xlsx hợp lệ.',
       );
+      setMessage('Đã kiểm tra xong nhưng file có lỗi cần xử lý.');
       input.value = '';
     } finally {
       setCheckingFile(false);
