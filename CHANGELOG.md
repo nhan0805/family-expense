@@ -2,6 +2,13 @@
 
 ## 2026-08-29
 
+### Sửa vùng chọn file Excel không phản hồi
+
+- Sau thay đổi: Input file phủ toàn bộ vùng upload, có accessible name rõ ràng và vẫn cho phép chọn lại cùng file; thao tác chọn file sẽ kích hoạt kiểm tra ổn định hơn trên Chrome, Safari và PWA.
+- Kỹ thuật: Cập nhật `src/pages/ImportExport.tsx`; không thay đổi database hoặc API.
+- Kiểm thử: Rà soát sự kiện click/change và trạng thái phản hồi sau khi chọn file.
+- Triển khai: Chưa deploy production.
+
 ### Giữ kết quả kiểm tra file Excel hiển thị ổn định
 
 - Sau thay đổi: Trạng thái đang kiểm tra được quản lý riêng; sau khi xử lý xong app vẫn hiển thị kết quả hoặc thông báo rõ khi sheet `Giao dịch` không có dòng dữ liệu, không để vùng upload tự trống.
