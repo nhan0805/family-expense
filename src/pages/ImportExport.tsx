@@ -236,8 +236,6 @@ export function ImportExport() {
         isSupabaseConfigured && familyId ? await loadAllTransactions() : [];
       const rows = cloudRows.length
         ? cloudRows.map((row) => ({
-            'ID giao dịch': row.id,
-            'Mã giao dịch': row.source_reference,
             Ngày: row.transaction_date,
             'Loại giao dịch': transactionTypeLabel(String(row.transaction_type ?? '')),
             'Trạng thái': row.status,
@@ -245,27 +243,13 @@ export function ImportExport() {
             'Số tiền': Number(row.amount),
             'Mục đích': relationName(row.purpose),
             'Danh mục': relationName(row.expense_type),
-            'Sự kiện/Kế hoạch': relationName(row.event),
-            'Người hưởng lợi': relationName(row.beneficiary),
             'Phương thức thanh toán': relationName(row.payment_method),
-            'Tài khoản/Thẻ': relationName(row.account),
             'Ghi chú': row.note,
             Nguồn: row.source,
-            'AI đề xuất': row.ai_generated ? 'Có' : 'Không',
-            'Độ tin cậy AI': row.ai_confidence,
-            'Nội dung gốc AI': row.ai_original_input,
-            'Model AI': row.ai_model,
-            'AI xác nhận lúc': row.ai_confirmed_at,
-            'Người tạo': row.created_by,
-            'Người cập nhật': row.updated_by,
-            'Ngày tạo': row.created_at,
-            'Ngày cập nhật': row.updated_at,
           }))
         : transactions
             .filter((transaction) => !transaction.deletedAt)
             .map((transaction) => ({
-              'ID giao dịch': transaction.id,
-              'Mã giao dịch': transaction.sourceReference || '',
               Ngày: transaction.transactionDate,
               'Loại giao dịch': transactionTypeLabel(transaction.transactionType),
               'Trạng thái': transaction.status,
@@ -278,18 +262,12 @@ export function ImportExport() {
                 expenseTypes.find(
                   (item) => item.id === transaction.expenseTypeId,
                 )?.name || '',
-              'Sự kiện/Kế hoạch': transaction.eventId || '',
-              'Người hưởng lợi': transaction.beneficiaryId || '',
               'Phương thức thanh toán':
                 paymentMethods.find(
                   (item) => item.id === transaction.paymentMethodId,
                 )?.name || '',
-              'Tài khoản/Thẻ': transaction.accountId || '',
               'Ghi chú': transaction.note || '',
               Nguồn: transaction.source,
-              'AI đề xuất': transaction.aiGenerated ? 'Có' : 'Không',
-              'Người tạo': transaction.createdBy || '',
-              'Ngày tạo': transaction.createdAt || '',
             }));
 
       const worksheet = XLSX.utils.json_to_sheet(rows);

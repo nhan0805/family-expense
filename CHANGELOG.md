@@ -2,6 +2,13 @@
 
 ## 2026-08-29
 
+### Rút gọn cột trong file Excel xuất
+
+- Sau thay đổi: Loại bỏ các cột ID/mã kỹ thuật, sự kiện/kế hoạch, người hưởng lợi, tài khoản/thẻ và các cột AI/audit khỏi file xuất; giữ lại thông tin giao dịch chính và nguồn.
+- Kỹ thuật: Cập nhật mapping Excel trong `src/pages/ImportExport.tsx`; không thay đổi database hoặc API.
+- Kiểm thử: Rà soát mapping dữ liệu cloud/fallback và tự động điều chỉnh độ rộng cột theo header.
+- Triển khai: Chờ CI, merge PR và Cloudflare deploy production.
+
 ### Sửa lỗi xuất Excel do quan hệ Supabase bị mơ hồ
 
 - Sau thay đổi: Chỉ định rõ các khóa liên kết cùng `family_id` khi tải dữ liệu xuất Excel, tránh lỗi `more than one relationship was found`.
