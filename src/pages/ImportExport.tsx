@@ -20,6 +20,12 @@ import {
 } from '../lib/templateImport';
 
 type ExportRow = Record<string, unknown>;
+type FilePickerWindow = Window & {
+  showOpenFilePicker?: (options?: {
+    types?: Array<{ description: string; accept: Record<string, string[]> }>;
+    multiple?: boolean;
+  }) => Promise<Array<{ getFile: () => Promise<File> }>>;
+};
 const relationName = (value: unknown) => {
   const relation = Array.isArray(value) ? value[0] : value;
   return relation && typeof relation === 'object' && 'name' in relation
@@ -64,11 +70,7 @@ export function ImportExport() {
       setTemplateBusy(false);
     }
   };
-  const selectImportFile = async (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const input = event.currentTarget;
-    const file = input.files?.[0];
+  const processImportFile = async (file: File, input?: HTMLInputElement) => {
     if (!file) return;
     setFileError('');
     setValidRows([]);
@@ -80,7 +82,7 @@ export function ImportExport() {
         'File không đúng định dạng. Vui lòng chọn file .xlsx được tải từ ứng dụng.',
       );
       setMessage('');
-      input.value = '';
+      if (input) input.value = '';
       return;
     }
     setCheckingFile(true);
@@ -147,9 +149,36 @@ export function ImportExport() {
             : 'Không thể đọc file Excel. File có thể bị hỏng hoặc không phải định dạng .xlsx hợp lệ.',
       );
       setMessage('Đã kiểm tra xong nhưng file có lỗi cần xử lý.');
-      input.value = '';
+      if (input) input.value = '';
     } finally {
       setCheckingFile(false);
+    }
+  };
+  const selectImportFile = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.currentTarget.files?.[0];
+    if (file) void processImportFile(file, event.currentTarget);
+  };
+  const chooseImportFile = async () => {
+    const picker = (window as FilePickerWindow).showOpenFilePicker;
+    if (!picker) {
+      fileInputRef.current?.click();
+      return;
+    }
+    try {
+      const [handle] = await picker({
+        multiple: false,
+        types: [{
+          description: 'Excel workbook',
+          accept: {
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+          },
+        }],
+      });
+      if (handle) await processImportFile(await handle.getFile());
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return;
+      setFileError('Không thể mở bộ chọn file. Vui lòng thử lại.');
+      setMessage('Không thể chọn file Excel.');
     }
   };
   const confirmImport = async () => {
@@ -373,7 +402,7 @@ export function ImportExport() {
             <button
               type="button"
               className="rounded-lg border border-[#b8c9bf] bg-white px-4 py-2 text-sm font-semibold dark:bg-[#17251f]"
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => void chooseImportFile()}
             >
               Chọn file Excel
             </button>
