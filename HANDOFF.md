@@ -1,18 +1,16 @@
 # Family Expense — Project Handoff
 
-> Cập nhật: **28/08/2026** (`Asia/Ho_Chi_Minh`)  
-> Trạng thái: **Production đang hoạt động; bàn giao vận hành cần hoàn thiện các mục TBD**  
+> Cập nhật: **29/08/2026** (`Asia/Ho_Chi_Minh`)  
+> Trạng thái: **Production đang hoạt động; tài liệu này là ngữ cảnh kỹ thuật cho các phiên làm việc tiếp theo**  
 > Production: <https://family-expense-8fo.pages.dev>
 
-## Trạng thái bàn giao nhanh
+## Trạng thái dự án
 
 - [x] Ứng dụng production đang chạy trên Cloudflare Pages.
 - [x] Mã nguồn frontend, Supabase migrations/RLS/RPC và Edge Function có trong workspace.
-- [x] README, CHANGELOG, SAD và Handoff bản Word đã được cập nhật.
-- [ ] Xác nhận Git remote, protected branch và baseline tag.
-- [ ] Thiết lập CI/CD và môi trường staging tách biệt.
-- [ ] Điền contact, owner cảnh báo và kênh liên lạc.
-- [ ] Bàn giao quyền Cloudflare, Supabase và Google AI; xác minh MFA.
+- [x] README, CHANGELOG và SAD đã được cập nhật.
+- [x] Git remote, protected `main`, CI/CD và Cloudflare Pages Git deployment đã thiết lập.
+- [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
 
 ## 1. Project Overview
@@ -25,20 +23,7 @@
 | Trạng thái | Go-live/đang chạy; cần hardening delivery và vận hành. |
 | Dữ liệu nguồn | Excel đã đối chiếu 2.090 giao dịch, tổng ròng 1.696.313.649 VND. |
 
-## 2. Team & Contacts
-
-Không ghi mật khẩu, token hoặc API key trong tài liệu này.
-
-| Vai trò | Người phụ trách | Liên hệ/kênh | Trạng thái |
-|---|---|---|---|
-| Product Owner | TBD | TBD | Cần điền |
-| Technical Owner | TBD | TBD | Cần điền |
-| Supabase Admin | TBD | TBD | Cần điền |
-| Cloudflare Admin | TBD | TBD | Cần điền |
-| Google AI Owner | TBD | TBD | Cần điền |
-| Incident Contact | TBD | TBD | Cần điền |
-
-## 3. Architecture Summary
+## 2. Architecture Summary
 
 ```mermaid
 flowchart LR
@@ -68,15 +53,15 @@ flowchart LR
 | `src/lib/` | Domain, Supabase client/API, AI và import/export |
 | `supabase/migrations/` | Schema, RLS, RPC, indexes và migration dữ liệu |
 | `supabase/functions/parse-expense/` | Edge Function tích hợp Gemini |
-| `scripts/` | Import Excel và script tạo tài liệu |
-| `docs/` | SAD và Handoff bản Word |
+| `scripts/` | Import Excel và các script hỗ trợ vận hành |
+| `docs/` | SAD và runbook deploy/vận hành |
 | `README.md` | Cài đặt, cấu hình và triển khai |
 | `CHANGELOG.md` | Nguồn cập nhật mới nhất của dự án |
 
 ### Repository và branching
 
-- Git remote: **TBD — chưa được xác nhận trong workspace bàn giao**.
-- Đề xuất: private GitHub repository, `main` được bảo vệ, feature branch + pull request.
+- Git remote: `https://github.com/nhan0805/family-expense.git`.
+- Repository private, `main` được bảo vệ, feature branch + pull request.
 - Bắt buộc review và CI xanh trước khi merge/deploy production.
 - Không commit `.env`, `node_modules`, secret hoặc Supabase temporary files.
 
@@ -86,8 +71,8 @@ flowchart LR
 |---|---|---|---|
 | Local | `http://127.0.0.1:5173` | Supabase local hoặc configured project | Có |
 | Preview | Cloudflare Pages deployment URL | Không dùng production để test mutation | Có theo deployment |
-| Staging | TBD | Đề xuất Supabase project riêng với dữ liệu giả lập | Chưa có |
-| Production | `family-expense-8fo.pages.dev` | Supabase Cloud linked project | Đang chạy |
+| Staging | Cloudflare preview/local | Supabase project riêng `gkvhztqoaslarykxxelt` với dữ liệu test | Đang sử dụng |
+| Production | `https://8444cfb7.family-expense-8fo.pages.dev` | Supabase Cloud linked project | Đang chạy |
 
 Thông tin project ID, account ID và quyền truy cập phải được lưu trong password manager/CMDB của đội, không ghi key vào file này.
 
@@ -257,7 +242,6 @@ Không ghi tài khoản test trong file. Tạo user/family riêng ở staging v�
 | Tài liệu | Vị trí | Trạng thái |
 |---|---|---|
 | Solution Architecture Document | [`docs/Solution_Architecture_Document_Family_Expense.docx`](docs/Solution_Architecture_Document_Family_Expense.docx) | Hoàn thành |
-| Project Handoff bản Word | [`docs/Handoff_Document_Family_Expense.docx`](docs/Handoff_Document_Family_Expense.docx) | Hoàn thành; còn TBD ký nhận |
 | Project Handoff bản Markdown | `HANDOFF.md` | Tài liệu mới nhất |
 | Setup/deploy guide | [`README.md`](README.md) | Có; cập nhật khi pipeline đổi |
 | Change history | [`CHANGELOG.md`](CHANGELOG.md) | Nguồn cập nhật mới nhất |
@@ -268,30 +252,15 @@ Không ghi tài khoản test trong file. Tạo user/family riêng ở staging v�
 
 | Ưu tiên | Việc | Owner | Due | Trạng thái |
 |---|---|---|---|---|
-| P0 | Khởi tạo/xác nhận Git remote, baseline tag và protected `main` | TBD | TBD | Chưa làm |
-| P0 | CI lint/typecheck/test/build + Cloudflare preview | TBD | TBD | Chưa làm |
-| P0 | Supabase/Cloudflare staging tách biệt | TBD | TBD | Chưa làm |
-| P1 | RLS negative tests và migration rehearsal | TBD | TBD | Chưa làm |
+| P0 | Git remote, baseline tag và protected `main` | Chủ dự án | Đã thực hiện | Hoàn thành |
+| P0 | CI lint/typecheck/test/build + Cloudflare preview | Chủ dự án | Đã thực hiện | Hoàn thành |
+| P0 | Supabase/Cloudflare staging tách biệt | Chủ dự án | Đã thực hiện | Hoàn thành |
+| P1 | RLS negative tests và migration rehearsal | Chủ dự án | Mỗi release DB | Có test/migration; chưa tích hợp CI đầy đủ |
 | P1 | Monitoring/alert/error tracking không chứa PII | TBD | TBD | Chưa làm |
 | P1 | Backup restore và rollback drill | TBD | TBD | Chưa làm |
 | P1 | Chốt retention/log/privacy policy | TBD | TBD | Cần quyết định |
 | P2 | Đánh giá migration enum Tiền vào/Tiền ra dài hạn | TBD | TBD | Theo dõi |
 | P3 | Storage chứng từ/recurring/queue khi có business case | TBD | TBD | Backlog |
-
-## 16. Sign-off
-
-| Bên | Đại diện | Vai trò | Ngày | Xác nhận/Ghi chú |
-|---|---|---|---|---|
-| Bàn giao | TBD | TBD | __/__/____ | |
-| Tiếp nhận | TBD | TBD | __/__/____ | |
-| Product Owner | TBD | TBD | __/__/____ | |
-| Security/Ops | TBD | TBD | __/__/____ | |
-
-- [ ] Đã nhận quyền truy cập và xác minh MFA.
-- [ ] Đã nhận tài liệu, mã nguồn, migrations và lịch sử triển khai.
-- [ ] Đã walkthrough kiến trúc, deploy, rollback và incident runbooks.
-- [ ] Đã xác nhận outstanding tasks, owner và thời hạn.
-- [ ] Đã thu hồi quyền không còn cần thiết của đội bàn giao.
 
 ---
 

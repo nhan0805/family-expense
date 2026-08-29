@@ -2,6 +2,20 @@
 
 ## 2026-08-29
 
+### Đồng bộ handoff và kiểm tra migration production
+
+- Sau thay đổi: Xóa các mục Team & Contacts/TBD, cập nhật repository, staging và URL production mới trong `HANDOFF.md`.
+- Kỹ thuật: Không thay đổi runtime hoặc database; kiểm tra migration production bị giới hạn vì Supabase CLI local chưa có `SUPABASE_ACCESS_TOKEN`.
+- Kiểm thử: Đã đối chiếu trạng thái Git, Cloudflare deployment và cấu hình staging; chưa xác nhận được migration production từ CLI.
+- Triển khai: Thay đổi tài liệu; không deploy ứng dụng.
+
+### Thiết lập dữ liệu giả lập cho Supabase staging
+
+- Sau thay đổi: Xác nhận Supabase staging hoạt động, schema `transactions` có sẵn và thêm 3 giao dịch giả lập bằng tài khoản test staging; không tác động production.
+- Kỹ thuật: Cập nhật trạng thái staging trong `HANDOFF.md`; dữ liệu được ghi qua RPC import hiện hành.
+- Kiểm thử: Đăng nhập staging thành công, RPC import trả HTTP 200, xác nhận dữ liệu staging sau seed.
+- Triển khai: Đã hoàn tất trên Supabase staging; không deploy production.
+
 ### Sửa lỗi typecheck ở export Excel
 
 - Sau thay đổi: Giá trị loại giao dịch từ dữ liệu Supabase được chuẩn hóa về chuỗi trước khi ánh xạ nhãn `Tiền ra/Tiền vào`, giúp CI build không còn lỗi TypeScript.
