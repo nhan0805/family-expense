@@ -2,6 +2,13 @@
 
 ## 2026-08-29
 
+### Sửa nút chọn file Excel trên Chrome macOS
+
+- Sau thay đổi: Dùng nút chọn file riêng kết hợp input ẩn được kích hoạt bằng `ref`, tránh trạng thái trình duyệt vẫn hiển thị `No file chosen` dù người dùng đã chọn file.
+- Kỹ thuật: Cập nhật `src/pages/ImportExport.tsx`; không thay đổi database hoặc API.
+- Kiểm thử: Rà soát click nút, chọn lại cùng file và chuỗi trạng thái kiểm tra.
+- Triển khai: Chờ CI, merge PR và Cloudflare deploy production.
+
 ### Giữ bảng kết quả kiểm tra file Excel luôn hiển thị
 
 - Sau thay đổi: Bổ sung bảng trạng thái cố định dưới vùng chọn file, luôn hiển thị đang kiểm tra, kết quả, lỗi chi tiết hoặc trạng thái chưa chọn file.
