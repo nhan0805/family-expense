@@ -2,6 +2,13 @@
 
 ## 2026-08-29
 
+### Tách thông báo import và xuất Excel
+
+- Sau thay đổi: Kết quả kiểm tra/import không còn bị thao tác xuất dữ liệu ghi đè; lỗi xuất Excel hiển thị nguyên nhân chi tiết hơn khi Supabase trả lỗi.
+- Kỹ thuật: Cập nhật `src/pages/ImportExport.tsx`; không thay đổi database hoặc API.
+- Kiểm thử: Rà soát trạng thái độc lập của import/export và các dạng lỗi `Error`/PostgREST.
+- Triển khai: Chờ CI, merge PR và Cloudflare deploy production.
+
 ### Cập nhật Supabase CLI action lên Node.js mới
 
 - Sau thay đổi: Cập nhật `supabase/setup-cli` từ `v1` lên `v2` để loại bỏ cảnh báo action dùng Node.js 20 đã deprecated trên GitHub Actions.
