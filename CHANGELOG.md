@@ -2,6 +2,13 @@
 
 ## 2026-08-29
 
+### Giữ thông báo khi kiểm tra Excel gặp lỗi
+
+- Sau thay đổi: Giữ trạng thái và thông báo lỗi rõ ràng sau khi chọn file, kể cả khi trình duyệt hoàn tất sự kiện chọn file trước khi thao tác đọc Excel kết thúc.
+- Kỹ thuật: Ổn định tham chiếu input file trong `src/pages/ImportExport.tsx`; không thay đổi database hoặc API.
+- Kiểm thử: Rà soát luồng chọn file hợp lệ, file sai template và lỗi đọc file.
+- Triển khai: Chờ CI, merge PR và Cloudflare deploy production.
+
 ### Hiển thị input chọn file Excel trực tiếp
 
 - Sau thay đổi: Hiển thị input file native thay vì input trong suốt phủ vùng upload, giúp Chrome nhận thao tác chọn file rõ ràng và hiển thị tên file sau khi chọn.

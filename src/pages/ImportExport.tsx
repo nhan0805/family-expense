@@ -65,7 +65,8 @@ export function ImportExport() {
   const selectImportFile = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
-    const file = event.target.files?.[0];
+    const input = event.currentTarget;
+    const file = input.files?.[0];
     if (!file) return;
     setFileError('');
     setValidRows([]);
@@ -77,7 +78,7 @@ export function ImportExport() {
         'File không đúng định dạng. Vui lòng chọn file .xlsx được tải từ ứng dụng.',
       );
       setMessage('');
-      event.currentTarget.value = '';
+      input.value = '';
       return;
     }
     setCheckingFile(true);
@@ -134,7 +135,7 @@ export function ImportExport() {
       setFileName('');
       setValidRows([]);
       setImportErrors([]);
-      setMessage('');
+      setMessage('Không thể kiểm tra file Excel.');
       const detail = e instanceof Error ? e.message : '';
       const wrongTemplate =
         detail.includes('sheet') || detail.includes('Tiêu đề cột');
@@ -145,7 +146,7 @@ export function ImportExport() {
             ? `Không thể đọc file Excel: ${detail}`
             : 'Không thể đọc file Excel. File có thể bị hỏng hoặc không phải định dạng .xlsx hợp lệ.',
       );
-      event.currentTarget.value = '';
+      input.value = '';
     } finally {
       setCheckingFile(false);
     }
