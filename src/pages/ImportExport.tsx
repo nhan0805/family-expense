@@ -375,6 +375,9 @@ export function ImportExport() {
               className="sr-only"
               type="file"
               accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              onClick={(event) => {
+                event.currentTarget.value = '';
+              }}
               onChange={(event) => void selectImportFile(event)}
             />
           </label>

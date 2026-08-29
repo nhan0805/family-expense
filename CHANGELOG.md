@@ -2,6 +2,13 @@
 
 ## 2026-08-29
 
+### Sửa luồng chọn lại file import Excel
+
+- Sau thay đổi: Input file được reset trước mỗi lần mở hộp chọn, nên chọn lại cùng một file vẫn kích hoạt kiểm tra import.
+- Kỹ thuật: Cập nhật `src/pages/ImportExport.tsx`; không thay đổi database hoặc API.
+- Kiểm thử: Cần chạy lại typecheck, lint, test và build.
+- Triển khai: Chưa deploy production.
+
 ### Cập nhật technical debt sau khi hoàn tất delivery pipeline
 
 - Sau thay đổi: Xóa mô tả lỗi thời về việc thiếu Git/CI/CD/staging trong `HANDOFF.md`; ghi nhận pipeline đã chuẩn hóa và chỉ còn cần duy trì.
