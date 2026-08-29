@@ -184,7 +184,7 @@ Không log token, secret, email đầy đủ, nội dung AI hoặc chi tiết t�
 
 | Ưu tiên | Vấn đề | Workaround hiện tại |
 |---|---|---|
-| P0 | Thiếu Git/CI/CD/staging chuẩn hóa | Chạy quality checks và deploy thủ công |
+| P0 | Git/CI/CD/staging đã chuẩn hóa; cần duy trì quy trình release | Theo dõi CI, preview, staging rehearsal và Cloudflare Git deployment |
 | P1 | JWT `issued at future` trên mobile/PWA | Refresh session khi foreground; đăng nhập lại nếu cần; bật giờ tự động |
 | P1 | Supabase email rate limit | Không gửi lặp; chờ quota hoặc cấu hình SMTP custom |
 | P1 | Gemini Free Tier/429/model thay đổi | Không retry vô hạn; nhập thủ công; model qua environment variable |

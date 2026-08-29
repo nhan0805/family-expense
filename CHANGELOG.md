@@ -2,6 +2,13 @@
 
 ## 2026-08-29
 
+### Cập nhật technical debt sau khi hoàn tất delivery pipeline
+
+- Sau thay đổi: Xóa mô tả lỗi thời về việc thiếu Git/CI/CD/staging trong `HANDOFF.md`; ghi nhận pipeline đã chuẩn hóa và chỉ còn cần duy trì.
+- Kỹ thuật: Cập nhật `HANDOFF.md`, không thay đổi runtime, database hoặc API.
+- Kiểm thử: Rà soát lại các mục Known Issues và Outstanding Tasks.
+- Triển khai: Thay đổi tài liệu; không cần deploy ứng dụng.
+
 ### Đồng bộ handoff và kiểm tra migration production
 
 - Sau thay đổi: Xóa các mục Team & Contacts/TBD, cập nhật repository, staging và URL production mới trong `HANDOFF.md`.
