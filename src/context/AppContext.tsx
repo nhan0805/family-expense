@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import type { AuthChangeEvent } from '@supabase/supabase-js';
 import type { CatalogItem, Transaction } from '../lib/domain';
 import {
   expenseTypeNames,
@@ -51,6 +52,10 @@ const fallbackPurposes = makeItems(purposeNames);
 const fallbackExpenseTypes = makeItems(expenseTypeNames);
 const fallbackPaymentMethods = makeItems(paymentMethodNames);
 
+export function shouldReloadAppForAuthEvent(event: AuthChangeEvent) {
+  return event !== 'TOKEN_REFRESHED';
+}
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const [familyId, setFamilyId] = useState('');
   const [familyName, setFamilyName] = useState('Gia đình của tôi');
@@ -78,8 +83,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!isSupabaseConfigured) return;
     let active = true;
-    const load = async () => {
-      setLoading(true);
+    const load = async (showInitialLoading = false) => {
+      if (showInitialLoading) setLoading(true);
       setError(null);
       const { data: sessionData } = await supabase.auth.getSession();
       const user = sessionData.session?.user;
@@ -157,9 +162,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setPaymentMethods((methodResult.data || []) as CatalogItem[]);
       setLoading(false);
     };
-    void load();
-    const { data: listener } = supabase.auth.onAuthStateChange(() => {
-      void load();
+    void load(true);
+    const { data: listener } = supabase.auth.onAuthStateChange((event) => {
+      // Supabase refreshes the session when the browser regains focus after a
+      // native file picker closes. Reloading here would unmount the current
+      // route and discard the selected Excel file before parsing can finish.
+      if (shouldReloadAppForAuthEvent(event)) void load(false);
     });
     return () => {
       active = false;
