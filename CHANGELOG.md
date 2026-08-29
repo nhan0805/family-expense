@@ -2,6 +2,13 @@
 
 ## 2026-08-29
 
+### Dùng bộ chọn file trực tiếp trên Chrome
+
+- Sau thay đổi: Dùng `showOpenFilePicker` trên Chrome để nhận trực tiếp file sau khi Finder đóng; vẫn giữ fallback input cho trình duyệt không hỗ trợ API này.
+- Kỹ thuật: Cập nhật `src/pages/ImportExport.tsx`; không thay đổi database hoặc API.
+- Kiểm thử: Rà soát chọn file, hủy Finder, file sai định dạng và fallback input.
+- Triển khai: Chờ CI, merge PR và Cloudflare deploy production.
+
 ### Giữ tên file khi Excel kiểm tra thất bại
 
 - Sau thay đổi: Khi parser gặp lỗi, tên file vẫn được giữ và bảng kết quả hiển thị lỗi chi tiết, không quay về trạng thái `Chưa chọn file Excel`.
