@@ -2,6 +2,13 @@
 
 ## 2026-08-29
 
+### Sửa lỗi xuất Excel do quan hệ Supabase bị mơ hồ
+
+- Sau thay đổi: Chỉ định rõ các khóa liên kết cùng `family_id` khi tải dữ liệu xuất Excel, tránh lỗi `more than one relationship was found`.
+- Kỹ thuật: Cập nhật truy vấn trong `src/pages/ImportExport.tsx`, dùng các FK `transactions_*_same_family_fkey`; không thay đổi schema hoặc dữ liệu.
+- Kiểm thử: Đã đối chiếu tên FK với migration `202608290001_composite_tenant_foreign_keys.sql`; chờ CI và kiểm tra xuất Excel trên production.
+- Triển khai: Chờ CI, merge PR và Cloudflare deploy production.
+
 ### Tách thông báo import và xuất Excel
 
 - Sau thay đổi: Kết quả kiểm tra/import không còn bị thao tác xuất dữ liệu ghi đè; lỗi xuất Excel hiển thị nguyên nhân chi tiết hơn khi Supabase trả lỗi.

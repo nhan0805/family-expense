@@ -206,7 +206,7 @@ export function ImportExport() {
       const { data, error } = await supabase
         .from('transactions')
         .select(
-          '*, purpose:purposes(name), expense_type:expense_types(name), event:events(name), beneficiary:beneficiaries(name), payment_method:payment_methods(name), account:accounts(name)',
+          '*, purpose:purposes!transactions_purpose_same_family_fkey(name), expense_type:expense_types!transactions_expense_type_same_family_fkey(name), event:events!transactions_event_same_family_fkey(name), beneficiary:beneficiaries!transactions_beneficiary_same_family_fkey(name), payment_method:payment_methods!transactions_payment_method_same_family_fkey(name), account:accounts!transactions_account_same_family_fkey(name)',
         )
         .eq('family_id', familyId)
         .is('deleted_at', null)
