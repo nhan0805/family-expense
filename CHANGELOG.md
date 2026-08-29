@@ -2,6 +2,48 @@
 
 ## 2026-08-29
 
+### Hiển thị lỗi cụ thể khi upload Excel
+
+- Sau thay đổi: Trạng thái kiểm tra được hiển thị ngay dưới vùng chọn file; lỗi đọc file, sheet/header hoặc validation được hiển thị rõ thay vì chỉ im lặng quay về trạng thái trống.
+- Kỹ thuật: Cập nhật `src/pages/ImportExport.tsx`; không thay đổi database hoặc API.
+- Kiểm thử: Rà soát các nhánh thành công, file sai định dạng và lỗi parse trong handler upload.
+- Triển khai: Chưa deploy production.
+
+### Sửa import file Excel có ngày dạng serial
+
+- Sau thay đổi: File Excel có dữ liệu ngày được lưu theo số serial của Excel (ví dụ `45316`) được chuyển đúng sang ngày ISO trước khi validate, thay vì bị loại toàn bộ dòng.
+- Kỹ thuật: Cập nhật `src/lib/templateImport.ts`; không thay đổi database hoặc API.
+- Kiểm thử: Đã xác nhận file `family-expense-template-2026-08-29.xlsx` có 64 dòng dữ liệu và tái hiện nguyên nhân từ giá trị ngày dạng số.
+- Triển khai: Chưa deploy production.
+
+### Sửa luồng chọn lại file import Excel
+
+- Sau thay đổi: Input file được reset trước mỗi lần mở hộp chọn, nên chọn lại cùng một file vẫn kích hoạt kiểm tra import.
+- Kỹ thuật: Cập nhật `src/pages/ImportExport.tsx`; không thay đổi database hoặc API.
+- Kiểm thử: Cần chạy lại typecheck, lint, test và build.
+- Triển khai: Chưa deploy production.
+
+### Cập nhật technical debt sau khi hoàn tất delivery pipeline
+
+- Sau thay đổi: Xóa mô tả lỗi thời về việc thiếu Git/CI/CD/staging trong `HANDOFF.md`; ghi nhận pipeline đã chuẩn hóa và chỉ còn cần duy trì.
+- Kỹ thuật: Cập nhật `HANDOFF.md`, không thay đổi runtime, database hoặc API.
+- Kiểm thử: Rà soát lại các mục Known Issues và Outstanding Tasks.
+- Triển khai: Thay đổi tài liệu; không cần deploy ứng dụng.
+
+### Đồng bộ handoff và kiểm tra migration production
+
+- Sau thay đổi: Xóa các mục Team & Contacts/TBD, cập nhật repository, staging và URL production mới trong `HANDOFF.md`.
+- Kỹ thuật: Không thay đổi runtime hoặc database; kiểm tra migration production bị giới hạn vì Supabase CLI local chưa có `SUPABASE_ACCESS_TOKEN`.
+- Kiểm thử: Đã đối chiếu trạng thái Git, Cloudflare deployment và cấu hình staging; chưa xác nhận được migration production từ CLI.
+- Triển khai: Thay đổi tài liệu; không deploy ứng dụng.
+
+### Thiết lập dữ liệu giả lập cho Supabase staging
+
+- Sau thay đổi: Xác nhận Supabase staging hoạt động, schema `transactions` có sẵn và thêm 3 giao dịch giả lập bằng tài khoản test staging; không tác động production.
+- Kỹ thuật: Cập nhật trạng thái staging trong `HANDOFF.md`; dữ liệu được ghi qua RPC import hiện hành.
+- Kiểm thử: Đăng nhập staging thành công, RPC import trả HTTP 200, xác nhận dữ liệu staging sau seed.
+- Triển khai: Đã hoàn tất trên Supabase staging; không deploy production.
+
 ### Sửa lỗi typecheck ở export Excel
 
 - Sau thay đổi: Giá trị loại giao dịch từ dữ liệu Supabase được chuẩn hóa về chuỗi trước khi ánh xạ nhãn `Tiền ra/Tiền vào`, giúp CI build không còn lỗi TypeScript.
