@@ -2,6 +2,13 @@
 
 ## 2026-08-29
 
+### Cập nhật Supabase CLI action lên Node.js mới
+
+- Sau thay đổi: Cập nhật `supabase/setup-cli` từ `v1` lên `v2` để loại bỏ cảnh báo action dùng Node.js 20 đã deprecated trên GitHub Actions.
+- Kỹ thuật: Cập nhật `.github/workflows/supabase-deploy.yml`; không thay đổi migration, dữ liệu hoặc runtime.
+- Kiểm thử: Chờ CI và lần chạy Supabase workflow kế tiếp xác nhận action mới hoạt động.
+- Triển khai: Chờ merge PR.
+
 ### Tự động deploy Supabase từ GitHub
 
 - Sau thay đổi: Thêm workflow tự động chạy migration production và deploy Edge Function `parse-expense` sau khi thay đổi Supabase được merge vào `main`; hỗ trợ chạy thủ công từ GitHub Actions.
