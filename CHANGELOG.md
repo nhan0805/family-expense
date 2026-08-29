@@ -2,6 +2,13 @@
 
 ## 2026-08-29
 
+### Hiển thị input chọn file Excel trực tiếp
+
+- Sau thay đổi: Hiển thị input file native thay vì input trong suốt phủ vùng upload, giúp Chrome nhận thao tác chọn file rõ ràng và hiển thị tên file sau khi chọn.
+- Kỹ thuật: Cập nhật `src/pages/ImportExport.tsx`; không thay đổi database hoặc API.
+- Kiểm thử: Rà soát sự kiện chọn file và trạng thái tên file/kết quả kiểm tra.
+- Triển khai: Chờ merge PR và Cloudflare deploy production.
+
 ### Đổi nhãn tab Dữ liệu thành Quản lý dữ liệu
 
 - Sau thay đổi: Đổi nhãn điều hướng và tiêu đề trang `/du-lieu` thành `Quản lý dữ liệu` để kiểm tra trực quan bản deploy mới.

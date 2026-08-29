@@ -373,14 +373,14 @@ export function ImportExport() {
           </div>
         </div>
         <div className="space-y-4 p-5">
-          <label className="relative flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#b8c9bf] bg-[#f7faf7] px-5 py-8 text-center transition hover:border-[#145c43] hover:bg-[#eef5f0] dark:bg-white/5">
+          <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#b8c9bf] bg-[#f7faf7] px-5 py-8 text-center transition hover:border-[#145c43] hover:bg-[#eef5f0] dark:bg-white/5">
             <FileCheck2 className="text-[#145c43]" size={30} />
             <span className="font-semibold">Chọn file Excel để kiểm tra</span>
             <span className="text-xs text-gray-500">
               Chỉ nhận file .xlsx đúng template Family Expense
             </span>
             <input
-              className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+              className="w-full max-w-sm cursor-pointer rounded-lg border border-[#b8c9bf] bg-white px-3 py-2 text-sm dark:bg-[#17251f]"
               type="file"
               accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
               aria-label="Chọn file Excel để kiểm tra"
@@ -389,7 +389,7 @@ export function ImportExport() {
               }}
               onChange={(event) => void selectImportFile(event)}
             />
-          </label>
+          </div>
           {message && (
             <p className="flex items-center gap-2 text-sm" role="status" aria-live="polite">
               {checkingFile ? <Upload className="animate-pulse text-[#187653]" size={18} /> : <CheckCircle2 className="text-[#187653]" size={18} />}
