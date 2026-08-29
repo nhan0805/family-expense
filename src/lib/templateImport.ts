@@ -154,7 +154,15 @@ export async function parseTemplate(
   const ws = wb.getWorksheet('Giao dịch');
   if (!ws) throw new Error('Không tìm thấy sheet “Giao dịch”.');
   const header = ws.getRow(1).values as unknown[];
-  if (templateHeaders.some((h, i) => norm(header[i + 1]) !== h))
+  const isFullExport = norm(header[1]) === 'ID giao dịch';
+  const headerIndex = (name: string) => {
+    const index = header.findIndex((value) => norm(value) === name);
+    return index < 1 ? -1 : index;
+  };
+  if (
+    !isFullExport &&
+    templateHeaders.some((h, i) => norm(header[i + 1]) !== h)
+  )
     throw new Error('Tiêu đề cột không đúng template.');
   const valid: TemplateRow[] = [];
   const errors: TemplateError[] = [];
@@ -168,16 +176,18 @@ export async function parseTemplate(
     if (n === 1) return;
     const values = row.values as unknown[];
     if (values.slice(1).every((v) => norm(v) === '')) return;
+    const value = (name: string, templatePosition: number) =>
+      values[isFullExport ? headerIndex(name) : templatePosition];
     const raw = {
-      date: dateValue(values[1]),
-      amount: Number(values[2]),
-      type: norm(values[3]),
-      status: norm(values[4]),
-      description: norm(values[5]),
-      payment: norm(values[6]),
-      purpose: norm(values[7]),
-      expense: norm(values[8]),
-      note: norm(values[9]),
+      date: dateValue(value('Ngày', 1)),
+      amount: Number(value('Số tiền (VND)', isFullExport ? headerIndex('Số tiền') : 2) ?? value('Số tiền', 2)),
+      type: norm(value('Loại giao dịch', 3)),
+      status: norm(value('Trạng thái', 4)),
+      description: norm(value('Nội dung', 5)),
+      payment: norm(value('Phương thức thanh toán', 6)),
+      purpose: norm(value('Mục đích', 7) ?? value('Mục đích chi', 7)),
+      expense: norm(value('Danh mục', 8) ?? value('Loại chi phí', 8)),
+      note: norm(value('Ghi chú', 9)),
     };
     const parsed = schema.safeParse(raw);
     const messages = parsed.success
