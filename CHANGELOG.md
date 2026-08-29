@@ -2,6 +2,14 @@
 
 ## 2026-08-29
 
+### Làm gọn thông báo kết quả kiểm tra Excel
+
+- Trước thay đổi: Kết quả kiểm tra hiển thị số dòng chung và thêm một khối riêng chỉ để lặp lại tên file, trong khi các thẻ thống kê phía dưới đã có số liệu chi tiết.
+- Sau thay đổi: Thông báo gộp tên file, số giao dịch hợp lệ, dòng có thể trùng và dòng lỗi trong một câu; trạng thái thành công nói rõ file đã sẵn sàng để import. Loại bỏ khối tên file bị lặp.
+- Kỹ thuật: Cập nhật `src/pages/ImportExport.tsx`; thêm formatter và test tại `src/lib/importSummary.ts`, `src/lib/importSummary.test.ts`. Không thay đổi database hoặc API.
+- Kiểm thử: Bổ sung test cho trường hợp 64 dòng hợp lệ và trường hợp có cả trùng/lỗi; chờ test, lint, typecheck và build.
+- Triển khai: Chờ CI, auto-merge PR và Cloudflare production deploy.
+
 ### Sửa nguyên nhân gốc làm mất file Excel sau khi đóng Finder
 
 - Trước thay đổi: Khi cửa sổ chọn file đóng, Chrome lấy lại focus và gọi làm mới phiên Supabase. Sự kiện `TOKEN_REFRESHED` sau đó tải lại toàn bộ `AppProvider`, bật trạng thái loading và tháo trang `ImportExport` khỏi giao diện; file vừa chọn, trạng thái kiểm tra và kết quả parse vì vậy bị xóa ngay.
