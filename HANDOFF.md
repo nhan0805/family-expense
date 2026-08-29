@@ -10,6 +10,7 @@
 - [x] Mã nguồn frontend, Supabase migrations/RLS/RPC và Edge Function có trong workspace.
 - [x] README, CHANGELOG và SAD đã được cập nhật.
 - [x] Git remote, protected `main`, CI/CD và Cloudflare Pages Git deployment đã thiết lập.
+- [x] Supabase production workflow đã kiểm tra thành công bằng `workflow_dispatch` với `dry_run=true`; không thay đổi database hoặc deploy Edge Function.
 - [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
 
@@ -93,13 +94,14 @@ pnpm test:e2e
 1. Đọc mục mới nhất trong `CHANGELOG.md`.
 2. Chạy lint, typecheck, test phù hợp và production build.
 3. Nếu có database change, thêm migration timestamp mới; không sửa migration đã áp dụng.
-4. Chạy `supabase db push` sau khi review và rehearsal trên staging.
-5. Nếu thay đổi AI, chạy `supabase functions deploy parse-expense`.
-6. Deploy `dist/` lên Cloudflare Pages.
-7. Smoke test đăng nhập, tải danh sách, tạo/sửa giao dịch, import/export và AI.
-8. Cập nhật `CHANGELOG.md` với kết quả kiểm thử và deployment URL.
+4. Với thay đổi database/function, mở PR vào `main` và chờ CI/preview checks.
+5. Supabase production deploy chạy qua `.github/workflows/supabase-deploy.yml` sau khi thay đổi migration/function được merge vào `main`.
+6. Có thể chạy thủ công với `dry_run=true` để kiểm tra credential, project link và migration mà không ghi production; `dry_run=false` mới áp dụng migration/deploy function.
+7. Cloudflare Pages production deploy qua Git integration từ `main`; không dùng `wrangler pages deploy` cho production.
+8. Smoke test đăng nhập, tải danh sách, tạo/sửa giao dịch, import/export và AI.
+9. Cập nhật `CHANGELOG.md` với kết quả kiểm thử và deployment URL.
 
-> **Cần theo dõi:** production hiện thiên về deploy thủ công. Ưu tiên chuyển sang Git-based CI/CD có preview, staging và approval.
+> **Đã xác nhận gần nhất:** PR #24 (`b6cb590`) bổ sung chế độ Supabase dry-run. Workflow run [#33259320637](https://github.com/nhan0805/family-expense/actions/runs/33259320637) đã pass; chỉ chạy link project và `supabase db push --dry-run`.
 
 ### Rollback
 
@@ -255,6 +257,7 @@ Không ghi tài khoản test trong file. Tạo user/family riêng ở staging v�
 | P0 | Git remote, baseline tag và protected `main` | Chủ dự án | Đã thực hiện | Hoàn thành |
 | P0 | CI lint/typecheck/test/build + Cloudflare preview | Chủ dự án | Đã thực hiện | Hoàn thành |
 | P0 | Supabase/Cloudflare staging tách biệt | Chủ dự án | Đã thực hiện | Hoàn thành |
+- P0 | Supabase deploy workflow với dry-run và Git-based production path | Chủ dự án | 29/08/2026 | Hoàn thành; dry-run đã pass |
 | P1 | RLS negative tests và migration rehearsal | Chủ dự án | Mỗi release DB | Có test/migration; chưa tích hợp CI đầy đủ |
 | P1 | Monitoring/alert/error tracking không chứa PII | TBD | TBD | Chưa làm |
 | P1 | Backup restore và rollback drill | TBD | TBD | Chưa làm |

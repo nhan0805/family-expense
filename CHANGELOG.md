@@ -2,13 +2,21 @@
 
 ## 2026-08-29
 
+### Cập nhật handoff sau khi kiểm tra workflow Supabase
+
+- Trước thay đổi: Handoff còn mô tả Supabase/production deployment chưa đồng bộ với workflow Git mới và chưa ghi kết quả dry-run.
+- Sau thay đổi: Cập nhật quy trình Git-based, điều kiện `dry_run`, PR #24, merge commit `b6cb590` và workflow run `33259320637`.
+- Kỹ thuật: Cập nhật `HANDOFF.md`; không thay đổi database, dữ liệu hoặc API.
+- Kiểm thử: Đã xác nhận workflow Supabase dry-run thành công; migration và Edge Function không được deploy.
+- Triển khai: Chỉ cập nhật tài liệu; không có production mutation.
+
 ### Bổ sung chế độ kiểm tra an toàn cho workflow Supabase
 
 - Trước thay đổi: Chạy workflow thủ công luôn áp dụng migration production và deploy Edge Function.
 - Sau thay đổi: Thêm input `dry_run`; khi bật, workflow vẫn kiểm tra secret, project link và danh sách migration nhưng không thay đổi database hoặc deploy function. Thay đổi file workflow không tự kích hoạt deploy production.
 - Kỹ thuật: Cập nhật `.github/workflows/supabase-deploy.yml`; không thay đổi schema, dữ liệu hoặc API.
-- Kiểm thử: Kiểm tra cú pháp workflow và chạy CI; sau khi merge, chạy `workflow_dispatch` với `dry_run=true` trên GitHub Actions.
-- Triển khai: Chờ PR merge và xác nhận workflow dry-run thành công.
+- Kiểm thử: CI pass; sau khi merge, chạy `workflow_dispatch` với `dry_run=true` trên GitHub Actions và workflow run `33259320637` pass.
+- Triển khai: PR #24 đã merge vào `main` với commit `b6cb590`; dry-run không áp dụng migration và không deploy Edge Function.
 
 ### Chuẩn hóa handoff deploy tự động qua Git
 
