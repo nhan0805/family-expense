@@ -319,7 +319,7 @@ export function ImportExport() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-extrabold">Dữ liệu</h2>
+        <h2 className="text-2xl font-extrabold">Quản lý dữ liệu</h2>
         <p className="mt-1 text-sm text-gray-500">
           Nhập, xuất và quản lý dữ liệu giao dịch của gia đình.
         </p>
