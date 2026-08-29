@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import * as XLSX from 'xlsx';
 import {
   statuses,
   transactionTypes,
@@ -150,21 +151,34 @@ export async function parseTemplate(
   paymentMethods: CatalogItem[],
   transactions: Transaction[],
 ) {
-  const { default: ExcelJS } = await import('exceljs');
-  const wb = new ExcelJS.Workbook();
-  await wb.xlsx.load(buffer);
-  const ws = wb.getWorksheet('Giao dịch');
+  const wb = XLSX.read(buffer, { type: 'array', cellDates: true });
+  const ws = wb.Sheets['Giao dịch'];
   if (!ws) throw new Error('Không tìm thấy sheet “Giao dịch”.');
-  const header = ws.getRow(1).values as unknown[];
-  const isFullExport = norm(header[1]) === 'ID giao dịch';
+  const rows = XLSX.utils.sheet_to_json<unknown[]>(ws, {
+    header: 1,
+    raw: true,
+    defval: '',
+  });
+  const header = rows[0] || [];
   const headerIndex = (name: string) => {
     const index = header.findIndex((value) => norm(value) === name);
-    return index < 1 ? -1 : index;
+    return index;
   };
-  if (
-    !isFullExport &&
-    templateHeaders.some((h, i) => norm(header[i + 1]) !== h)
-  )
+  const isTemplate = templateHeaders.every(
+    (name, index) => norm(header[index]) === name,
+  );
+  const exportHeaders = [
+    'Ngày',
+    'Loại giao dịch',
+    'Trạng thái',
+    'Nội dung',
+    'Số tiền',
+    'Phương thức thanh toán',
+    'Mục đích',
+    'Danh mục',
+  ];
+  const isFullExport = !isTemplate && exportHeaders.every((name) => headerIndex(name) >= 0);
+  if (!isTemplate && !isFullExport)
     throw new Error('Tiêu đề cột không đúng template.');
   const valid: TemplateRow[] = [];
   const errors: TemplateError[] = [];
@@ -174,22 +188,21 @@ export async function parseTemplate(
         x.name.trim().toLocaleLowerCase('vi-VN') ===
         name.toLocaleLowerCase('vi-VN'),
     )?.id;
-  ws.eachRow((row, n) => {
-    if (n === 1) return;
-    const values = row.values as unknown[];
-    if (values.slice(1).every((v) => norm(v) === '')) return;
+  rows.slice(1).forEach((values, index) => {
+    const n = index + 2;
+    if (values.every((v) => norm(v) === '')) return;
     const value = (name: string, templatePosition: number) =>
       values[isFullExport ? headerIndex(name) : templatePosition];
     const raw = {
-      date: dateValue(value('Ngày', 1)),
-      amount: Number(value('Số tiền (VND)', isFullExport ? headerIndex('Số tiền') : 2) ?? value('Số tiền', 2)),
-      type: norm(value('Loại giao dịch', 3)),
-      status: norm(value('Trạng thái', 4)),
-      description: norm(value('Nội dung', 5)),
-      payment: norm(value('Phương thức thanh toán', 6)),
-      purpose: norm(value('Mục đích', 7) ?? value('Mục đích chi', 7)),
-      expense: norm(value('Danh mục', 8) ?? value('Loại chi phí', 8)),
-      note: norm(value('Ghi chú', 9)),
+      date: dateValue(value('Ngày', 0)),
+      amount: Number(value(isFullExport ? 'Số tiền' : 'Số tiền (VND)', 1)),
+      type: norm(value('Loại giao dịch', 2)),
+      status: norm(value('Trạng thái', 3)),
+      description: norm(value('Nội dung', 4)),
+      payment: norm(value('Phương thức thanh toán', 5)),
+      purpose: norm(value('Mục đích', 6)),
+      expense: norm(value('Danh mục', 7)),
+      note: norm(value('Ghi chú', 8)),
     };
     const parsed = schema.safeParse(raw);
     const messages = parsed.success

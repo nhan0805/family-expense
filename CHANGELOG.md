@@ -2,6 +2,14 @@
 
 ## 2026-08-29
 
+### Thay parser import Excel để xử lý ổn định trong trình duyệt
+
+- Trước thay đổi: Sau khi Finder trả file, UI bắt đầu kiểm tra rồi mất kết quả; parser dùng dynamic import `exceljs`. File xuất rút gọn cũng không còn được nhận diện vì logic cũ phụ thuộc cột `ID giao dịch` đã bị loại bỏ.
+- Sau thay đổi: `parseTemplate` dùng thư viện `xlsx` đã có sẵn trong bundle, đọc sheet thành mảng dữ liệu, hỗ trợ ngày serial và nhận diện template/file xuất theo tên các cột bắt buộc.
+- Kỹ thuật: Cập nhật `src/lib/templateImport.ts` và `src/lib/templateImport.test.ts`; không thay đổi database hoặc API.
+- Kiểm thử: Bổ sung test file xuất rút gọn có ngày serial `45316`, số tiền và ánh xạ `Tiền vào`; chờ CI chạy test/typecheck/lint/build.
+- Triển khai: Chờ CI, merge PR và Cloudflare production deploy.
+
 ### Ghi chú điều tra lỗi import Excel chưa nhận file
 
 - Triệu chứng thực tế: Trên production `/du-lieu`, người dùng bấm chọn file `.xlsx`; Finder mở và đóng bình thường, UI hiện `Đang kiểm tra file…` trong chốc lát rồi quay về `Chưa chọn file Excel.`. File name không xuất hiện và không có kết quả parse để người dùng xem.
