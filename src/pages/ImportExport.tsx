@@ -393,11 +393,23 @@ export function ImportExport() {
           </div>
         </div>
         <div className="space-y-4 p-5">
-          <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#b8c9bf] bg-[#f7faf7] px-5 py-8 text-center transition hover:border-[#145c43] hover:bg-[#eef5f0] dark:bg-white/5">
+          <div
+            className="flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#b8c9bf] bg-[#f7faf7] px-5 py-8 text-center transition hover:border-[#145c43] hover:bg-[#eef5f0] dark:bg-white/5"
+            onDragOver={(event) => {
+              event.preventDefault();
+              event.dataTransfer.dropEffect = 'copy';
+            }}
+            onDrop={(event) => {
+              event.preventDefault();
+              const file = event.dataTransfer.files?.[0];
+              if (file) void processImportFile(file);
+            }}
+          >
             <FileCheck2 className="text-[#145c43]" size={30} />
             <span className="font-semibold">Chọn file Excel để kiểm tra</span>
             <span className="text-xs text-gray-500">
-              Chỉ nhận file .xlsx đúng template Family Expense
+              Chỉ nhận file .xlsx đúng template Family Expense; có thể kéo file
+              từ Finder và thả vào đây
             </span>
             <button
               type="button"
