@@ -47,6 +47,8 @@ const norm = (v: unknown) => String(v ?? '').trim();
 const dateValue = (v: unknown) =>
   v instanceof Date
     ? v.toISOString().slice(0, 10)
+    : typeof v === 'number' && Number.isFinite(v)
+      ? new Date(Date.UTC(1899, 11, 30 + v)).toISOString().slice(0, 10)
     : norm(v).match(/^\d{4}-\d{2}-\d{2}/)?.[0] ||
       norm(v).split('/').reverse().join('-');
 

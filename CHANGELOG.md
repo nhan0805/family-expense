@@ -2,6 +2,13 @@
 
 ## 2026-08-29
 
+### Sửa import file Excel có ngày dạng serial
+
+- Sau thay đổi: File Excel có dữ liệu ngày được lưu theo số serial của Excel (ví dụ `45316`) được chuyển đúng sang ngày ISO trước khi validate, thay vì bị loại toàn bộ dòng.
+- Kỹ thuật: Cập nhật `src/lib/templateImport.ts`; không thay đổi database hoặc API.
+- Kiểm thử: Đã xác nhận file `family-expense-template-2026-08-29.xlsx` có 64 dòng dữ liệu và tái hiện nguyên nhân từ giá trị ngày dạng số.
+- Triển khai: Chưa deploy production.
+
 ### Sửa luồng chọn lại file import Excel
 
 - Sau thay đổi: Input file được reset trước mỗi lần mở hộp chọn, nên chọn lại cùng một file vẫn kích hoạt kiểm tra import.
