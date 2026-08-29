@@ -2,6 +2,14 @@
 
 ## 2026-08-29
 
+### Sửa nguyên nhân gốc làm mất file Excel sau khi đóng Finder
+
+- Trước thay đổi: Khi cửa sổ chọn file đóng, Chrome lấy lại focus và gọi làm mới phiên Supabase. Sự kiện `TOKEN_REFRESHED` sau đó tải lại toàn bộ `AppProvider`, bật trạng thái loading và tháo trang `ImportExport` khỏi giao diện; file vừa chọn, trạng thái kiểm tra và kết quả parse vì vậy bị xóa ngay.
+- Sau thay đổi: Sự kiện chỉ làm mới token không còn tải lại dữ liệu ứng dụng hoặc tháo trang hiện tại. File Excel và bảng kết quả được giữ nguyên trong lúc parser chạy; các sự kiện đăng nhập, đăng xuất và cập nhật tài khoản vẫn đồng bộ lại dữ liệu.
+- Kỹ thuật: Cập nhật `src/context/AppContext.tsx`; thêm regression test `src/context/AppContext.test.ts`. Không thay đổi database, RPC hoặc dữ liệu production.
+- Kiểm thử: Bổ sung kiểm tra `TOKEN_REFRESHED` không kích hoạt reload và các sự kiện auth thực sự vẫn reload; chờ chạy toàn bộ test, lint, typecheck và build.
+- Triển khai: Chờ CI, auto-merge PR và Cloudflare production deploy.
+
 ### Bổ sung kéo-thả file Excel từ Finder
 
 - Triệu chứng: Sau khi file picker đóng, macOS chuyển focus sang Excel và trang vẫn báo chưa chọn file, cho thấy file có thể bị mở bằng Excel thay vì được trả cho Chrome.
