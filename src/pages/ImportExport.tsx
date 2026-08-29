@@ -373,16 +373,17 @@ export function ImportExport() {
           </div>
         </div>
         <div className="space-y-4 p-5">
-          <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#b8c9bf] bg-[#f7faf7] px-5 py-8 text-center transition hover:border-[#145c43] hover:bg-[#eef5f0] dark:bg-white/5">
+          <label className="relative flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#b8c9bf] bg-[#f7faf7] px-5 py-8 text-center transition hover:border-[#145c43] hover:bg-[#eef5f0] dark:bg-white/5">
             <FileCheck2 className="text-[#145c43]" size={30} />
             <span className="font-semibold">Chọn file Excel để kiểm tra</span>
             <span className="text-xs text-gray-500">
               Chỉ nhận file .xlsx đúng template Family Expense
             </span>
             <input
-              className="sr-only"
+              className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
               type="file"
               accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              aria-label="Chọn file Excel để kiểm tra"
               onClick={(event) => {
                 event.currentTarget.value = '';
               }}
