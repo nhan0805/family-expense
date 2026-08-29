@@ -2,6 +2,13 @@
 
 ## 2026-08-29
 
+### Giữ bảng kết quả kiểm tra file Excel luôn hiển thị
+
+- Sau thay đổi: Bổ sung bảng trạng thái cố định dưới vùng chọn file, luôn hiển thị đang kiểm tra, kết quả, lỗi chi tiết hoặc trạng thái chưa chọn file.
+- Kỹ thuật: Cập nhật `src/pages/ImportExport.tsx`; không thay đổi database hoặc API.
+- Kiểm thử: Rà soát các trạng thái chưa chọn, đang kiểm tra, thành công và lỗi đọc file.
+- Triển khai: Chờ CI, merge PR và Cloudflare deploy production.
+
 ### Rút gọn cột trong file Excel xuất
 
 - Sau thay đổi: Loại bỏ các cột ID/mã kỹ thuật, sự kiện/kế hoạch, người hưởng lợi, tài khoản/thẻ và các cột AI/audit khỏi file xuất; giữ lại thông tin giao dịch chính và nguồn.

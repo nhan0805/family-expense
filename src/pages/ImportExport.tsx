@@ -381,24 +381,39 @@ export function ImportExport() {
               onChange={(event) => void selectImportFile(event)}
             />
           </div>
-          {message && (
-            <p className="flex items-center gap-2 text-sm" role="status" aria-live="polite">
-              {checkingFile ? <Upload className="animate-pulse text-[#187653]" size={18} /> : <CheckCircle2 className="text-[#187653]" size={18} />}
-              {message}
-            </p>
-          )}
-          {fileError && (
-            <div
-              className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200"
-              role="alert"
-            >
-              <AlertTriangle className="mt-0.5 shrink-0" size={20} />
-              <div>
-                <strong className="block">Không thể sử dụng file này</strong>
-                <span>{fileError}</span>
+          <div
+            className={`min-h-14 rounded-xl border p-4 text-sm ${
+              fileError
+                ? 'border-red-200 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200'
+                : 'border-[#cfe0d4] bg-[#f5faf6] text-[#245743] dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200'
+            }`}
+            role={fileError ? 'alert' : 'status'}
+            aria-live="polite"
+          >
+            <div className="flex items-start gap-2">
+              {checkingFile ? (
+                <Upload className="mt-0.5 animate-pulse" size={18} />
+              ) : fileError ? (
+                <AlertTriangle className="mt-0.5 shrink-0" size={18} />
+              ) : (
+                <CheckCircle2 className="mt-0.5 shrink-0" size={18} />
+              )}
+              <div className="min-w-0">
+                <strong className="block">
+                  {checkingFile
+                    ? 'Đang kiểm tra file…'
+                    : fileError
+                      ? 'Không thể kiểm tra file'
+                      : 'Kết quả kiểm tra file'}
+                </strong>
+                <span className="break-words">
+                  {checkingFile
+                    ? 'Vui lòng chờ, không đóng trang trong lúc đọc dữ liệu.'
+                    : fileError || message || 'Chưa chọn file Excel.'}
+                </span>
               </div>
             </div>
-          )}
+          </div>
           {fileName && (
             <div className="flex items-center gap-2 rounded-xl bg-[#eef4ef] px-4 py-3 text-sm dark:bg-white/5">
               <CheckCircle2 className="text-[#187653]" size={18} />
