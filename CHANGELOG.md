@@ -2,6 +2,14 @@
 
 ## 2026-08-29
 
+### Sửa môi trường test localStorage và deploy bản build mới
+
+- Trước thay đổi: Test `ThemeContext` thất bại vì jsdom không cung cấp `window.localStorage` trong môi trường hiện tại.
+- Sau thay đổi: Cấu hình URL jsdom và bổ sung localStorage fallback dùng riêng cho test; không thay đổi logic production.
+- Kỹ thuật: Cập nhật `vite.config.ts` và `src/test/setup.ts`; không thay đổi database/API.
+- Kiểm thử: 50/50 test, typecheck, lint và build đều đạt.
+- Triển khai: Đã deploy Cloudflare Pages production từ artifact hiện tại.
+
 ### Làm gọn thông báo kết quả kiểm tra Excel
 
 - Trước thay đổi: Kết quả kiểm tra hiển thị số dòng chung và thêm một khối riêng chỉ để lặp lại tên file, trong khi các thẻ thống kê phía dưới đã có số liệu chi tiết.
