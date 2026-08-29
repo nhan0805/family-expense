@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   AlertTriangle,
   CheckCircle2,
@@ -41,6 +41,7 @@ export function ImportExport() {
   const [validRows, setValidRows] = useState<TemplateRow[]>([]);
   const [importErrors, setImportErrors] = useState<TemplateError[]>([]);
   const [includeDuplicates, setIncludeDuplicates] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const downloadTemplate = async () => {
     setTemplateBusy(true);
@@ -370,8 +371,16 @@ export function ImportExport() {
             <span className="text-xs text-gray-500">
               Chỉ nhận file .xlsx đúng template Family Expense
             </span>
+            <button
+              type="button"
+              className="rounded-lg border border-[#b8c9bf] bg-white px-4 py-2 text-sm font-semibold dark:bg-[#17251f]"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              Chọn file Excel
+            </button>
             <input
-              className="w-full max-w-sm cursor-pointer rounded-lg border border-[#b8c9bf] bg-white px-3 py-2 text-sm dark:bg-[#17251f]"
+              ref={fileInputRef}
+              className="sr-only"
               type="file"
               accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
               aria-label="Chọn file Excel để kiểm tra"
