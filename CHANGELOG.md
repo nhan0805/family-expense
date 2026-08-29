@@ -2,6 +2,13 @@
 
 ## 2026-08-29
 
+### Hiển thị lỗi cụ thể khi upload Excel
+
+- Sau thay đổi: Trạng thái kiểm tra được hiển thị ngay dưới vùng chọn file; lỗi đọc file, sheet/header hoặc validation được hiển thị rõ thay vì chỉ im lặng quay về trạng thái trống.
+- Kỹ thuật: Cập nhật `src/pages/ImportExport.tsx`; không thay đổi database hoặc API.
+- Kiểm thử: Rà soát các nhánh thành công, file sai định dạng và lỗi parse trong handler upload.
+- Triển khai: Chưa deploy production.
+
 ### Sửa import file Excel có ngày dạng serial
 
 - Sau thay đổi: File Excel có dữ liệu ngày được lưu theo số serial của Excel (ví dụ `45316`) được chuyển đúng sang ngày ISO trước khi validate, thay vì bị loại toàn bộ dòng.

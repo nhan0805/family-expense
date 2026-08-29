@@ -137,7 +137,9 @@ export function ImportExport() {
       setFileError(
         wrongTemplate
           ? 'File không đúng template Family Expense. Hãy tải template mới từ ứng dụng và không đổi tên sheet “Giao dịch” hoặc tiêu đề cột.'
-          : 'Không thể đọc file Excel. File có thể bị hỏng hoặc không phải định dạng .xlsx hợp lệ.',
+          : detail
+            ? `Không thể đọc file Excel: ${detail}`
+            : 'Không thể đọc file Excel. File có thể bị hỏng hoặc không phải định dạng .xlsx hợp lệ.',
       );
       event.currentTarget.value = '';
     }
@@ -381,6 +383,12 @@ export function ImportExport() {
               onChange={(event) => void selectImportFile(event)}
             />
           </label>
+          {message && (
+            <p className="flex items-center gap-2 text-sm" role="status" aria-live="polite">
+              <CheckCircle2 className="text-[#187653]" size={18} />
+              {message}
+            </p>
+          )}
           {fileError && (
             <div
               className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200"
@@ -471,12 +479,6 @@ export function ImportExport() {
           )}
         </div>
       </section>
-      {message && (
-        <p className="flex items-center gap-2 text-sm" role="status">
-          <CheckCircle2 className="text-[#187653]" size={18} />
-          {message}
-        </p>
-      )}
     </div>
   );
 }
