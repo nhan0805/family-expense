@@ -2,6 +2,14 @@
 
 ## 2026-08-29
 
+### Bổ sung chế độ kiểm tra an toàn cho workflow Supabase
+
+- Trước thay đổi: Chạy workflow thủ công luôn áp dụng migration production và deploy Edge Function.
+- Sau thay đổi: Thêm input `dry_run`; khi bật, workflow vẫn kiểm tra secret, project link và danh sách migration nhưng không thay đổi database hoặc deploy function. Thay đổi file workflow không tự kích hoạt deploy production.
+- Kỹ thuật: Cập nhật `.github/workflows/supabase-deploy.yml`; không thay đổi schema, dữ liệu hoặc API.
+- Kiểm thử: Kiểm tra cú pháp workflow và chạy CI; sau khi merge, chạy `workflow_dispatch` với `dry_run=true` trên GitHub Actions.
+- Triển khai: Chờ PR merge và xác nhận workflow dry-run thành công.
+
 ### Chuẩn hóa handoff deploy tự động qua Git
 
 - Sau thay đổi: Ghi rõ quy trình bắt buộc từ kiểm thử, commit/push, tạo PR, cập nhật branch, auto-merge, required checks đến Cloudflare Pages production deploy.
