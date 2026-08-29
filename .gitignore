@@ -2,6 +2,7 @@ node_modules/
 dist/
 .env
 .env.local
+.env.staging
 playwright-report/
 test-results/
 .DS_Store
