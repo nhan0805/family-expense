@@ -368,7 +368,7 @@ export function ImportExport() {
         <DataCard
           icon={<Database size={24} />}
           title="Xuất dữ liệu"
-          description="Tải toàn bộ giao dịch chưa xóa cùng thông tin phân loại, thanh toán, nguồn và dữ liệu audit."
+          description="Xuất tất cả dữ liệu từ hệ thống."
           tone="blue"
         >
           <button

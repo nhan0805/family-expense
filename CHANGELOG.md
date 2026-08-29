@@ -2,6 +2,13 @@
 
 ## 2026-08-29
 
+### Chuẩn hóa handoff deploy tự động qua Git
+
+- Sau thay đổi: Ghi rõ quy trình bắt buộc từ kiểm thử, commit/push, tạo PR, cập nhật branch, auto-merge, required checks đến Cloudflare Pages production deploy.
+- Kỹ thuật: Cập nhật `AGENTS.md`; không thay đổi database/API.
+- Kiểm thử: Không áp dụng vì chỉ cập nhật quy tắc vận hành.
+- Triển khai: Rule được commit và push cùng PR hiện tại; production chỉ deploy sau khi merge vào `main`.
+
 ### Đổi màu KPI giá trị ròng theo thu chi
 
 - Trước thay đổi: KPI “Giá trị ròng” luôn dùng màu xanh dương.
