@@ -2,6 +2,34 @@
 
 ## 2026-08-29
 
+### Sửa lỗi typecheck ở export Excel
+
+- Sau thay đổi: Giá trị loại giao dịch từ dữ liệu Supabase được chuẩn hóa về chuỗi trước khi ánh xạ nhãn `Tiền ra/Tiền vào`, giúp CI build không còn lỗi TypeScript.
+- Kỹ thuật: Cập nhật `src/pages/ImportExport.tsx`; không thay đổi database hoặc API.
+- Kiểm thử: Đã sửa lỗi theo log CI; cần chạy lại typecheck, lint, test và build.
+- Triển khai: Chưa deploy production.
+
+### Rút gọn tài liệu handoff cho dự án cá nhân
+
+- Sau thay đổi: Giữ lại `HANDOFF.md` làm ngữ cảnh kỹ thuật cho các phiên làm việc tiếp theo; loại bỏ nội dung contact, bàn giao quyền và sign-off dành cho đội khác.
+- Kỹ thuật: Xóa `docs/Handoff_Document_Family_Expense.docx` và `scripts/build_handoff_document.py`; cập nhật `HANDOFF.md`, không thay đổi runtime, database hay API.
+- Kiểm thử: Rà soát tham chiếu tài liệu trong repository; không cần chạy quality gate vì chỉ thay đổi tài liệu.
+- Triển khai: Không cần deploy ứng dụng.
+
+### Đồng bộ Handoff với trạng thái delivery thực tế
+
+- Sau thay đổi: Handoff đánh dấu GitHub, protected `main`, CI, Cloudflare Git deployment và Supabase staging đã hoàn thành; tách riêng các hạng mục vận hành còn thiếu.
+- Kỹ thuật: Cập nhật `HANDOFF.md`, không thay đổi runtime hay database.
+- Kiểm thử: Rà soát đối chiếu với repository, workflow và trạng thái staging đã triển khai.
+- Triển khai: Thay đổi tài liệu; chưa cần deploy ứng dụng.
+
+### Bổ sung runbook deploy dùng lại
+
+- Sau thay đổi: Chuẩn hóa quy trình deploy gồm quality gates, Pull Request, CI, Cloudflare Git deployment và kiểm tra sau deploy.
+- Kỹ thuật: Thêm `docs/DEPLOY_RUNBOOK.md`; không thay đổi runtime.
+- Kiểm thử: Rà soát nội dung theo workflow GitHub/Cloudflare hiện tại.
+- Triển khai: Áp dụng từ lần release tiếp theo.
+
 ### Cho phép import lại file Excel xuất đầy đủ
 
 - Sau thay đổi: Màn hình Import nhận cả template chuẩn và file Excel xuất đầy đủ có sheet `Giao dịch`; nhãn `Tiền ra/Tiền vào` được ánh xạ về enum nội bộ khi ghi dữ liệu.

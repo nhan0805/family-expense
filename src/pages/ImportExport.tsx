@@ -229,7 +229,7 @@ export function ImportExport() {
             'ID giao dịch': row.id,
             'Mã giao dịch': row.source_reference,
             Ngày: row.transaction_date,
-            'Loại giao dịch': transactionTypeLabel(row.transaction_type),
+            'Loại giao dịch': transactionTypeLabel(String(row.transaction_type ?? '')),
             'Trạng thái': row.status,
             'Nội dung': row.description,
             'Số tiền': Number(row.amount),
