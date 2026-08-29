@@ -438,39 +438,41 @@ export function ImportExport() {
               onChange={(event) => void selectImportFile(event)}
             />
           </div>
-          <div
-            className={`min-h-14 rounded-xl border p-4 text-sm ${
-              fileError
-                ? 'border-red-200 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200'
-                : 'border-[#cfe0d4] bg-[#f5faf6] text-[#245743] dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200'
-            }`}
-            role={fileError ? 'alert' : 'status'}
-            aria-live="polite"
-          >
-            <div className="flex items-start gap-2">
-              {checkingFile ? (
-                <Upload className="mt-0.5 animate-pulse" size={18} />
-              ) : fileError ? (
-                <AlertTriangle className="mt-0.5 shrink-0" size={18} />
-              ) : (
-                <CheckCircle2 className="mt-0.5 shrink-0" size={18} />
-              )}
-              <div className="min-w-0">
-                <strong className="block">
-                  {checkingFile
-                    ? 'Đang kiểm tra file…'
-                    : fileError
-                      ? 'Không thể kiểm tra file'
-                      : 'Kết quả kiểm tra file'}
-                </strong>
-                <span className="break-words">
-                  {checkingFile
-                    ? 'Vui lòng chờ, không đóng trang trong lúc đọc dữ liệu.'
-                    : fileError || message || 'Chưa chọn file Excel.'}
-                </span>
+          {(fileName || checkingFile || fileError) && (
+            <div
+              className={`min-h-14 rounded-xl border p-4 text-sm ${
+                fileError
+                  ? 'border-red-200 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200'
+                  : 'border-[#cfe0d4] bg-[#f5faf6] text-[#245743] dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200'
+              }`}
+              role={fileError ? 'alert' : 'status'}
+              aria-live="polite"
+            >
+              <div className="flex items-start gap-2">
+                {checkingFile ? (
+                  <Upload className="mt-0.5 animate-pulse" size={18} />
+                ) : fileError ? (
+                  <AlertTriangle className="mt-0.5 shrink-0" size={18} />
+                ) : (
+                  <CheckCircle2 className="mt-0.5 shrink-0" size={18} />
+                )}
+                <div className="min-w-0">
+                  <strong className="block">
+                    {checkingFile
+                      ? 'Đang kiểm tra file…'
+                      : fileError
+                        ? 'Không thể kiểm tra file'
+                        : 'Kết quả kiểm tra file'}
+                  </strong>
+                  <span className="break-words">
+                    {checkingFile
+                      ? 'Vui lòng chờ, không đóng trang trong lúc đọc dữ liệu.'
+                      : fileError || message}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
+          )}
           {(validRows.length > 0 || importErrors.length > 0) && (
             <>
               <div className="grid grid-cols-3 gap-2">

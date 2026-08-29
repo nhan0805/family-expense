@@ -2,6 +2,29 @@
 
 ## 2026-08-29
 
+### Đổi màu KPI giá trị ròng theo thu chi
+
+- Trước thay đổi: KPI “Giá trị ròng” luôn dùng màu xanh dương.
+- Sau thay đổi: Dương (thu nhiều hơn chi) dùng màu xanh; âm (chi nhiều hơn thu) dùng màu đỏ; bằng 0 giữ màu trung tính.
+- Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx` và `src/pages/Dashboard.test.tsx`; không thay đổi database/API.
+- Kiểm thử: Bổ sung kiểm tra màu KPI khi giá trị ròng âm; chờ chạy test, lint, typecheck và build.
+- Triển khai: Chờ CI/CD qua Git và Cloudflare Pages production deploy.
+
+### Chỉ hiển thị kết quả kiểm tra sau khi chọn file
+
+- Trước thay đổi: Khối “Kết quả kiểm tra file” luôn hiển thị dù người dùng chưa chọn file.
+- Sau thay đổi: Khối kết quả chỉ xuất hiện khi đã chọn file, đang kiểm tra hoặc có lỗi từ thao tác chọn file.
+- Kỹ thuật: Cập nhật `src/pages/ImportExport.tsx`; không thay đổi database/API.
+- Kiểm thử: Chạy typecheck, lint, test và build trước khi deploy.
+- Triển khai: Chờ CI và Cloudflare Pages production deploy.
+
+### Handoff mới nhất cho PR #21
+
+- Đã resolve conflict `CHANGELOG.md` và push commit `6a67eb9` lên branch `chore/protect-env`.
+- PR #21 đã được auto-merge vào `main` với merge commit `1cbbac0`.
+- CI và Cloudflare Pages Preview của commit `6a67eb9` đều thành công; CI production cho merge commit đang chạy.
+- Production đã từng được deploy thủ công từ artifact tương ứng; cần xác nhận deployment Git của merge commit `1cbbac0` hoàn tất trước khi kết luận handoff.
+
 ### Sửa môi trường test localStorage và deploy bản build mới
 
 - Trước thay đổi: Test `ThemeContext` thất bại vì jsdom không cung cấp `window.localStorage` trong môi trường hiện tại.
