@@ -11,6 +11,7 @@ import {
 import * as XLSX from 'xlsx';
 import { useApp } from '../context/AppContext';
 import { transactionTypeLabel, type Transaction } from '../lib/domain';
+import { formatImportCheckSummary } from '../lib/importSummary';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import {
   createTemplate,
@@ -130,9 +131,16 @@ export function ImportExport() {
       );
       setValidRows(result.valid);
       setImportErrors(result.errors);
+      const duplicateCount = result.valid.filter((row) => row.duplicate).length;
+      const validCount = result.valid.length - duplicateCount;
       setMessage(
         result.valid.length + result.errors.length > 0
-          ? `Đã kiểm tra ${result.valid.length + result.errors.length} dòng.`
+          ? formatImportCheckSummary(
+              file.name,
+              validCount,
+              duplicateCount,
+              result.errors.length,
+            )
           : 'Không tìm thấy dòng dữ liệu nào trong sheet “Giao dịch”.',
       );
     } catch (e) {
@@ -463,14 +471,6 @@ export function ImportExport() {
               </div>
             </div>
           </div>
-          {fileName && (
-            <div className="flex items-center gap-2 rounded-xl bg-[#eef4ef] px-4 py-3 text-sm dark:bg-white/5">
-              <CheckCircle2 className="text-[#187653]" size={18} />
-              <span>
-                File: <strong>{fileName}</strong>
-              </span>
-            </div>
-          )}
           {(validRows.length > 0 || importErrors.length > 0) && (
             <>
               <div className="grid grid-cols-3 gap-2">

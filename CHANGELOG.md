@@ -2,6 +2,22 @@
 
 ## 2026-08-29
 
+### Sửa môi trường test localStorage và deploy bản build mới
+
+- Trước thay đổi: Test `ThemeContext` thất bại vì jsdom không cung cấp `window.localStorage` trong môi trường hiện tại.
+- Sau thay đổi: Cấu hình URL jsdom và bổ sung localStorage fallback dùng riêng cho test; không thay đổi logic production.
+- Kỹ thuật: Cập nhật `vite.config.ts` và `src/test/setup.ts`; không thay đổi database/API.
+- Kiểm thử: 50/50 test, typecheck, lint và build đều đạt.
+- Triển khai: Đã deploy Cloudflare Pages production từ artifact hiện tại.
+
+### Làm gọn thông báo kết quả kiểm tra Excel
+
+- Trước thay đổi: Kết quả kiểm tra hiển thị số dòng chung và thêm một khối riêng chỉ để lặp lại tên file, trong khi các thẻ thống kê phía dưới đã có số liệu chi tiết.
+- Sau thay đổi: Thông báo gộp tên file, số giao dịch hợp lệ, dòng có thể trùng và dòng lỗi trong một câu; trạng thái thành công nói rõ file đã sẵn sàng để import. Loại bỏ khối tên file bị lặp.
+- Kỹ thuật: Cập nhật `src/pages/ImportExport.tsx`; thêm formatter và test tại `src/lib/importSummary.ts`, `src/lib/importSummary.test.ts`. Không thay đổi database hoặc API.
+- Kiểm thử: Bổ sung test cho trường hợp 64 dòng hợp lệ và trường hợp có cả trùng/lỗi; chờ test, lint, typecheck và build.
+- Triển khai: Chờ CI, auto-merge PR và Cloudflare production deploy.
+
 ### Sửa nguyên nhân gốc làm mất file Excel sau khi đóng Finder
 
 - Trước thay đổi: Khi cửa sổ chọn file đóng, Chrome lấy lại focus và gọi làm mới phiên Supabase. Sự kiện `TOKEN_REFRESHED` sau đó tải lại toàn bộ `AppProvider`, bật trạng thái loading và tháo trang `ImportExport` khỏi giao diện; file vừa chọn, trạng thái kiểm tra và kết quả parse vì vậy bị xóa ngay.
