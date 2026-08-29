@@ -6,7 +6,7 @@
 - Frontend: React 19, TypeScript strict, Vite, React Router, Tailwind CSS, React Hook Form + Zod, Recharts.
 - Backend: Supabase Auth/PostgreSQL/RLS/RPC/Edge Functions; Gemini chỉ đề xuất dữ liệu, user phải xác nhận trước khi lưu.
 - Production: Cloudflare Pages; đọc mục mới nhất trong `CHANGELOG.md` trước khi sửa vì mới hơn README.
-- Quy trình deploy bắt buộc: production chỉ deploy qua Git bằng Cloudflare Pages Git integration sau khi thay đổi được merge vào `main`; PR dùng preview deployment. Không chạy `wrangler pages deploy` trực tiếp cho production.
+- Quy trình deploy bắt buộc: production chỉ deploy qua Git bằng Cloudflare Pages Git integration sau khi thay đổi được push/merge vào `main`; PR dùng preview deployment. Không chạy `wrangler pages deploy` trực tiếp cho production.
 - Quy trình tự động đầy đủ khi người dùng yêu cầu deploy: (1) đọc handoff/changelog và kiểm tra working tree; (2) chạy test, typecheck, lint, build; (3) commit và push branch; (4) nếu chưa có PR thì dùng GitHub CLI/API đã đăng nhập để tự tạo PR vào `main`; (5) nếu branch behind thì cập nhật branch với `main`; (6) bật auto-merge; (7) theo dõi required checks, sửa lỗi và push bổ sung nếu cần; (8) chỉ kết luận hoàn tất sau khi PR merge và Cloudflare Pages production deployment của merge commit thành công. Báo blocker cụ thể nếu thiếu quyền GitHub.
 
 ## Commands
