@@ -32,6 +32,7 @@ export function ImportExport() {
     useApp();
   const [exporting, setExporting] = useState(false);
   const [message, setMessage] = useState('');
+  const [exportMessage, setExportMessage] = useState('');
   const [templateBusy, setTemplateBusy] = useState(false);
   const [checkingFile, setCheckingFile] = useState(false);
   const [importBusy, setImportBusy] = useState(false);
@@ -216,7 +217,7 @@ export function ImportExport() {
       if (error) throw error;
       const batch = (data || []) as ExportRow[];
       allRows.push(...batch);
-      setMessage(
+      setExportMessage(
         `Đang tải ${allRows.length.toLocaleString('vi-VN')} / ${expectedTotal.toLocaleString('vi-VN')} giao dịch…`,
       );
     }
@@ -229,7 +230,7 @@ export function ImportExport() {
 
   const exportData = async () => {
     setExporting(true);
-    setMessage('Đang chuẩn bị dữ liệu…');
+    setExportMessage('Đang chuẩn bị dữ liệu…');
     try {
       const cloudRows =
         isSupabaseConfigured && familyId ? await loadAllTransactions() : [];
@@ -303,14 +304,20 @@ export function ImportExport() {
         workbook,
         `family-expense-${new Date().toISOString().slice(0, 10)}.xlsx`,
       );
-      setMessage(
+      setExportMessage(
         `Đã xuất ${rows.length.toLocaleString('vi-VN')} giao dịch với đầy đủ thông tin.`,
       );
     } catch (error) {
-      setMessage(
+      const detail =
         error instanceof Error
-          ? `Không thể xuất file: ${error.message}`
-          : 'Không thể xuất file Excel.',
+          ? error.message
+          : typeof error === 'object' && error !== null && 'message' in error
+            ? String(error.message)
+            : '';
+      setExportMessage(
+        detail
+          ? `Không thể xuất file Excel: ${detail}`
+          : 'Không thể xuất file Excel. Vui lòng thử lại hoặc tải lại trang.',
       );
     } finally {
       setExporting(false);
@@ -357,6 +364,11 @@ export function ImportExport() {
             <Download size={18} />
             {exporting ? 'Đang tạo file…' : 'Tải file Excel đầy đủ'}
           </button>
+          {exportMessage && (
+            <p className="mt-3 text-sm" role="status" aria-live="polite">
+              {exportMessage}
+            </p>
+          )}
         </DataCard>
       </div>
 
