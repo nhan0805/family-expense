@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { useApp } from '../context/AppContext';
-import type { Transaction } from '../lib/domain';
+import { transactionTypeLabel, type Transaction } from '../lib/domain';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import {
   createTemplate,
@@ -229,7 +229,7 @@ export function ImportExport() {
             'ID giao dịch': row.id,
             'Mã giao dịch': row.source_reference,
             Ngày: row.transaction_date,
-            'Loại giao dịch': row.transaction_type,
+            'Loại giao dịch': transactionTypeLabel(row.transaction_type),
             'Trạng thái': row.status,
             'Nội dung': row.description,
             'Số tiền': Number(row.amount),
@@ -257,7 +257,7 @@ export function ImportExport() {
               'ID giao dịch': transaction.id,
               'Mã giao dịch': transaction.sourceReference || '',
               Ngày: transaction.transactionDate,
-              'Loại giao dịch': transaction.transactionType,
+              'Loại giao dịch': transactionTypeLabel(transaction.transactionType),
               'Trạng thái': transaction.status,
               'Nội dung': transaction.description,
               'Số tiền': transaction.amount,

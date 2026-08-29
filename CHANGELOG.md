@@ -2,6 +2,20 @@
 
 ## 2026-08-29
 
+### Cho phép import lại file Excel xuất đầy đủ
+
+- Sau thay đổi: Màn hình Import nhận cả template chuẩn và file Excel xuất đầy đủ có sheet `Giao dịch`; nhãn `Tiền ra/Tiền vào` được ánh xạ về enum nội bộ khi ghi dữ liệu.
+- Kỹ thuật: Cập nhật `src/lib/templateImport.ts` để nhận diện header đầy đủ và đọc cột theo tên.
+- Kiểm thử: Cần chạy test, typecheck, lint và build trước khi deploy.
+- Triển khai: Chưa deploy production.
+
+### Đồng bộ nhãn loại giao dịch trong file Excel xuất
+
+- Sau thay đổi: Cột `Loại giao dịch` trong file Excel xuất hiển thị `Tiền ra` và `Tiền vào` thay vì enum nội bộ `Chi tiêu` và `Thu nhập`.
+- Kỹ thuật: Cập nhật `src/pages/ImportExport.tsx` dùng `transactionTypeLabel`; không thay đổi dữ liệu database hoặc logic import tương thích legacy.
+- Kiểm thử: Cần chạy lint, typecheck, test và build trước khi deploy.
+- Triển khai: Chưa deploy production.
+
 ### Sửa workflow preview Cloudflare thiếu API token
 
 - Sau thay đổi: Workflow Pull Request chỉ kiểm tra build; Cloudflare Pages tiếp tục tự triển khai preview qua kết nối GitHub, không còn gọi `cloudflare/pages-action@v1`.
