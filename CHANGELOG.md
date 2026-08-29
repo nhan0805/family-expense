@@ -2,6 +2,14 @@
 
 ## 2026-08-29
 
+### Tự động deploy Supabase từ GitHub
+
+- Sau thay đổi: Thêm workflow tự động chạy migration production và deploy Edge Function `parse-expense` sau khi thay đổi Supabase được merge vào `main`; hỗ trợ chạy thủ công từ GitHub Actions.
+- Kỹ thuật: Thêm `.github/workflows/supabase-deploy.yml`; không thay đổi schema hoặc dữ liệu production.
+- Cấu hình cần có: GitHub Environment `production` với Secret `SUPABASE_ACCESS_TOKEN` và Variable `SUPABASE_PROJECT_REF`.
+- Kiểm thử: Đã rà soát trigger, concurrency, kiểm tra thiếu cấu hình và thứ tự migration/function deploy; chờ GitHub Actions chạy lần đầu.
+- Triển khai: Workflow đã đưa vào repository; migration/function production chỉ chạy khi workflow được kích hoạt với đủ secret/variable.
+
 ### Giữ thông báo khi kiểm tra Excel gặp lỗi
 
 - Sau thay đổi: Giữ trạng thái và thông báo lỗi rõ ràng sau khi chọn file, kể cả khi trình duyệt hoàn tất sự kiện chọn file trước khi thao tác đọc Excel kết thúc.
