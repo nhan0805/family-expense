@@ -2,6 +2,21 @@
 
 ## 2026-08-29
 
+### Ghi chú điều tra lỗi import Excel chưa nhận file
+
+- Triệu chứng thực tế: Trên production `/du-lieu`, người dùng bấm chọn file `.xlsx`; Finder mở và đóng bình thường, UI hiện `Đang kiểm tra file…` trong chốc lát rồi quay về `Chưa chọn file Excel.`. File name không xuất hiện và không có kết quả parse để người dùng xem.
+- Triệu chứng liên quan: Nút `Xuất dữ liệu` từng báo `Could not embed because more than one relationship was found for 'transactions' and 'purposes'`; lỗi này đã được sửa bằng cách chỉ định composite FK trong truy vấn Supabase.
+- Các thay đổi đã thực hiện:
+  - Hỗ trợ ngày Excel serial trong `src/lib/templateImport.ts`.
+  - Hiển thị input native rồi đổi sang nút riêng điều khiển input ẩn trong `src/pages/ImportExport.tsx`.
+  - Tách thông báo import/export và giữ bảng kết quả luôn hiển thị.
+  - Giữ tên file khi parser lỗi thay vì xóa về trạng thái chưa chọn.
+  - Dùng `showOpenFilePicker` trên Chrome và fallback input cho trình duyệt khác; xử lý file qua `processImportFile`.
+  - Rút gọn cột Excel xuất và chỉ định các quan hệ `transactions_*_same_family_fkey`.
+- Đã merge/deploy: Các PR liên quan #8–#17 đều đã được CI kiểm tra; PR #17 đã merge với commit `928774c5` và Cloudflare production đã nhận các bản trước đó. Cần xác nhận lại deployment sau commit #17 trên Cloudflare trước khi kết luận bản mới đang chạy.
+- Cần model tiếp theo kiểm tra: Nếu production đã chạy commit #17 mà vẫn quay về `Chưa chọn file Excel`, kiểm tra runtime console/network và xem component có bị remount hay lỗi JavaScript trong `showOpenFilePicker`/`processImportFile`; không giả định tiếp tục là lỗi cache hay parser.
+- Phạm vi: Chưa có thay đổi database hay dữ liệu production cho các bản sửa UI/import này.
+
 ### Dùng bộ chọn file trực tiếp trên Chrome
 
 - Sau thay đổi: Dùng `showOpenFilePicker` trên Chrome để nhận trực tiếp file sau khi Finder đóng; vẫn giữ fallback input cho trình duyệt không hỗ trợ API này.
