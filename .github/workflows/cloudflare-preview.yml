@@ -1,4 +1,4 @@
-name: Cloudflare Pages Preview
+name: Cloudflare Pages Preview Build
 on:
   pull_request:
     types: [opened, synchronize, reopened]
@@ -16,13 +16,8 @@ jobs:
         with: { node-version: 22, cache: pnpm }
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
-      - name: Deploy preview
-        id: deploy
-        uses: cloudflare/pages-action@v1
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: family-expense
-          directory: dist
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
-          branch: pr-${{ github.event.pull_request.number }}
+      # Cloudflare Pages is connected to GitHub and creates the preview
+      # deployment automatically. Keep this workflow secret-free and use it
+      # only to verify that the production build succeeds on every PR.
+      - name: Verify production build
+        run: test -d dist && test -f dist/index.html

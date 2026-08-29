@@ -2,6 +2,13 @@
 
 ## 2026-08-29
 
+### Sửa workflow preview Cloudflare thiếu API token
+
+- Sau thay đổi: Workflow Pull Request chỉ kiểm tra build; Cloudflare Pages tiếp tục tự triển khai preview qua kết nối GitHub, không còn gọi `cloudflare/pages-action@v1`.
+- Kỹ thuật: Cập nhật `.github/workflows/cloudflare-preview.yml`, loại bỏ yêu cầu `CLOUDFLARE_API_TOKEN` và `CLOUDFLARE_ACCOUNT_ID`.
+- Kiểm thử: Kiểm tra cấu hình workflow và build output `dist/index.html`.
+- Triển khai: Cần push commit lên GitHub; không cần cấu hình thêm secret Cloudflare.
+
 ### Cập nhật GitHub Actions lên Node.js 24
 
 - Sau thay đổi: `checkout` và `setup-node` dùng major version mới tương thích Node.js 24, loại bỏ cảnh báo deprecation Node.js 20 trên GitHub Actions.
