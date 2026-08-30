@@ -144,7 +144,7 @@ export function Dashboard() {
       fill: chartColors[index % chartColors.length] || '#155e46',
     }))
     .filter((item) => item.value > 0);
-  const localTrend = recentMonths(monthKey, 5).map((item) => ({
+  const localTrend = recentMonths(monthKey, 6).map((item) => ({
     m: item.label,
     v: actualTransactions
       .filter((transaction) => transaction.transactionDate.startsWith(item.key))
@@ -202,6 +202,15 @@ export function Dashboard() {
   const trend = isSupabaseConfigured
     ? summaryQuery.data?.trend || []
     : localTrend;
+  const trendMonths = recentMonths(monthKey, 6);
+  const incomeTrend = trendMonths.map((item) => ({
+    m: item.label,
+    v: actualTransactions.filter((transaction) => transaction.transactionDate.startsWith(item.key) && (transaction.transactionType === 'Thu nhập' || transaction.transactionType === 'Hoàn tiền')).reduce((total, transaction) => total + transaction.amount, 0),
+  }));
+  const expenseTrend = trendMonths.map((item) => ({
+    m: item.label,
+    v: actualTransactions.filter((transaction) => transaction.transactionDate.startsWith(item.key) && (transaction.transactionType === 'Chi tiêu' || transaction.transactionType === 'Tạm ứng')).reduce((total, transaction) => total + transaction.amount, 0),
+  }));
   const dueTransactions = isSupabaseConfigured
     ? summaryQuery.data?.dueTransactions || []
     : localDueTransactions;
@@ -371,8 +380,28 @@ export function Dashboard() {
             to={`/giao-dich?month=${selectedMonth}&year=${selectedYear}`}
           />
         </div>
+        <div className="card min-w-0 overflow-hidden p-4">
+          <h3 className="font-bold">Thu nhập 6 tháng gần nhất</h3>
+          <div className="h-64 min-w-0 max-w-full">
+            <ResponsiveContainer>
+              <LineChart data={incomeTrend} margin={{ top: 24, right: 18, left: 8 }}>
+                <CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="m" /><YAxis tickFormatter={(value) => formatCompactVnd(Number(value)).replace(' ₫', '')} width={48} /><Tooltip formatter={(value) => formatVnd(Number(value))} /><Line name="Thu nhập" type="monotone" dataKey="v" stroke="#155e46" strokeWidth={3}><LabelList dataKey="v" position="top" formatter={(value) => formatCompactVnd(Number(value)).replace(' ₫', '')} /></Line>
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+        <div className="card min-w-0 overflow-hidden p-4">
+          <h3 className="font-bold">Chi tiêu 6 tháng gần nhất</h3>
+          <div className="h-64 min-w-0 max-w-full">
+            <ResponsiveContainer>
+              <LineChart data={expenseTrend} margin={{ top: 24, right: 18, left: 8 }}>
+                <CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="m" /><YAxis tickFormatter={(value) => formatCompactVnd(Number(value)).replace(' ₫', '')} width={48} /><Tooltip formatter={(value) => formatVnd(Number(value))} /><Line name="Chi tiêu" type="monotone" dataKey="v" stroke="#d96f4f" strokeWidth={3}><LabelList dataKey="v" position="top" formatter={(value) => formatCompactVnd(Number(value)).replace(' ₫', '')} /></Line>
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
         <div className="card min-w-0 overflow-hidden p-4 lg:col-span-2">
-          <h3 className="font-bold">Xu hướng 5 tháng</h3>
+          <h3 className="font-bold">Chi ròng 6 tháng gần nhất</h3>
           <div className="h-64 min-w-0 max-w-full">
             <ResponsiveContainer>
               <LineChart data={trend} margin={{ top: 24, right: 18, left: 8 }}>

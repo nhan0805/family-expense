@@ -2,6 +2,12 @@
 
 ## 2026-08-30
 
+### Bổ sung xu hướng thu nhập và chi tiêu 6 tháng
+
+- Thêm hai chart riêng “Thu nhập 6 tháng gần nhất” và “Chi tiêu 6 tháng gần nhất” phía trên chart chi ròng; chart chi ròng cũng hiển thị 6 tháng.
+- Cập nhật `src/pages/Dashboard.tsx`; không thay đổi database/API.
+- Kiểm thử: 61/61 tests, lint, typecheck và build đạt. Triển khai: Đang thực hiện.
+
 ### Đồng bộ tên bốn biểu đồ Dashboard
 
 - Đổi tiêu đề thành: “Thu nhập theo mục đích”, “Chi tiêu theo mục đích”, “Chi tiêu theo danh mục” và “Thu nhập theo danh mục”.
