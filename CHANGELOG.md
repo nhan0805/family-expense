@@ -8,7 +8,7 @@
 - Sau thay đổi: Owner có thể gửi toàn bộ giao dịch đang hoạt động tới email tài khoản hiện tại dưới dạng file CSV; Edge Function tự kiểm tra JWT, membership/owner và query lại theo `family_id` trước khi gọi Brevo.
 - Kỹ thuật: Thêm `supabase/functions/email-transactions/index.ts`, cấu hình JWT trong `supabase/config.toml`, cập nhật `.github/workflows/supabase-deploy.yml`, `src/pages/ImportExport.tsx` và `README.md`; dùng secret `BREVO_API_KEY`, `BREVO_SENDER_EMAIL`, `BREVO_SENDER_NAME`, không thay đổi database/schema.
 - Kiểm thử: `pnpm test` đạt 60/60 test; `pnpm typecheck`, `pnpm lint` và `pnpm build` đạt; E2E local bị chặn do máy chưa có browser Playwright, CI không chạy E2E; chưa kiểm thử gửi thật trên Supabase staging sau khi cấu hình Brevo.
-- Triển khai: Đã deploy `email-transactions` lên Supabase staging project `gkvhztqoaslarykxxelt` bằng CLI; chưa deploy production, production vẫn qua workflow Git sau khi merge vào `main`.
+- Triển khai: Đã deploy `email-transactions` lên Supabase staging project `gkvhztqoaslarykxxelt` bằng CLI; đã deploy production qua workflow Git sau khi merge vào `main`.
 
 ### Bổ sung offline/error recovery và kiểm thử DB/RLS trong CI
 
