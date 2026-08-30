@@ -2,6 +2,21 @@
 
 ## 2026-08-30
 
+### Bỏ nút xem giao dịch trên biểu đồ
+
+- Sau thay đổi: Loại nút “Xem giao dịch” khỏi các biểu đồ Dashboard vì từng lát/ cột biểu đồ đã có thể bấm để mở giao dịch theo bộ lọc tương ứng.
+- Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx`; giữ nguyên điều hướng khi click vào dữ liệu biểu đồ.
+- Kiểm thử: Chờ test, lint, typecheck và build.
+- Triển khai: Chưa deploy.
+
+### Đổi thứ tự biểu đồ Dashboard
+
+- Trước thay đổi: Biểu đồ chi tiêu theo mục đích nằm bên trái và biểu đồ thu nhập nằm bên phải.
+- Sau thay đổi: Biểu đồ `Income by purpose` nằm bên trái, `Expenses by purpose` nằm bên phải; dữ liệu và link lọc không thay đổi.
+- Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx`; không đổi dữ liệu/API.
+- Kiểm thử: Chờ test, lint, typecheck và build.
+- Triển khai: Chưa deploy.
+
 ### Đồng bộ độ rộng bộ chọn khi dùng tiếng Anh
 
 - Trước thay đổi: Nhãn “Appearance” và “Language” có độ dài khác nhau làm hai khung select rộng không đều khi chọn EN.
