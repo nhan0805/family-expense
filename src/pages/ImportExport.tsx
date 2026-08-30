@@ -162,7 +162,7 @@ export function ImportExport() {
         wrongTemplate
           ? (en ? 'This file does not use the Family Expense template. Download a new template and do not rename the “Giao dịch” sheet or column headers.' : 'File không đúng template Family Expense. Hãy tải template mới từ ứng dụng và không đổi tên sheet “Giao dịch” hoặc tiêu đề cột.')
           : detail
-            ? `Không thể đọc file Excel: ${detail}`
+            ? (en ? `Could not read Excel file: ${detail}` : `Không thể đọc file Excel: ${detail}`)
             : (en ? 'Could not read the Excel file. It may be corrupted or not a valid .xlsx file.' : 'Không thể đọc file Excel. File có thể bị hỏng hoặc không phải định dạng .xlsx hợp lệ.'),
       );
       setMessage(en ? 'Validation finished, but the file has errors to resolve.' : 'Đã kiểm tra xong nhưng file có lỗi cần xử lý.');
@@ -264,19 +264,19 @@ export function ImportExport() {
       const batch = (data || []) as ExportRow[];
       allRows.push(...batch);
       setExportMessage(
-        `Đang tải ${allRows.length.toLocaleString('vi-VN')} / ${expectedTotal.toLocaleString('vi-VN')} giao dịch…`,
+        en ? `Loading ${allRows.length.toLocaleString('vi-VN')} / ${expectedTotal.toLocaleString('vi-VN')} transactions…` : `Đang tải ${allRows.length.toLocaleString('vi-VN')} / ${expectedTotal.toLocaleString('vi-VN')} giao dịch…`,
       );
     }
     if (allRows.length !== expectedTotal)
       throw new Error(
-        `Dữ liệu chưa đầy đủ: nhận ${allRows.length.toLocaleString('vi-VN')} / ${expectedTotal.toLocaleString('vi-VN')} giao dịch. Vui lòng thử lại.`,
+        en ? `Incomplete data: received ${allRows.length.toLocaleString('vi-VN')} / ${expectedTotal.toLocaleString('vi-VN')} transactions. Please try again.` : `Dữ liệu chưa đầy đủ: nhận ${allRows.length.toLocaleString('vi-VN')} / ${expectedTotal.toLocaleString('vi-VN')} giao dịch. Vui lòng thử lại.`,
       );
     return allRows;
   };
 
   const exportData = async () => {
     setExporting(true);
-    setExportMessage('Đang chuẩn bị dữ liệu…');
+    setExportMessage(en ? 'Preparing data…' : 'Đang chuẩn bị dữ liệu…');
     try {
       const XLSX = await import('xlsx');
       const cloudRows =
@@ -330,7 +330,7 @@ export function ImportExport() {
         `family-expense-${new Date().toISOString().slice(0, 10)}.xlsx`,
       );
       setExportMessage(
-        `Đã xuất ${rows.length.toLocaleString('vi-VN')} giao dịch với đầy đủ thông tin.`,
+        en ? `Exported ${rows.length.toLocaleString('vi-VN')} transactions with complete information.` : `Đã xuất ${rows.length.toLocaleString('vi-VN')} giao dịch với đầy đủ thông tin.`,
       );
     } catch (error) {
       const detail =
@@ -341,8 +341,8 @@ export function ImportExport() {
             : '';
       setExportMessage(
         detail
-          ? `Không thể xuất file Excel: ${detail}`
-          : 'Không thể xuất file Excel. Vui lòng thử lại hoặc tải lại trang.',
+          ? (en ? `Could not export Excel file: ${detail}` : `Không thể xuất file Excel: ${detail}`)
+          : (en ? 'Could not export the Excel file. Please try again or reload the page.' : 'Không thể xuất file Excel. Vui lòng thử lại hoặc tải lại trang.'),
       );
     } finally {
       setExporting(false);
@@ -351,20 +351,20 @@ export function ImportExport() {
 
   const sendTransactionsByEmail = async () => {
     if (!isSupabaseConfigured || !familyId) {
-      setEmailMessage('Tính năng gửi email cần kết nối Supabase.');
+      setEmailMessage(en ? 'Email sending requires a Supabase connection.' : 'Tính năng gửi email cần kết nối Supabase.');
       return;
     }
     if (currentUserRole !== 'owner') {
-      setEmailMessage('Chỉ chủ gia đình mới có thể gửi danh sách giao dịch.');
+      setEmailMessage(en ? 'Only the family owner can send the transaction list.' : 'Chỉ chủ gia đình mới có thể gửi danh sách giao dịch.');
       return;
     }
     if (!currentUserEmail) {
-      setEmailMessage('Không tìm thấy email của tài khoản hiện tại.');
+      setEmailMessage(en ? 'The current account email could not be found.' : 'Không tìm thấy email của tài khoản hiện tại.');
       return;
     }
 
     setEmailBusy(true);
-    setEmailMessage('Đang chuẩn bị và gửi danh sách giao dịch…');
+    setEmailMessage(en ? 'Preparing and sending transaction list…' : 'Đang chuẩn bị và gửi danh sách giao dịch…');
     try {
       const { data, error } = await supabase.functions.invoke(
         'email-transactions',
@@ -381,14 +381,14 @@ export function ImportExport() {
         }
         setEmailMessage(
           errorCode === 'NO_TRANSACTIONS'
-            ? 'Chưa có giao dịch đang hoạt động để gửi.'
+            ? (en ? 'There are no active transactions to send.' : 'Chưa có giao dịch đang hoạt động để gửi.')
             : errorCode === 'SERVER_NOT_CONFIGURED'
-              ? 'Brevo chưa được cấu hình trên máy chủ.'
+              ? (en ? 'Brevo is not configured on the server.' : 'Brevo chưa được cấu hình trên máy chủ.')
               : errorCode === 'RATE_LIMITED'
-                ? 'Đã vượt giới hạn gửi email. Vui lòng thử lại sau.'
+                ? (en ? 'The email sending limit was reached. Please try again later.' : 'Đã vượt giới hạn gửi email. Vui lòng thử lại sau.')
                 : errorCode === 'FILE_TOO_LARGE'
-                  ? 'Danh sách giao dịch quá lớn để gửi kèm email.'
-                : 'Không thể gửi email. Hãy kiểm tra cấu hình Brevo hoặc thử lại sau.',
+                  ? (en ? 'The transaction list is too large to attach to an email.' : 'Danh sách giao dịch quá lớn để gửi kèm email.')
+                : (en ? 'Could not send email. Check the Brevo configuration or try again later.' : 'Không thể gửi email. Hãy kiểm tra cấu hình Brevo hoặc thử lại sau.'),
         );
         return;
       }
@@ -396,10 +396,10 @@ export function ImportExport() {
         (data as { transactionCount?: number } | null)?.transactionCount || 0,
       );
       setEmailMessage(
-        `Đã gửi ${count.toLocaleString('vi-VN')} giao dịch tới ${currentUserEmail}.`,
+        en ? `Sent ${count.toLocaleString('vi-VN')} transactions to ${currentUserEmail}.` : `Đã gửi ${count.toLocaleString('vi-VN')} giao dịch tới ${currentUserEmail}.`,
       );
     } catch {
-      setEmailMessage('Không thể gửi email. Vui lòng thử lại sau.');
+      setEmailMessage(en ? 'Could not send email. Please try again later.' : 'Không thể gửi email. Vui lòng thử lại sau.');
     } finally {
       setEmailBusy(false);
     }
