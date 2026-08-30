@@ -138,6 +138,29 @@ export type DashboardSummary = {
   dueTransactions: Transaction[];
 };
 
+export type DashboardTrends = {
+  income: Array<{ m: string; v: number }>;
+  expense: Array<{ m: string; v: number }>;
+};
+
+export async function fetchDashboardTrends(
+  familyId: string,
+  year: number,
+  month: number,
+): Promise<DashboardTrends> {
+  const { data, error } = await supabase.rpc('get_dashboard_trends', {
+    p_family_id: familyId,
+    p_year: year,
+    p_month: month,
+  });
+  if (error) throw error;
+  const result = data as DashboardTrends;
+  return {
+    income: (result.income || []).map((item) => ({ m: item.m, v: Number(item.v) })),
+    expense: (result.expense || []).map((item) => ({ m: item.m, v: Number(item.v) })),
+  };
+}
+
 export async function fetchDashboardSummary(
   familyId: string,
   year: number,
