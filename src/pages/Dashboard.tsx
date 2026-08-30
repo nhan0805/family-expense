@@ -384,9 +384,9 @@ export function Dashboard() {
           <h3 className="font-bold">Thu nhập 6 tháng gần nhất</h3>
           <div className="h-64 min-w-0 max-w-full">
             <ResponsiveContainer>
-              <LineChart data={incomeTrend} margin={{ top: 24, right: 18, left: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="m" /><YAxis tickFormatter={(value) => formatCompactVnd(Number(value)).replace(' ₫', '')} width={48} /><Tooltip formatter={(value) => formatVnd(Number(value))} /><Line name="Thu nhập" type="monotone" dataKey="v" stroke="#155e46" strokeWidth={3}><LabelList dataKey="v" position="top" formatter={(value) => formatCompactVnd(Number(value)).replace(' ₫', '')} /></Line>
-              </LineChart>
+              <BarChart data={incomeTrend} margin={{ top: 24, right: 18, left: 8 }}>
+                <CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="m" /><YAxis tickFormatter={(value) => formatCompactVnd(Number(value)).replace(' ₫', '')} width={48} /><Tooltip formatter={(value) => formatVnd(Number(value))} /><Bar name="Thu nhập" dataKey="v" fill="#155e46" radius={[8, 8, 0, 0]}><LabelList dataKey="v" position="top" formatter={(value) => formatCompactVnd(Number(value)).replace(' ₫', '')} /></Bar>
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
@@ -394,9 +394,9 @@ export function Dashboard() {
           <h3 className="font-bold">Chi tiêu 6 tháng gần nhất</h3>
           <div className="h-64 min-w-0 max-w-full">
             <ResponsiveContainer>
-              <LineChart data={expenseTrend} margin={{ top: 24, right: 18, left: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="m" /><YAxis tickFormatter={(value) => formatCompactVnd(Number(value)).replace(' ₫', '')} width={48} /><Tooltip formatter={(value) => formatVnd(Number(value))} /><Line name="Chi tiêu" type="monotone" dataKey="v" stroke="#d96f4f" strokeWidth={3}><LabelList dataKey="v" position="top" formatter={(value) => formatCompactVnd(Number(value)).replace(' ₫', '')} /></Line>
-              </LineChart>
+              <BarChart data={expenseTrend} margin={{ top: 24, right: 18, left: 8 }}>
+                <CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="m" /><YAxis tickFormatter={(value) => formatCompactVnd(Number(value)).replace(' ₫', '')} width={48} /><Tooltip formatter={(value) => formatVnd(Number(value))} /><Bar name="Chi tiêu" dataKey="v" fill="#d96f4f" radius={[8, 8, 0, 0]}><LabelList dataKey="v" position="top" formatter={(value) => formatCompactVnd(Number(value)).replace(' ₫', '')} /></Bar>
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </div>

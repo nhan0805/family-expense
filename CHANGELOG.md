@@ -2,13 +2,11 @@
 
 ## 2026-08-30
 
-### Tối ưu tải asset PWA và tính toán Dashboard
+### Đổi chart thu nhập và chi tiêu 6 tháng sang dạng cột
 
-- Trước thay đổi: PWA precache cả chunk ExcelJS/XLSX lớn; một số phép tính Dashboard local lặp lại sau mỗi lần render.
-- Sau thay đổi: Loại chunk ExcelJS/XLSX khỏi precache; memo hóa danh sách năm, giao dịch thực tế và breakdown local.
-- Kỹ thuật: Cập nhật `vite.config.ts` và `src/pages/Dashboard.tsx`; không thay đổi database/API. Excel vẫn dynamic import khi người dùng thao tác.
-- Kiểm thử: Đang chạy test, lint, typecheck và build.
-- Triển khai: Chưa deploy.
+- Đổi hai chart xu hướng Thu nhập và Chi tiêu 6 tháng sang cột bo góc, giữ màu xanh/cam và nhãn giá trị trên đầu cột.
+- Cập nhật `src/pages/Dashboard.tsx`; không thay đổi dữ liệu/API.
+- Kiểm thử và triển khai: Đang thực hiện.
 
 ### Bổ sung nền tảng chuyển ngôn ngữ VI/EN
 
