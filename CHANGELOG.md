@@ -3,6 +3,14 @@
 ## 2026-08-30
 
 ### Đổi chart thu nhập và chi tiêu 6 tháng sang dạng cột
+### Sửa CI bỏ qua migration dữ liệu Excel phụ thuộc Auth user
+
+- Sau thay đổi: Job `db-security` tạm thời di chuyển migration Excel user-dependent trước khi khởi động Supabase local, để structural tests chạy trên database rỗng.
+- Kỹ thuật: Cập nhật `.github/workflows/ci.yml`; không thay đổi production database.
+- Kiểm thử: Chờ CI xác nhận.
+- Triển khai: Chưa deploy.
+
+### Tối ưu tải asset PWA và tính toán Dashboard
 
 - Đổi hai chart xu hướng Thu nhập và Chi tiêu 6 tháng sang cột bo góc, giữ màu xanh/cam và nhãn giá trị trên đầu cột.
 - Cập nhật `src/pages/Dashboard.tsx`; không thay đổi dữ liệu/API.
