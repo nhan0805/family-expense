@@ -2,6 +2,19 @@
 
 ## 2026-08-30
 
+### Lọc giao dịch từ từng mục trên biểu đồ Tổng quan
+
+- Sau thay đổi: Nhấn vào lát biểu đồ Mục đích hoặc cột Loại chi phí sẽ mở Giao dịch với bộ lọc tương ứng và giữ nguyên tháng/năm đang xem.
+- Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx` và `src/pages/Transactions.tsx`; không thay đổi database/API.
+- Kiểm thử: Sẽ chạy test, lint, typecheck và build.
+- Triển khai: Chưa deploy.
+
+### Cập nhật handoff sau release UI ngày 30/08/2026
+
+- Sau thay đổi: Đồng bộ `HANDOFF.md` với production merge commit `4682364870797aeb6b5b29e4bbe3bd61f2e97e09` và ghi nhận các cập nhật UI KPI, Import/Export, Tổng quan và thùng rác mobile đã deploy.
+- Kiểm thử: CI quality và `db-security` đạt; local 61/61 tests, lint, typecheck và build đạt.
+- Triển khai: Cloudflare Pages production deployment thành công; không có migration production mới.
+
 ### Bổ sung nút khôi phục giao dịch trong thùng rác mobile
 
 - Trước thay đổi: Trên mobile, mỗi giao dịch trong thùng rác chỉ có nút xóa vĩnh viễn; nút khôi phục chỉ xuất hiện ở chế độ desktop.

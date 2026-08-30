@@ -16,7 +16,7 @@ import {
 } from 'recharts';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ArrowDownToLine, ArrowUpFromLine, Scale } from 'lucide-react';
 import { EmptyState, PageSkeleton } from '../components/AsyncStates';
 import { useApp } from '../context/AppContext';
@@ -116,6 +116,7 @@ export function Dashboard() {
     .reduce((total, transaction) => total + transaction.amount, 0);
   const localByPurpose = purposes
     .map((purpose, index) => ({
+      id: purpose.id,
       name: purpose.name,
       value: localSelectedMonthTransactions
         .filter((transaction) => transaction.purposeId === purpose.id)
@@ -130,6 +131,7 @@ export function Dashboard() {
     .filter((item) => item.value > 0);
   const localByExpenseType = expenseTypes
     .map((expenseType, index) => ({
+      id: expenseType.id,
       name: expenseType.name,
       value: localSelectedMonthTransactions
         .filter((transaction) => transaction.expenseTypeId === expenseType.id)
@@ -183,12 +185,14 @@ export function Dashboard() {
   const byPurpose = isSupabaseConfigured
     ? (summaryQuery.data?.byPurpose || []).map((item, index) => ({
         ...item,
+        id: purposes.find((purpose) => purpose.name === item.name)?.id || '',
         fill: chartColors[index % chartColors.length] || '#155e46',
       }))
     : localByPurpose;
   const byExpenseType = isSupabaseConfigured
     ? (summaryQuery.data?.byExpenseType || []).map((item, index) => ({
         ...item,
+        id: expenseTypes.find((expenseType) => expenseType.name === item.name)?.id || '',
         fill: chartColors[index % chartColors.length] || '#155e46',
       }))
     : localByExpenseType;
@@ -397,7 +401,7 @@ export function Dashboard() {
   );
 }
 
-type ExpenseChartItem = { name: string; value: number; fill: string };
+type ExpenseChartItem = { id: string; name: string; value: number; fill: string };
 
 function ExpensePieChart({
   title,
@@ -408,6 +412,10 @@ function ExpensePieChart({
   data: ExpenseChartItem[];
   to: string;
 }) {
+  const navigate = useNavigate();
+  const openItem = (item: ExpenseChartItem) => {
+    if (item.id) navigate(`${to}&purposeId=${encodeURIComponent(item.id)}`);
+  };
   return (
     <>
       <div className="flex items-center justify-between gap-3"><h3 className="font-bold">{title}</h3><Link className="text-xs font-semibold text-[#137050] dark:text-emerald-300" to={to}>Xem giao dịch</Link></div>
@@ -427,7 +435,7 @@ function ExpensePieChart({
                 }
               >
                 {data.map((item) => (
-                  <Cell key={item.name} fill={item.fill} />
+                  <Cell key={item.name} fill={item.fill} cursor={item.id ? 'pointer' : undefined} onClick={() => openItem(item)} />
                 ))}
               </Pie>
               <Tooltip formatter={(value) => formatVnd(Number(value))} />
@@ -451,6 +459,10 @@ function ExpenseBarChart({
   data: ExpenseChartItem[];
   to: string;
 }) {
+  const navigate = useNavigate();
+  const openItem = (item: ExpenseChartItem) => {
+    if (item.id) navigate(`${to}&expenseTypeId=${encodeURIComponent(item.id)}`);
+  };
   const chartWidth = Math.max(520, data.length * 78);
   return (
     <>
@@ -481,7 +493,7 @@ function ExpenseBarChart({
                 <Tooltip formatter={(value) => formatVnd(Number(value))} />
                 <Bar dataKey="value" name="Tiền ra" radius={[6, 6, 0, 0]}>
                   {data.map((item) => (
-                    <Cell key={item.name} fill={item.fill} />
+                  <Cell key={item.name} fill={item.fill} cursor={item.id ? 'pointer' : undefined} onClick={() => openItem(item)} />
                   ))}
                   <LabelList
                     dataKey="value"

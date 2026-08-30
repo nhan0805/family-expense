@@ -227,8 +227,8 @@ export function Transactions() {
   const [transactionType, setTransactionType] = useState(() =>
     getInitialTransactionType(searchParams.get('transactionType')),
   );
-  const [purposeId, setPurposeId] = useState('');
-  const [expenseTypeId, setExpenseTypeId] = useState('');
+  const [purposeId, setPurposeId] = useState(() => searchParams.get('purposeId') || '');
+  const [expenseTypeId, setExpenseTypeId] = useState(() => searchParams.get('expenseTypeId') || '');
   const [paymentMethodId, setPaymentMethodId] = useState('');
   const [month, setMonth] = useState(initialMonth);
   const [year, setYear] = useState(initialYear);

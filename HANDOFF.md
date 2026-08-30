@@ -1,6 +1,6 @@
 # Family Expense — Project Handoff
 
-> Cập nhật: **29/08/2026** (`Asia/Ho_Chi_Minh`)  
+> Cập nhật: **30/08/2026** (`Asia/Ho_Chi_Minh`)
 > Trạng thái: **Production đang hoạt động; tài liệu này là ngữ cảnh kỹ thuật cho các phiên làm việc tiếp theo**  
 > Production: <https://family-expense-8fo.pages.dev>
 
@@ -13,6 +13,14 @@
 - [x] Supabase production workflow đã kiểm tra thành công bằng `workflow_dispatch` với `dry_run=true`; không thay đổi database hoặc deploy Edge Function.
 - [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
+
+## Handoff mới nhất — release 30/08/2026
+
+- Production đã nhận merge commit `4682364870797aeb6b5b29e4bbe3bd61f2e97e09` qua PR #31.
+- Cloudflare Pages production deployment của merge commit đã thành công; Supabase không có migration production mới trong release này.
+- Đã hoàn tất UI: thẻ Công cụ dữ liệu/Import được làm gọn; KPI Tổng thu/Tổng chi mở Giao dịch với bộ lọc Tiền vào/Tiền ra theo tháng; icon Giá trị ròng theo bộ lọc đổi màu theo trạng thái; bỏ danh sách giao dịch thực tế khỏi Tổng quan; thêm nút Khôi phục từng giao dịch trên mobile trong thùng rác.
+- CI quality và `db-security` trên merge commit đều đạt; local validation gần nhất đạt 61/61 tests, lint, typecheck và build. Build vẫn có cảnh báo chunk ExcelJS lớn hiện hữu.
+- Working tree hiện chỉ còn file tạm `.pnpm-store/index.db-shm` và `.pnpm-store/index.db-wal`, không thuộc source release.
 
 ## 1. Project Overview
 
@@ -73,7 +81,7 @@ flowchart LR
 | Local | `http://127.0.0.1:5173` | Supabase local hoặc configured project | Có |
 | Preview | Cloudflare Pages deployment URL | Không dùng production để test mutation | Có theo deployment |
 | Staging | Cloudflare preview/local | Supabase project riêng `gkvhztqoaslarykxxelt` với dữ liệu test | Đang sử dụng |
-| Production | `https://8444cfb7.family-expense-8fo.pages.dev` | Supabase Cloud linked project | Đang chạy |
+| Production | `https://family-expense-8fo.pages.dev` | Supabase Cloud linked project | Đang chạy |
 
 Thông tin project ID, account ID và quyền truy cập phải được lưu trong password manager/CMDB của đội, không ghi key vào file này.
 
@@ -101,7 +109,7 @@ pnpm test:e2e
 8. Smoke test đăng nhập, tải danh sách, tạo/sửa giao dịch, import/export và AI.
 9. Cập nhật `CHANGELOG.md` với kết quả kiểm thử và deployment URL.
 
-> **Đã xác nhận gần nhất:** PR #24 (`b6cb590`) bổ sung chế độ Supabase dry-run. Workflow run [#33259320637](https://github.com/nhan0805/family-expense/actions/runs/33259320637) đã pass; chỉ chạy link project và `supabase db push --dry-run`.
+> **Đã xác nhận gần nhất:** PR #31, merge commit `4682364870797aeb6b5b29e4bbe3bd61f2e97e09`. CI quality/db-security và Cloudflare Pages production check đã pass; Supabase Production Deploy không có migration mới cần áp dụng.
 
 ### Rollback
 
@@ -258,7 +266,7 @@ Không ghi tài khoản test trong file. Tạo user/family riêng ở staging v�
 | P0 | CI lint/typecheck/test/build + Cloudflare preview | Chủ dự án | Đã thực hiện | Hoàn thành |
 | P0 | Supabase/Cloudflare staging tách biệt | Chủ dự án | Đã thực hiện | Hoàn thành |
 - P0 | Supabase deploy workflow với dry-run và Git-based production path | Chủ dự án | 29/08/2026 | Hoàn thành; dry-run đã pass |
-| P1 | RLS negative tests và migration rehearsal | Chủ dự án | Mỗi release DB | Đã thêm pgTAP policy/constraint test vào CI; chờ GitHub run xác nhận; fixture cross-family cần dữ liệu test staging |
+| P1 | RLS negative tests và migration rehearsal | Chủ dự án | Mỗi release DB | Structural pgTAP policy/constraint test đã pass trong CI; fixture cross-family vẫn cần dữ liệu test staging |
 | P1 | Monitoring/alert/error tracking không chứa PII | TBD | TBD | Chưa làm |
 | P1 | Backup restore và rollback drill | TBD | Mỗi quý | Đã có script/runbook an toàn; drill staging thực tế chờ `STAGING_DB_URL` và `RESTORE_DB_URL` |
 | P1 | Chốt retention/log/privacy policy | TBD | TBD | Cần quyết định |
