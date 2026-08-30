@@ -452,7 +452,7 @@ export function ImportExport() {
             onClick={exportData}
           >
             <Download size={18} />
-            {exporting ? (en ? 'Creating file…' : 'Đang tạo file…') : (en ? 'Download complete Excel file' : 'Tải file Excel đầy đủ')}
+            {exporting ? (en ? 'Creating file…' : 'Đang tạo file…') : (en ? 'Download Excel file' : 'Tải file Excel đầy đủ')}
           </button>
           {exportMessage && (
             <p className="mt-3 text-sm" role="status" aria-live="polite">

@@ -2,6 +2,14 @@
 
 ## 2026-08-30
 
+### Đồng bộ độ rộng bộ chọn khi dùng tiếng Anh
+
+- Trước thay đổi: Nhãn “Appearance” và “Language” có độ dài khác nhau làm hai khung select rộng không đều khi chọn EN.
+- Sau thay đổi: Hai select dùng chung một cột grid nên luôn cùng độ rộng; đổi wording nút export thành “Download Excel file”.
+- Kỹ thuật: Cập nhật `src/components/ThemeSelect.tsx` và `src/pages/ImportExport.tsx`; không đổi dữ liệu/API.
+- Kiểm thử: Chờ test, lint, typecheck và build.
+- Triển khai: Chưa deploy.
+
 ### Hoàn thiện bản dịch bộ lọc tháng/năm và các nhãn giao dịch còn sót
 
 - Trước thay đổi: Khi chọn EN, option tháng vẫn hiển thị “Tháng 8”, một số chip bộ lọc, nhãn ngày, tiêu đề bảng, legend Dashboard và thao tác giao dịch vẫn còn tiếng Việt.
