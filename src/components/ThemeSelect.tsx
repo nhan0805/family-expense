@@ -1,4 +1,4 @@
-import { Laptop, Moon, Sun } from 'lucide-react';
+import { Globe2, Laptop, Moon, Sun } from 'lucide-react';
 import { useTheme, type ThemePreference } from '../context/ThemeContext';
 import { useOptionalLanguage } from '../context/LanguageContext';
 
@@ -19,5 +19,5 @@ export function ThemeSelect({ compact = false }: { compact?: boolean }) {
       <option value="light">{t('light')}</option>
       <option value="dark">{t('dark')}</option>
     </select>
-  </label>{!compact && <select className="self-end rounded-lg border border-black/10 bg-transparent px-2 py-1.5 text-sm dark:border-white/15" aria-label={t('language')} value={language} onChange={(event) => setLanguage(event.target.value as 'vi' | 'en')}><option value="vi">VI</option><option value="en">EN</option></select>}</div>;
+  </label>{!compact && <label className="flex min-w-0 items-center gap-2"><Globe2 size={18} aria-hidden="true" /><span className="whitespace-nowrap text-sm font-medium">{t('language')}</span><select className="ml-auto min-w-0 rounded-lg border border-black/10 bg-transparent px-2 py-1.5 text-sm dark:border-white/15" aria-label={t('language')} value={language} onChange={(event) => setLanguage(event.target.value as 'vi' | 'en')}><option value="vi">VI</option><option value="en">EN</option></select></label>}</div>;
 }
