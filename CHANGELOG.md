@@ -2,6 +2,14 @@
 
 ## 2026-08-30
 
+### Sửa CI cho kiểm thử DB/RLS không phụ thuộc dữ liệu Excel
+
+- Trước thay đổi: Job `db-security` vẫn áp dụng migration dịch chuyển ngày dữ liệu Excel, khiến structural test thất bại trên database rỗng vì migration yêu cầu 2.083 dòng dữ liệu lịch sử.
+- Sau thay đổi: CI loại cả migration seed Excel và migration dịch chuyển dữ liệu phụ thuộc user trước khi khởi động Supabase local; migration production không bị sửa.
+- Kỹ thuật: Cập nhật `.github/workflows/ci.yml`.
+- Kiểm thử: Đã xác nhận nguyên nhân qua log job GitHub; chờ chạy lại `db-security` sau khi push.
+- Triển khai: Chờ required checks và Cloudflare Pages production deployment sau khi merge.
+
 ### Gửi danh sách giao dịch qua email bằng Brevo
 
 - Trước thay đổi: Trang Quản lý dữ liệu chỉ cho tải file Excel về thiết bị, chưa có luồng gửi danh sách giao dịch qua email.
