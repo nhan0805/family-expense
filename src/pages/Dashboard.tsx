@@ -459,10 +459,10 @@ function ExpensePieChart({
   return (
     <>
       <div className="flex items-center justify-between gap-3"><h3 className="font-bold">{title}</h3><Link className="text-xs font-semibold text-[#137050] dark:text-emerald-300" to={to}>Xem giao dịch</Link></div>
-      <div className="h-64 min-w-0 max-w-full overflow-hidden">
+      <div className="h-72 min-w-0 max-w-full overflow-hidden pt-3">
         {data.length ? (
           <ResponsiveContainer>
-            <PieChart>
+            <PieChart margin={{ top: 18, right: 18, left: 18, bottom: 0 }}>
               <Pie
                 data={data}
                 dataKey="value"

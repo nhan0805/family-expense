@@ -2,6 +2,12 @@
 
 ## 2026-08-30
 
+### Tránh cắt nhãn giá trị trên biểu đồ tròn
+
+- Tăng vùng hiển thị và khoảng đệm phía trên cho chart tròn để nhãn giá trị lớn như 19,2M không bị che ở mép trên.
+- Cập nhật `src/pages/Dashboard.tsx`; không thay đổi dữ liệu/API.
+- Kiểm thử và triển khai: Đang thực hiện.
+
 ### Bổ sung xu hướng thu nhập và chi tiêu 6 tháng
 
 - Thêm hai chart riêng “Thu nhập 6 tháng gần nhất” và “Chi tiêu 6 tháng gần nhất” phía trên chart chi ròng; chart chi ròng cũng hiển thị 6 tháng.
