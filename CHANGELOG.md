@@ -5,7 +5,7 @@
 ### Hoàn thiện bản dịch bộ lọc tháng/năm và các nhãn giao dịch còn sót
 
 - Trước thay đổi: Khi chọn EN, option tháng vẫn hiển thị “Tháng 8”, một số chip bộ lọc, nhãn ngày, tiêu đề bảng, legend Dashboard và thao tác giao dịch vẫn còn tiếng Việt.
-- Sau thay đổi: Option hiển thị “Month 8”, chip hiển thị Month/Year/From/To, và các nhãn/aria label liên quan chuyển theo VI/EN; giá trị query, enum nghiệp vụ và dữ liệu Excel giữ nguyên.
+- Sau thay đổi: Option hiển thị tên tháng tiếng Anh như “August”, chip hiển thị tên tháng/Year/From/To, và các nhãn/aria label liên quan chuyển theo VI/EN; giá trị query, enum nghiệp vụ và dữ liệu Excel giữ nguyên.
 - Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx`, `src/pages/Transactions.tsx`, `src/components/Layout.tsx`, `src/components/ThemeSelect.tsx`.
 - Kiểm thử: Chờ test, lint, typecheck và build.
 - Triển khai: Chưa deploy.
