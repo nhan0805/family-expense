@@ -41,23 +41,24 @@ export function Catalogs() {
   return <div className="space-y-5">
     <div><h2 className="text-2xl font-extrabold">{isEnglish ? 'Categories' : 'Danh mục'}</h2><p className="text-sm text-gray-500">{canManage ? (isEnglish ? 'You can add, rename and delete unused categories.' : 'Bạn có thể thêm, đổi tên và xóa danh mục chưa được sử dụng.') : (isEnglish ? 'You can view categories. Only the family owner can edit them.' : 'Bạn có thể xem danh mục. Chỉ chủ gia đình mới có quyền chỉnh sửa.')}</p></div>
     <div className="grid gap-4 lg:grid-cols-3">
-      <Catalog title={isEnglish ? 'Purpose' : 'Mục đích'} kind="purpose" items={purposes} canManage={canManage} error={errorKind === 'purpose' ? error : ''} {...shared}/>
-      <Catalog title={isEnglish ? 'Expense type' : 'Danh mục'} kind="expenseType" items={expenseTypes} canManage={canManage} error={errorKind === 'expenseType' ? error : ''} {...shared}/>
-      <Catalog title={isEnglish ? 'Payment method' : 'Phương thức thanh toán'} kind="paymentMethod" items={paymentMethods} canManage={canManage} error={errorKind === 'paymentMethod' ? error : ''} {...shared}/>
+      <Catalog isEnglish={isEnglish} title={isEnglish ? 'Purpose' : 'Mục đích'} kind="purpose" items={purposes} canManage={canManage} error={errorKind === 'purpose' ? error : ''} {...shared}/>
+      <Catalog isEnglish={isEnglish} title={isEnglish ? 'Expense type' : 'Danh mục'} kind="expenseType" items={expenseTypes} canManage={canManage} error={errorKind === 'expenseType' ? error : ''} {...shared}/>
+      <Catalog isEnglish={isEnglish} title={isEnglish ? 'Payment method' : 'Phương thức thanh toán'} kind="paymentMethod" items={paymentMethods} canManage={canManage} error={errorKind === 'paymentMethod' ? error : ''} {...shared}/>
     </div>
   </div>;
 }
 
 type CatalogProps = {
+  isEnglish: boolean;
   title: string; kind: CatalogKind; items: { id: string; name: string }[]; canManage: boolean; editor: Editor; name: string; error: string; saving: boolean; deletingId: string | null;
   onOpen: (kind: CatalogKind, item?: { id: string; name: string }) => void; onClose: () => void; onNameChange: (name: string) => void;
   onSubmit: (event: React.FormEvent) => void; onDelete: (kind: CatalogKind, item: { id: string; name: string }) => void;
 };
 
-function Catalog({ title, kind, items, canManage, editor, name, error, saving, deletingId, onOpen, onClose, onNameChange, onSubmit, onDelete }: CatalogProps) {
+function Catalog({ isEnglish, title, kind, items, canManage, editor, name, error, saving, deletingId, onOpen, onClose, onNameChange, onSubmit, onDelete }: CatalogProps) {
   const isEditingHere = editor?.kind === kind;
   return <section className="card p-4">
-    <div className="mb-3 flex items-center justify-between"><h3 className="font-bold">{title}</h3>{canManage && <button className="btn-secondary flex items-center gap-1 text-sm" onClick={() => onOpen(kind)}><Plus size={16}/>Thêm</button>}</div>
+    <div className="mb-3 flex items-center justify-between"><h3 className="font-bold">{title}</h3>{canManage && <button className="btn-secondary flex items-center gap-1 text-sm" onClick={() => onOpen(kind)}><Plus size={16} />{isEnglish ? 'Add' : 'Thêm'}</button>}</div>
     {isEditingHere && <form className="mb-3 space-y-2 rounded-xl bg-[#eef4ef] p-3 dark:bg-white/5" onSubmit={onSubmit}>
       <div className="flex items-center justify-between"><label className="label mb-0" htmlFor={`catalog-${kind}`}>{editor?.id ? `Đổi tên ${title.toLocaleLowerCase('vi-VN')}` : `Tên ${title.toLocaleLowerCase('vi-VN')}`}</label><button type="button" className="rounded-lg p-1" aria-label="Đóng" onClick={onClose}><X size={17}/></button></div>
       <input id={`catalog-${kind}`} className="field bg-white dark:bg-[#17251f]" autoFocus maxLength={100} required value={name} onChange={(event) => onNameChange(event.target.value)} placeholder={`Nhập tên ${title.toLocaleLowerCase('vi-VN')}`}/>
