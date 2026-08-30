@@ -503,8 +503,7 @@ export function ImportExport() {
               <span className="rounded-full bg-[#e3f2e9] px-2 py-0.5 text-[11px] font-bold text-[#145c43] dark:bg-emerald-950/60 dark:text-emerald-200">{en ? 'Safe · confirmation required' : 'An toàn · cần xác nhận'}</span>
             </div>
             <p className="mt-1 text-sm text-gray-500">
-              Chọn file .xlsx được tải từ ứng dụng. Dữ liệu chỉ được ghi sau khi
-              bạn kiểm tra và xác nhận.
+              {en ? 'Choose an .xlsx file downloaded from the app. Data is saved only after you review and confirm it.' : 'Chọn file .xlsx được tải từ ứng dụng. Dữ liệu chỉ được ghi sau khi bạn kiểm tra và xác nhận.'}
             </p>
           </div>
         </div>
@@ -538,7 +537,7 @@ export function ImportExport() {
               className="sr-only"
               type="file"
               accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-              aria-label="Chọn file Excel để kiểm tra"
+              aria-label={en ? 'Choose Excel file to validate' : 'Chọn file Excel để kiểm tra'}
               onClick={(event) => {
                 event.currentTarget.value = '';
               }}
@@ -566,14 +565,14 @@ export function ImportExport() {
                 <div className="min-w-0">
                   <strong className="block">
                     {checkingFile
-                      ? 'Đang kiểm tra file…'
+                      ? (en ? 'Validating file…' : 'Đang kiểm tra file…')
                       : fileError
-                        ? 'Không thể kiểm tra file'
-                        : 'Kết quả kiểm tra file'}
+                        ? (en ? 'Could not validate file' : 'Không thể kiểm tra file')
+                        : (en ? 'File validation result' : 'Kết quả kiểm tra file')}
                   </strong>
                   <span className="break-words">
                     {checkingFile
-                      ? 'Vui lòng chờ, không đóng trang trong lúc đọc dữ liệu.'
+                      ? (en ? 'Please wait and do not close the page while the data is being read.' : 'Vui lòng chờ, không đóng trang trong lúc đọc dữ liệu.')
                       : fileError || message}
                   </span>
                 </div>
@@ -584,14 +583,14 @@ export function ImportExport() {
             <>
               <div className="grid grid-cols-3 gap-2">
                 <Stat
-                  label="Hợp lệ"
+                  label={en ? 'Valid' : 'Hợp lệ'}
                   value={validRows.filter((r) => !r.duplicate).length}
                 />
                 <Stat
-                  label="Có thể trùng"
+                  label={en ? 'Possible duplicate' : 'Có thể trùng'}
                   value={validRows.filter((r) => r.duplicate).length}
                 />
-                <Stat label="Lỗi" value={importErrors.length} />
+                <Stat label={en ? 'Errors' : 'Lỗi'} value={importErrors.length} />
               </div>
               {validRows.some((r) => r.duplicate) && (
                 <label className="flex items-center gap-2 text-sm">
@@ -600,18 +599,18 @@ export function ImportExport() {
                     checked={includeDuplicates}
                     onChange={(e) => setIncludeDuplicates(e.target.checked)}
                   />
-                  Vẫn import các dòng có thể trùng
+                  {en ? 'Import rows that may be duplicates anyway' : 'Vẫn import các dòng có thể trùng'}
                 </label>
               )}
               <div className="max-h-80 overflow-auto rounded-xl border">
                 <table className="w-full min-w-[700px] text-left text-sm">
                   <thead className="bg-[#eef2ed]">
                     <tr>
-                      <th className="p-2">Dòng</th>
-                      <th>Nội dung</th>
-                      <th>Ngày</th>
-                      <th>Số tiền</th>
-                      <th>Kết quả</th>
+                      <th className="p-2">{en ? 'Row' : 'Dòng'}</th>
+                      <th>{en ? 'Description' : 'Nội dung'}</th>
+                      <th>{en ? 'Date' : 'Ngày'}</th>
+                      <th>{en ? 'Amount' : 'Số tiền'}</th>
+                      <th>{en ? 'Result' : 'Kết quả'}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -621,14 +620,14 @@ export function ImportExport() {
                         <td>{r.description}</td>
                         <td>{r.transactionDate}</td>
                         <td>{r.amount.toLocaleString('vi-VN')}</td>
-                        <td>{r.duplicate ? 'Có thể trùng' : 'Hợp lệ'}</td>
+                        <td>{r.duplicate ? (en ? 'Possible duplicate' : 'Có thể trùng') : (en ? 'Valid' : 'Hợp lệ')}</td>
                       </tr>
                     ))}
                     {importErrors.slice(0, 100).map((r) => (
                       <tr className="border-t text-red-700" key={r.rowNumber}>
                         <td className="p-2">{r.rowNumber}</td>
                         <td colSpan={3}>{r.messages.join('; ')}</td>
-                        <td>Lỗi</td>
+                        <td>{en ? 'Error' : 'Lỗi'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -643,8 +642,8 @@ export function ImportExport() {
                 onClick={() => void confirmImport()}
               >
                 {importBusy
-                  ? 'Đang import…'
-                  : `Xác nhận import (${validRows.filter((r) => includeDuplicates || !r.duplicate).length})`}
+                  ? (en ? 'Importing…' : 'Đang import…')
+                  : `${en ? 'Confirm import' : 'Xác nhận import'} (${validRows.filter((r) => includeDuplicates || !r.duplicate).length})`}
               </button>
             </>
           )}
