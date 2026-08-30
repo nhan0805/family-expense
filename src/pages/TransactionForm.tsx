@@ -706,6 +706,8 @@ function Field({
   aiTone?: 'suggestion' | 'warning' | null;
   children: React.ReactNode;
 }) {
+  const { language } = useOptionalLanguage();
+  const en = language === 'en';
   return (
     <label className="min-w-0">
       <span className="label flex items-center gap-2">
@@ -740,6 +742,8 @@ function aiFieldClass({ aiSuggested, aiTone }: AiFieldVisualProps) {
 }
 
 function AiBadge({ aiSuggested, aiTone }: AiFieldVisualProps) {
+  const { language } = useOptionalLanguage();
+  const en = language === 'en';
   if (!aiSuggested) return null;
   return (
     <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${aiTone === 'warning' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200' : 'bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-200'}`}>
