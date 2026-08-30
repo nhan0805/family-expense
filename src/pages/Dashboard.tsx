@@ -42,6 +42,20 @@ const monthOptions = Array.from({ length: 12 }, (_, index) => ({
   value: String(index + 1).padStart(2, '0'),
   label: `Tháng ${index + 1}`,
 }));
+const englishMonthNames = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+] as const;
 const chartColors = ['#155e46', '#e6b85c', '#d97757', '#6081a8', '#7b6aa2'];
 
 const recentMonths = (monthKey: string, count: number) => {
@@ -273,7 +287,7 @@ export function Dashboard() {
             >
               {monthOptions.map((option) => (
                 <option key={option.value} value={option.value}>
-                  {option.label}
+                  {en ? englishMonthNames[Number(option.value) - 1] : option.label}
                 </option>
               ))}
             </select>
@@ -372,14 +386,14 @@ export function Dashboard() {
       )}
       <section className="grid gap-4 lg:grid-cols-2">
         <div className="card min-w-0 overflow-hidden p-4">
+          <ExpensePieChart title={en ? 'Income by purpose' : 'Thu nhập theo mục đích'} data={incomeByPurpose} to={`/giao-dich?transactionType=Thu nhập&month=${selectedMonth}&year=${selectedYear}`} filterKey="purposeId" />
+        </div>
+        <div className="card min-w-0 overflow-hidden p-4">
           <ExpensePieChart
             title={en ? 'Expenses by purpose' : 'Chi tiêu theo mục đích'}
             data={byPurpose}
             to={`/giao-dich?month=${selectedMonth}&year=${selectedYear}`}
           />
-        </div>
-        <div className="card min-w-0 overflow-hidden p-4">
-          <ExpensePieChart title={en ? 'Income by purpose' : 'Thu nhập theo mục đích'} data={incomeByPurpose} to={`/giao-dich?transactionType=Thu nhập&month=${selectedMonth}&year=${selectedYear}`} filterKey="purposeId" />
         </div>
         <div className="card min-w-0 overflow-hidden p-4">
           <ExpenseBarChart title={en ? 'Income by category' : 'Thu nhập theo danh mục'} data={incomeByExpenseType} to={`/giao-dich?transactionType=Thu nhập&month=${selectedMonth}&year=${selectedYear}`} filterKey="expenseTypeId" />
@@ -427,7 +441,7 @@ export function Dashboard() {
                 <Tooltip formatter={(value) => formatVnd(Number(value))} />
                 <Legend verticalAlign="bottom" />
                 <Line
-                  name="Chi ròng thực tế"
+                  name={en ? 'Actual net spending' : 'Chi ròng thực tế'}
                   type="monotone"
                   dataKey="v"
                   stroke="#155e46"
@@ -469,7 +483,7 @@ function ExpensePieChart({
   };
   return (
     <>
-      <div className="flex items-center justify-between gap-3"><h3 className="font-bold">{title}</h3><Link className="text-xs font-semibold text-[#137050] dark:text-emerald-300" to={to}>Xem giao dịch</Link></div>
+      <h3 className="font-bold">{title}</h3>
       <div className="h-72 min-w-0 max-w-full overflow-hidden pt-3">
         {data.length ? (
           <ResponsiveContainer>
@@ -519,7 +533,7 @@ function ExpenseBarChart({
   const chartWidth = Math.max(520, data.length * 78);
   return (
     <>
-      <div className="flex items-center justify-between gap-3"><h3 className="font-bold">{title}</h3><Link className="text-xs font-semibold text-[#137050] dark:text-emerald-300" to={to}>Xem giao dịch</Link></div>
+      <h3 className="font-bold">{title}</h3>
       <div className="h-72 w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain">
         {data.length ? (
           <div className="h-full" style={{ minWidth: chartWidth }}>

@@ -2,9 +2,12 @@ import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { HousePlus, LogOut } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useOptionalLanguage } from '../context/LanguageContext';
 import { supabase } from '../lib/supabase';
 
 export function CreateFamily() {
+  const { language, t } = useOptionalLanguage();
+  const en = language === 'en';
   const { authenticated, loading, familyId, createFamily } = useApp();
   const [name, setName] = useState('');
   const [message, setMessage] = useState('');
@@ -12,7 +15,7 @@ export function CreateFamily() {
   const [signingOut, setSigningOut] = useState(false);
   if (loading)
     return (
-      <main className="grid min-h-screen place-items-center">Đang tải…</main>
+      <main className="grid min-h-screen place-items-center">{en ? 'Loading…' : 'Đang tải…'}</main>
     );
   if (!authenticated)
     return (
@@ -52,13 +55,13 @@ export function CreateFamily() {
           <p className="text-xs font-bold tracking-widest text-[#137050]">
             FAMILY EXPENSE
           </p>
-          <h1 className="mt-1 text-2xl font-extrabold">Tạo gia đình mới</h1>
+          <h1 className="mt-1 text-2xl font-extrabold">{en ? 'Create a new family' : 'Tạo gia đình mới'}</h1>
           <p className="mt-2 text-sm text-gray-500">
-            Bạn sẽ là Chủ gia đình và có thể thêm thành viên sau khi hoàn tất.
+            {en ? 'You will become the family owner and can add members after setup.' : 'Bạn sẽ là Chủ gia đình và có thể thêm thành viên sau khi hoàn tất.'}
           </p>
         </div>
         <label>
-          <span className="label">Tên gia đình *</span>
+          <span className="label">{en ? 'Family name *' : 'Tên gia đình *'}</span>
           <input
             className="field"
             autoFocus
@@ -66,11 +69,11 @@ export function CreateFamily() {
             maxLength={100}
             value={name}
             onChange={(event) => setName(event.target.value)}
-            placeholder="Ví dụ: Gia đình Nhân"
+            placeholder={en ? 'Example: Nhan family' : 'Ví dụ: Gia đình Nhân'}
           />
         </label>
         <button className="btn-primary w-full" disabled={busy}>
-          {busy ? 'Đang tạo…' : 'Tạo gia đình'}
+          {busy ? (en ? 'Creating…' : 'Đang tạo…') : (en ? 'Create family' : 'Tạo gia đình')}
         </button>
         <button
           type="button"
@@ -79,7 +82,7 @@ export function CreateFamily() {
           onClick={() => void signOut()}
         >
           <LogOut size={17} />
-          {signingOut ? 'Đang đăng xuất…' : 'Đăng xuất'}
+          {signingOut ? (en ? 'Logging out…' : 'Đang đăng xuất…') : t('logout')}
         </button>
         {message && (
           <p
@@ -90,8 +93,7 @@ export function CreateFamily() {
           </p>
         )}
         <p className="text-xs text-gray-500">
-          Hệ thống sẽ tạo sẵn mục đích chi, loại chi phí và phương thức thanh
-          toán mặc định.
+          {en ? 'The system will create default purposes, expense types and payment methods.' : 'Hệ thống sẽ tạo sẵn mục đích chi, loại chi phí và phương thức thanh toán mặc định.'}
         </p>
       </form>
     </main>
