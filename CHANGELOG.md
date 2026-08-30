@@ -2,6 +2,14 @@
 
 ## 2026-08-30
 
+### Sửa tràn layout bộ chọn ngôn ngữ trên sidebar mobile/hẹp
+
+- Trước thay đổi: Nhãn Giao diện bị xuống dòng và bộ chọn VI/EN có thể tràn khỏi sidebar.
+- Sau thay đổi: Các bộ chọn được xếp responsive theo cột khi sidebar hẹp; nhãn không bị vỡ dòng.
+- Kỹ thuật: Cập nhật `src/components/ThemeSelect.tsx`; không đổi database/API.
+- Kiểm thử: `pnpm test` đạt 61/61; lint, typecheck và build đạt.
+- Triển khai: Đang chờ PR #36.
+
 ### Sửa tên chart thành Thu ròng thực tế
 
 - Đổi tên chart và chú giải từ “Chi ròng thực tế” thành “Thu ròng thực tế”, đúng với công thức Thu nhập − Chi tiêu.
