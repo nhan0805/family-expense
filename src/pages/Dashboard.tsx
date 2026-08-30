@@ -15,7 +15,7 @@ import {
   LineChart,
 } from 'recharts';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowDownToLine, ArrowUpFromLine, Scale } from 'lucide-react';
 import { EmptyState, PageSkeleton } from '../components/AsyncStates';
@@ -78,17 +78,17 @@ export function Dashboard() {
   const monthKey = `${selectedYear}-${selectedMonth}`;
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [dueError, setDueError] = useState('');
-  const localAvailableYears = Array.from(
+  const localAvailableYears = useMemo(() => Array.from(
     new Set([
       currentYear,
       ...transactions
         .map((transaction) => transaction.transactionDate.slice(0, 4))
         .filter((year) => /^\d{4}$/.test(year)),
     ]),
-  ).sort((a, b) => Number(b) - Number(a));
-  const actualTransactions = transactions.filter(
+  ).sort((a, b) => Number(b) - Number(a)), [currentYear, transactions]);
+  const actualTransactions = useMemo(() => transactions.filter(
     (transaction) => !transaction.deletedAt && transaction.status === 'Thực tế',
-  );
+  ), [transactions]);
   const localDueTransactions = transactions
     .filter(
       (transaction) =>
@@ -97,9 +97,9 @@ export function Dashboard() {
         transaction.transactionDate <= todayKey(),
     )
     .sort((a, b) => a.transactionDate.localeCompare(b.transactionDate));
-  const localSelectedMonthTransactions = actualTransactions.filter(
+  const localSelectedMonthTransactions = useMemo(() => actualTransactions.filter(
     (transaction) => transaction.transactionDate.startsWith(monthKey),
-  );
+  ), [actualTransactions, monthKey]);
   const localTotalIncome = localSelectedMonthTransactions
     .filter(
       (transaction) =>
@@ -114,7 +114,7 @@ export function Dashboard() {
         transaction.transactionType === 'Tạm ứng',
     )
     .reduce((total, transaction) => total + transaction.amount, 0);
-  const localByPurpose = purposes
+  const localByPurpose = useMemo(() => purposes
     .map((purpose, index) => ({
       id: purpose.id,
       name: purpose.name,
@@ -128,8 +128,8 @@ export function Dashboard() {
         ),
       fill: chartColors[index % chartColors.length] || '#155e46',
     }))
-    .filter((item) => item.value > 0);
-  const localByExpenseType = expenseTypes
+    .filter((item) => item.value > 0), [purposes, localSelectedMonthTransactions]);
+  const localByExpenseType = useMemo(() => expenseTypes
     .map((expenseType, index) => ({
       id: expenseType.id,
       name: expenseType.name,
@@ -143,7 +143,7 @@ export function Dashboard() {
         ),
       fill: chartColors[index % chartColors.length] || '#155e46',
     }))
-    .filter((item) => item.value > 0);
+    .filter((item) => item.value > 0), [expenseTypes, localSelectedMonthTransactions]);
   const localTrend = recentMonths(monthKey, 6).map((item) => ({
     m: item.label,
     v: actualTransactions
