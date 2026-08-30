@@ -2,6 +2,13 @@
 
 ## 2026-08-30
 
+### Dịch tiếp Form giao dịch và Quản lý dữ liệu
+
+- Sau thay đổi: Bổ sung bản dịch tiếng Anh cho tiêu đề, mô tả và nhãn chính của Form giao dịch và Import/Export.
+- Kỹ thuật: Cập nhật `src/pages/TransactionForm.tsx` và `src/pages/ImportExport.tsx`; không đổi dữ liệu Excel/database.
+- Kiểm thử: Chờ CI.
+- Triển khai: Chưa deploy.
+
 ### Dịch tiếp màn hình Tạo gia đình và Thành viên
 
 - Sau thay đổi: Các tiêu đề, mô tả, nút và placeholder chuyển sang tiếng Anh khi chọn EN.

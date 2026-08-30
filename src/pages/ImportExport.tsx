@@ -10,6 +10,7 @@ import {
   Upload,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useOptionalLanguage } from '../context/LanguageContext';
 import { transactionTypeLabel, type Transaction } from '../lib/domain';
 import { formatImportCheckSummary } from '../lib/importSummary';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
@@ -30,6 +31,8 @@ const relationName = (value: unknown) => {
 };
 
 export function ImportExport() {
+  const { language } = useOptionalLanguage();
+  const en = language === 'en';
   const {
     familyId,
     currentUserEmail,
@@ -405,8 +408,8 @@ export function ImportExport() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-extrabold">Quản lý dữ liệu</h2>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Excel hiện dùng template tiếng Việt để tương thích với các file hiện có.</p>
+        <h2 className="text-2xl font-extrabold">{en ? 'Data management' : 'Quản lý dữ liệu'}</h2>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{en ? 'Excel currently uses Vietnamese templates for compatibility with existing files.' : 'Excel hiện dùng template tiếng Việt để tương thích với các file hiện có.'}</p>
         <p className="mt-1 text-sm text-gray-500">
           Nhập, xuất và quản lý dữ liệu giao dịch của gia đình.
         </p>
@@ -415,10 +418,10 @@ export function ImportExport() {
       <section aria-labelledby="data-tools-title">
         <div className="mb-3 flex items-end justify-between gap-3">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#137050]">Công cụ dữ liệu</p>
-            <h3 id="data-tools-title" className="mt-1 text-lg font-extrabold">Nhập, xuất và chia sẻ</h3>
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#137050]">{en ? 'Data tools' : 'Công cụ dữ liệu'}</p>
+            <h3 id="data-tools-title" className="mt-1 text-lg font-extrabold">{en ? 'Import, export and share' : 'Nhập, xuất và chia sẻ'}</h3>
           </div>
-          <span className="hidden text-xs text-gray-500 sm:inline">Dữ liệu của gia đình</span>
+          <span className="hidden text-xs text-gray-500 sm:inline">{en ? 'Family data' : 'Dữ liệu của gia đình'}</span>
         </div>
         <div className="grid gap-4 lg:grid-cols-3">
         <DataCard

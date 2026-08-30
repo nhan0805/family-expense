@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
+import { useOptionalLanguage } from '../context/LanguageContext';
 import {
   canDeleteTransaction,
   findDuplicates,
@@ -80,6 +81,8 @@ function getSpeechRecognition() {
   return speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition;
 }
 export function TransactionForm() {
+  const { language } = useOptionalLanguage();
+  const en = language === 'en';
   const { askConfirm, notify } = useFeedback();
   const queryClient = useQueryClient();
   const { id } = useParams();
@@ -477,7 +480,7 @@ export function TransactionForm() {
   return (
     <div className="mx-auto max-w-3xl space-y-5">
       <div>
-        <p className="text-sm text-gray-500">Giao dịch</p>
+        <p className="text-sm text-gray-500">{en ? 'Transaction' : 'Giao dịch'}</p>
         <h2 className="text-2xl font-extrabold">
           {id ? 'Sửa giao dịch' : 'Thêm giao dịch'}
         </h2>
@@ -487,13 +490,13 @@ export function TransactionForm() {
         onSubmit={handleSubmit(onSubmit)}
       >
           <p className="text-xs text-gray-500 md:col-span-3">
-            Các trường có <span className="font-bold text-red-600">*</span> là
+            {en ? 'Fields marked with ' : 'Các trường có '}<span className="font-bold text-red-600">*</span>{en ? ' are required.' : ' là bắt buộc.'}
             bắt buộc.
           </p>
-          <div className="md:col-span-3"><h3 className="font-bold">Thông tin chính</h3><p className="text-xs text-gray-500">Nhập các thông tin cần thiết để ghi nhận giao dịch.</p></div>
+          <div className="md:col-span-3"><h3 className="font-bold">{en ? 'Basic information' : 'Thông tin chính'}</h3><p className="text-xs text-gray-500">{en ? 'Enter the information needed to record this transaction.' : 'Nhập các thông tin cần thiết để ghi nhận giao dịch.'}</p></div>
           <div className="md:col-span-3">
             <label className="label flex items-center gap-2" htmlFor="transaction-description">
-              <span>Nội dung <span className="text-red-600" aria-hidden="true">*</span></span>
+              <span>{en ? 'Description' : 'Nội dung'} <span className="text-red-600" aria-hidden="true">*</span></span>
               <AiBadge {...aiFieldProps('description')} />
             </label>
             <div className="flex items-stretch gap-2">
@@ -587,7 +590,7 @@ export function TransactionForm() {
               <option value="Thu nhập">Tiền vào</option>
             </select>
           </Field>
-          <div className="mt-1 border-t border-black/10 pt-4 dark:border-white/10 md:col-span-3"><h3 className="font-bold">Phân loại</h3><p className="text-xs text-gray-500">Giúp Dashboard và báo cáo tổng hợp chính xác.</p></div>
+          <div className="mt-1 border-t border-black/10 pt-4 dark:border-white/10 md:col-span-3"><h3 className="font-bold">{en ? 'Classification' : 'Phân loại'}</h3><p className="text-xs text-gray-500">{en ? 'Helps keep the dashboard and reports accurate.' : 'Giúp Dashboard và báo cáo tổng hợp chính xác.'}</p></div>
           <Field
             label="Phương thức thanh toán"
             required
