@@ -2,6 +2,13 @@
 
 ## 2026-08-30
 
+### Sửa db-security bỏ qua migration dịch chuyển dữ liệu Excel legacy
+
+- Sau thay đổi: Loại migration phụ thuộc 2.083 giao dịch Excel khỏi database rỗng dùng cho structural test; không thay đổi production database.
+- Kỹ thuật: Cập nhật `.github/workflows/ci.yml`.
+- Kiểm thử: Chờ CI xác nhận.
+- Triển khai: Chưa deploy.
+
 ### Đổi chart thu nhập và chi tiêu 6 tháng sang dạng cột
 ### Sửa CI bỏ qua migration dữ liệu Excel phụ thuộc Auth user
 
