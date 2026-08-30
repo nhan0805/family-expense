@@ -2,6 +2,13 @@
 
 ## 2026-08-30
 
+### Căn đều chiều rộng khung chọn giao diện và ngôn ngữ
+
+- Sau thay đổi: Hai khung chọn có cùng chiều rộng, icon/label căn thẳng hàng và không tràn trên sidebar hẹp.
+- Kỹ thuật: Cập nhật `src/components/ThemeSelect.tsx`; không đổi dữ liệu hay API.
+- Kiểm thử: TypeScript/CI.
+- Triển khai: Chờ merge và Cloudflare Pages deploy.
+
 ### Hoàn thiện bản dịch giao diện Dashboard, Giao dịch và bộ chọn ngôn ngữ
 
 - Sau thay đổi: Dashboard và màn hình Giao dịch có nhãn, trạng thái và bộ lọc tiếng Anh khi chọn EN; bổ sung icon địa cầu và label Ngôn ngữ cho bộ chọn VI/EN, giữ responsive mobile.
