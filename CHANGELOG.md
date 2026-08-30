@@ -2,6 +2,13 @@
 
 ## 2026-08-30
 
+### Dịch tiếp màn hình Tạo gia đình và Thành viên
+
+- Sau thay đổi: Các tiêu đề, mô tả, nút và placeholder chuyển sang tiếng Anh khi chọn EN.
+- Kỹ thuật: Cập nhật `src/pages/CreateFamily.tsx` và `src/pages/Members.tsx`; không thay đổi dữ liệu/API.
+- Kiểm thử: Chờ CI.
+- Triển khai: Chưa deploy.
+
 ### Căn đều chiều rộng khung chọn giao diện và ngôn ngữ
 
 - Sau thay đổi: Hai khung chọn có cùng chiều rộng, icon/label căn thẳng hàng và không tràn trên sidebar hẹp.

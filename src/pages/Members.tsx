@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Pencil, Trash2, UserPlus, X } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useOptionalLanguage } from '../context/LanguageContext';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { EmptyState, Skeleton } from '../components/AsyncStates';
 
@@ -27,6 +28,8 @@ const friendlyError = (message: string) => {
 };
 
 export function Members() {
+  const { language } = useOptionalLanguage();
+  const en = language === 'en';
   const {
     familyId,
     familyName,
@@ -207,7 +210,7 @@ export function Members() {
               onChange={(event) => setFamilyNameInput(event.target.value)}
             />
             <button className="btn-primary shrink-0" disabled={busy}>
-              Lưu
+              {en ? 'Save' : 'Lưu'}
             </button>
             <button
               type="button"
@@ -238,7 +241,7 @@ export function Members() {
           </div>
         )}
         <p className="mt-1 text-sm text-gray-500">
-          Thành viên dùng chung dữ liệu giao dịch và báo cáo của gia đình.
+              {en ? 'Family members share the family transactions and reports.' : 'Thành viên dùng chung dữ liệu giao dịch và báo cáo của gia đình.'}
         </p>
       </div>
       {message && (
@@ -257,10 +260,10 @@ export function Members() {
           <div className="sm:col-span-2">
             <h3 className="flex items-center gap-2 font-bold">
               <UserPlus size={20} />
-              Thêm thành viên
+              {en ? 'Add member' : 'Thêm thành viên'}
             </h3>
             <p className="mt-1 text-xs text-gray-500">
-              Email phải đăng ký tài khoản Family Expense trước khi được thêm.
+              {en ? 'The email must have a Family Expense account before it can be added.' : 'Email phải đăng ký tài khoản Family Expense trước khi được thêm.'}
             </p>
           </div>
           <label>
@@ -274,23 +277,23 @@ export function Members() {
             />
           </label>
           <label>
-            <span className="label">Tên hiển thị</span>
+            <span className="label">{en ? 'Display name' : 'Tên hiển thị'}</span>
             <input
               className="field"
               maxLength={100}
               value={displayName}
               onChange={(event) => setDisplayName(event.target.value)}
-              placeholder="Không bắt buộc"
+              placeholder={en ? 'Optional' : 'Không bắt buộc'}
             />
           </label>
           <button className="btn-primary sm:col-span-2" disabled={busy}>
-            {busy ? 'Đang thêm…' : 'Thêm vào gia đình'}
+            {busy ? (en ? 'Adding…' : 'Đang thêm…') : (en ? 'Add to family' : 'Thêm vào gia đình')}
           </button>
         </form>
       )}
       <div className="card overflow-hidden">
         <div className="border-b border-black/10 p-5 dark:border-white/10">
-          <h3 className="font-bold">Danh sách thành viên ({members.length})</h3>
+          <h3 className="font-bold">{en ? 'Member list' : 'Danh sách thành viên'} ({members.length})</h3>
         </div>
         <div className="divide-y divide-black/10 dark:divide-white/10" aria-busy={loadingMembers}>
           {loadingMembers ? <div className="space-y-4 p-5" role="status" aria-label="Đang tải thành viên"><span className="sr-only">Đang tải thành viên…</span>{Array.from({ length: 2 }, (_, index) => <div className="flex items-center justify-between gap-4" key={index}><div className="flex-1 space-y-2"><Skeleton className="h-5 w-40"/><Skeleton className="h-4 w-56 max-w-full"/></div><Skeleton className="h-10 w-20"/></div>)}</div> : members.map((member) => (
