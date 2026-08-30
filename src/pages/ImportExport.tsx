@@ -8,17 +8,11 @@ import {
   FileSpreadsheet,
   Upload,
 } from 'lucide-react';
-import * as XLSX from 'xlsx';
 import { useApp } from '../context/AppContext';
 import { transactionTypeLabel, type Transaction } from '../lib/domain';
 import { formatImportCheckSummary } from '../lib/importSummary';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
-import {
-  createTemplate,
-  parseTemplate,
-  type TemplateError,
-  type TemplateRow,
-} from '../lib/templateImport';
+import type { TemplateError, TemplateRow } from '../lib/templateImport';
 
 type ExportRow = Record<string, unknown>;
 type FilePickerWindow = Window & {
@@ -54,6 +48,7 @@ export function ImportExport() {
     setTemplateBusy(true);
     setMessage('Đang tạo template…');
     try {
+      const { createTemplate } = await import('../lib/templateImport');
       const data = await createTemplate(purposes, expenseTypes, paymentMethods);
       const blob = new Blob([data as BlobPart], {
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -89,6 +84,7 @@ export function ImportExport() {
     setCheckingFile(true);
     setMessage('Đang kiểm tra file…');
     try {
+      const { parseTemplate } = await import('../lib/templateImport');
       let duplicateTransactions = transactions;
       if (isSupabaseConfigured && familyId) {
         duplicateTransactions = [];
@@ -269,6 +265,7 @@ export function ImportExport() {
     setExporting(true);
     setExportMessage('Đang chuẩn bị dữ liệu…');
     try {
+      const XLSX = await import('xlsx');
       const cloudRows =
         isSupabaseConfigured && familyId ? await loadAllTransactions() : [];
       const rows = cloudRows.length

@@ -1,5 +1,15 @@
 # Nhật ký thay đổi Family Expense
 
+## 2026-08-30
+
+### Refactor component, bổ sung coverage và tối ưu bundle
+
+- Trước thay đổi: `Transactions.tsx` chứa cả phần render từng dòng giao dịch; test chưa có lệnh coverage; `ImportExport` tải tĩnh thư viện Excel và build tạo chunk dùng chung lớn.
+- Sau thay đổi: Tách `TransactionRow`, thêm 3 regression tests và `pnpm test:coverage`; parser/template/export Excel được tải theo thao tác; cấu hình manual chunks cho vendor dependencies.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`, thêm `src/components/TransactionRow.tsx` và test, cập nhật `src/pages/ImportExport.tsx`, `src/test/setup.ts`, `vite.config.ts`, `package.json`, `pnpm-lock.yaml`, `.gitignore`. Không thay đổi database/API.
+- Kiểm thử: 16 test files / 53 tests đạt; coverage `src` đạt 52.24% statements, 65.99% branches; lint, typecheck và build đạt. Build còn cảnh báo riêng cho chunk ExcelJS deferred khoảng 937 KB.
+- Triển khai: Chờ PR, CI và Cloudflare Pages Git deployment vào production.
+
 ## 2026-08-29
 
 ### Cập nhật handoff sau khi kiểm tra workflow Supabase
