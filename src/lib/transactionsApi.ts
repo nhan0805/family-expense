@@ -131,6 +131,8 @@ export type DashboardSummary = {
   totalExpense: number;
   byPurpose: Array<{ name: string; value: number }>;
   byExpenseType: Array<{ name: string; value: number }>;
+  incomeByPurpose: Array<{ name: string; value: number }>;
+  incomeByExpenseType: Array<{ name: string; value: number }>;
   trend: Array<{ m: string; v: number }>;
   recentTransactions: Transaction[];
   dueTransactions: Transaction[];
@@ -165,6 +167,8 @@ export async function fetchDashboardSummary(
       name: item.name,
       value: Number(item.value),
     })),
+    incomeByPurpose: (result.incomeByPurpose || []).map((item) => ({ name: item.name, value: Number(item.value) })),
+    incomeByExpenseType: (result.incomeByExpenseType || []).map((item) => ({ name: item.name, value: Number(item.value) })),
     trend: (result.trend || []).map((item) => ({
       m: item.m,
       v: Number(item.v),
