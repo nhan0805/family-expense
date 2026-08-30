@@ -411,7 +411,15 @@ export function ImportExport() {
         </p>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-3">
+      <section aria-labelledby="data-tools-title">
+        <div className="mb-3 flex items-end justify-between gap-3">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#137050]">Công cụ dữ liệu</p>
+            <h3 id="data-tools-title" className="mt-1 text-lg font-extrabold">Nhập, xuất và chia sẻ</h3>
+          </div>
+          <span className="hidden text-xs text-gray-500 sm:inline">Dữ liệu của gia đình</span>
+        </div>
+        <div className="grid gap-4 lg:grid-cols-3">
         <DataCard
           icon={<FileSpreadsheet size={24} />}
           title="Tải template"
@@ -477,24 +485,28 @@ export function ImportExport() {
             </p>
           )}
         </DataCard>
-      </div>
+        </div>
+      </section>
 
       <section className="card overflow-hidden">
-        <div className="flex items-start gap-3 border-b border-black/10 p-5 dark:border-white/10">
+        <div className="flex items-start gap-3 border-b border-black/10 bg-[#fbfdfb] p-4 dark:border-white/10 dark:bg-white/[0.02] sm:p-5">
           <span className="rounded-xl bg-[#e3f2e9] p-3 text-[#145c43] dark:bg-emerald-950/50 dark:text-emerald-300">
             <Upload size={24} />
           </span>
           <div>
-            <h3 className="font-bold">Import giao dịch</h3>
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="font-bold">Import giao dịch</h3>
+              <span className="rounded-full bg-[#e3f2e9] px-2 py-0.5 text-[11px] font-bold text-[#145c43] dark:bg-emerald-950/60 dark:text-emerald-200">An toàn · cần xác nhận</span>
+            </div>
             <p className="mt-1 text-sm text-gray-500">
               Chọn file .xlsx được tải từ ứng dụng. Dữ liệu chỉ được ghi sau khi
               bạn kiểm tra và xác nhận.
             </p>
           </div>
         </div>
-        <div className="space-y-4 p-5">
+        <div className="space-y-4 p-4 sm:p-5">
           <div
-            className="flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#b8c9bf] bg-[#f7faf7] px-5 py-8 text-center transition hover:border-[#145c43] hover:bg-[#eef5f0] dark:bg-white/5"
+            className="flex min-h-56 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#b8c9bf] bg-[#f7faf7] px-5 py-7 text-center transition hover:border-[#145c43] hover:bg-[#eef5f0] dark:bg-white/5"
             onDragOver={(event) => {
               event.preventDefault();
               event.dataTransfer.dropEffect = 'copy';
@@ -657,15 +669,15 @@ function DataCard({
       ? 'bg-[#e3f2e9] text-[#145c43] dark:bg-emerald-950/50 dark:text-emerald-300'
       : 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300';
   return (
-    <section className="card flex flex-col p-5">
+    <section className="card flex min-h-[250px] flex-col p-4 sm:p-5">
       <div className="flex items-start gap-3">
         <span className={`rounded-xl p-3 ${iconClass}`}>{icon}</span>
         <div>
-          <h3 className="font-bold">{title}</h3>
-          <p className="mt-1 text-sm text-gray-500">{description}</p>
+          <h3 className="text-lg font-extrabold">{title}</h3>
+          <p className="mt-1 line-clamp-3 text-sm leading-6 text-gray-500">{description}</p>
         </div>
       </div>
-      <div className="mt-5">{children}</div>
+      <div className="mt-auto pt-5">{children}</div>
     </section>
   );
 }

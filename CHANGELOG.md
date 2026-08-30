@@ -2,6 +2,37 @@
 
 ## 2026-08-30
 
+### Bổ sung nút khôi phục giao dịch trong thùng rác mobile
+
+- Trước thay đổi: Trên mobile, mỗi giao dịch trong thùng rác chỉ có nút xóa vĩnh viễn; nút khôi phục chỉ xuất hiện ở chế độ desktop.
+- Sau thay đổi: Mỗi giao dịch trong thùng rác mobile có nút “Khôi phục” riêng, dùng cùng luồng xác nhận và persistence hiện có.
+- Kỹ thuật: Cập nhật `src/components/TransactionRow.tsx`; không thay đổi database/API.
+- Kiểm thử: Đã rà soát bằng test/lint/typecheck/build trước đó; cần chạy lại sau thay đổi.
+- Triển khai: Chưa deploy.
+
+### Đồng bộ bộ lọc loại giao dịch từ KPI
+
+- Sau thay đổi: Trang Giao dịch đọc `transactionType` từ URL, giúp KPI Tổng chi chỉ mở Tiền ra và KPI Tổng thu chỉ mở Tiền vào theo tháng/năm đã chọn.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx` và `src/pages/Transactions.test.ts`; không thay đổi database/API.
+- Kiểm thử: Sẽ chạy test, lint, typecheck và build.
+- Triển khai: Chưa deploy.
+
+### Sửa assertion pgTAP cho kiểm thử foreign key
+
+- Trước thay đổi: `db-security` dừng trước khi chạy test vì gọi hàm `has_constraint()` không có trong pgTAP của Supabase CLI.
+- Sau thay đổi: Kiểm tra bốn composite foreign key tenant bằng `pg_constraint` và `ok()` của pgTAP.
+- Kỹ thuật: Cập nhật `supabase/tests/tenant_security.sql`.
+- Kiểm thử: Chờ chạy lại `db-security` trên GitHub Actions.
+- Triển khai: Chờ required checks và Cloudflare Pages production deployment sau khi merge.
+
+### Sửa CI cho kiểm thử DB/RLS không phụ thuộc dữ liệu Excel
+
+- Trước thay đổi: Job `db-security` vẫn áp dụng migration dịch chuyển ngày dữ liệu Excel, khiến structural test thất bại trên database rỗng vì migration yêu cầu 2.083 dòng dữ liệu lịch sử.
+- Sau thay đổi: CI loại cả migration seed Excel và migration dịch chuyển dữ liệu phụ thuộc user trước khi khởi động Supabase local; migration production không bị sửa.
+- Kỹ thuật: Cập nhật `.github/workflows/ci.yml`.
+- Kiểm thử: Đã xác nhận nguyên nhân qua log job GitHub; chờ chạy lại `db-security` sau khi push.
+- Triển khai: Chờ required checks và Cloudflare Pages production deployment sau khi merge.
+
 ### Gửi danh sách giao dịch qua email bằng Brevo
 
 - Trước thay đổi: Trang Quản lý dữ liệu chỉ cho tải file Excel về thiết bị, chưa có luồng gửi danh sách giao dịch qua email.

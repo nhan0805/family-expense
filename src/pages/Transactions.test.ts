@@ -4,6 +4,7 @@ import {
   compareTransactions,
   filterAndSortTransactions,
   getInitialTransactionPeriod,
+  getInitialTransactionType,
   getTransactionListTone,
 } from './Transactions';
 
@@ -21,6 +22,11 @@ const transaction = (id: string, transactionDate: string): Transaction => ({
 });
 
 describe('sắp xếp giao dịch theo ngày', () => {
+  it('đọc đúng bộ lọc loại giao dịch từ URL KPI', () => {
+    expect(getInitialTransactionType('Chi tiêu')).toBe('Chi tiêu');
+    expect(getInitialTransactionType('Thu nhập')).toBe('Thu nhập');
+    expect(getInitialTransactionType('không hợp lệ')).toBe('');
+  });
   it('mặc định lọc theo tháng và năm hiện tại khi URL không truyền kỳ', () => {
     expect(
       getInitialTransactionPeriod(null, null, new Date(2026, 7, 26)),
