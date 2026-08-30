@@ -2,6 +2,14 @@
 
 ## 2026-08-30
 
+### Sửa assertion pgTAP cho kiểm thử foreign key
+
+- Trước thay đổi: `db-security` dừng trước khi chạy test vì gọi hàm `has_constraint()` không có trong pgTAP của Supabase CLI.
+- Sau thay đổi: Kiểm tra bốn composite foreign key tenant bằng `pg_constraint` và `ok()` của pgTAP.
+- Kỹ thuật: Cập nhật `supabase/tests/tenant_security.sql`.
+- Kiểm thử: Chờ chạy lại `db-security` trên GitHub Actions.
+- Triển khai: Chờ required checks và Cloudflare Pages production deployment sau khi merge.
+
 ### Sửa CI cho kiểm thử DB/RLS không phụ thuộc dữ liệu Excel
 
 - Trước thay đổi: Job `db-security` vẫn áp dụng migration dịch chuyển ngày dữ liệu Excel, khiến structural test thất bại trên database rỗng vì migration yêu cầu 2.083 dòng dữ liệu lịch sử.
