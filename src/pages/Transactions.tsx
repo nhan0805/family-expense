@@ -21,6 +21,7 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
+import { useOptionalLanguage } from '../context/LanguageContext';
 import {
   canDeleteTransaction,
   formatVnd,
@@ -203,6 +204,8 @@ export const filterAndSortTransactions = (
 };
 
 export function Transactions() {
+  const { language } = useOptionalLanguage();
+  const en = language === 'en';
   const { askConfirm, notify } = useFeedback();
   const queryClient = useQueryClient();
   const {
@@ -676,7 +679,7 @@ export function Transactions() {
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-2xl font-extrabold">Giao dịch</h2>
+        <h2 className="text-2xl font-extrabold">{en ? 'Transactions' : 'Giao dịch'}</h2>
       </div>
       <section
         aria-label="Giá trị ròng theo bộ lọc"
@@ -688,7 +691,7 @@ export function Transactions() {
           </span>
           <div className="min-w-0">
             <p className="whitespace-nowrap text-sm font-semibold text-gray-600 dark:text-gray-300">
-              Giá trị ròng theo bộ lọc
+              {en ? 'Net value for current filters' : 'Giá trị ròng theo bộ lọc'}
             </p>
           </div>
         </div>
@@ -697,9 +700,9 @@ export function Transactions() {
             {formatVnd(Math.abs(filteredTotal))}
           </p>
           <p className="mt-1 text-xs font-medium text-gray-500 dark:text-gray-400">
-            {netIsPositive ? 'Chi nhiều hơn' : netIsNegative ? 'Thu nhiều hơn' : 'Cân bằng'} · {isSupabaseConfigured
-              ? `${Number(transactionQuery.data?.pages[0]?.totalCount || 0).toLocaleString('vi-VN')} giao dịch phù hợp`
-              : `${rows.length.toLocaleString('vi-VN')} giao dịch phù hợp`}
+            {netIsPositive ? (en ? 'Spent more' : 'Chi nhiều hơn') : netIsNegative ? (en ? 'Earned more' : 'Thu nhiều hơn') : (en ? 'Balanced' : 'Cân bằng')} · {isSupabaseConfigured
+              ? `${Number(transactionQuery.data?.pages[0]?.totalCount || 0).toLocaleString('vi-VN')} ${en ? 'matching transactions' : 'giao dịch phù hợp'}`
+              : `${rows.length.toLocaleString('vi-VN')} ${en ? 'matching transactions' : 'giao dịch phù hợp'}`}
           </p>
         </div>
       </section>
@@ -716,14 +719,14 @@ export function Transactions() {
           role="alert"
           className="rounded-xl bg-red-50 p-3 text-sm text-red-700"
         >
-          Không thể tải danh sách giao dịch. Vui lòng thử lại.
+          {en ? 'Could not load transactions. Please try again.' : 'Không thể tải danh sách giao dịch. Vui lòng thử lại.'}
         </p>
       )}
 
-      <section aria-label="Tìm kiếm và bộ lọc giao dịch" className="order-1 card space-y-3 p-3 shadow-sm">
+      <section aria-label={en ? 'Transaction search and filters' : 'Tìm kiếm và bộ lọc giao dịch'} className="order-1 card space-y-3 p-3 shadow-sm">
         <div className="grid gap-3 md:grid-cols-[minmax(240px,1fr)_220px]">
           <label className="col-span-2 md:col-span-1">
-            <span className="label">Tìm kiếm</span>
+            <span className="label">{en ? 'Search' : 'Tìm kiếm'}</span>
             <div className="relative">
               <Search
                 className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"
@@ -734,22 +737,22 @@ export function Transactions() {
                 style={{ paddingLeft: '2.75rem' }}
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Tìm nội dung hoặc ghi chú…"
+                placeholder={en ? 'Search description or notes…' : 'Tìm nội dung hoặc ghi chú…'}
               />
             </div>
           </label>
           <label>
-            <span className="label">Sắp xếp</span>
+            <span className="label">{en ? 'Sort' : 'Sắp xếp'}</span>
             <select
               className="field"
               value={sort}
               onChange={(event) => setSort(event.target.value as SortOption)}
             >
-              <option value="date-desc">Ngày mới nhất</option>
-              <option value="date-asc">Ngày cũ nhất</option>
-              <option value="amount-desc">Số tiền cao nhất</option>
-              <option value="amount-asc">Số tiền thấp nhất</option>
-              <option value="description-asc">Nội dung A–Z</option>
+              <option value="date-desc">{en ? 'Newest date' : 'Ngày mới nhất'}</option>
+              <option value="date-asc">{en ? 'Oldest date' : 'Ngày cũ nhất'}</option>
+              <option value="amount-desc">{en ? 'Highest amount' : 'Số tiền cao nhất'}</option>
+              <option value="amount-asc">{en ? 'Lowest amount' : 'Số tiền thấp nhất'}</option>
+              <option value="description-asc">{en ? 'Description A–Z' : 'Nội dung A–Z'}</option>
             </select>
           </label>
         </div>
@@ -758,7 +761,7 @@ export function Transactions() {
 
         <details className="group border-t border-black/10 pt-3 dark:border-white/10">
           <summary className="btn-secondary flex cursor-pointer list-none items-center justify-between gap-3 [&::-webkit-details-marker]:hidden">
-            <span>Bộ lọc chi tiết{activeFilterCount ? ` (${activeFilterCount})` : ''}</span>
+            <span>{en ? 'Detailed filters' : 'Bộ lọc chi tiết'}{activeFilterCount ? ` (${activeFilterCount})` : ''}</span>
             <ChevronDown className="shrink-0 transition-transform group-open:rotate-180" size={18} aria-hidden="true" />
           </summary>
           <div className="ui-enter mt-3 grid gap-3 md:grid-cols-4">

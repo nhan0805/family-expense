@@ -2,7 +2,23 @@
 
 ## 2026-08-30
 
+### Cho phép nhấn cột xu hướng để mở giao dịch
+
+- Nhấn cột Thu nhập/Chi tiêu theo tháng sẽ mở màn hình Giao dịch với bộ lọc tương ứng.
+- Cập nhật `src/pages/Dashboard.tsx`; kiểm thử và triển khai đang thực hiện.
+
+<<<<<<< HEAD
 ### Mở giao dịch khi nhấn chart xu hướng
+=======
+### Hoàn thiện bản dịch giao diện Dashboard, Giao dịch và bộ chọn ngôn ngữ
+
+- Sau thay đổi: Dashboard và màn hình Giao dịch có nhãn, trạng thái và bộ lọc tiếng Anh khi chọn EN; bổ sung icon địa cầu và label Ngôn ngữ cho bộ chọn VI/EN, giữ responsive mobile.
+- Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx`, `src/pages/Transactions.tsx`, `src/components/ThemeSelect.tsx`; không thay đổi database, enum nghiệp vụ hoặc cột Excel.
+- Kiểm thử: TypeScript pass; lint/test bị giới hạn do worktree mới không tải được dependency từ npm registry.
+- Triển khai: Chưa deploy.
+
+### Sửa db-security bỏ qua migration dịch chuyển dữ liệu Excel legacy
+>>>>>>> origin/main
 
 - Nhấn cột Thu nhập hoặc Chi tiêu theo từng tháng sẽ mở màn hình Giao dịch với bộ lọc loại giao dịch, tháng và năm tương ứng.
 - Cập nhật `src/pages/Dashboard.tsx`; không thay đổi dữ liệu/API.
