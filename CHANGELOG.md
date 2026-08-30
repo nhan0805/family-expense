@@ -2,6 +2,12 @@
 
 ## 2026-08-30
 
+### Sửa chiều tính chart Chi ròng thực tế
+
+- Chart xu hướng tính theo công thức “Thu nhập − Chi tiêu”; thu nhập hiển thị dương và chi tiêu làm giảm giá trị ròng.
+- Cập nhật `src/pages/Dashboard.tsx` và `src/lib/transactionsApi.ts`; không thay đổi schema/database.
+- Kiểm thử và triển khai: Đang thực hiện.
+
 ### Đổi tên chart xu hướng thành Chi ròng thực tế
 
 - Giữ dữ liệu 6 tháng gần nhất và đổi tiêu đề chart cuối thành “Chi ròng thực tế” để đồng bộ với nội dung số liệu.

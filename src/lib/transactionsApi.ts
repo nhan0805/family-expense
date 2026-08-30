@@ -171,7 +171,7 @@ export async function fetchDashboardSummary(
     incomeByExpenseType: (result.incomeByExpenseType || []).map((item) => ({ name: item.name, value: Number(item.value) })),
     trend: (result.trend || []).map((item) => ({
       m: item.m,
-      v: Number(item.v),
+      v: -Number(item.v),
     })),
     recentTransactions: (result.recentTransactions || []).map(
       mapTransactionRow,

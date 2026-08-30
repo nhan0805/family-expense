@@ -150,7 +150,7 @@ export function Dashboard() {
       .filter((transaction) => transaction.transactionDate.startsWith(item.key))
       .reduce(
         (total, transaction) =>
-          total +
+          total -
           getNetExpense(transaction.amount, transaction.transactionType),
         0,
       ),
