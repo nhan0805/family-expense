@@ -678,7 +678,7 @@ export function Transactions() {
         className={`order-2 flex flex-col gap-3 rounded-2xl border p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between ${netIsPositive ? 'border-rose-200 bg-gradient-to-br from-rose-50 to-white dark:border-rose-900/40 dark:from-rose-950/40 dark:to-white/5' : netIsNegative ? 'border-emerald-200 bg-gradient-to-br from-emerald-50 to-white dark:border-emerald-900/40 dark:from-emerald-950/40 dark:to-white/5' : 'border-slate-200 bg-gradient-to-br from-slate-50 to-white dark:border-slate-700 dark:from-slate-900/40 dark:to-white/5'}`}
       >
         <div className="flex min-w-0 items-center gap-3">
-          <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-[#155e46] text-white shadow-sm">
+          <span className={`grid size-11 shrink-0 place-items-center rounded-xl text-white shadow-sm ${netIsPositive ? 'bg-rose-700' : netIsNegative ? 'bg-emerald-700' : 'bg-slate-600'}`}>
             <WalletCards size={22} aria-hidden="true" />
           </span>
           <div className="min-w-0">

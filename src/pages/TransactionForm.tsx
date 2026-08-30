@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, ChevronDown, LoaderCircle, Mic, MicOff, Sparkles, Trash2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import {
@@ -18,6 +18,12 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { fetchTransaction } from '../lib/transactionsApi';
 import { PageSkeleton } from '../components/AsyncStates';
 import { useFeedback } from '../components/Feedback';
+import { userFacingError } from '../lib/errorRecovery';
+import {
+  clearTransactionDraft,
+  readTransactionDraft,
+  saveTransactionDraft,
+} from '../lib/transactionDraft';
 
 type AiFieldKey =
   | 'transactionDate'
@@ -87,6 +93,7 @@ export function TransactionForm() {
     familyId,
     currentUserId,
     currentUserRole,
+    online = true,
   } = useApp();
   const localExisting = transactions.find((t) => t.id === id);
   const existingQuery = useQuery({
@@ -113,7 +120,7 @@ export function TransactionForm() {
     reset,
     setValue,
     watch,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<TransactionFormInput, unknown, TransactionInput>({
     resolver: zodResolver(transactionSchema),
     defaultValues: existing ?? {
@@ -136,6 +143,23 @@ export function TransactionForm() {
       aiGenerated: false,
     },
   });
+  const watchedForm = useWatch({ control });
+  const [draftRestored, setDraftRestored] = useState(false);
+  const draftCheckedFamilyRef = useRef('');
+  useEffect(() => {
+    if (id || !familyId || draftCheckedFamilyRef.current === familyId) return;
+    draftCheckedFamilyRef.current = familyId;
+    const draft = readTransactionDraft(familyId);
+    setDraftRestored(false);
+    if (draft) {
+      reset(draft);
+      setDraftRestored(true);
+    }
+  }, [familyId, id, reset]);
+  useEffect(() => {
+    if (id || !familyId || !isDirty) return;
+    saveTransactionDraft(familyId, watchedForm);
+  }, [familyId, id, isDirty, watchedForm]);
   useEffect(() => {
     if (existing) {
       reset(existing);
@@ -167,6 +191,10 @@ export function TransactionForm() {
   }, [id, setValue, transactionDate]);
   useEffect(() => () => speechRecognitionRef.current?.stop(), []);
   const onSubmit = async (data: TransactionInput) => {
+    if (isSupabaseConfigured && !online) {
+      setSaveError('Đang mất kết nối mạng. Bản nháp đã được lưu trên thiết bị; hãy kết nối lại rồi thử lại.');
+      return;
+    }
     let duplicateCount = 0;
     if (isSupabaseConfigured) {
       let duplicateQuery = supabase
@@ -179,9 +207,7 @@ export function TransactionForm() {
       if (id) duplicateQuery = duplicateQuery.neq('id', id);
       const { data: candidates, error: duplicateError } = await duplicateQuery;
       if (duplicateError) {
-        setSaveError(
-          `Không thể kiểm tra giao dịch trùng: ${duplicateError.message}`,
-        );
+        setSaveError(userFacingError(duplicateError, 'Không thể kiểm tra giao dịch trùng.'));
         return;
       }
       duplicateCount = findDuplicates(
@@ -237,9 +263,7 @@ export function TransactionForm() {
             .single();
       if (result.error || !result.data) {
         setSaveBusy(false);
-        setSaveError(
-          result.error?.message || 'Không thể lưu giao dịch vào database.',
-        );
+        setSaveError(userFacingError(result.error, 'Không thể lưu giao dịch vào database.'));
         return;
       }
       await queryClient.invalidateQueries({
@@ -258,6 +282,8 @@ export function TransactionForm() {
           : [{ ...data, id: crypto.randomUUID() }, ...items],
       );
     }
+    if (isSupabaseConfigured) clearTransactionDraft(familyId);
+    else if (!id) clearTransactionDraft(familyId);
     setSaveBusy(false);
     notify(id ? 'Đã cập nhật giao dịch.' : 'Đã thêm giao dịch mới.');
     nav('/giao-dich');
@@ -271,6 +297,10 @@ export function TransactionForm() {
       return;
     }
     if (!await askConfirm({ title: 'Xóa giao dịch?', description: `Giao dịch “${existing.description}” sẽ được chuyển vào trạng thái đã xóa.`, confirmLabel: 'Xóa giao dịch', danger: true })) return;
+    if (isSupabaseConfigured && !online) {
+      setSaveError('Đang mất kết nối mạng. Hãy kết nối lại rồi thử lại thao tác xóa.');
+      return;
+    }
     const deletedAt = new Date().toISOString();
     setDeleteBusy(true);
     setSaveError('');
@@ -286,10 +316,7 @@ export function TransactionForm() {
       const { data, error } = await query.select('id').maybeSingle();
       if (error || !data) {
         setDeleteBusy(false);
-        setSaveError(
-          error?.message ||
-            'Không thể xóa giao dịch. Bạn có thể không có quyền hoặc giao dịch đã bị xóa.',
-        );
+        setSaveError(userFacingError(error, 'Không thể xóa giao dịch. Bạn có thể không có quyền hoặc giao dịch đã bị xóa.'));
         return;
       }
     }
@@ -318,6 +345,10 @@ export function TransactionForm() {
   };
   const parseAi = async () => {
     if (!description.trim()) return;
+    if (!online) {
+      notify('Đang mất kết nối mạng. Hãy kết nối lại trước khi dùng AI.', 'error');
+      return;
+    }
     setAiBusy(true);
     setAiCompleted(false);
     setAiResult(null);
@@ -615,14 +646,8 @@ export function TransactionForm() {
               <textarea className="field min-h-24" {...register('note')} />
             </Field>
           </div>}
-          {saveError && (
-            <p
-              role="alert"
-              className="md:col-span-3 rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300"
-            >
-              {saveError}
-            </p>
-          )}
+          {draftRestored && <p role="status" className="md:col-span-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-950/30 dark:text-amber-100">Đã khôi phục bản nháp trên thiết bị. Hãy kiểm tra trước khi lưu.</p>}
+          {saveError && <div role="alert" className="md:col-span-3 rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300"><p>{saveError}</p><button type="button" className="btn-secondary mt-2" disabled={saveBusy || deleteBusy || (isSupabaseConfigured && !online)} onClick={() => void handleSubmit(onSubmit)()}>Thử lại</button></div>}
           <div className="flex items-center gap-2 md:col-span-3">
             <button
               className="btn-primary h-12 min-w-0 flex-1 whitespace-nowrap px-3 md:flex-none md:px-4"

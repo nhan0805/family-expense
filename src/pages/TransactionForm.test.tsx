@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { FeedbackProvider } from '../components/Feedback';
 import { useApp } from '../context/AppContext';
+import { clearTransactionDraft } from '../lib/transactionDraft';
 import { TransactionForm } from './TransactionForm';
 
 vi.mock('../context/AppContext', () => ({ useApp: vi.fn() }));
@@ -20,7 +21,11 @@ const appValue = {
 } as unknown as ReturnType<typeof useApp>;
 
 describe('Form giao dịch hợp nhất', () => {
-  afterEach(() => { cleanup(); vi.clearAllMocks(); });
+  afterEach(() => {
+    cleanup();
+    clearTransactionDraft('f1');
+    vi.clearAllMocks();
+  });
 
   it('dùng chung ô nội dung cho nhập tay và gợi ý AI', () => {
     vi.mocked(useApp).mockReturnValue(appValue);

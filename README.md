@@ -63,6 +63,18 @@ supabase functions deploy parse-expense
 
 Function kiểm tra JWT, membership theo `family_id`, validate request/response bằng Zod, giới hạn 10 request/user/phút, không retry vô hạn khi 429 và không log token/API key. Log chỉ chứa metadata tối thiểu. Gemini Free Tier có quota/rate limit và dữ liệu có thể được dùng để cải thiện sản phẩm theo chính sách Google; xem pricing hiện hành trước khi đưa dữ liệu thật vào.
 
+## Gửi danh sách giao dịch qua Brevo
+
+Tính năng **Quản lý dữ liệu → Gửi danh sách giao dịch** gọi Edge Function `email-transactions`. Function chỉ cho owner gửi danh sách giao dịch chưa bị xóa tới email tài khoản hiện tại, tự query theo `family_id` và gửi file CSV qua Brevo. Không đặt API key Brevo ở frontend.
+
+Tạo API key có quyền gửi trong Brevo, xác minh sender email, rồi lưu secret ở Supabase:
+
+```bash
+supabase secrets set BREVO_API_KEY=<key> BREVO_SENDER_EMAIL=<sender-email> BREVO_SENDER_NAME="Family Expense"
+```
+
+Production deploy `email-transactions` chạy qua workflow Supabase sau khi thay đổi được merge vào `main`. Gói Brevo Free có giới hạn gửi hằng ngày; kiểm tra quota và lỗi provider trước khi dùng dữ liệu thật.
+
 ## Chạy local
 
 ```bash
@@ -148,7 +160,7 @@ Thêm route fallback SPA về `index.html` nếu cấu hình Pages yêu cầu. T
 - Owner quản lý thành viên/danh mục; member xem và nhập/sửa giao dịch theo RLS. Mời thành viên nâng cao và UI recurring transaction để sau MVP.
 - Accounts chỉ lưu tên, tổ chức và bốn số cuối, không lưu toàn bộ số tài khoản/thẻ.
 - Storage chưa dùng; dark mode nền tảng CSS đã chuẩn bị nhưng chưa có nút chuyển theme.
-- Trước production, nên thêm integration test RLS trên môi trường Supabase test, monitoring và quy trình backup.
+- CI chạy pgTAP kiểm tra schema/RLS trên Supabase local; drill backup/restore staging theo [`docs/OPERATIONS_RUNBOOK.md`](docs/OPERATIONS_RUNBOOK.md) trước mỗi thay đổi database lớn.
 
 ## Bảo mật
 

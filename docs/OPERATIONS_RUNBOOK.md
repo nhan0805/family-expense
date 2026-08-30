@@ -12,7 +12,21 @@ Chạy `pnpm test:e2e` định kỳ với `E2E_EMAIL`/`E2E_PASSWORD` của tài 
 
 ## Backup/restore drill
 
-Mỗi quý tạo backup Supabase staging, khôi phục vào project tạm, chạy migration và smoke test, rồi ghi thời gian khôi phục (RTO) và mức mất dữ liệu (RPO). Không thử nghiệm trên production.
+Mỗi quý chạy drill trên dữ liệu staging đã ẩn danh, khôi phục vào một database/project tạm đã áp dụng cùng migrations, chạy kiểm tra DB/RLS và smoke test, rồi ghi RTO/RPO. Không thử nghiệm trên production và không restore vào target có dữ liệu cần giữ.
+
+Script tự kiểm tra target khác source, yêu cầu xác nhận rõ ràng và không tự xóa schema/data target. Cần chuẩn bị `psql`, Supabase CLI, `STAGING_DB_URL`, `RESTORE_DB_URL` và quyền đọc source/ghi target:
+
+```bash
+CONFIRM_STAGING_RESTORE=YES \
+STAGING_DB_URL='<staging-db-url>' \
+RESTORE_DB_URL='<empty-restore-db-url>' \
+BACKUP_DIR='./artifacts/backup-drill-YYYY-MM-DD' \
+scripts/staging-backup-restore.sh
+```
+
+Nếu không đặt `BACKUP_DIR`, file dump chỉ tồn tại trong thư mục tạm và bị xóa sau khi xác minh. Script đối chiếu số dòng giao dịch chưa xóa, chạy lại pgTAP DB/RLS tests trên target và in RTO; RPO được ghi nhận tại thời điểm tạo dump. Sau đó chạy smoke test ứng dụng bằng tài khoản test riêng và lưu kết quả vào ticket/runbook. Không in URL chứa mật khẩu vào log.
+
+Target phải là project/database tạm đã áp dụng migrations và có sẵn các auth fixture tương ứng với dữ liệu staging (các khóa ngoại public trỏ tới `auth.users`). Script sẽ dừng trước khi restore nếu target đã có family hoặc transaction.
 
 ## Retention
 

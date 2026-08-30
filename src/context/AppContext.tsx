@@ -17,6 +17,7 @@ import {
   purposeNames,
 } from '../lib/domain';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
+import { userFacingError } from '../lib/errorRecovery';
 
 type AppState = {
   familyId: string;
@@ -33,6 +34,7 @@ type AppState = {
   loading: boolean;
   authenticated: boolean;
   error: string | null;
+  reloadApp: () => void;
   addCatalogItem: (kind: CatalogKind, name: string) => Promise<string | null>;
   updateCatalogItem: (
     kind: CatalogKind,
@@ -79,14 +81,32 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(isSupabaseConfigured);
   const [authenticated, setAuthenticated] = useState(!isSupabaseConfigured);
   const [error, setError] = useState<string | null>(null);
+  const [online, setOnline] = useState(() => navigator.onLine);
+  const [reloadNonce, setReloadNonce] = useState(0);
+  const reloadApp = useCallback(() => setReloadNonce((value) => value + 1), []);
+
+  useEffect(() => {
+    const updateOnline = () => {
+      const nextOnline = navigator.onLine;
+      setOnline(nextOnline);
+      if (nextOnline) setReloadNonce((value) => value + 1);
+    };
+    window.addEventListener('online', updateOnline);
+    window.addEventListener('offline', updateOnline);
+    return () => {
+      window.removeEventListener('online', updateOnline);
+      window.removeEventListener('offline', updateOnline);
+    };
+  }, []);
 
   useEffect(() => {
     if (!isSupabaseConfigured) return;
     let active = true;
     const load = async (showInitialLoading = false) => {
-      if (showInitialLoading) setLoading(true);
-      setError(null);
-      const { data: sessionData } = await supabase.auth.getSession();
+      try {
+        if (showInitialLoading) setLoading(true);
+        setError(null);
+        const { data: sessionData } = await supabase.auth.getSession();
       const user = sessionData.session?.user;
       if (!user) {
         if (active) {
@@ -104,6 +124,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setCurrentUserEmail(user.email || 'Tài khoản đã đăng nhập');
         setCurrentUserId(user.id);
       }
+      if (!navigator.onLine) {
+        setLoading(false);
+        setError('Không có kết nối mạng. Hãy kết nối Internet rồi thử lại.');
+        return;
+      }
       const { data: membership, error: membershipError } = await supabase
         .from('family_members')
         .select('family_id, role, families(name)')
@@ -116,7 +141,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
           setLoading(false);
           setFamilyId('');
           setCurrentUserRole(null);
-          setError(membershipError ? membershipError.message : null);
+          setError(
+            membershipError
+              ? userFacingError(membershipError, 'Không thể tải gia đình hiện tại.')
+              : null,
+          );
         }
         return;
       }
@@ -146,7 +175,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (firstError) {
         if (active) {
           setLoading(false);
-          setError(firstError.message);
+          setError(userFacingError(firstError, 'Không thể tải danh mục gia đình.'));
         }
         return;
       }
@@ -159,8 +188,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setCurrentUserRole(membership.role as 'owner' | 'member');
       setPurposes((purposeResult.data || []) as CatalogItem[]);
       setExpenseTypes((typeResult.data || []) as CatalogItem[]);
-      setPaymentMethods((methodResult.data || []) as CatalogItem[]);
-      setLoading(false);
+        setPaymentMethods((methodResult.data || []) as CatalogItem[]);
+        setLoading(false);
+      } catch (loadError) {
+        if (!active) return;
+        setLoading(false);
+        setError(userFacingError(loadError, 'Không thể tải dữ liệu gia đình.'));
+      }
     };
     void load(true);
     const { data: listener } = supabase.auth.onAuthStateChange((event) => {
@@ -173,7 +207,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       active = false;
       listener.subscription.unsubscribe();
     };
-  }, []);
+  }, [reloadNonce]);
 
   useEffect(() => {
     if (!isSupabaseConfigured) return;
@@ -438,7 +472,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       paymentMethods,
       transactions,
       setTransactions,
-      online: navigator.onLine,
+      online,
+      reloadApp,
       loading,
       authenticated,
       error,
@@ -460,6 +495,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       expenseTypes,
       paymentMethods,
       transactions,
+      online,
+      reloadApp,
       loading,
       authenticated,
       error,
