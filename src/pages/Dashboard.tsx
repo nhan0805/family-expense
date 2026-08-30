@@ -62,6 +62,7 @@ const adjacentMonth = (year: string, month: string, offset: number) => {
 };
 
 export function Dashboard() {
+  const navigate = useNavigate();
   const { language } = useOptionalLanguage();
   const en = language === 'en';
   const {
@@ -395,7 +396,7 @@ export function Dashboard() {
           <div className="h-64 min-w-0 max-w-full">
             <ResponsiveContainer>
               <BarChart data={incomeTrend} margin={{ top: 24, right: 18, left: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="m" /><YAxis tickFormatter={(value) => formatCompactVnd(Number(value)).replace(' ₫', '')} width={48} /><Tooltip formatter={(value) => formatVnd(Number(value))} /><Bar name={en ? 'Income' : 'Thu nhập'} dataKey="v" fill="#155e46" radius={[8, 8, 0, 0]}><LabelList dataKey="v" position="top" formatter={(value) => formatCompactVnd(Number(value)).replace(' ₫', '')} /></Bar>
+                <CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="m" /><YAxis tickFormatter={(value) => formatCompactVnd(Number(value)).replace(' ₫', '')} width={48} /><Tooltip formatter={(value) => formatVnd(Number(value))} /><Bar name={en ? 'Income' : 'Thu nhập'} dataKey="v" fill="#155e46" radius={[8, 8, 0, 0]} cursor="pointer" onClick={(_, index) => { const period = trendMonths[index]; if (period) navigate(`/giao-dich?transactionType=Thu nhập&month=${period.key.slice(5, 7)}&year=${period.key.slice(0, 4)}`); }}><LabelList dataKey="v" position="top" formatter={(value) => formatCompactVnd(Number(value)).replace(' ₫', '')} /></Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -405,7 +406,7 @@ export function Dashboard() {
           <div className="h-64 min-w-0 max-w-full">
             <ResponsiveContainer>
               <BarChart data={expenseTrend} margin={{ top: 24, right: 18, left: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="m" /><YAxis tickFormatter={(value) => formatCompactVnd(Number(value)).replace(' ₫', '')} width={48} /><Tooltip formatter={(value) => formatVnd(Number(value))} /><Bar name={en ? 'Expenses' : 'Chi tiêu'} dataKey="v" fill="#d96f4f" radius={[8, 8, 0, 0]}><LabelList dataKey="v" position="top" formatter={(value) => formatCompactVnd(Number(value)).replace(' ₫', '')} /></Bar>
+                <CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="m" /><YAxis tickFormatter={(value) => formatCompactVnd(Number(value)).replace(' ₫', '')} width={48} /><Tooltip formatter={(value) => formatVnd(Number(value))} /><Bar name={en ? 'Expenses' : 'Chi tiêu'} dataKey="v" fill="#d96f4f" radius={[8, 8, 0, 0]} cursor="pointer" onClick={(_, index) => { const period = trendMonths[index]; if (period) navigate(`/giao-dich?transactionType=Chi tiêu&month=${period.key.slice(5, 7)}&year=${period.key.slice(0, 4)}`); }}><LabelList dataKey="v" position="top" formatter={(value) => formatCompactVnd(Number(value)).replace(' ₫', '')} /></Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
