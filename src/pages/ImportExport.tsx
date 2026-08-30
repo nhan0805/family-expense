@@ -411,7 +411,7 @@ export function ImportExport() {
         <h2 className="text-2xl font-extrabold">{en ? 'Data management' : 'Quản lý dữ liệu'}</h2>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{en ? 'Excel currently uses Vietnamese templates for compatibility with existing files.' : 'Excel hiện dùng template tiếng Việt để tương thích với các file hiện có.'}</p>
         <p className="mt-1 text-sm text-gray-500">
-          Nhập, xuất và quản lý dữ liệu giao dịch của gia đình.
+          {en ? 'Import, export and manage family transaction data.' : 'Nhập, xuất và quản lý dữ liệu giao dịch của gia đình.'}
         </p>
       </div>
 
@@ -426,8 +426,8 @@ export function ImportExport() {
         <div className="grid gap-4 lg:grid-cols-3">
         <DataCard
           icon={<FileSpreadsheet size={24} />}
-          title="Tải template"
-          description="Tạo file Excel có sẵn danh mục và quy tắc kiểm tra dữ liệu cho 1.000 dòng."
+          title={en ? 'Download template' : 'Tải template'}
+          description={en ? 'Create an Excel file with categories and validation rules for 1,000 rows.' : 'Tạo file Excel có sẵn danh mục và quy tắc kiểm tra dữ liệu cho 1.000 dòng.'}
           tone="green"
         >
           <button
@@ -436,14 +436,14 @@ export function ImportExport() {
             onClick={() => void downloadTemplate()}
           >
             <Download size={18} />
-            {templateBusy ? 'Đang tạo…' : 'Tải template Excel'}
+            {templateBusy ? (en ? 'Creating…' : 'Đang tạo…') : (en ? 'Download Excel template' : 'Tải template Excel')}
           </button>
         </DataCard>
 
         <DataCard
           icon={<Database size={24} />}
-          title="Xuất dữ liệu"
-          description="Xuất tất cả dữ liệu từ hệ thống."
+          title={en ? 'Export data' : 'Xuất dữ liệu'}
+          description={en ? 'Export all data from the system.' : 'Xuất tất cả dữ liệu từ hệ thống.'}
           tone="blue"
         >
           <button
@@ -452,7 +452,7 @@ export function ImportExport() {
             onClick={exportData}
           >
             <Download size={18} />
-            {exporting ? 'Đang tạo file…' : 'Tải file Excel đầy đủ'}
+            {exporting ? (en ? 'Creating file…' : 'Đang tạo file…') : (en ? 'Download complete Excel file' : 'Tải file Excel đầy đủ')}
           </button>
           {exportMessage && (
             <p className="mt-3 text-sm" role="status" aria-live="polite">
@@ -463,12 +463,12 @@ export function ImportExport() {
 
         <DataCard
           icon={<Mail size={24} />}
-          title="Gửi qua email"
-          description="Gửi toàn bộ giao dịch đang hoạt động tới email tài khoản của chủ gia đình."
+          title={en ? 'Send by email' : 'Gửi qua email'}
+          description={en ? 'Send all active transactions to the family owner’s account email.' : 'Gửi toàn bộ giao dịch đang hoạt động tới email tài khoản của chủ gia đình.'}
           tone="blue"
         >
           <p className="text-sm text-gray-500">
-            Người nhận: {currentUserEmail || 'chưa xác định'}
+            {en ? 'Recipient: ' : 'Người nhận: '}{currentUserEmail || (en ? 'unknown' : 'chưa xác định')}
           </p>
           <button
             className="btn-secondary mt-3 inline-flex items-center justify-center gap-2"
@@ -481,7 +481,7 @@ export function ImportExport() {
             onClick={() => void sendTransactionsByEmail()}
           >
             <Mail size={18} />
-            {emailBusy ? 'Đang gửi…' : 'Gửi danh sách giao dịch'}
+            {emailBusy ? (en ? 'Sending…' : 'Đang gửi…') : (en ? 'Send transaction list' : 'Gửi danh sách giao dịch')}
           </button>
           {emailMessage && (
             <p className="mt-3 text-sm" role="status" aria-live="polite">
@@ -499,8 +499,8 @@ export function ImportExport() {
           </span>
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="font-bold">Import giao dịch</h3>
-              <span className="rounded-full bg-[#e3f2e9] px-2 py-0.5 text-[11px] font-bold text-[#145c43] dark:bg-emerald-950/60 dark:text-emerald-200">An toàn · cần xác nhận</span>
+              <h3 className="font-bold">{en ? 'Import transactions' : 'Import giao dịch'}</h3>
+              <span className="rounded-full bg-[#e3f2e9] px-2 py-0.5 text-[11px] font-bold text-[#145c43] dark:bg-emerald-950/60 dark:text-emerald-200">{en ? 'Safe · confirmation required' : 'An toàn · cần xác nhận'}</span>
             </div>
             <p className="mt-1 text-sm text-gray-500">
               Chọn file .xlsx được tải từ ứng dụng. Dữ liệu chỉ được ghi sau khi
@@ -522,17 +522,16 @@ export function ImportExport() {
             }}
           >
             <FileCheck2 className="text-[#145c43]" size={30} />
-            <span className="font-semibold">Chọn file Excel để kiểm tra</span>
+            <span className="font-semibold">{en ? 'Choose an Excel file to validate' : 'Chọn file Excel để kiểm tra'}</span>
             <span className="text-xs text-gray-500">
-              Chỉ nhận file .xlsx đúng template Family Expense; có thể kéo file
-              từ Finder và thả vào đây
+              {en ? 'Only .xlsx files using the Family Expense template are accepted; you can drag a file here.' : 'Chỉ nhận file .xlsx đúng template Family Expense; có thể kéo file từ Finder và thả vào đây'}
             </span>
             <button
               type="button"
               className="rounded-lg border border-[#b8c9bf] bg-white px-4 py-2 text-sm font-semibold dark:bg-[#17251f]"
               onClick={() => void chooseImportFile()}
             >
-              Chọn file Excel
+              {en ? 'Choose Excel file' : 'Chọn file Excel'}
             </button>
             <input
               ref={fileInputRef}
