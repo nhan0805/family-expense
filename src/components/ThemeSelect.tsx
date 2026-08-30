@@ -13,7 +13,7 @@ export function ThemeSelect({ compact = false }: { compact?: boolean }) {
     </span>
     <select
       className={`rounded-lg border border-black/10 bg-transparent px-2 py-1.5 text-sm dark:border-white/15 ${compact ? 'max-w-28' : 'w-full'}`}
-      aria-label="Chế độ giao diện"
+      aria-label={language === 'en' ? 'Appearance mode' : 'Chế độ giao diện'}
       value={preference}
       onChange={(event) => setPreference(event.target.value as ThemePreference)}
     >
