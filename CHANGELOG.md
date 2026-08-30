@@ -6,6 +6,10 @@
 
 - Sau thay đổi: Loại migration phụ thuộc 2.083 giao dịch Excel khỏi database rỗng dùng cho structural test; không thay đổi production database.
 - Kỹ thuật: Cập nhật `.github/workflows/ci.yml`.
+### Sửa pgTAP assertion foreign key cho db-security
+
+- Sau thay đổi: Dùng `pg_constraint` và `ok()` thay cho `has_constraint()` không tồn tại trong pgTAP CI.
+- Kỹ thuật: Cập nhật `supabase/tests/tenant_security.sql`; không đổi production database.
 - Kiểm thử: Chờ CI xác nhận.
 - Triển khai: Chưa deploy.
 
