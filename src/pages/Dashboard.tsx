@@ -20,6 +20,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowDownToLine, ArrowUpFromLine, Scale } from 'lucide-react';
 import { EmptyState, PageSkeleton } from '../components/AsyncStates';
 import { useApp } from '../context/AppContext';
+import { useOptionalLanguage } from '../context/LanguageContext';
 import { formatCompactVnd, formatVnd, getNetExpense } from '../lib/domain';
 import { isSupabaseConfigured } from '../lib/supabase';
 import {
@@ -60,6 +61,8 @@ const adjacentMonth = (year: string, month: string, offset: number) => {
 };
 
 export function Dashboard() {
+  const { language } = useOptionalLanguage();
+  const en = language === 'en';
   const {
     familyId,
     transactions,
@@ -233,25 +236,25 @@ export function Dashboard() {
   };
 
   if (isSupabaseConfigured && summaryQuery.isPending)
-    return <PageSkeleton label="Đang tải tổng quan tài chính…" />;
+    return <PageSkeleton label={en ? 'Loading financial overview…' : 'Đang tải tổng quan tài chính…'} />;
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm text-gray-500">
-            Tháng {selectedMonth}/{selectedYear}
+            {en ? 'Month' : 'Tháng'} {selectedMonth}/{selectedYear}
           </p>
-          <h2 className="text-2xl font-extrabold">Tổng quan tài chính</h2>
+          <h2 className="text-2xl font-extrabold">{en ? 'Financial overview' : 'Tổng quan tài chính'}</h2>
         </div>
         <div className="grid w-full grid-cols-[minmax(0,1fr)_92px_84px] items-end gap-2 sm:flex sm:w-auto">
           <div className="flex h-[46px] min-w-0 rounded-xl bg-black/5 p-1 dark:bg-white/5">
-            <button type="button" aria-label="Tháng trước" className={`min-w-0 flex-1 whitespace-nowrap rounded-lg px-2 py-2 text-sm font-semibold sm:px-3 ${selectedYear === previousCurrentPeriod.year && selectedMonth === previousCurrentPeriod.month ? 'bg-white shadow-sm dark:bg-white/10' : 'hover:bg-white dark:hover:bg-white/10'}`} onClick={() => { setSelectedYear(previousCurrentPeriod.year); setSelectedMonth(previousCurrentPeriod.month); }}><span className="sm:hidden">Trước</span><span className="hidden sm:inline">Tháng trước</span></button>
-            <button type="button" aria-label="Tháng này" className={`min-w-0 flex-1 whitespace-nowrap rounded-lg px-2 py-2 text-sm font-semibold sm:px-3 ${selectedYear === currentYear && selectedMonth === currentMonthNumber ? 'bg-white shadow-sm dark:bg-white/10' : 'hover:bg-white dark:hover:bg-white/10'}`} onClick={() => { setSelectedMonth(currentMonthNumber || '01'); setSelectedYear(currentYear || ''); }}><span className="sm:hidden">Nay</span><span className="hidden sm:inline">Tháng này</span></button>
+            <button type="button" aria-label={en ? 'Previous month' : 'Tháng trước'} className={`min-w-0 flex-1 whitespace-nowrap rounded-lg px-2 py-2 text-sm font-semibold sm:px-3 ${selectedYear === previousCurrentPeriod.year && selectedMonth === previousCurrentPeriod.month ? 'bg-white shadow-sm dark:bg-white/10' : 'hover:bg-white dark:hover:bg-white/10'}`} onClick={() => { setSelectedYear(previousCurrentPeriod.year); setSelectedMonth(previousCurrentPeriod.month); }}><span className="sm:hidden">{en ? 'Prev' : 'Trước'}</span><span className="hidden sm:inline">{en ? 'Previous month' : 'Tháng trước'}</span></button>
+            <button type="button" aria-label={en ? 'Current month' : 'Tháng này'} className={`min-w-0 flex-1 whitespace-nowrap rounded-lg px-2 py-2 text-sm font-semibold sm:px-3 ${selectedYear === currentYear && selectedMonth === currentMonthNumber ? 'bg-white shadow-sm dark:bg-white/10' : 'hover:bg-white dark:hover:bg-white/10'}`} onClick={() => { setSelectedMonth(currentMonthNumber || '01'); setSelectedYear(currentYear || ''); }}><span className="sm:hidden">{en ? 'Now' : 'Nay'}</span><span className="hidden sm:inline">{en ? 'This month' : 'Tháng này'}</span></button>
           </div>
           <div>
             <label className="label" htmlFor="dashboard-month">
-              Tháng
+              {en ? 'Month' : 'Tháng'}
             </label>
             <select
               id="dashboard-month"
@@ -268,7 +271,7 @@ export function Dashboard() {
           </div>
           <div>
             <label className="label" htmlFor="dashboard-year">
-              Năm
+              {en ? 'Year' : 'Năm'}
             </label>
             <select
               id="dashboard-year"
@@ -290,14 +293,14 @@ export function Dashboard() {
           role="alert"
           className="rounded-xl bg-red-50 p-3 text-sm text-red-700"
         >
-          Không thể tải dữ liệu Dashboard. Vui lòng thử lại.
+          {en ? 'Could not load dashboard data. Please try again.' : 'Không thể tải dữ liệu Dashboard. Vui lòng thử lại.'}
         </p>
       )}
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <Kpi label="Tổng thu" value={totalIncome} icon={ArrowDownToLine} tone="emerald" to={`/giao-dich?transactionType=Thu nhập&month=${selectedMonth}&year=${selectedYear}`} />
-        <Kpi label="Tổng chi" value={totalExpense} icon={ArrowUpFromLine} tone="rose" to={`/giao-dich?transactionType=Chi tiêu&month=${selectedMonth}&year=${selectedYear}`} />
+        <Kpi label={en ? 'Total income' : 'Tổng thu'} value={totalIncome} icon={ArrowDownToLine} tone="emerald" to={`/giao-dich?transactionType=Thu nhập&month=${selectedMonth}&year=${selectedYear}`} />
+        <Kpi label={en ? 'Total expenses' : 'Tổng chi'} value={totalExpense} icon={ArrowUpFromLine} tone="rose" to={`/giao-dich?transactionType=Chi tiêu&month=${selectedMonth}&year=${selectedYear}`} />
         <Kpi
-          label="Giá trị ròng"
+          label={en ? 'Net value' : 'Giá trị ròng'}
           value={totalIncome - totalExpense}
           icon={Scale}
           tone={totalIncome > totalExpense ? 'emerald' : totalIncome < totalExpense ? 'rose' : 'sky'}
@@ -307,10 +310,9 @@ export function Dashboard() {
       {dueTransactions.length > 0 && (
         <section className="card border-amber-300 p-4 dark:border-amber-700">
           <div className="mb-3">
-            <h3 className="font-bold">Giao dịch dự kiến đến hạn</h3>
+            <h3 className="font-bold">{en ? 'Due planned transactions' : 'Giao dịch dự kiến đến hạn'}</h3>
             <p className="text-sm text-gray-500">
-              {dueTransactions.length} giao dịch cần xác nhận trước khi tính vào
-              báo cáo thực tế.
+              {en ? `${dueTransactions.length} transaction(s) need confirmation before they are included in actual reports.` : `${dueTransactions.length} giao dịch cần xác nhận trước khi tính vào báo cáo thực tế.`}
             </p>
           </div>
           {dueError && (
@@ -332,7 +334,7 @@ export function Dashboard() {
                     {transaction.description}
                   </p>
                   <p className="text-xs text-gray-500">
-                    Đến hạn{' '}
+                    {en ? 'Due ' : 'Đến hạn '}
                     {new Date(
                       `${transaction.transactionDate}T00:00:00`,
                     ).toLocaleDateString('vi-VN')}{' '}
@@ -351,8 +353,8 @@ export function Dashboard() {
                   }
                 >
                   {confirmingId === transaction.id
-                    ? 'Đang xác nhận…'
-                    : 'Xác nhận thực tế'}
+                    ? (en ? 'Confirming…' : 'Đang xác nhận…')
+                    : (en ? 'Confirm actual' : 'Xác nhận thực tế')}
                 </button>
               </div>
             ))}
@@ -362,46 +364,46 @@ export function Dashboard() {
       <section className="grid gap-4 lg:grid-cols-2">
         <div className="card min-w-0 overflow-hidden p-4">
           <ExpensePieChart
-            title="Chi tiêu theo mục đích"
+            title={en ? 'Expenses by purpose' : 'Chi tiêu theo mục đích'}
             data={byPurpose}
             to={`/giao-dich?month=${selectedMonth}&year=${selectedYear}`}
           />
         </div>
         <div className="card min-w-0 overflow-hidden p-4">
-          <ExpensePieChart title="Thu nhập theo mục đích" data={incomeByPurpose} to={`/giao-dich?transactionType=Thu nhập&month=${selectedMonth}&year=${selectedYear}`} filterKey="purposeId" />
+          <ExpensePieChart title={en ? 'Income by purpose' : 'Thu nhập theo mục đích'} data={incomeByPurpose} to={`/giao-dich?transactionType=Thu nhập&month=${selectedMonth}&year=${selectedYear}`} filterKey="purposeId" />
         </div>
         <div className="card min-w-0 overflow-hidden p-4">
-          <ExpenseBarChart title="Thu nhập theo danh mục" data={incomeByExpenseType} to={`/giao-dich?transactionType=Thu nhập&month=${selectedMonth}&year=${selectedYear}`} filterKey="expenseTypeId" />
+          <ExpenseBarChart title={en ? 'Income by category' : 'Thu nhập theo danh mục'} data={incomeByExpenseType} to={`/giao-dich?transactionType=Thu nhập&month=${selectedMonth}&year=${selectedYear}`} filterKey="expenseTypeId" />
         </div>
         <div className="card min-w-0 overflow-hidden p-4">
           <ExpenseBarChart
-            title="Chi tiêu theo danh mục"
+            title={en ? 'Expenses by category' : 'Chi tiêu theo danh mục'}
             data={byExpenseType}
             to={`/giao-dich?month=${selectedMonth}&year=${selectedYear}`}
           />
         </div>
         <div className="card min-w-0 overflow-hidden p-4">
-          <h3 className="font-bold">Thu nhập 6 tháng gần nhất</h3>
+          <h3 className="font-bold">{en ? 'Income over the last 6 months' : 'Thu nhập 6 tháng gần nhất'}</h3>
           <div className="h-64 min-w-0 max-w-full">
             <ResponsiveContainer>
               <BarChart data={incomeTrend} margin={{ top: 24, right: 18, left: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="m" /><YAxis tickFormatter={(value) => formatCompactVnd(Number(value)).replace(' ₫', '')} width={48} /><Tooltip formatter={(value) => formatVnd(Number(value))} /><Bar name="Thu nhập" dataKey="v" fill="#155e46" radius={[8, 8, 0, 0]}><LabelList dataKey="v" position="top" formatter={(value) => formatCompactVnd(Number(value)).replace(' ₫', '')} /></Bar>
+                <CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="m" /><YAxis tickFormatter={(value) => formatCompactVnd(Number(value)).replace(' ₫', '')} width={48} /><Tooltip formatter={(value) => formatVnd(Number(value))} /><Bar name={en ? 'Income' : 'Thu nhập'} dataKey="v" fill="#155e46" radius={[8, 8, 0, 0]}><LabelList dataKey="v" position="top" formatter={(value) => formatCompactVnd(Number(value)).replace(' ₫', '')} /></Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
         <div className="card min-w-0 overflow-hidden p-4">
-          <h3 className="font-bold">Chi tiêu 6 tháng gần nhất</h3>
+          <h3 className="font-bold">{en ? 'Expenses over the last 6 months' : 'Chi tiêu 6 tháng gần nhất'}</h3>
           <div className="h-64 min-w-0 max-w-full">
             <ResponsiveContainer>
               <BarChart data={expenseTrend} margin={{ top: 24, right: 18, left: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="m" /><YAxis tickFormatter={(value) => formatCompactVnd(Number(value)).replace(' ₫', '')} width={48} /><Tooltip formatter={(value) => formatVnd(Number(value))} /><Bar name="Chi tiêu" dataKey="v" fill="#d96f4f" radius={[8, 8, 0, 0]}><LabelList dataKey="v" position="top" formatter={(value) => formatCompactVnd(Number(value)).replace(' ₫', '')} /></Bar>
+                <CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="m" /><YAxis tickFormatter={(value) => formatCompactVnd(Number(value)).replace(' ₫', '')} width={48} /><Tooltip formatter={(value) => formatVnd(Number(value))} /><Bar name={en ? 'Expenses' : 'Chi tiêu'} dataKey="v" fill="#d96f4f" radius={[8, 8, 0, 0]}><LabelList dataKey="v" position="top" formatter={(value) => formatCompactVnd(Number(value)).replace(' ₫', '')} /></Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
         <div className="card min-w-0 overflow-hidden p-4 lg:col-span-2">
-          <h3 className="font-bold">Chi ròng thực tế</h3>
+          <h3 className="font-bold">{en ? 'Actual net spending' : 'Chi ròng thực tế'}</h3>
           <div className="h-64 min-w-0 max-w-full">
             <ResponsiveContainer>
               <LineChart data={trend} margin={{ top: 24, right: 18, left: 8 }}>

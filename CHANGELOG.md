@@ -2,6 +2,13 @@
 
 ## 2026-08-30
 
+### Hoàn thiện bản dịch giao diện Dashboard, Giao dịch và bộ chọn ngôn ngữ
+
+- Sau thay đổi: Dashboard và màn hình Giao dịch có nhãn, trạng thái và bộ lọc tiếng Anh khi chọn EN; bổ sung icon địa cầu và label Ngôn ngữ cho bộ chọn VI/EN, giữ responsive mobile.
+- Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx`, `src/pages/Transactions.tsx`, `src/components/ThemeSelect.tsx`; không thay đổi database, enum nghiệp vụ hoặc cột Excel.
+- Kiểm thử: TypeScript pass; lint/test bị giới hạn do worktree mới không tải được dependency từ npm registry.
+- Triển khai: Chưa deploy.
+
 ### Sửa db-security bỏ qua migration dịch chuyển dữ liệu Excel legacy
 
 - Sau thay đổi: Loại migration phụ thuộc 2.083 giao dịch Excel khỏi database rỗng dùng cho structural test; không thay đổi production database.
