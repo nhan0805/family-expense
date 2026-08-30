@@ -17,7 +17,7 @@ import {
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowDownToLine, ArrowUpFromLine, Plus, ReceiptText, Scale } from 'lucide-react';
+import { ArrowDownToLine, ArrowUpFromLine, Scale } from 'lucide-react';
 import { EmptyState, PageSkeleton } from '../components/AsyncStates';
 import { useApp } from '../context/AppContext';
 import { formatCompactVnd, formatVnd, getNetExpense } from '../lib/domain';
@@ -198,9 +198,6 @@ export function Dashboard() {
   const dueTransactions = isSupabaseConfigured
     ? summaryQuery.data?.dueTransactions || []
     : localDueTransactions;
-  const selectedMonthTransactions = isSupabaseConfigured
-    ? summaryQuery.data?.recentTransactions || []
-    : localSelectedMonthTransactions;
   const confirmDueTransaction = async (id: string, description: string) => {
     if (
       !window.confirm(
@@ -281,13 +278,14 @@ export function Dashboard() {
         </p>
       )}
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <Kpi label="Tổng thu" value={totalIncome} icon={ArrowDownToLine} tone="emerald" />
-        <Kpi label="Tổng chi" value={totalExpense} icon={ArrowUpFromLine} tone="rose" />
+        <Kpi label="Tổng thu" value={totalIncome} icon={ArrowDownToLine} tone="emerald" to={`/giao-dich?transactionType=Thu nhập&month=${selectedMonth}&year=${selectedYear}`} />
+        <Kpi label="Tổng chi" value={totalExpense} icon={ArrowUpFromLine} tone="rose" to={`/giao-dich?transactionType=Chi tiêu&month=${selectedMonth}&year=${selectedYear}`} />
         <Kpi
           label="Giá trị ròng"
           value={totalIncome - totalExpense}
           icon={Scale}
           tone={totalIncome > totalExpense ? 'emerald' : totalIncome < totalExpense ? 'rose' : 'sky'}
+          to={`/giao-dich?month=${selectedMonth}&year=${selectedYear}`}
         />
       </section>
       {dueTransactions.length > 0 && (
@@ -393,50 +391,6 @@ export function Dashboard() {
               </LineChart>
             </ResponsiveContainer>
           </div>
-        </div>
-      </section>
-      <section className="card p-4">
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="font-bold">Giao dịch thực tế trong tháng</h3>
-          <Link
-            className="text-sm font-semibold text-[#137050]"
-            to={`/giao-dich?month=${selectedMonth}&year=${selectedYear}`}
-          >
-            Xem tất cả
-          </Link>
-        </div>
-        <div className="divide-y">
-          {selectedMonthTransactions.slice(0, 5).map((transaction) => (
-            <div
-              className="flex items-center justify-between py-3"
-              key={transaction.id}
-            >
-              <div>
-                <p className="font-semibold">{transaction.description}</p>
-                <p className="text-xs text-gray-500">
-                  {new Date(
-                    `${transaction.transactionDate}T00:00:00`,
-                  ).toLocaleDateString('vi-VN')}{' '}
-                  · {transaction.transactionType}
-                </p>
-              </div>
-              <strong
-                className={
-                  transaction.transactionType === 'Hoàn tiền' ||
-                  transaction.transactionType === 'Thu nhập'
-                    ? 'text-emerald-600'
-                    : ''
-                }
-              >
-                {transaction.transactionType === 'Chi tiêu' ||
-                transaction.transactionType === 'Tạm ứng'
-                  ? '-'
-                  : '+'}
-                {formatVnd(transaction.amount)}
-              </strong>
-            </div>
-          ))}
-          {!selectedMonthTransactions.length && <EmptyState title="Chưa có giao dịch trong tháng này" description="Thêm giao dịch thực tế để bắt đầu theo dõi thu chi." icon={ReceiptText} action={<Link className="btn-primary inline-flex items-center gap-2" to="/giao-dich/moi"><Plus size={17}/>Thêm giao dịch</Link>}/>} 
         </div>
       </section>
     </div>
@@ -548,10 +502,10 @@ function ExpenseBarChart({
   );
 }
 
-function Kpi({ label, value, icon: Icon, tone }: { label: string; value: number; icon: typeof Scale; tone: 'emerald' | 'rose' | 'sky' }) {
+function Kpi({ label, value, icon: Icon, tone, to }: { label: string; value: number; icon: typeof Scale; tone: 'emerald' | 'rose' | 'sky'; to: string }) {
   const toneClass = tone === 'emerald' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300' : tone === 'rose' ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300' : 'bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300';
   return (
-    <div className="card flex min-w-0 items-start gap-3 p-4">
+    <Link to={to} className="card flex min-w-0 items-start gap-3 p-4 transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137050]" aria-label={`Mở giao dịch theo ${label}`}>
       <span className={`grid size-10 shrink-0 place-items-center rounded-xl ${toneClass}`}><Icon size={19} aria-hidden="true"/></span><div className="min-w-0 flex-1">
       <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">{label}</p>
       <p
@@ -562,6 +516,6 @@ function Kpi({ label, value, icon: Icon, tone }: { label: string; value: number;
         {formatVnd(value)}
       </p>
       </div>
-    </div>
+    </Link>
   );
 }

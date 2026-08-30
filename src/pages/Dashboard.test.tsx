@@ -77,13 +77,22 @@ describe('Dashboard', () => {
     expect(screen.getByText('Tổng chi').parentElement).toHaveTextContent(
       '250.000',
     );
-    expect(screen.getByText('Giá trị ròng').parentElement?.parentElement?.firstElementChild).toHaveClass('bg-rose-100');
-    expect(screen.getByText('Chi tháng 2')).toBeInTheDocument();
-    expect(screen.queryByText('Chi tháng 1')).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Xem tất cả' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Mở giao dịch theo Tổng thu' })).toHaveAttribute(
+      'href',
+      '/giao-dich?transactionType=Thu nhập&month=02&year=2026',
+    );
+    expect(screen.getByRole('link', { name: 'Mở giao dịch theo Tổng chi' })).toHaveAttribute(
+      'href',
+      '/giao-dich?transactionType=Chi tiêu&month=02&year=2026',
+    );
+    expect(screen.getByRole('link', { name: 'Mở giao dịch theo Giá trị ròng' })).toHaveAttribute(
       'href',
       '/giao-dich?month=02&year=2026',
     );
+    expect(screen.getByText('Giá trị ròng').parentElement?.parentElement?.firstElementChild).toHaveClass('bg-rose-100');
+    expect(screen.queryByText('Giao dịch thực tế trong tháng')).not.toBeInTheDocument();
+    expect(screen.queryByText('Chi tháng 2')).not.toBeInTheDocument();
+    expect(screen.queryByText('Chi tháng 1')).not.toBeInTheDocument();
   });
 
   it('hiển thị trạng thái trống khi tháng không có giao dịch', () => {
@@ -96,13 +105,10 @@ describe('Dashboard', () => {
     renderDashboard();
 
     expect(screen.getByText('Tổng quan tài chính')).toBeInTheDocument();
-    expect(
-      screen.getByText('Chưa có giao dịch trong tháng này'),
-    ).toBeInTheDocument();
+    expect(screen.queryByText('Giao dịch thực tế trong tháng')).not.toBeInTheDocument();
     expect(
       screen.getAllByText('Chưa có dữ liệu biểu đồ'),
     ).toHaveLength(2);
-    expect(screen.getByRole('link', { name: 'Thêm giao dịch' })).toHaveAttribute('href', '/giao-dich/moi');
   });
 
   it('cho phép xác nhận giao dịch dự kiến đã đến hạn', async () => {
