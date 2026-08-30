@@ -2,6 +2,12 @@
 
 ## 2026-08-30
 
+### Kết nối dữ liệu RPC cho chart xu hướng
+
+- Sửa lỗi hai chart Thu nhập/Chi tiêu 6 tháng hiển thị toàn số 0 do chưa gọi `fetchDashboardTrends`.
+- Cập nhật `src/pages/Dashboard.tsx`; chart nay lấy đúng dữ liệu từ RPC khi dùng Supabase.
+- Kiểm thử: 61/61 tests, typecheck và lint đạt. Triển khai: Đang thực hiện.
+
 ### Đổi chart xu hướng 6 tháng sang dạng cột
 
 - Hai chart Thu nhập và Chi tiêu 6 tháng hiển thị dạng cột bo góc, giữ màu xanh/cam và nhãn giá trị.
