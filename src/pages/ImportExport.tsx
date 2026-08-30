@@ -162,7 +162,7 @@ export function ImportExport() {
         wrongTemplate
           ? (en ? 'This file does not use the Family Expense template. Download a new template and do not rename the “Giao dịch” sheet or column headers.' : 'File không đúng template Family Expense. Hãy tải template mới từ ứng dụng và không đổi tên sheet “Giao dịch” hoặc tiêu đề cột.')
           : detail
-            ? (en ? `Could not read Excel file: ${detail}` : `Không thể đọc file Excel: ${detail}`)
+            ? `Không thể đọc file Excel: ${detail}`
             : (en ? 'Could not read the Excel file. It may be corrupted or not a valid .xlsx file.' : 'Không thể đọc file Excel. File có thể bị hỏng hoặc không phải định dạng .xlsx hợp lệ.'),
       );
       setMessage(en ? 'Validation finished, but the file has errors to resolve.' : 'Đã kiểm tra xong nhưng file có lỗi cần xử lý.');
@@ -264,19 +264,19 @@ export function ImportExport() {
       const batch = (data || []) as ExportRow[];
       allRows.push(...batch);
       setExportMessage(
-        en ? `Loading ${allRows.length.toLocaleString('vi-VN')} / ${expectedTotal.toLocaleString('vi-VN')} transactions…` : `Đang tải ${allRows.length.toLocaleString('vi-VN')} / ${expectedTotal.toLocaleString('vi-VN')} giao dịch…`,
+        `Đang tải ${allRows.length.toLocaleString('vi-VN')} / ${expectedTotal.toLocaleString('vi-VN')} giao dịch…`,
       );
     }
     if (allRows.length !== expectedTotal)
       throw new Error(
-        en ? `Incomplete data: received ${allRows.length.toLocaleString('vi-VN')} / ${expectedTotal.toLocaleString('vi-VN')} transactions. Please try again.` : `Dữ liệu chưa đầy đủ: nhận ${allRows.length.toLocaleString('vi-VN')} / ${expectedTotal.toLocaleString('vi-VN')} giao dịch. Vui lòng thử lại.`,
+        `Dữ liệu chưa đầy đủ: nhận ${allRows.length.toLocaleString('vi-VN')} / ${expectedTotal.toLocaleString('vi-VN')} giao dịch. Vui lòng thử lại.`,
       );
     return allRows;
   };
 
   const exportData = async () => {
     setExporting(true);
-    setExportMessage(en ? 'Preparing data…' : 'Đang chuẩn bị dữ liệu…');
+    setExportMessage('Đang chuẩn bị dữ liệu…');
     try {
       const XLSX = await import('xlsx');
       const cloudRows =
@@ -330,7 +330,7 @@ export function ImportExport() {
         `family-expense-${new Date().toISOString().slice(0, 10)}.xlsx`,
       );
       setExportMessage(
-        en ? `Exported ${rows.length.toLocaleString('vi-VN')} transactions with complete information.` : `Đã xuất ${rows.length.toLocaleString('vi-VN')} giao dịch với đầy đủ thông tin.`,
+        `Đã xuất ${rows.length.toLocaleString('vi-VN')} giao dịch với đầy đủ thông tin.`,
       );
     } catch (error) {
       const detail =
@@ -341,8 +341,8 @@ export function ImportExport() {
             : '';
       setExportMessage(
         detail
-          ? (en ? `Could not export Excel file: ${detail}` : `Không thể xuất file Excel: ${detail}`)
-          : (en ? 'Could not export the Excel file. Please try again or reload the page.' : 'Không thể xuất file Excel. Vui lòng thử lại hoặc tải lại trang.'),
+          ? `Không thể xuất file Excel: ${detail}`
+          : 'Không thể xuất file Excel. Vui lòng thử lại hoặc tải lại trang.',
       );
     } finally {
       setExporting(false);
@@ -351,20 +351,20 @@ export function ImportExport() {
 
   const sendTransactionsByEmail = async () => {
     if (!isSupabaseConfigured || !familyId) {
-      setEmailMessage(en ? 'Email sending requires a Supabase connection.' : 'Tính năng gửi email cần kết nối Supabase.');
+      setEmailMessage('Tính năng gửi email cần kết nối Supabase.');
       return;
     }
     if (currentUserRole !== 'owner') {
-      setEmailMessage(en ? 'Only the family owner can send the transaction list.' : 'Chỉ chủ gia đình mới có thể gửi danh sách giao dịch.');
+      setEmailMessage('Chỉ chủ gia đình mới có thể gửi danh sách giao dịch.');
       return;
     }
     if (!currentUserEmail) {
-      setEmailMessage(en ? 'The current account email could not be found.' : 'Không tìm thấy email của tài khoản hiện tại.');
+      setEmailMessage('Không tìm thấy email của tài khoản hiện tại.');
       return;
     }
 
     setEmailBusy(true);
-    setEmailMessage(en ? 'Preparing and sending transaction list…' : 'Đang chuẩn bị và gửi danh sách giao dịch…');
+    setEmailMessage('Đang chuẩn bị và gửi danh sách giao dịch…');
     try {
       const { data, error } = await supabase.functions.invoke(
         'email-transactions',
@@ -381,14 +381,14 @@ export function ImportExport() {
         }
         setEmailMessage(
           errorCode === 'NO_TRANSACTIONS'
-            ? (en ? 'There are no active transactions to send.' : 'Chưa có giao dịch đang hoạt động để gửi.')
+            ? 'Chưa có giao dịch đang hoạt động để gửi.'
             : errorCode === 'SERVER_NOT_CONFIGURED'
-              ? (en ? 'Brevo is not configured on the server.' : 'Brevo chưa được cấu hình trên máy chủ.')
+              ? 'Brevo chưa được cấu hình trên máy chủ.'
               : errorCode === 'RATE_LIMITED'
-                ? (en ? 'The email sending limit was reached. Please try again later.' : 'Đã vượt giới hạn gửi email. Vui lòng thử lại sau.')
+                ? 'Đã vượt giới hạn gửi email. Vui lòng thử lại sau.'
                 : errorCode === 'FILE_TOO_LARGE'
-                  ? (en ? 'The transaction list is too large to attach to an email.' : 'Danh sách giao dịch quá lớn để gửi kèm email.')
-                : (en ? 'Could not send email. Check the Brevo configuration or try again later.' : 'Không thể gửi email. Hãy kiểm tra cấu hình Brevo hoặc thử lại sau.'),
+                  ? 'Danh sách giao dịch quá lớn để gửi kèm email.'
+                : 'Không thể gửi email. Hãy kiểm tra cấu hình Brevo hoặc thử lại sau.',
         );
         return;
       }
@@ -396,10 +396,10 @@ export function ImportExport() {
         (data as { transactionCount?: number } | null)?.transactionCount || 0,
       );
       setEmailMessage(
-        en ? `Sent ${count.toLocaleString('vi-VN')} transactions to ${currentUserEmail}.` : `Đã gửi ${count.toLocaleString('vi-VN')} giao dịch tới ${currentUserEmail}.`,
+        `Đã gửi ${count.toLocaleString('vi-VN')} giao dịch tới ${currentUserEmail}.`,
       );
     } catch {
-      setEmailMessage(en ? 'Could not send email. Please try again later.' : 'Không thể gửi email. Vui lòng thử lại sau.');
+      setEmailMessage('Không thể gửi email. Vui lòng thử lại sau.');
     } finally {
       setEmailBusy(false);
     }
@@ -503,7 +503,8 @@ export function ImportExport() {
               <span className="rounded-full bg-[#e3f2e9] px-2 py-0.5 text-[11px] font-bold text-[#145c43] dark:bg-emerald-950/60 dark:text-emerald-200">{en ? 'Safe · confirmation required' : 'An toàn · cần xác nhận'}</span>
             </div>
             <p className="mt-1 text-sm text-gray-500">
-              {en ? 'Choose an .xlsx file downloaded from the app. Data is saved only after you review and confirm it.' : 'Chọn file .xlsx được tải từ ứng dụng. Dữ liệu chỉ được ghi sau khi bạn kiểm tra và xác nhận.'}
+              Chọn file .xlsx được tải từ ứng dụng. Dữ liệu chỉ được ghi sau khi
+              bạn kiểm tra và xác nhận.
             </p>
           </div>
         </div>
@@ -537,7 +538,7 @@ export function ImportExport() {
               className="sr-only"
               type="file"
               accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-              aria-label={en ? 'Choose Excel file to validate' : 'Chọn file Excel để kiểm tra'}
+              aria-label="Chọn file Excel để kiểm tra"
               onClick={(event) => {
                 event.currentTarget.value = '';
               }}
@@ -565,14 +566,14 @@ export function ImportExport() {
                 <div className="min-w-0">
                   <strong className="block">
                     {checkingFile
-                      ? (en ? 'Validating file…' : 'Đang kiểm tra file…')
+                      ? 'Đang kiểm tra file…'
                       : fileError
-                        ? (en ? 'Could not validate file' : 'Không thể kiểm tra file')
-                        : (en ? 'File validation result' : 'Kết quả kiểm tra file')}
+                        ? 'Không thể kiểm tra file'
+                        : 'Kết quả kiểm tra file'}
                   </strong>
                   <span className="break-words">
                     {checkingFile
-                      ? (en ? 'Please wait and do not close the page while the data is being read.' : 'Vui lòng chờ, không đóng trang trong lúc đọc dữ liệu.')
+                      ? 'Vui lòng chờ, không đóng trang trong lúc đọc dữ liệu.'
                       : fileError || message}
                   </span>
                 </div>
@@ -583,14 +584,14 @@ export function ImportExport() {
             <>
               <div className="grid grid-cols-3 gap-2">
                 <Stat
-                  label={en ? 'Valid' : 'Hợp lệ'}
+                  label="Hợp lệ"
                   value={validRows.filter((r) => !r.duplicate).length}
                 />
                 <Stat
-                  label={en ? 'Possible duplicate' : 'Có thể trùng'}
+                  label="Có thể trùng"
                   value={validRows.filter((r) => r.duplicate).length}
                 />
-                <Stat label={en ? 'Errors' : 'Lỗi'} value={importErrors.length} />
+                <Stat label="Lỗi" value={importErrors.length} />
               </div>
               {validRows.some((r) => r.duplicate) && (
                 <label className="flex items-center gap-2 text-sm">
@@ -599,18 +600,18 @@ export function ImportExport() {
                     checked={includeDuplicates}
                     onChange={(e) => setIncludeDuplicates(e.target.checked)}
                   />
-                  {en ? 'Import rows that may be duplicates anyway' : 'Vẫn import các dòng có thể trùng'}
+                  Vẫn import các dòng có thể trùng
                 </label>
               )}
               <div className="max-h-80 overflow-auto rounded-xl border">
                 <table className="w-full min-w-[700px] text-left text-sm">
                   <thead className="bg-[#eef2ed]">
                     <tr>
-                      <th className="p-2">{en ? 'Row' : 'Dòng'}</th>
-                      <th>{en ? 'Description' : 'Nội dung'}</th>
-                      <th>{en ? 'Date' : 'Ngày'}</th>
-                      <th>{en ? 'Amount' : 'Số tiền'}</th>
-                      <th>{en ? 'Result' : 'Kết quả'}</th>
+                      <th className="p-2">Dòng</th>
+                      <th>Nội dung</th>
+                      <th>Ngày</th>
+                      <th>Số tiền</th>
+                      <th>Kết quả</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -620,14 +621,14 @@ export function ImportExport() {
                         <td>{r.description}</td>
                         <td>{r.transactionDate}</td>
                         <td>{r.amount.toLocaleString('vi-VN')}</td>
-                        <td>{r.duplicate ? (en ? 'Possible duplicate' : 'Có thể trùng') : (en ? 'Valid' : 'Hợp lệ')}</td>
+                        <td>{r.duplicate ? 'Có thể trùng' : 'Hợp lệ'}</td>
                       </tr>
                     ))}
                     {importErrors.slice(0, 100).map((r) => (
                       <tr className="border-t text-red-700" key={r.rowNumber}>
                         <td className="p-2">{r.rowNumber}</td>
                         <td colSpan={3}>{r.messages.join('; ')}</td>
-                        <td>{en ? 'Error' : 'Lỗi'}</td>
+                        <td>Lỗi</td>
                       </tr>
                     ))}
                   </tbody>
@@ -642,8 +643,8 @@ export function ImportExport() {
                 onClick={() => void confirmImport()}
               >
                 {importBusy
-                  ? (en ? 'Importing…' : 'Đang import…')
-                  : `${en ? 'Confirm import' : 'Xác nhận import'} (${validRows.filter((r) => includeDuplicates || !r.duplicate).length})`}
+                  ? 'Đang import…'
+                  : `Xác nhận import (${validRows.filter((r) => includeDuplicates || !r.duplicate).length})`}
               </button>
             </>
           )}
