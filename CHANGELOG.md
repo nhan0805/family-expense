@@ -2,6 +2,13 @@
 
 ## 2026-08-30
 
+### Sửa label đè lên khung chọn giao diện/ngôn ngữ
+
+- Sau thay đổi: Cột label dùng kích thước theo nội dung, cột select giữ chiều rộng cố định nên không còn chồng lấn trên sidebar hẹp.
+- Kỹ thuật: Cập nhật `src/components/ThemeSelect.tsx`; không đổi dữ liệu/API.
+- Kiểm thử: Chờ CI.
+- Triển khai: Chưa deploy.
+
 ### Rà soát toàn bộ text hiển thị còn lại
 
 - Sau thay đổi: Dịch thêm thông báo thao tác, xác nhận, AI, accessibility label và bảng kiểm tra Import/Export theo VI/EN.
