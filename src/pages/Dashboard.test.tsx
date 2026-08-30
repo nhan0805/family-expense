@@ -73,7 +73,7 @@ describe('Dashboard', () => {
     });
 
     expect(screen.getByText('Tháng 02/2026')).toBeInTheDocument();
-    expect(screen.getByText('Chi tiêu theo loại chi phí')).toBeInTheDocument();
+    expect(screen.getByText('Chi tiêu theo danh mục')).toBeInTheDocument();
     expect(screen.getByText('Tổng chi').parentElement).toHaveTextContent(
       '250.000',
     );

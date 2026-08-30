@@ -2,6 +2,19 @@
 
 ## 2026-08-30
 
+### Đồng bộ tên bốn biểu đồ Dashboard
+
+- Đổi tiêu đề thành: “Thu nhập theo mục đích”, “Chi tiêu theo mục đích”, “Chi tiêu theo danh mục” và “Thu nhập theo danh mục”.
+- Cập nhật `src/pages/Dashboard.tsx` và assertion tương ứng trong `src/pages/Dashboard.test.tsx`; không thay đổi dữ liệu/API.
+- Kiểm thử và triển khai: Đang thực hiện.
+
+### Thêm toggle ngôn ngữ Việt/English
+
+- Sau thay đổi: Thêm bộ chọn VI/EN cạnh lựa chọn giao diện, lưu lựa chọn trên thiết bị.
+- Kỹ thuật: Thêm `src/context/LanguageContext.tsx`; cập nhật `src/main.tsx`, `src/components/ThemeSelect.tsx`; không đổi database/API.
+- Kiểm thử: `pnpm test` đạt 61/61; `pnpm lint`, `pnpm typecheck` và `pnpm build` đạt. Build vẫn có cảnh báo chunk ExcelJS lớn hiện hữu.
+- Triển khai: Chưa deploy.
+
 ### Bổ sung biểu đồ thu nhập theo mục đích và danh mục
 
 - Trước thay đổi: Dashboard chỉ có các biểu đồ phân tích chi tiêu.

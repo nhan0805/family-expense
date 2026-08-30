@@ -353,7 +353,7 @@ export function Dashboard() {
       <section className="grid gap-4 lg:grid-cols-2">
         <div className="card min-w-0 overflow-hidden p-4">
           <ExpensePieChart
-            title="Chi tiêu theo mục đích chi"
+            title="Chi tiêu theo mục đích"
             data={byPurpose}
             to={`/giao-dich?month=${selectedMonth}&year=${selectedYear}`}
           />
@@ -366,7 +366,7 @@ export function Dashboard() {
         </div>
         <div className="card min-w-0 overflow-hidden p-4">
           <ExpenseBarChart
-            title="Chi tiêu theo loại chi phí"
+            title="Chi tiêu theo danh mục"
             data={byExpenseType}
             to={`/giao-dich?month=${selectedMonth}&year=${selectedYear}`}
           />
