@@ -2,6 +2,25 @@
 
 ## 2026-08-30
 
+### Bổ sung nền tảng chuyển ngôn ngữ VI/EN
+
+- Sau thay đổi: Thêm toggle VI/EN, lưu lựa chọn trên thiết bị và đồng bộ `lang` của document; các nhãn giao diện dùng chung/theme đổi theo ngôn ngữ. Template Excel vẫn giữ tiếng Việt để tương thích file cũ.
+- Kỹ thuật: Thêm `src/context/LanguageContext.tsx`; cập nhật `src/components/Layout.tsx`, `src/components/ThemeSelect.tsx`, `src/main.tsx`, `src/pages/ImportExport.tsx`; không đổi database/API.
+- Kiểm thử: `pnpm test` đạt 61/61; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` đạt. Build còn cảnh báo chunk ExcelJS lớn hiện hữu.
+- Triển khai: Chưa deploy.
+
+### Sửa chiều tính chart Chi ròng thực tế
+
+- Chart xu hướng tính theo công thức “Thu nhập − Chi tiêu”; thu nhập hiển thị dương và chi tiêu làm giảm giá trị ròng.
+- Cập nhật `src/pages/Dashboard.tsx` và `src/lib/transactionsApi.ts`; không thay đổi schema/database.
+- Kiểm thử và triển khai: Đang thực hiện.
+
+### Đổi tên chart xu hướng thành Chi ròng thực tế
+
+- Giữ dữ liệu 6 tháng gần nhất và đổi tiêu đề chart cuối thành “Chi ròng thực tế” để đồng bộ với nội dung số liệu.
+- Cập nhật `src/pages/Dashboard.tsx`; không thay đổi dữ liệu/API.
+- Kiểm thử và triển khai: Đang thực hiện.
+
 ### Tránh cắt nhãn giá trị trên biểu đồ tròn
 
 - Tăng vùng hiển thị và khoảng đệm phía trên cho chart tròn để nhãn giá trị lớn như 19,2M không bị che ở mép trên.

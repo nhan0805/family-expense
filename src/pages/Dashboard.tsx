@@ -150,7 +150,7 @@ export function Dashboard() {
       .filter((transaction) => transaction.transactionDate.startsWith(item.key))
       .reduce(
         (total, transaction) =>
-          total +
+          total -
           getNetExpense(transaction.amount, transaction.transactionType),
         0,
       ),
@@ -401,7 +401,7 @@ export function Dashboard() {
           </div>
         </div>
         <div className="card min-w-0 overflow-hidden p-4 lg:col-span-2">
-          <h3 className="font-bold">Chi ròng 6 tháng gần nhất</h3>
+          <h3 className="font-bold">Chi ròng thực tế</h3>
           <div className="h-64 min-w-0 max-w-full">
             <ResponsiveContainer>
               <LineChart data={trend} margin={{ top: 24, right: 18, left: 8 }}>

@@ -406,6 +406,7 @@ export function ImportExport() {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-extrabold">Quản lý dữ liệu</h2>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Excel hiện dùng template tiếng Việt để tương thích với các file hiện có.</p>
         <p className="mt-1 text-sm text-gray-500">
           Nhập, xuất và quản lý dữ liệu giao dịch của gia đình.
         </p>
