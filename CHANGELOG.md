@@ -2,6 +2,13 @@
 
 ## 2026-08-30
 
+### Rà soát bản dịch action Thành viên và Danh mục
+
+- Sau thay đổi: Dịch thêm nhãn accessibility, trạng thái loading/empty, thao tác đổi tên/xóa và thông báo xác nhận theo locale.
+- Kỹ thuật: Cập nhật `src/pages/Members.tsx` và `src/pages/Catalogs.tsx`; không đổi dữ liệu/API.
+- Kiểm thử: Chờ CI.
+- Triển khai: Chưa deploy.
+
 ### Hoàn thiện thêm bản dịch Form giao dịch và bộ lọc Giao dịch
 
 - Sau thay đổi: Các nhãn, trạng thái, nút, empty state và lựa chọn lọc chính hiển thị theo VI/EN; giá trị enum lưu trữ vẫn giữ nguyên tiếng Việt.

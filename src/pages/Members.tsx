@@ -201,7 +201,7 @@ export function Members() {
         {editingFamily ? (
           <form className="flex max-w-xl gap-2" onSubmit={saveFamilyName}>
             <input
-              aria-label="Tên gia đình mới"
+              aria-label={en ? 'New family name' : 'Tên gia đình mới'}
               className="field"
               autoFocus
               required
@@ -214,7 +214,7 @@ export function Members() {
             </button>
             <button
               type="button"
-              aria-label="Hủy sửa tên gia đình"
+              aria-label={en ? 'Cancel family name edit' : 'Hủy sửa tên gia đình'}
               className="btn-secondary shrink-0"
               onClick={() => setEditingFamily(false)}
             >
@@ -227,8 +227,8 @@ export function Members() {
             {isOwner && (
               <button
                 type="button"
-                title="Sửa tên gia đình"
-                aria-label="Sửa tên gia đình"
+                title={en ? 'Edit family name' : 'Sửa tên gia đình'}
+                aria-label={en ? 'Edit family name' : 'Sửa tên gia đình'}
                 className="rounded-lg p-2 hover:bg-black/5 dark:hover:bg-white/5"
                 onClick={() => {
                   setFamilyNameInput(familyName);
@@ -296,7 +296,7 @@ export function Members() {
           <h3 className="font-bold">{en ? 'Member list' : 'Danh sách thành viên'} ({members.length})</h3>
         </div>
         <div className="divide-y divide-black/10 dark:divide-white/10" aria-busy={loadingMembers}>
-          {loadingMembers ? <div className="space-y-4 p-5" role="status" aria-label="Đang tải thành viên"><span className="sr-only">Đang tải thành viên…</span>{Array.from({ length: 2 }, (_, index) => <div className="flex items-center justify-between gap-4" key={index}><div className="flex-1 space-y-2"><Skeleton className="h-5 w-40"/><Skeleton className="h-4 w-56 max-w-full"/></div><Skeleton className="h-10 w-20"/></div>)}</div> : members.map((member) => (
+          {loadingMembers ? <div className="space-y-4 p-5" role="status" aria-label={en ? 'Loading members' : 'Đang tải thành viên'}><span className="sr-only">{en ? 'Loading members…' : 'Đang tải thành viên…'}</span>{Array.from({ length: 2 }, (_, index) => <div className="flex items-center justify-between gap-4" key={index}><div className="flex-1 space-y-2"><Skeleton className="h-5 w-40"/><Skeleton className="h-4 w-56 max-w-full"/></div><Skeleton className="h-10 w-20"/></div>)}</div> : members.map((member) => (
             <article className="p-5" key={member.id}>
               {editingId === member.id ? (
                 <form
@@ -304,7 +304,7 @@ export function Members() {
                   onSubmit={updateName}
                 >
                   <input
-                    aria-label="Tên hiển thị mới"
+                    aria-label={en ? 'New display name' : 'Tên hiển thị mới'}
                     className="field"
                     autoFocus
                     required
@@ -313,11 +313,11 @@ export function Members() {
                     onChange={(event) => setEditingName(event.target.value)}
                   />
                   <button className="btn-primary shrink-0" disabled={busy}>
-                    {busy ? 'Đang lưu…' : 'Lưu tên'}
+                    {busy ? (en ? 'Saving…' : 'Đang lưu…') : (en ? 'Save name' : 'Lưu tên')}
                   </button>
                   <button
                     type="button"
-                    aria-label="Hủy đổi tên"
+                    aria-label={en ? 'Cancel rename' : 'Hủy đổi tên'}
                     className="btn-secondary shrink-0"
                     onClick={() => setEditingId(null)}
                   >
@@ -331,8 +331,8 @@ export function Members() {
                       <strong>{member.display_name}</strong>
                       <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs dark:bg-gray-700">
                         {member.role === 'owner'
-                          ? 'Chủ gia đình'
-                          : 'Thành viên'}
+                          ? (en ? 'Family owner' : 'Chủ gia đình')
+                          : (en ? 'Member' : 'Thành viên')}
                       </span>
                     </div>
                     <p className="mt-1 text-sm text-gray-500">{member.email}</p>
@@ -341,8 +341,8 @@ export function Members() {
                     {(isOwner || member.user_id === currentUserId) && (
                       <button
                         type="button"
-                        title={`Đổi tên ${member.display_name}`}
-                        aria-label={`Đổi tên ${member.display_name}`}
+                        title={`${en ? 'Rename' : 'Đổi tên'} ${member.display_name}`}
+                        aria-label={`${en ? 'Rename' : 'Đổi tên'} ${member.display_name}`}
                         className="rounded-lg border border-gray-200 p-2 hover:bg-black/5 dark:border-gray-700 dark:hover:bg-white/5"
                         onClick={() => {
                           setEditingId(member.id);
@@ -355,7 +355,7 @@ export function Members() {
                     {isOwner && member.role === 'member' && (
                       <button
                         type="button"
-                        aria-label={`Xóa ${member.display_name}`}
+                        aria-label={`${en ? 'Remove' : 'Xóa'} ${member.display_name}`}
                         className="flex items-center gap-1 rounded-xl border border-red-200 px-3 py-2 text-sm font-semibold text-red-700"
                         disabled={busy}
                         onClick={() => void removeMember(member)}
@@ -368,25 +368,32 @@ export function Members() {
               )}
             </article>
           ))}
-          {!loadingMembers && members.length === 0 && <EmptyState title="Chưa có thành viên" description={isOwner ? 'Thêm thành viên bằng email đã đăng ký Family Expense.' : 'Gia đình hiện chưa có thành viên để hiển thị.'}/>} 
+          {!loadingMembers && members.length === 0 && (
+            <EmptyState
+              title={en ? 'No members yet' : 'Chưa có thành viên'}
+              description={isOwner
+                ? (en ? 'Add a member using an email registered with Family Expense.' : 'Thêm thành viên bằng email đã đăng ký Family Expense.')
+                : (en ? 'There are currently no family members to display.' : 'Gia đình hiện chưa có thành viên để hiển thị.')}
+            />
+          )}
         </div>
       </div>
       {!isOwner && (
         <p className="text-sm text-gray-500">
-          Chỉ chủ gia đình mới có thể thêm thành viên.
+          {en ? 'Only the family owner can add members.' : 'Chỉ chủ gia đình mới có thể thêm thành viên.'}
         </p>
       )}
       {isOwner && (
         <section className="card border-red-200 p-5 dark:border-red-900">
           <h3 className="font-bold text-red-700 dark:text-red-300">
-            Xóa gia đình
+            {en ? 'Delete family' : 'Xóa gia đình'}
           </h3>
           <p className="mt-1 text-sm text-gray-500">
             {canDeleteFamily === false
-              ? 'Hãy xóa hết giao dịch trước khi xóa gia đình.'
+              ? (en ? 'Delete all transactions before deleting the family.' : 'Hãy xóa hết giao dịch trước khi xóa gia đình.')
               : canDeleteFamily === null
-                ? 'Đang kiểm tra điều kiện xóa…'
-                : 'Không còn giao dịch hoạt động; gia đình có thể xóa.'}
+                ? (en ? 'Checking deletion requirements…' : 'Đang kiểm tra điều kiện xóa…')
+                : (en ? 'No active transactions remain; the family can be deleted.' : 'Không còn giao dịch hoạt động; gia đình có thể xóa.')}
           </p>
           <button
             type="button"
@@ -395,7 +402,7 @@ export function Members() {
             onClick={() => void removeFamily()}
           >
             <Trash2 className="mr-2 inline" size={17} />
-            Xóa gia đình
+            {en ? 'Delete family' : 'Xóa gia đình'}
           </button>
         </section>
       )}
