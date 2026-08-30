@@ -2,6 +2,13 @@
 
 ## 2026-08-30
 
+### Hoàn thiện thêm bản dịch Form giao dịch và bộ lọc Giao dịch
+
+- Sau thay đổi: Các nhãn, trạng thái, nút, empty state và lựa chọn lọc chính hiển thị theo VI/EN; giá trị enum lưu trữ vẫn giữ nguyên tiếng Việt.
+- Kỹ thuật: Cập nhật `src/pages/TransactionForm.tsx` và `src/pages/Transactions.tsx`; không thay đổi database/Excel.
+- Kiểm thử: TypeScript và diff check pass; chờ CI.
+- Triển khai: Chưa deploy.
+
 ### Dịch tiếp Form giao dịch và Quản lý dữ liệu
 
 - Sau thay đổi: Bổ sung bản dịch tiếng Anh cho tiêu đề, mô tả và nhãn chính của Form giao dịch và Import/Export.
