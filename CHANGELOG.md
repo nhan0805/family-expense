@@ -2,6 +2,14 @@
 
 ## 2026-08-30
 
+### Bổ sung biểu đồ thu nhập theo mục đích và danh mục
+
+- Trước thay đổi: Dashboard chỉ có các biểu đồ phân tích chi tiêu.
+- Sau thay đổi: Thêm biểu đồ “Thu nhập theo mục đích” và “Thu nhập theo danh mục”; nhấn từng lát/cột sẽ mở màn hình Giao dịch với bộ lọc thu nhập tương ứng.
+- Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx`, `src/lib/transactionsApi.ts`, `src/pages/Dashboard.test.tsx` và thêm migration `supabase/migrations/202608300001_dashboard_income_breakdowns.sql`.
+- Kiểm thử: Vitest đạt 61/61; lint, typecheck và build đạt.
+- Triển khai: Chưa deploy.
+
 ### Lọc giao dịch từ từng mục trên biểu đồ Tổng quan
 
 - Sau thay đổi: Nhấn vào lát biểu đồ Mục đích hoặc cột Loại chi phí sẽ mở Giao dịch với bộ lọc tương ứng và giữ nguyên tháng/năm đang xem.

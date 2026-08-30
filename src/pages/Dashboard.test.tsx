@@ -108,7 +108,7 @@ describe('Dashboard', () => {
     expect(screen.queryByText('Giao dịch thực tế trong tháng')).not.toBeInTheDocument();
     expect(
       screen.getAllByText('Chưa có dữ liệu biểu đồ'),
-    ).toHaveLength(2);
+    ).toHaveLength(4);
   });
 
   it('cho phép xác nhận giao dịch dự kiến đã đến hạn', async () => {

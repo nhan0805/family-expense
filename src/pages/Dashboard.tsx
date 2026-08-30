@@ -196,6 +196,9 @@ export function Dashboard() {
         fill: chartColors[index % chartColors.length] || '#155e46',
       }))
     : localByExpenseType;
+  const localIncomeTransactions = localSelectedMonthTransactions.filter((transaction) => transaction.transactionType === 'Thu nhập' || transaction.transactionType === 'Hoàn tiền');
+  const incomeByPurpose = (isSupabaseConfigured ? summaryQuery.data?.incomeByPurpose || [] : purposes.map((item) => ({ id: item.id, name: item.name, value: localIncomeTransactions.filter((transaction) => transaction.purposeId === item.id).reduce((total, transaction) => total + transaction.amount, 0) })).filter((item) => item.value > 0)).map((item, index) => ({ ...item, id: String(('id' in item ? item.id : purposes.find((purpose) => purpose.name === item.name)?.id) || ''), fill: chartColors[index % chartColors.length] || '#155e46' }));
+  const incomeByExpenseType = (isSupabaseConfigured ? summaryQuery.data?.incomeByExpenseType || [] : expenseTypes.map((item) => ({ id: item.id, name: item.name, value: localIncomeTransactions.filter((transaction) => transaction.expenseTypeId === item.id).reduce((total, transaction) => total + transaction.amount, 0) })).filter((item) => item.value > 0)).map((item, index) => ({ ...item, id: String(('id' in item ? item.id : expenseTypes.find((expenseType) => expenseType.name === item.name)?.id) || ''), fill: chartColors[index % chartColors.length] || '#155e46' }));
   const trend = isSupabaseConfigured
     ? summaryQuery.data?.trend || []
     : localTrend;
@@ -356,6 +359,12 @@ export function Dashboard() {
           />
         </div>
         <div className="card min-w-0 overflow-hidden p-4">
+          <ExpensePieChart title="Thu nhập theo mục đích" data={incomeByPurpose} to={`/giao-dich?transactionType=Thu nhập&month=${selectedMonth}&year=${selectedYear}`} filterKey="purposeId" />
+        </div>
+        <div className="card min-w-0 overflow-hidden p-4">
+          <ExpenseBarChart title="Thu nhập theo danh mục" data={incomeByExpenseType} to={`/giao-dich?transactionType=Thu nhập&month=${selectedMonth}&year=${selectedYear}`} filterKey="expenseTypeId" />
+        </div>
+        <div className="card min-w-0 overflow-hidden p-4">
           <ExpenseBarChart
             title="Chi tiêu theo loại chi phí"
             data={byExpenseType}
@@ -407,14 +416,16 @@ function ExpensePieChart({
   title,
   data,
   to,
+  filterKey = 'purposeId',
 }: {
   title: string;
   data: ExpenseChartItem[];
   to: string;
+  filterKey?: 'purposeId' | 'expenseTypeId';
 }) {
   const navigate = useNavigate();
   const openItem = (item: ExpenseChartItem) => {
-    if (item.id) navigate(`${to}&purposeId=${encodeURIComponent(item.id)}`);
+    if (item.id) navigate(`${to}&${filterKey}=${encodeURIComponent(item.id)}`);
   };
   return (
     <>
@@ -454,14 +465,16 @@ function ExpenseBarChart({
   title,
   data,
   to,
+  filterKey = 'expenseTypeId',
 }: {
   title: string;
   data: ExpenseChartItem[];
   to: string;
+  filterKey?: 'purposeId' | 'expenseTypeId';
 }) {
   const navigate = useNavigate();
   const openItem = (item: ExpenseChartItem) => {
-    if (item.id) navigate(`${to}&expenseTypeId=${encodeURIComponent(item.id)}`);
+    if (item.id) navigate(`${to}&${filterKey}=${encodeURIComponent(item.id)}`);
   };
   const chartWidth = Math.max(520, data.length * 78);
   return (
