@@ -2,12 +2,28 @@
 
 ## 2026-08-30
 
+### Sửa tên chart thành Thu ròng thực tế
+
+- Đổi tên chart và chú giải từ “Chi ròng thực tế” thành “Thu ròng thực tế”, đúng với công thức Thu nhập − Chi tiêu.
+- Cập nhật `src/pages/Dashboard.tsx`; không thay đổi dữ liệu/API.
+- Kiểm thử và triển khai: Chưa thực hiện.
+
+### Tối ưu tải asset PWA và tính toán Dashboard
+
+- Trước thay đổi: PWA precache cả chunk ExcelJS/XLSX lớn dù chỉ được dùng khi người dùng thao tác Import/Export; một số phép tính Dashboard local lặp lại sau mỗi lần render.
+- Sau thay đổi: Loại các chunk `exceljs` và `xlsx` khỏi precache để giảm kích thước cache cài đặt/cập nhật PWA; memo hóa danh sách năm và breakdown local theo danh mục.
+- Kỹ thuật: Cập nhật `vite.config.ts`, `src/pages/Dashboard.tsx`; không thay đổi database/API. Excel vẫn được tải theo thao tác dynamic import và cần mạng nếu chưa có trong cache.
+- Kiểm thử: Đã chạy production build; cần hoàn tất test/lint/typecheck trước merge.
+- Triển khai: Chưa deploy.
+
+## 2026-08-30
+
 ### Bổ sung nền tảng chuyển ngôn ngữ VI/EN
 
 - Sau thay đổi: Thêm toggle VI/EN, lưu lựa chọn trên thiết bị và đồng bộ `lang` của document; các nhãn giao diện dùng chung/theme đổi theo ngôn ngữ. Template Excel vẫn giữ tiếng Việt để tương thích file cũ.
 - Kỹ thuật: Thêm `src/context/LanguageContext.tsx`; cập nhật `src/components/Layout.tsx`, `src/components/ThemeSelect.tsx`, `src/main.tsx`, `src/pages/ImportExport.tsx`; không đổi database/API.
 - Kiểm thử: `pnpm test` đạt 61/61; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` đạt. Build còn cảnh báo chunk ExcelJS lớn hiện hữu.
-- Triển khai: Chưa deploy.
+- Triển khai: PR #35 đã merge vào `main` với merge commit `75f50e4551a3feca23c93e9a5ddaf3c8f0638970`; CI quality/db-security và Cloudflare Pages check đều thành công. Production trả HTTP 200 tại https://family-expense-8fo.pages.dev.
 
 ### Sửa chiều tính chart Chi ròng thực tế
 
