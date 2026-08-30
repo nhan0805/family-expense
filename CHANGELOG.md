@@ -2,6 +2,12 @@
 
 ## 2026-08-30
 
+### Đổi chart xu hướng 6 tháng sang dạng cột
+
+- Hai chart Thu nhập và Chi tiêu 6 tháng hiển thị dạng cột bo góc, giữ màu xanh/cam và nhãn giá trị.
+- Sửa CI để kiểm thử DB không bị chặn bởi migration dữ liệu Excel phụ thuộc Auth user.
+- Kiểm thử: Đã đạt local test/typecheck; chờ CI chạy lại. Triển khai: Đang thực hiện.
+
 ### Đổi chart thu nhập và chi tiêu 6 tháng sang dạng cột
 
 - Đổi hai chart xu hướng Thu nhập và Chi tiêu 6 tháng sang cột bo góc, giữ màu xanh/cam và nhãn giá trị trên đầu cột.

@@ -32,6 +32,11 @@ jobs:
       - uses: supabase/setup-cli@v1
         with:
           version: latest
+      - name: Exclude user-dependent data migrations from structural tests
+        run: |
+          mkdir -p /tmp/supabase-user-migrations
+          mv supabase/migrations/202608250004_excel_data.sql /tmp/supabase-user-migrations/
+          mv supabase/migrations/202608260019_excel_data_date_shift.sql /tmp/supabase-user-migrations/
       - name: Start local Supabase database
         run: supabase start --exclude gotrue,realtime,storage-api,imgproxy,kong,postgrest,postgres-meta,studio,mailpit,edge-runtime,logflare,vector,supavisor
       - name: Run database and RLS tests
