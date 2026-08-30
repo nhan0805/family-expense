@@ -59,7 +59,7 @@ export function ImportExport() {
 
   const downloadTemplate = async () => {
     setTemplateBusy(true);
-    setMessage('Đang tạo template…');
+    setMessage(en ? 'Creating template…' : 'Đang tạo template…');
     try {
       const { createTemplate } = await import('../lib/templateImport');
       const data = await createTemplate(purposes, expenseTypes, paymentMethods);
@@ -72,9 +72,9 @@ export function ImportExport() {
       a.download = `family-expense-template-${new Date().toISOString().slice(0, 10)}.xlsx`;
       a.click();
       URL.revokeObjectURL(url);
-      setMessage('Đã tải template theo danh mục hiện tại.');
+      setMessage(en ? 'Template downloaded using the current categories.' : 'Đã tải template theo danh mục hiện tại.');
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : 'Không thể tạo template.');
+      setMessage(e instanceof Error ? e.message : (en ? 'Could not create template.' : 'Không thể tạo template.'));
     } finally {
       setTemplateBusy(false);
     }
@@ -88,14 +88,14 @@ export function ImportExport() {
     if (!file.name.toLowerCase().endsWith('.xlsx')) {
       setFileName('');
       setFileError(
-        'File không đúng định dạng. Vui lòng chọn file .xlsx được tải từ ứng dụng.',
+        en ? 'Invalid file format. Choose an .xlsx file downloaded from the app.' : 'File không đúng định dạng. Vui lòng chọn file .xlsx được tải từ ứng dụng.',
       );
       setMessage('');
       if (input) input.value = '';
       return;
     }
     setCheckingFile(true);
-    setMessage('Đang kiểm tra file…');
+    setMessage(en ? 'Validating file…' : 'Đang kiểm tra file…');
     try {
       const { parseTemplate } = await import('../lib/templateImport');
       let duplicateTransactions = transactions;
@@ -150,7 +150,7 @@ export function ImportExport() {
               duplicateCount,
               result.errors.length,
             )
-          : 'Không tìm thấy dòng dữ liệu nào trong sheet “Giao dịch”.',
+          : (en ? 'No data rows were found in the “Giao dịch” sheet.' : 'Không tìm thấy dòng dữ liệu nào trong sheet “Giao dịch”.'),
       );
     } catch (e) {
       setValidRows([]);
@@ -160,12 +160,12 @@ export function ImportExport() {
         detail.includes('sheet') || detail.includes('Tiêu đề cột');
       setFileError(
         wrongTemplate
-          ? 'File không đúng template Family Expense. Hãy tải template mới từ ứng dụng và không đổi tên sheet “Giao dịch” hoặc tiêu đề cột.'
+          ? (en ? 'This file does not use the Family Expense template. Download a new template and do not rename the “Giao dịch” sheet or column headers.' : 'File không đúng template Family Expense. Hãy tải template mới từ ứng dụng và không đổi tên sheet “Giao dịch” hoặc tiêu đề cột.')
           : detail
             ? `Không thể đọc file Excel: ${detail}`
-            : 'Không thể đọc file Excel. File có thể bị hỏng hoặc không phải định dạng .xlsx hợp lệ.',
+            : (en ? 'Could not read the Excel file. It may be corrupted or not a valid .xlsx file.' : 'Không thể đọc file Excel. File có thể bị hỏng hoặc không phải định dạng .xlsx hợp lệ.'),
       );
-      setMessage('Đã kiểm tra xong nhưng file có lỗi cần xử lý.');
+      setMessage(en ? 'Validation finished, but the file has errors to resolve.' : 'Đã kiểm tra xong nhưng file có lỗi cần xử lý.');
       if (input) input.value = '';
     } finally {
       setCheckingFile(false);
@@ -194,18 +194,18 @@ export function ImportExport() {
       if (handle) await processImportFile(await handle.getFile());
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') return;
-      setFileError('Không thể mở bộ chọn file. Vui lòng thử lại.');
-      setMessage('Không thể chọn file Excel.');
+      setFileError(en ? 'Could not open the file picker. Please try again.' : 'Không thể mở bộ chọn file. Vui lòng thử lại.');
+      setMessage(en ? 'Could not choose an Excel file.' : 'Không thể chọn file Excel.');
     }
   };
   const confirmImport = async () => {
     const rows = validRows.filter((r) => includeDuplicates || !r.duplicate);
     if (!rows.length) {
-      setMessage('Không có dòng hợp lệ để import.');
+      setMessage(en ? 'There are no valid rows to import.' : 'Không có dòng hợp lệ để import.');
       return;
     }
     setImportBusy(true);
-    setMessage('Đang ghi dữ liệu…');
+    setMessage(en ? 'Saving data…' : 'Đang ghi dữ liệu…');
     const payload = rows.map((row) => ({
       rowNumber: row.rowNumber,
       transactionDate: row.transactionDate,
@@ -226,11 +226,11 @@ export function ImportExport() {
     });
     setImportBusy(false);
     if (error) {
-      setMessage(`Import thất bại: ${error.message}`);
+      setMessage(`${en ? 'Import failed' : 'Import thất bại'}: ${error.message}`);
       return;
     }
     setMessage(
-      `Đã import ${Number((data as { imported?: number })?.imported || rows.length).toLocaleString('vi-VN')} giao dịch.`,
+      `${en ? 'Imported' : 'Đã import'} ${Number((data as { imported?: number })?.imported || rows.length).toLocaleString('vi-VN')} ${en ? 'transactions.' : 'giao dịch.'}`,
     );
     setValidRows([]);
     setImportErrors([]);
