@@ -195,7 +195,7 @@ export function TransactionForm() {
   useEffect(() => () => speechRecognitionRef.current?.stop(), []);
   const onSubmit = async (data: TransactionInput) => {
     if (isSupabaseConfigured && !online) {
-      setSaveError('Đang mất kết nối mạng. Bản nháp đã được lưu trên thiết bị; hãy kết nối lại rồi thử lại.');
+      setSaveError(en ? 'You are offline. The draft was saved on this device; reconnect and try again.' : 'Đang mất kết nối mạng. Bản nháp đã được lưu trên thiết bị; hãy kết nối lại rồi thử lại.');
       return;
     }
     let duplicateCount = 0;
@@ -210,7 +210,7 @@ export function TransactionForm() {
       if (id) duplicateQuery = duplicateQuery.neq('id', id);
       const { data: candidates, error: duplicateError } = await duplicateQuery;
       if (duplicateError) {
-        setSaveError(userFacingError(duplicateError, 'Không thể kiểm tra giao dịch trùng.'));
+      setSaveError(userFacingError(duplicateError, en ? 'Could not check for duplicate transactions.' : 'Không thể kiểm tra giao dịch trùng.'));
         return;
       }
       duplicateCount = findDuplicates(
@@ -228,7 +228,7 @@ export function TransactionForm() {
         data,
         transactions.filter((t) => t.id !== id),
       ).length;
-    if (duplicateCount && !await askConfirm({ title: 'Giao dịch có thể bị trùng', description: `Tìm thấy ${duplicateCount} giao dịch tương tự về ngày, nội dung và số tiền. Bạn vẫn muốn lưu?`, confirmLabel: 'Vẫn lưu' })) return;
+    if (duplicateCount && !await askConfirm({ title: en ? 'Possible duplicate transaction' : 'Giao dịch có thể bị trùng', description: en ? `Found ${duplicateCount} transactions with a similar date, description and amount. Save anyway?` : `Tìm thấy ${duplicateCount} giao dịch tương tự về ngày, nội dung và số tiền. Bạn vẫn muốn lưu?`, confirmLabel: en ? 'Save anyway' : 'Vẫn lưu' })) return;
     setSaveBusy(true);
     setSaveError('');
     if (isSupabaseConfigured) {
@@ -266,7 +266,7 @@ export function TransactionForm() {
             .single();
       if (result.error || !result.data) {
         setSaveBusy(false);
-        setSaveError(userFacingError(result.error, 'Không thể lưu giao dịch vào database.'));
+      setSaveError(userFacingError(result.error, en ? 'Could not save the transaction to the database.' : 'Không thể lưu giao dịch vào database.'));
         return;
       }
       await queryClient.invalidateQueries({
@@ -288,7 +288,7 @@ export function TransactionForm() {
     if (isSupabaseConfigured) clearTransactionDraft(familyId);
     else if (!id) clearTransactionDraft(familyId);
     setSaveBusy(false);
-    notify(id ? 'Đã cập nhật giao dịch.' : 'Đã thêm giao dịch mới.');
+    notify(id ? (en ? 'Transaction updated.' : 'Đã cập nhật giao dịch.') : (en ? 'Transaction added.' : 'Đã thêm giao dịch mới.'));
     nav('/giao-dich');
   };
   const deleteTransaction = async () => {
@@ -296,12 +296,12 @@ export function TransactionForm() {
       !existing ||
       !canDeleteTransaction(existing, currentUserRole, currentUserId)
     ) {
-      setSaveError('Bạn chỉ có thể xóa giao dịch do chính mình tạo.');
+      setSaveError(en ? 'You can only delete transactions you created.' : 'Bạn chỉ có thể xóa giao dịch do chính mình tạo.');
       return;
     }
-    if (!await askConfirm({ title: 'Xóa giao dịch?', description: `Giao dịch “${existing.description}” sẽ được chuyển vào trạng thái đã xóa.`, confirmLabel: 'Xóa giao dịch', danger: true })) return;
+    if (!await askConfirm({ title: en ? 'Delete transaction?' : 'Xóa giao dịch?', description: en ? `Transaction “${existing.description}” will be moved to the deleted state.` : `Giao dịch “${existing.description}” sẽ được chuyển vào trạng thái đã xóa.`, confirmLabel: en ? 'Delete transaction' : 'Xóa giao dịch', danger: true })) return;
     if (isSupabaseConfigured && !online) {
-      setSaveError('Đang mất kết nối mạng. Hãy kết nối lại rồi thử lại thao tác xóa.');
+      setSaveError(en ? 'You are offline. Reconnect and try the delete action again.' : 'Đang mất kết nối mạng. Hãy kết nối lại rồi thử lại thao tác xóa.');
       return;
     }
     const deletedAt = new Date().toISOString();
@@ -319,7 +319,7 @@ export function TransactionForm() {
       const { data, error } = await query.select('id').maybeSingle();
       if (error || !data) {
         setDeleteBusy(false);
-        setSaveError(userFacingError(error, 'Không thể xóa giao dịch. Bạn có thể không có quyền hoặc giao dịch đã bị xóa.'));
+      setSaveError(userFacingError(error, en ? 'Could not delete the transaction. You may not have permission or it may already be deleted.' : 'Không thể xóa giao dịch. Bạn có thể không có quyền hoặc giao dịch đã bị xóa.'));
         return;
       }
     }
@@ -343,13 +343,13 @@ export function TransactionForm() {
         ),
       );
     setDeleteBusy(false);
-    notify('Đã xóa giao dịch.');
+    notify(en ? 'Transaction deleted.' : 'Đã xóa giao dịch.');
     nav('/giao-dich');
   };
   const parseAi = async () => {
     if (!description.trim()) return;
     if (!online) {
-      notify('Đang mất kết nối mạng. Hãy kết nối lại trước khi dùng AI.', 'error');
+      notify(en ? 'You are offline. Reconnect before using AI.' : 'Đang mất kết nối mạng. Hãy kết nối lại trước khi dùng AI.', 'error');
       return;
     }
     setAiBusy(true);
@@ -358,7 +358,7 @@ export function TransactionForm() {
     setAiResultVisible(true);
     try {
       if (!isSupabaseConfigured)
-        throw new Error('Hãy cấu hình Supabase để sử dụng Gemini.');
+        throw new Error(en ? 'Configure Supabase before using Gemini.' : 'Hãy cấu hình Supabase để sử dụng Gemini.');
       const { data, error } = await supabase.functions.invoke('parse-expense', {
         body: { text: description, familyId, timezone: 'Asia/Ho_Chi_Minh' },
       });
@@ -398,8 +398,8 @@ export function TransactionForm() {
       const missingAmount = s.amount === null;
       notify(
         missingAmount
-          ? 'AI đã điền một phần thông tin. Còn thiếu Số tiền.'
-          : `AI đã đề xuất ${filledFields.length} trường. Hãy kiểm tra trước khi lưu.`,
+          ? (en ? 'AI filled part of the form. Amount is still missing.' : 'AI đã điền một phần thông tin. Còn thiếu Số tiền.')
+          : (en ? `AI suggested ${filledFields.length} fields. Review before saving.` : `AI đã đề xuất ${filledFields.length} trường. Hãy kiểm tra trước khi lưu.`),
         missingAmount || s.warnings.length ? 'info' : 'success',
       );
     } catch (e) {
@@ -407,8 +407,8 @@ export function TransactionForm() {
       const rateLimited = /429|rate limit|too many requests/i.test(message);
       notify(
         rateLimited
-          ? 'AI đang đạt giới hạn sử dụng. Vui lòng thử lại sau.'
-          : 'Không thể phân tích lúc này. Nội dung của bạn vẫn được giữ nguyên.',
+          ? (en ? 'AI usage is currently limited. Please try again later.' : 'AI đang đạt giới hạn sử dụng. Vui lòng thử lại sau.')
+          : (en ? 'Could not analyze this now. Your description was kept unchanged.' : 'Không thể phân tích lúc này. Nội dung của bạn vẫn được giữ nguyên.'),
         'error',
       );
     } finally {
@@ -423,7 +423,7 @@ export function TransactionForm() {
     }
     const Recognition = getSpeechRecognition();
     if (!Recognition) {
-      notify('Trình duyệt này chưa hỗ trợ nhập bằng giọng nói.', 'info');
+      notify(en ? 'This browser does not support voice input.' : 'Trình duyệt này chưa hỗ trợ nhập bằng giọng nói.', 'info');
       return;
     }
     const recognition = new Recognition();
@@ -442,14 +442,14 @@ export function TransactionForm() {
         shouldDirty: true,
         shouldValidate: true,
       });
-      notify('Đã chuyển giọng nói thành nội dung. Hãy kiểm tra trước khi dùng AI.', 'success');
+      notify(en ? 'Voice converted to text. Review it before using AI.' : 'Đã chuyển giọng nói thành nội dung. Hãy kiểm tra trước khi dùng AI.', 'success');
     };
     recognition.onerror = (event) => {
       const permissionDenied = event.error === 'not-allowed' || event.error === 'service-not-allowed';
       notify(
         permissionDenied
-          ? 'Chưa được cấp quyền micro. Hãy cho phép trong cài đặt trình duyệt.'
-          : 'Không nhận dạng được giọng nói. Vui lòng thử lại hoặc nhập bằng bàn phím.',
+          ? (en ? 'Microphone permission was not granted. Allow it in browser settings.' : 'Chưa được cấp quyền micro. Hãy cho phép trong cài đặt trình duyệt.')
+          : (en ? 'Speech was not recognized. Try again or type with the keyboard.' : 'Không nhận dạng được giọng nói. Vui lòng thử lại hoặc nhập bằng bàn phím.'),
         'error',
       );
       setVoiceListening(false);
@@ -461,7 +461,7 @@ export function TransactionForm() {
       setVoiceListening(true);
     } catch {
       setVoiceListening(false);
-      notify('Không thể bật micro lúc này. Vui lòng thử lại.', 'error');
+      notify(en ? 'Could not start the microphone. Please try again.' : 'Không thể bật micro lúc này. Vui lòng thử lại.', 'error');
     }
   };
   const aiTone: AiTone = aiResult ? (aiResult.confidence < 0.9 ? 'warning' : 'suggestion') : null;
@@ -535,7 +535,7 @@ export function TransactionForm() {
             <p className="mt-1 text-xs text-gray-500">{en ? 'Type or use the microphone to convert speech to text, then select AI if needed. The app does not store audio and suggestions are never saved automatically.' : 'Nhập tay hoặc dùng micro để chuyển giọng nói thành chữ, sau đó nhấn AI nếu cần. App không lưu audio và gợi ý không được tự động lưu.'}</p>
           </div>
           {aiResult && aiResultVisible && (
-            <section className={`ui-enter rounded-xl border p-4 md:col-span-3 ${aiTone === 'warning' ? 'border-amber-300 bg-amber-50 text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100' : 'border-violet-200 bg-gradient-to-r from-violet-50 to-sky-50 text-violet-950 dark:border-violet-800 dark:from-violet-950/35 dark:to-sky-950/25 dark:text-violet-100'}`} aria-label="Tóm tắt gợi ý AI">
+            <section className={`ui-enter rounded-xl border p-4 md:col-span-3 ${aiTone === 'warning' ? 'border-amber-300 bg-amber-50 text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100' : 'border-violet-200 bg-gradient-to-r from-violet-50 to-sky-50 text-violet-950 dark:border-violet-800 dark:from-violet-950/35 dark:to-sky-950/25 dark:text-violet-100'}`} aria-label={en ? 'AI suggestion summary' : 'Tóm tắt gợi ý AI'}>
               <div className="flex items-start gap-3">
                 <Sparkles className="mt-0.5 shrink-0" size={19} />
                 <div className="min-w-0 flex-1">
@@ -544,7 +544,7 @@ export function TransactionForm() {
                   <p className="mt-2 text-xs font-semibold">{en ? 'Confidence' : 'Độ tin cậy'}: {Math.round(aiResult.confidence * 100)}%. {en ? 'Review before saving.' : 'Hãy kiểm tra trước khi lưu.'}</p>
                   {aiResult.warnings.length > 0 && <ul className="mt-2 list-disc pl-5 text-sm" role="alert">{aiResult.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>}
                 </div>
-                <button type="button" className="rounded-lg p-1.5 hover:bg-black/5 dark:hover:bg-white/10" aria-label="Ẩn tóm tắt và đánh dấu AI" onClick={() => setAiResultVisible(false)}><X size={18} /></button>
+                <button type="button" className="rounded-lg p-1.5 hover:bg-black/5 dark:hover:bg-white/10" aria-label={en ? 'Hide AI summary' : 'Ẩn tóm tắt và đánh dấu AI'} onClick={() => setAiResultVisible(false)}><X size={18} /></button>
               </div>
             </section>
           )}
@@ -679,10 +679,10 @@ export function TransactionForm() {
                 >
                   <Trash2 className="shrink-0" size={17} />
                   <span className="md:hidden">
-                    {deleteBusy ? 'Đang xóa…' : 'Xóa'}
+                    {deleteBusy ? (en ? 'Deleting…' : 'Đang xóa…') : (en ? 'Delete' : 'Xóa')}
                   </span>
                   <span className="hidden md:inline">
-                    {deleteBusy ? 'Đang xóa…' : 'Xóa giao dịch'}
+                    {deleteBusy ? (en ? 'Deleting…' : 'Đang xóa…') : (en ? 'Delete transaction' : 'Xóa giao dịch')}
                   </span>
                 </button>
               )}
@@ -713,7 +713,7 @@ function Field({
           {required && (
             <>
               <span className="ml-1 text-red-600" aria-hidden="true">*</span>
-              <span className="sr-only"> (bắt buộc)</span>
+              <span className="sr-only"> ({en ? 'required' : 'bắt buộc'})</span>
             </>
           )}
         </span>
@@ -743,7 +743,7 @@ function AiBadge({ aiSuggested, aiTone }: AiFieldVisualProps) {
   if (!aiSuggested) return null;
   return (
     <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${aiTone === 'warning' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200' : 'bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-200'}`}>
-      <Sparkles size={10} aria-hidden="true" /> AI đề xuất
+      <Sparkles size={10} aria-hidden="true" /> {en ? 'AI suggested' : 'AI đề xuất'}
     </span>
   );
 }

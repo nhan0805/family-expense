@@ -2,6 +2,13 @@
 
 ## 2026-08-30
 
+### Rà soát toàn bộ text hiển thị còn lại
+
+- Sau thay đổi: Dịch thêm thông báo thao tác, xác nhận, AI, accessibility label và bảng kiểm tra Import/Export theo VI/EN.
+- Kỹ thuật: Cập nhật `src/pages/TransactionForm.tsx` và `src/pages/ImportExport.tsx`; giữ nguyên enum, sheet và cột Excel tiếng Việt.
+- Kiểm thử: TypeScript và diff check pass; chờ CI.
+- Triển khai: Chưa deploy.
+
 ### Rà soát bản dịch action Thành viên và Danh mục
 
 - Sau thay đổi: Dịch thêm nhãn accessibility, trạng thái loading/empty, thao tác đổi tên/xóa và thông báo xác nhận theo locale.
