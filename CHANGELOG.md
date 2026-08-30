@@ -2,6 +2,12 @@
 
 ## 2026-08-30
 
+### Sửa dữ liệu hai chart xu hướng 6 tháng
+
+- Hai chart Thu nhập và Chi tiêu 6 tháng lấy dữ liệu trực tiếp từ RPC Supabase, không phụ thuộc danh sách giao dịch đã phân trang trên client.
+- Thêm migration `202608300002_dashboard_trends.sql`; cập nhật `src/lib/transactionsApi.ts` và `src/pages/Dashboard.tsx`.
+- Kiểm thử: 61/61 tests, typecheck và lint đạt. Triển khai: Đang thực hiện.
+
 ### Sửa tràn layout bộ chọn ngôn ngữ trên sidebar mobile/hẹp
 
 - Trước thay đổi: Nhãn Giao diện bị xuống dòng và bộ chọn VI/EN có thể tràn khỏi sidebar.
