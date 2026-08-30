@@ -470,11 +470,11 @@ export function TransactionForm() {
     aiTone,
   });
   if (id && isSupabaseConfigured && existingQuery.isPending)
-    return <PageSkeleton label="Đang tải thông tin giao dịch…"/>;
+    return <PageSkeleton label={en ? 'Loading transaction…' : 'Đang tải thông tin giao dịch…'}/>;
   if (id && isSupabaseConfigured && (existingQuery.isError || !existing))
     return (
       <p role="alert" className="rounded-xl bg-red-50 p-4 text-red-700">
-        Không tìm thấy giao dịch hoặc bạn không có quyền truy cập.
+        {en ? 'Transaction not found or you do not have access.' : 'Không tìm thấy giao dịch hoặc bạn không có quyền truy cập.'}
       </p>
     );
   return (
@@ -482,7 +482,7 @@ export function TransactionForm() {
       <div>
         <p className="text-sm text-gray-500">{en ? 'Transaction' : 'Giao dịch'}</p>
         <h2 className="text-2xl font-extrabold">
-          {id ? 'Sửa giao dịch' : 'Thêm giao dịch'}
+          {id ? (en ? 'Edit transaction' : 'Sửa giao dịch') : (en ? 'Add transaction' : 'Thêm giao dịch')}
         </h2>
       </div>
       <form
@@ -491,7 +491,6 @@ export function TransactionForm() {
       >
           <p className="text-xs text-gray-500 md:col-span-3">
             {en ? 'Fields marked with ' : 'Các trường có '}<span className="font-bold text-red-600">*</span>{en ? ' are required.' : ' là bắt buộc.'}
-            bắt buộc.
           </p>
           <div className="md:col-span-3"><h3 className="font-bold">{en ? 'Basic information' : 'Thông tin chính'}</h3><p className="text-xs text-gray-500">{en ? 'Enter the information needed to record this transaction.' : 'Nhập các thông tin cần thiết để ghi nhận giao dịch.'}</p></div>
           <div className="md:col-span-3">
@@ -511,9 +510,9 @@ export function TransactionForm() {
                   <button
                     type="button"
                     className={`absolute inset-y-1 right-1 grid aspect-square place-items-center rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-violet-300 ${voiceListening ? 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300' : 'text-gray-500 hover:bg-gray-100 hover:text-violet-700 dark:text-gray-300 dark:hover:bg-white/10'}`}
-                    aria-label={voiceListening ? 'Dừng nhập bằng giọng nói' : 'Nhập nội dung bằng giọng nói'}
+                    aria-label={voiceListening ? (en ? 'Stop voice input' : 'Dừng nhập bằng giọng nói') : (en ? 'Enter description by voice' : 'Nhập nội dung bằng giọng nói')}
                     aria-pressed={voiceListening}
-                    title={voiceListening ? 'Dừng nghe' : 'Nhập bằng giọng nói'}
+                    title={voiceListening ? (en ? 'Stop listening' : 'Dừng nghe') : (en ? 'Enter by voice' : 'Nhập bằng giọng nói')}
                     onClick={toggleVoiceInput}
                   >
                     {voiceListening ? <MicOff className="animate-pulse" size={19} /> : <Mic size={19} />}
@@ -523,33 +522,33 @@ export function TransactionForm() {
               <button
                 type="button"
                 className={`flex h-[46px] shrink-0 items-center justify-center gap-2 rounded-xl px-3 font-bold text-white shadow-sm transition-all focus:outline-none focus:ring-4 focus:ring-violet-300/40 disabled:cursor-not-allowed disabled:bg-none disabled:bg-gray-300 disabled:text-gray-500 disabled:shadow-none dark:disabled:bg-gray-700 dark:disabled:text-gray-400 ${aiCompleted ? 'bg-emerald-600' : 'bg-gradient-to-r from-violet-600 to-sky-500 hover:from-violet-700 hover:to-sky-600'}`}
-                aria-label="Phân tích nội dung bằng AI"
-                title="Phân tích nội dung bằng AI"
+                aria-label={en ? 'Analyze description with AI' : 'Phân tích nội dung bằng AI'}
+                title={en ? 'Analyze description with AI' : 'Phân tích nội dung bằng AI'}
                 disabled={aiBusy || !description.trim()}
                 onClick={() => void parseAi()}
               >
                 {aiBusy ? <LoaderCircle className="animate-spin" size={18} /> : aiCompleted ? <Check size={18} /> : <Sparkles size={18} />}
-                <span className="hidden sm:inline">{aiBusy ? 'Đang phân tích…' : aiCompleted ? 'Đã điền' : 'Gợi ý AI'}</span>
+                <span className="hidden sm:inline">{aiBusy ? (en ? 'Analyzing…' : 'Đang phân tích…') : aiCompleted ? (en ? 'Filled' : 'Đã điền') : (en ? 'AI suggest' : 'Gợi ý AI')}</span>
               </button>
             </div>
             {errors.description?.message && <span className="mt-1 block text-xs text-red-600">{errors.description.message}</span>}
-            <p className="mt-1 text-xs text-gray-500">Nhập tay hoặc dùng micro để chuyển giọng nói thành chữ, sau đó nhấn AI nếu cần. App không lưu audio và gợi ý không được tự động lưu.</p>
+            <p className="mt-1 text-xs text-gray-500">{en ? 'Type or use the microphone to convert speech to text, then select AI if needed. The app does not store audio and suggestions are never saved automatically.' : 'Nhập tay hoặc dùng micro để chuyển giọng nói thành chữ, sau đó nhấn AI nếu cần. App không lưu audio và gợi ý không được tự động lưu.'}</p>
           </div>
           {aiResult && aiResultVisible && (
             <section className={`ui-enter rounded-xl border p-4 md:col-span-3 ${aiTone === 'warning' ? 'border-amber-300 bg-amber-50 text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100' : 'border-violet-200 bg-gradient-to-r from-violet-50 to-sky-50 text-violet-950 dark:border-violet-800 dark:from-violet-950/35 dark:to-sky-950/25 dark:text-violet-100'}`} aria-label="Tóm tắt gợi ý AI">
               <div className="flex items-start gap-3">
                 <Sparkles className="mt-0.5 shrink-0" size={19} />
                 <div className="min-w-0 flex-1">
-                  <p className="font-bold">AI đã đề xuất {aiResult.fields.length} trường</p>
+                  <p className="font-bold">{en ? 'AI suggested' : 'AI đã đề xuất'} {aiResult.fields.length} {en ? 'fields' : 'trường'}</p>
                   <p className="mt-1 text-sm">{aiResult.fields.map((field) => aiFieldLabels[field]).join(', ')}.</p>
-                  <p className="mt-2 text-xs font-semibold">Độ tin cậy: {Math.round(aiResult.confidence * 100)}%. Hãy kiểm tra trước khi lưu.</p>
+                  <p className="mt-2 text-xs font-semibold">{en ? 'Confidence' : 'Độ tin cậy'}: {Math.round(aiResult.confidence * 100)}%. {en ? 'Review before saving.' : 'Hãy kiểm tra trước khi lưu.'}</p>
                   {aiResult.warnings.length > 0 && <ul className="mt-2 list-disc pl-5 text-sm" role="alert">{aiResult.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>}
                 </div>
                 <button type="button" className="rounded-lg p-1.5 hover:bg-black/5 dark:hover:bg-white/10" aria-label="Ẩn tóm tắt và đánh dấu AI" onClick={() => setAiResultVisible(false)}><X size={18} /></button>
               </div>
             </section>
           )}
-          <Field label="Ngày" required error={errors.transactionDate?.message} {...aiFieldProps('transactionDate')}>
+          <Field label={en ? 'Date' : 'Ngày'} required error={errors.transactionDate?.message} {...aiFieldProps('transactionDate')}>
             <input
               type="date"
               className={`field ${aiFieldClass(aiFieldProps('transactionDate'))}`}
@@ -557,7 +556,7 @@ export function TransactionForm() {
               {...register('transactionDate')}
             />
           </Field>
-          <Field label="Số tiền (VND)" required error={errors.amount?.message} {...aiFieldProps('amount')}>
+          <Field label={en ? 'Amount (VND)' : 'Số tiền (VND)'} required error={errors.amount?.message} {...aiFieldProps('amount')}>
             <Controller
               name="amount"
               control={control}
@@ -584,21 +583,21 @@ export function TransactionForm() {
               )}
             />
           </Field>
-          <Field label="Loại giao dịch" required {...aiFieldProps('transactionType')}>
+          <Field label={en ? 'Transaction type' : 'Loại giao dịch'} required {...aiFieldProps('transactionType')}>
             <select className={`field ${aiFieldClass(aiFieldProps('transactionType'))}`} required {...register('transactionType')}>
-              <option value="Chi tiêu">Tiền ra</option>
-              <option value="Thu nhập">Tiền vào</option>
+              <option value="Chi tiêu">{en ? 'Money out' : 'Tiền ra'}</option>
+              <option value="Thu nhập">{en ? 'Money in' : 'Tiền vào'}</option>
             </select>
           </Field>
           <div className="mt-1 border-t border-black/10 pt-4 dark:border-white/10 md:col-span-3"><h3 className="font-bold">{en ? 'Classification' : 'Phân loại'}</h3><p className="text-xs text-gray-500">{en ? 'Helps keep the dashboard and reports accurate.' : 'Giúp Dashboard và báo cáo tổng hợp chính xác.'}</p></div>
           <Field
-            label="Phương thức thanh toán"
+            label={en ? 'Payment method' : 'Phương thức thanh toán'}
             required
             error={errors.paymentMethodId?.message}
             {...aiFieldProps('paymentMethodId')}
           >
             <select className={`field ${aiFieldClass(aiFieldProps('paymentMethodId'))}`} required {...register('paymentMethodId')}>
-              <option value="">Chọn phương thức</option>
+              <option value="">{en ? 'Select payment method' : 'Chọn phương thức'}</option>
               {paymentMethods.map((x) => (
                 <option key={x.id} value={x.id}>
                   {x.name}
@@ -607,13 +606,13 @@ export function TransactionForm() {
             </select>
           </Field>
           <Field
-            label="Mục đích"
+            label={en ? 'Purpose' : 'Mục đích'}
             required
             error={errors.purposeId?.message}
             {...aiFieldProps('purposeId')}
           >
             <select className={`field ${aiFieldClass(aiFieldProps('purposeId'))}`} required {...register('purposeId')}>
-              <option value="">Chọn mục đích</option>
+              <option value="">{en ? 'Select purpose' : 'Chọn mục đích'}</option>
               {purposes.map((x) => (
                 <option key={x.id} value={x.id}>
                   {x.name}
@@ -622,13 +621,13 @@ export function TransactionForm() {
             </select>
           </Field>
           <Field
-            label="Danh mục"
+            label={en ? 'Category' : 'Danh mục'}
             required
             error={errors.expenseTypeId?.message}
             {...aiFieldProps('expenseTypeId')}
           >
             <select className={`field ${aiFieldClass(aiFieldProps('expenseTypeId'))}`} required {...register('expenseTypeId')}>
-              <option value="">Chọn loại chi phí</option>
+              <option value="">{en ? 'Select expense type' : 'Chọn loại chi phí'}</option>
               {expenseTypes.map((x) => (
                 <option key={x.id} value={x.id}>
                   {x.name}
@@ -636,35 +635,35 @@ export function TransactionForm() {
               ))}
             </select>
           </Field>
-          <button type="button" className="btn-secondary flex items-center justify-between md:col-span-3" aria-expanded={extrasOpen} onClick={() => setExtrasOpen((value) => !value)}><span>Tùy chọn nâng cao</span><ChevronDown size={18} className={`transition-transform ${extrasOpen ? 'rotate-180' : ''}`}/></button>
+          <button type="button" className="btn-secondary flex items-center justify-between md:col-span-3" aria-expanded={extrasOpen} onClick={() => setExtrasOpen((value) => !value)}><span>{en ? 'Advanced options' : 'Tùy chọn nâng cao'}</span><ChevronDown size={18} className={`transition-transform ${extrasOpen ? 'rotate-180' : ''}`}/></button>
           {extrasOpen && <div className="ui-enter grid gap-4 md:col-span-3 md:grid-cols-2">
-            <Field label="Trạng thái" {...aiFieldProps('status')}>
+            <Field label={en ? 'Status' : 'Trạng thái'} {...aiFieldProps('status')}>
               <select className={`field ${aiFieldClass(aiFieldProps('status'))}`} {...register('status')}>
-                <option>Thực tế</option>
-                <option>Dự kiến</option>
+                <option value="Thực tế">{en ? 'Actual' : 'Thực tế'}</option>
+                <option value="Dự kiến">{en ? 'Planned' : 'Dự kiến'}</option>
               </select>
-              <span className="mt-1 block text-xs text-gray-500">Ứng dụng tự chọn theo ngày giao dịch. Chỉ thay đổi khi giao dịch chưa hoặc đã thực sự phát sinh khác với ngày.</span>
+              <span className="mt-1 block text-xs text-gray-500">{en ? 'The app selects this from the transaction date. Change it only when the actual status differs from the date.' : 'Ứng dụng tự chọn theo ngày giao dịch. Chỉ thay đổi khi giao dịch chưa hoặc đã thực sự phát sinh khác với ngày.'}</span>
             </Field>
-            <Field label="Ghi chú">
+            <Field label={en ? 'Notes' : 'Ghi chú'}>
               <textarea className="field min-h-24" {...register('note')} />
             </Field>
           </div>}
-          {draftRestored && <p role="status" className="md:col-span-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-950/30 dark:text-amber-100">Đã khôi phục bản nháp trên thiết bị. Hãy kiểm tra trước khi lưu.</p>}
-          {saveError && <div role="alert" className="md:col-span-3 rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300"><p>{saveError}</p><button type="button" className="btn-secondary mt-2" disabled={saveBusy || deleteBusy || (isSupabaseConfigured && !online)} onClick={() => void handleSubmit(onSubmit)()}>Thử lại</button></div>}
+          {draftRestored && <p role="status" className="md:col-span-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-950/30 dark:text-amber-100">{en ? 'Draft restored on this device. Review it before saving.' : 'Đã khôi phục bản nháp trên thiết bị. Hãy kiểm tra trước khi lưu.'}</p>}
+          {saveError && <div role="alert" className="md:col-span-3 rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300"><p>{saveError}</p><button type="button" className="btn-secondary mt-2" disabled={saveBusy || deleteBusy || (isSupabaseConfigured && !online)} onClick={() => void handleSubmit(onSubmit)()}>{en ? 'Try again' : 'Thử lại'}</button></div>}
           <div className="flex items-center gap-2 md:col-span-3">
             <button
               className="btn-primary h-12 min-w-0 flex-1 whitespace-nowrap px-3 md:flex-none md:px-4"
               type="submit"
               disabled={saveBusy || deleteBusy}
             >
-              {saveBusy ? 'Đang lưu…' : id ? 'Lưu thay đổi' : 'Xác nhận và lưu'}
+              {saveBusy ? (en ? 'Saving…' : 'Đang lưu…') : id ? (en ? 'Save changes' : 'Lưu thay đổi') : (en ? 'Confirm and save' : 'Xác nhận và lưu')}
             </button>
             <button
               type="button"
               className="btn-secondary h-12 shrink-0 px-3 md:px-4"
               onClick={() => nav(-1)}
             >
-              Hủy
+              {en ? 'Cancel' : 'Hủy'}
             </button>
             {existing &&
               canDeleteTransaction(
