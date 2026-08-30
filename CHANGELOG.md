@@ -7,6 +7,18 @@
 - Đổi hai chart xu hướng Thu nhập và Chi tiêu 6 tháng sang cột bo góc, giữ màu xanh/cam và nhãn giá trị trên đầu cột.
 - Cập nhật `src/pages/Dashboard.tsx`; không thay đổi dữ liệu/API.
 - Kiểm thử và triển khai: Đang thực hiện.
+- Trước thay đổi: PWA precache cả chunk ExcelJS/XLSX lớn; một số phép tính Dashboard local lặp lại sau mỗi lần render.
+- Sau thay đổi: Loại chunk ExcelJS/XLSX khỏi precache; memo hóa danh sách năm, giao dịch thực tế và breakdown local.
+- Kỹ thuật: Cập nhật `vite.config.ts` và `src/pages/Dashboard.tsx`; không thay đổi database/API. Excel vẫn dynamic import khi người dùng thao tác.
+- Kiểm thử: Đang chạy test, lint, typecheck và build.
+- Triển khai: Chưa deploy.
+### Sửa tràn layout bộ chọn ngôn ngữ trên sidebar mobile/hẹp
+
+- Trước thay đổi: Nhãn Giao diện bị xuống dòng và bộ chọn VI/EN có thể tràn khỏi sidebar.
+- Sau thay đổi: Các bộ chọn được xếp responsive theo cột khi sidebar hẹp; nhãn không bị vỡ dòng.
+- Kỹ thuật: Cập nhật `src/components/ThemeSelect.tsx`; không đổi database/API.
+- Kiểm thử: `pnpm test` đạt 61/61; lint, typecheck và build đạt.
+- Triển khai: Đang chờ PR #36.
 
 ### Sửa tên chart thành Thu ròng thực tế
 
