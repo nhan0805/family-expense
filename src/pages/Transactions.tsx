@@ -67,6 +67,20 @@ const monthOptions = Array.from({ length: 12 }, (_, index) => ({
   value: String(index + 1).padStart(2, '0'),
   label: `Tháng ${index + 1}`,
 }));
+const englishMonthNames = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+] as const;
 
 export const getInitialTransactionPeriod = (
   monthParam: string | null,
@@ -388,10 +402,10 @@ export function Transactions() {
     purposeId && { key: 'purposeId', label: purposes.find((item) => item.id === purposeId)?.name || 'Mục đích', clear: () => setPurposeId('') },
     expenseTypeId && { key: 'expenseTypeId', label: expenseTypes.find((item) => item.id === expenseTypeId)?.name || 'Danh mục', clear: () => setExpenseTypeId('') },
     paymentMethodId && { key: 'paymentMethodId', label: paymentMethods.find((item) => item.id === paymentMethodId)?.name || 'Thanh toán', clear: () => setPaymentMethodId('') },
-    month && { key: 'month', label: `Tháng ${Number(month)}`, clear: () => setMonth('') },
-    year && { key: 'year', label: `Năm ${year}`, clear: () => setYear('') },
-    dateFrom && { key: 'dateFrom', label: `Từ ${new Date(`${dateFrom}T00:00:00`).toLocaleDateString('vi-VN')}`, clear: () => setDateFrom('') },
-    dateTo && { key: 'dateTo', label: `Đến ${new Date(`${dateTo}T00:00:00`).toLocaleDateString('vi-VN')}`, clear: () => setDateTo('') },
+    month && { key: 'month', label: en ? (englishMonthNames[Number(month) - 1] || `Month ${Number(month)}`) : `Tháng ${Number(month)}`, clear: () => setMonth('') },
+    year && { key: 'year', label: `${en ? 'Year' : 'Năm'} ${year}`, clear: () => setYear('') },
+    dateFrom && { key: 'dateFrom', label: `${en ? 'From' : 'Từ'} ${new Date(`${dateFrom}T00:00:00`).toLocaleDateString('vi-VN')}`, clear: () => setDateFrom('') },
+    dateTo && { key: 'dateTo', label: `${en ? 'To' : 'Đến'} ${new Date(`${dateTo}T00:00:00`).toLocaleDateString('vi-VN')}`, clear: () => setDateTo('') },
   ].filter(Boolean) as { key: string; label: string; clear: () => void }[];
   const filteredTotal = isSupabaseConfigured
     ? (showTrash ? rows.reduce((total, transaction) => total + getTransactionTotalImpact(transaction.amount, transaction.transactionType), 0) : transactionQuery.data?.pages[0]?.totalAmount || 0)
@@ -682,7 +696,7 @@ export function Transactions() {
         <h2 className="text-2xl font-extrabold">{en ? 'Transactions' : 'Giao dịch'}</h2>
       </div>
       <section
-        aria-label="Giá trị ròng theo bộ lọc"
+        aria-label={en ? 'Net value for current filters' : 'Giá trị ròng theo bộ lọc'}
         className={`order-2 flex flex-col gap-3 rounded-2xl border p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between ${netIsPositive ? 'border-rose-200 bg-gradient-to-br from-rose-50 to-white dark:border-rose-900/40 dark:from-rose-950/40 dark:to-white/5' : netIsNegative ? 'border-emerald-200 bg-gradient-to-br from-emerald-50 to-white dark:border-emerald-900/40 dark:from-emerald-950/40 dark:to-white/5' : 'border-slate-200 bg-gradient-to-br from-slate-50 to-white dark:border-slate-700 dark:from-slate-900/40 dark:to-white/5'}`}
       >
         <div className="flex min-w-0 items-center gap-3">
@@ -824,7 +838,7 @@ export function Transactions() {
               <option value="">{en ? 'All months' : 'Tất cả tháng'}</option>
               {monthOptions.map((option) => (
                 <option key={option.value} value={option.value}>
-                  {option.label}
+                  {en ? englishMonthNames[Number(option.value) - 1] : option.label}
                 </option>
               ))}
             </select>
@@ -845,7 +859,7 @@ export function Transactions() {
             </select>
           </label>
           <label className="min-w-0">
-            <span className="label">Từ ngày</span>
+            <span className="label">{en ? 'From date' : 'Từ ngày'}</span>
             <input
               className="field"
               type="date"
@@ -855,7 +869,7 @@ export function Transactions() {
             />
           </label>
           <label className="min-w-0">
-            <span className="label">Đến ngày</span>
+            <span className="label">{en ? 'To date' : 'Đến ngày'}</span>
             <input
               className="field"
               type="date"
@@ -866,7 +880,7 @@ export function Transactions() {
           </label>
           <div>
             <span className="label invisible" aria-hidden="true">
-              Thao tác
+              {en ? 'Actions' : 'Thao tác'}
             </span>
             <button
               className="btn-secondary flex w-full items-center justify-center gap-2"
@@ -884,27 +898,27 @@ export function Transactions() {
       <div className="order-3 flex items-center justify-between gap-3 rounded-xl border border-black/5 bg-white/70 px-3 py-2 shadow-sm dark:border-white/10 dark:bg-white/5">
         <p className="text-base font-semibold text-gray-600 dark:text-gray-300">{showTrash ? (en ? 'Trash' : 'Thùng rác') : (en ? 'Transaction list' : 'Danh sách giao dịch')}</p>
         <div className="flex items-center gap-0">
-          <button type="button" className={`grid size-10 place-items-center rounded-xl transition-colors focus:outline-none focus:ring-4 focus:ring-emerald-200/50 ${selectMode ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200' : 'text-gray-600 hover:bg-emerald-50 hover:text-emerald-700 dark:text-gray-300 dark:hover:bg-white/10'}`} aria-label={selectMode ? 'Đóng chọn nhiều giao dịch' : 'Chọn nhiều giao dịch'} title={selectMode ? 'Đóng chọn nhiều' : 'Chọn nhiều giao dịch'} aria-pressed={selectMode} onClick={() => selectMode ? closeSelectMode() : setSelectMode(true)}><ListChecks size={21}/></button>
-          <button type="button" className={`flex h-10 items-center justify-center gap-1 rounded-xl px-1 transition-colors focus:outline-none focus:ring-4 focus:ring-amber-200/50 ${showTrash ? 'text-amber-700 dark:text-amber-300' : 'text-gray-600 hover:bg-amber-50 hover:text-amber-700 dark:text-gray-300 dark:hover:bg-white/10'}`} aria-label={showTrash ? 'Đóng giao dịch đã xóa' : 'Xem giao dịch đã xóa'} title={showTrash ? 'Đóng giao dịch đã xóa' : 'Xem giao dịch đã xóa'} aria-pressed={showTrash} onClick={() => { closeSelectMode(); setShowTrash((value) => !value); }}><ArchiveRestore size={19}/><span className="hidden text-sm font-semibold sm:inline">Đã xóa</span></button>
+          <button type="button" className={`grid size-10 place-items-center rounded-xl transition-colors focus:outline-none focus:ring-4 focus:ring-emerald-200/50 ${selectMode ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200' : 'text-gray-600 hover:bg-emerald-50 hover:text-emerald-700 dark:text-gray-300 dark:hover:bg-white/10'}`} aria-label={selectMode ? (en ? 'Close multi-select' : 'Đóng chọn nhiều giao dịch') : (en ? 'Select multiple transactions' : 'Chọn nhiều giao dịch')} title={selectMode ? (en ? 'Close multi-select' : 'Đóng chọn nhiều') : (en ? 'Select multiple transactions' : 'Chọn nhiều giao dịch')} aria-pressed={selectMode} onClick={() => selectMode ? closeSelectMode() : setSelectMode(true)}><ListChecks size={21}/></button>
+          <button type="button" className={`flex h-10 items-center justify-center gap-1 rounded-xl px-1 transition-colors focus:outline-none focus:ring-4 focus:ring-amber-200/50 ${showTrash ? 'text-amber-700 dark:text-amber-300' : 'text-gray-600 hover:bg-amber-50 hover:text-amber-700 dark:text-gray-300 dark:hover:bg-white/10'}`} aria-label={showTrash ? (en ? 'Close trash' : 'Đóng giao dịch đã xóa') : (en ? 'View trash' : 'Xem giao dịch đã xóa')} title={showTrash ? (en ? 'Close trash' : 'Đóng giao dịch đã xóa') : (en ? 'View trash' : 'Xem giao dịch đã xóa')} aria-pressed={showTrash} onClick={() => { closeSelectMode(); setShowTrash((value) => !value); }}><ArchiveRestore size={19}/><span className="hidden text-sm font-semibold sm:inline">{en ? 'Trash' : 'Đã xóa'}</span></button>
         </div>
       </div>
       {selectMode && (
         <div className="order-3 sticky top-2 z-40 flex w-full items-center gap-2 rounded-xl border border-emerald-900/15 bg-emerald-50/95 p-2.5 shadow-md backdrop-blur dark:border-white/15 dark:bg-[#17251f]/95">
-          <div className="min-w-0 flex-1"><p className="truncate text-sm font-bold">Đã chọn {selectedIds.size} giao dịch</p><p className="hidden text-xs text-gray-500 sm:block">Tối đa 100 giao dịch mỗi lần</p></div>
-          <button type="button" className="btn-secondary shrink-0 px-3 text-sm" onClick={() => setSelectedIds(new Set(rows.slice(0, 100).map((item) => item.id)))}>Chọn tất cả</button>
-          {showTrash && <button type="button" className="grid size-10 shrink-0 place-items-center rounded-xl bg-red-600 text-white shadow-sm" disabled={rows.length === 0 || bulkEditBusy} onClick={() => { setSelectedIds(new Set(rows.slice(0, 100).map((item) => item.id))); window.setTimeout(() => void permanentlyDeleteSelected(), 0); }} aria-label="Xóa tất cả giao dịch trong thùng rác" title="Xóa tất cả giao dịch trong thùng rác"><Trash2 size={18}/></button>}
-          {showTrash ? <button type="button" className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#155e46] text-white" disabled={selectedIds.size === 0 || bulkEditBusy} onClick={() => void restoreSelected()} aria-label="Khôi phục các giao dịch đã chọn" title="Khôi phục các giao dịch đã chọn"><RotateCcw size={18}/></button> : <><button type="button" className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#155e46] text-white" disabled={selectedIds.size === 0 || bulkEditBusy} onClick={() => { setDeleteError(''); setBulkEditOpen(true); }} aria-label="Sửa các giao dịch đã chọn" title="Sửa các giao dịch đã chọn"><Pencil size={18}/></button><button type="button" className="grid size-10 shrink-0 place-items-center rounded-xl bg-red-600 text-white" disabled={!canBulkDelete || bulkEditBusy} onClick={() => void bulkDelete()} aria-label={canBulkDelete ? 'Xóa các giao dịch đã chọn' : 'Không có quyền xóa các giao dịch đã chọn'} title={canBulkDelete ? 'Xóa các giao dịch đã chọn' : 'Chỉ có thể xóa giao dịch do bạn tạo'}><Trash2 size={18}/></button></>}
+          <div className="min-w-0 flex-1"><p className="truncate text-sm font-bold">{en ? `Selected ${selectedIds.size} transaction(s)` : `Đã chọn ${selectedIds.size} giao dịch`}</p><p className="hidden text-xs text-gray-500 sm:block">{en ? 'Up to 100 transactions per batch' : 'Tối đa 100 giao dịch mỗi lần'}</p></div>
+          <button type="button" className="btn-secondary shrink-0 px-3 text-sm" onClick={() => setSelectedIds(new Set(rows.slice(0, 100).map((item) => item.id)))}>{en ? 'Select all' : 'Chọn tất cả'}</button>
+          {showTrash && <button type="button" className="grid size-10 shrink-0 place-items-center rounded-xl bg-red-600 text-white shadow-sm" disabled={rows.length === 0 || bulkEditBusy} onClick={() => { setSelectedIds(new Set(rows.slice(0, 100).map((item) => item.id))); window.setTimeout(() => void permanentlyDeleteSelected(), 0); }} aria-label={en ? 'Delete all transactions in trash' : 'Xóa tất cả giao dịch trong thùng rác'} title={en ? 'Delete all transactions in trash' : 'Xóa tất cả giao dịch trong thùng rác'}><Trash2 size={18}/></button>}
+          {showTrash ? <button type="button" className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#155e46] text-white" disabled={selectedIds.size === 0 || bulkEditBusy} onClick={() => void restoreSelected()} aria-label={en ? 'Restore selected transactions' : 'Khôi phục các giao dịch đã chọn'} title={en ? 'Restore selected transactions' : 'Khôi phục các giao dịch đã chọn'}><RotateCcw size={18}/></button> : <><button type="button" className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#155e46] text-white" disabled={selectedIds.size === 0 || bulkEditBusy} onClick={() => { setDeleteError(''); setBulkEditOpen(true); }} aria-label={en ? 'Edit selected transactions' : 'Sửa các giao dịch đã chọn'} title={en ? 'Edit selected transactions' : 'Sửa các giao dịch đã chọn'}><Pencil size={18}/></button><button type="button" className="grid size-10 shrink-0 place-items-center rounded-xl bg-red-600 text-white" disabled={!canBulkDelete || bulkEditBusy} onClick={() => void bulkDelete()} aria-label={canBulkDelete ? (en ? 'Delete selected transactions' : 'Xóa các giao dịch đã chọn') : (en ? 'You can only delete transactions you created' : 'Chỉ có thể xóa giao dịch do bạn tạo')} title={canBulkDelete ? (en ? 'Delete selected transactions' : 'Xóa các giao dịch đã chọn') : (en ? 'You can only delete transactions you created' : 'Chỉ có thể xóa giao dịch do bạn tạo')}><Trash2 size={18}/></button></>}
         </div>
       )}
       <div key={resultKey} className="order-4 space-y-2 overflow-visible md:space-y-0 md:overflow-x-auto md:rounded-2xl md:border md:border-[#e3e7df] md:bg-white md:shadow-sm dark:md:border-[#33463f] dark:md:bg-[#17251f]">
         <div className={`hidden w-max min-w-[980px] gap-1 rounded-t-2xl bg-[#eef2ed] p-3 text-sm font-bold dark:bg-white/5 md:grid ${selectMode ? 'grid-cols-[32px_80px_minmax(160px,1fr)_130px_120px_145px_110px_70px]' : 'grid-cols-[80px_minmax(160px,1fr)_130px_120px_145px_110px_70px]'}`}>
-          {selectMode && <input type="checkbox" className="size-5 accent-[#155e46]" aria-label="Chọn tất cả giao dịch đang hiển thị" checked={rows.length > 0 && rows.slice(0, 100).every((item) => selectedIds.has(item.id))} onChange={(event) => setSelectedIds(event.target.checked ? new Set(rows.slice(0, 100).map((item) => item.id)) : new Set())} />}
-          <span>Ngày</span>
-          <span>Nội dung</span>
-          <span>Mục đích</span>
-          <span>Danh mục</span>
-          <span>Phương thức</span>
-          <span>Số tiền</span>
+          {selectMode && <input type="checkbox" className="size-5 accent-[#155e46]" aria-label={en ? 'Select all visible transactions' : 'Chọn tất cả giao dịch đang hiển thị'} checked={rows.length > 0 && rows.slice(0, 100).every((item) => selectedIds.has(item.id))} onChange={(event) => setSelectedIds(event.target.checked ? new Set(rows.slice(0, 100).map((item) => item.id)) : new Set())} />}
+          <span>{en ? 'Date' : 'Ngày'}</span>
+          <span>{en ? 'Description' : 'Nội dung'}</span>
+          <span>{en ? 'Purpose' : 'Mục đích'}</span>
+          <span>{en ? 'Category' : 'Danh mục'}</span>
+          <span>{en ? 'Payment method' : 'Phương thức'}</span>
+          <span>{en ? 'Amount' : 'Số tiền'}</span>
           <span></span>
         </div>
         {rows.map((transaction) => {

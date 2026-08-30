@@ -42,6 +42,20 @@ const monthOptions = Array.from({ length: 12 }, (_, index) => ({
   value: String(index + 1).padStart(2, '0'),
   label: `Tháng ${index + 1}`,
 }));
+const englishMonthNames = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+] as const;
 const chartColors = ['#155e46', '#e6b85c', '#d97757', '#6081a8', '#7b6aa2'];
 
 const recentMonths = (monthKey: string, count: number) => {
@@ -273,7 +287,7 @@ export function Dashboard() {
             >
               {monthOptions.map((option) => (
                 <option key={option.value} value={option.value}>
-                  {option.label}
+                  {en ? englishMonthNames[Number(option.value) - 1] : option.label}
                 </option>
               ))}
             </select>
@@ -427,7 +441,7 @@ export function Dashboard() {
                 <Tooltip formatter={(value) => formatVnd(Number(value))} />
                 <Legend verticalAlign="bottom" />
                 <Line
-                  name="Chi ròng thực tế"
+                  name={en ? 'Actual net spending' : 'Chi ròng thực tế'}
                   type="monotone"
                   dataKey="v"
                   stroke="#155e46"
