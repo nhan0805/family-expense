@@ -2,6 +2,14 @@
 
 ## 2026-08-30
 
+### Tối ưu tải asset PWA và tính toán Dashboard
+
+- Trước thay đổi: PWA precache cả chunk ExcelJS/XLSX lớn; một số phép tính Dashboard local lặp lại sau mỗi lần render.
+- Sau thay đổi: Loại chunk ExcelJS/XLSX khỏi precache; memo hóa danh sách năm, giao dịch thực tế và breakdown local.
+- Kỹ thuật: Cập nhật `vite.config.ts` và `src/pages/Dashboard.tsx`; không thay đổi database/API. Excel vẫn dynamic import khi người dùng thao tác.
+- Kiểm thử: Đang chạy test, lint, typecheck và build.
+- Triển khai: Chưa deploy.
+
 ### Bổ sung nền tảng chuyển ngôn ngữ VI/EN
 
 - Sau thay đổi: Thêm toggle VI/EN, lưu lựa chọn trên thiết bị và đồng bộ `lang` của document; các nhãn giao diện dùng chung/theme đổi theo ngôn ngữ. Template Excel vẫn giữ tiếng Việt để tương thích file cũ.
