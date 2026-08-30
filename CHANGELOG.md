@@ -2,6 +2,13 @@
 
 ## 2026-08-30
 
+### Đổi bộ chọn giao diện và ngôn ngữ sang switch
+
+- Sau thay đổi: Giao diện chỉ còn Sáng/Tối bằng nút switch; ngôn ngữ VI/EN cũng chuyển đổi bằng switch, không còn lựa chọn Theo thiết bị.
+- Kỹ thuật: Cập nhật `src/context/ThemeContext.tsx`, `src/components/ThemeSelect.tsx` và test tương ứng; lựa chọn `system` cũ được đọc thành Sáng để tương thích.
+- Kiểm thử: Đang chạy test, lint, typecheck và build.
+- Triển khai: Chưa deploy.
+
 ### Cải thiện accessibility và khả năng phục hồi Dashboard
 
 - Sau thay đổi: Dashboard thông báo lỗi nếu bất kỳ query summary/trends/years thất bại; các lát/cột biểu đồ có thể điều hướng bằng bàn phím và có accessible name.
