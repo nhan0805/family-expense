@@ -2,6 +2,13 @@
 
 ## 2026-08-30
 
+### Đồng bộ bộ lọc loại giao dịch từ KPI
+
+- Sau thay đổi: Trang Giao dịch đọc `transactionType` từ URL, giúp KPI Tổng chi chỉ mở Tiền ra và KPI Tổng thu chỉ mở Tiền vào theo tháng/năm đã chọn.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx` và `src/pages/Transactions.test.ts`; không thay đổi database/API.
+- Kiểm thử: Sẽ chạy test, lint, typecheck và build.
+- Triển khai: Chưa deploy.
+
 ### Sửa assertion pgTAP cho kiểm thử foreign key
 
 - Trước thay đổi: `db-security` dừng trước khi chạy test vì gọi hàm `has_constraint()` không có trong pgTAP của Supabase CLI.

@@ -86,6 +86,9 @@ export const getInitialTransactionPeriod = (
   };
 };
 
+export const getInitialTransactionType = (value: string | null) =>
+  value === 'Chi tiêu' || value === 'Thu nhập' ? value : '';
+
 export const getTransactionListTone = (
   transactionType: Transaction['transactionType'],
 ) => {
@@ -221,7 +224,9 @@ export function Transactions() {
   const initialYear = initialPeriod.year;
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
-  const [transactionType, setTransactionType] = useState('');
+  const [transactionType, setTransactionType] = useState(() =>
+    getInitialTransactionType(searchParams.get('transactionType')),
+  );
   const [purposeId, setPurposeId] = useState('');
   const [expenseTypeId, setExpenseTypeId] = useState('');
   const [paymentMethodId, setPaymentMethodId] = useState('');
