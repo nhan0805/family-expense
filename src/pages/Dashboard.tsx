@@ -25,6 +25,7 @@ import { formatCompactVnd, formatVnd, getNetExpense } from '../lib/domain';
 import { isSupabaseConfigured } from '../lib/supabase';
 import {
   fetchDashboardSummary,
+  fetchDashboardTrends,
   fetchTransactionYears,
 } from '../lib/transactionsApi';
 
@@ -168,6 +169,11 @@ export function Dashboard() {
       ),
     enabled: isSupabaseConfigured && Boolean(familyId),
   });
+  const trendsQuery = useQuery({
+    queryKey: ['dashboard-trends', familyId, selectedYear, selectedMonth],
+    queryFn: () => fetchDashboardTrends(familyId, Number(selectedYear), Number(selectedMonth)),
+    enabled: isSupabaseConfigured && Boolean(familyId),
+  });
   const yearsQuery = useQuery({
     queryKey: ['transaction-years', familyId],
     queryFn: () => fetchTransactionYears(familyId),
@@ -206,14 +212,16 @@ export function Dashboard() {
     ? summaryQuery.data?.trend || []
     : localTrend;
   const trendMonths = recentMonths(monthKey, 6);
-  const incomeTrend = trendMonths.map((item) => ({
+  const localIncomeTrend = trendMonths.map((item) => ({
     m: item.label,
     v: actualTransactions.filter((transaction) => transaction.transactionDate.startsWith(item.key) && (transaction.transactionType === 'Thu nhập' || transaction.transactionType === 'Hoàn tiền')).reduce((total, transaction) => total + transaction.amount, 0),
   }));
-  const expenseTrend = trendMonths.map((item) => ({
+  const localExpenseTrend = trendMonths.map((item) => ({
     m: item.label,
     v: actualTransactions.filter((transaction) => transaction.transactionDate.startsWith(item.key) && (transaction.transactionType === 'Chi tiêu' || transaction.transactionType === 'Tạm ứng')).reduce((total, transaction) => total + transaction.amount, 0),
   }));
+  const incomeTrend = isSupabaseConfigured ? trendsQuery.data?.income || [] : localIncomeTrend;
+  const expenseTrend = isSupabaseConfigured ? trendsQuery.data?.expense || [] : localExpenseTrend;
   const dueTransactions = isSupabaseConfigured
     ? summaryQuery.data?.dueTransactions || []
     : localDueTransactions;
