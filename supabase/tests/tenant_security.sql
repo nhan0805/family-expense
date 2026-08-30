@@ -2,22 +2,10 @@
 -- Fixture-level cross-family negative tests nên dùng dữ liệu test riêng của môi trường.
 begin;
 select plan(20);
-select ok(
-  exists (select 1 from pg_constraint where connamespace = 'public'::regnamespace and conrelid = 'public.transactions'::regclass and conname = 'transactions_purpose_same_family_fkey' and contype = 'f'),
-  'transactions có purpose FK cùng family'
-);
-select ok(
-  exists (select 1 from pg_constraint where connamespace = 'public'::regnamespace and conrelid = 'public.transactions'::regclass and conname = 'transactions_expense_type_same_family_fkey' and contype = 'f'),
-  'transactions có expense type FK cùng family'
-);
-select ok(
-  exists (select 1 from pg_constraint where connamespace = 'public'::regnamespace and conrelid = 'public.transactions'::regclass and conname = 'transactions_payment_method_same_family_fkey' and contype = 'f'),
-  'transactions có payment method FK cùng family'
-);
-select ok(
-  exists (select 1 from pg_constraint where connamespace = 'public'::regnamespace and conrelid = 'public.transactions'::regclass and conname = 'transactions_event_same_family_fkey' and contype = 'f'),
-  'transactions có event FK cùng family'
-);
+select has_constraint('public','transactions','transactions_purpose_same_family_fkey','purpose FK cùng family');
+select has_constraint('public','transactions','transactions_expense_type_same_family_fkey','expense type FK cùng family');
+select has_constraint('public','transactions','transactions_payment_method_same_family_fkey','payment method FK cùng family');
+select has_constraint('public','transactions','transactions_event_same_family_fkey','event FK cùng family');
 select has_function('public','bulk_update_transactions',ARRAY['uuid','uuid[]','jsonb'],'bulk update RPC có authorization');
 
 select ok(
