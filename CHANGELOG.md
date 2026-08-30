@@ -2,34 +2,6 @@
 
 ## 2026-08-30
 
-### Rà soát toàn bộ text hiển thị còn lại
-
-- Sau thay đổi: Dịch thêm thông báo thao tác, xác nhận, AI, accessibility label và bảng kiểm tra Import/Export theo VI/EN.
-- Kỹ thuật: Cập nhật `src/pages/TransactionForm.tsx` và `src/pages/ImportExport.tsx`; giữ nguyên enum, sheet và cột Excel tiếng Việt.
-- Kiểm thử: TypeScript và diff check pass; chờ CI.
-- Triển khai: Chưa deploy.
-
-### Rà soát bản dịch action Thành viên và Danh mục
-
-- Sau thay đổi: Dịch thêm nhãn accessibility, trạng thái loading/empty, thao tác đổi tên/xóa và thông báo xác nhận theo locale.
-- Kỹ thuật: Cập nhật `src/pages/Members.tsx` và `src/pages/Catalogs.tsx`; không đổi dữ liệu/API.
-- Kiểm thử: Chờ CI.
-- Triển khai: Chưa deploy.
-
-### Hoàn thiện thêm bản dịch Form giao dịch và bộ lọc Giao dịch
-
-- Sau thay đổi: Các nhãn, trạng thái, nút, empty state và lựa chọn lọc chính hiển thị theo VI/EN; giá trị enum lưu trữ vẫn giữ nguyên tiếng Việt.
-- Kỹ thuật: Cập nhật `src/pages/TransactionForm.tsx` và `src/pages/Transactions.tsx`; không thay đổi database/Excel.
-- Kiểm thử: TypeScript và diff check pass; chờ CI.
-- Triển khai: Chưa deploy.
-
-### Dịch tiếp Form giao dịch và Quản lý dữ liệu
-
-- Sau thay đổi: Bổ sung bản dịch tiếng Anh cho tiêu đề, mô tả và nhãn chính của Form giao dịch và Import/Export.
-- Kỹ thuật: Cập nhật `src/pages/TransactionForm.tsx` và `src/pages/ImportExport.tsx`; không đổi dữ liệu Excel/database.
-- Kiểm thử: Chờ CI.
-- Triển khai: Chưa deploy.
-
 ### Dịch tiếp màn hình Tạo gia đình và Thành viên
 
 - Sau thay đổi: Các tiêu đề, mô tả, nút và placeholder chuyển sang tiếng Anh khi chọn EN.
