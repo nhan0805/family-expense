@@ -1,13 +1,13 @@
 import { Pencil, Plus, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import { useApp, type CatalogKind } from '../context/AppContext';
-import { useLanguage } from '../context/LanguageContext';
+import { useOptionalLanguage } from '../context/LanguageContext';
 import { EmptyState } from '../components/AsyncStates';
 
 type Editor = { kind: CatalogKind; id?: string } | null;
 
 export function Catalogs() {
-  const { language } = useLanguage();
+  const { language } = useOptionalLanguage();
   const isEnglish = language === 'en';
   const { currentUserRole, purposes, expenseTypes, paymentMethods, addCatalogItem, updateCatalogItem, deleteCatalogItem } = useApp();
   const canManage = currentUserRole === 'owner';
