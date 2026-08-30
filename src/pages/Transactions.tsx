@@ -1,11 +1,9 @@
 import {
-  Copy,
   ChevronDown,
   RotateCcw,
   Search,
   Trash2,
   Plus,
-  MoreHorizontal,
   Pencil,
   ListChecks,
   WalletCards,
@@ -13,6 +11,7 @@ import {
   ArchiveRestore,
 } from 'lucide-react';
 import { EmptyState, TransactionListSkeleton } from '../components/AsyncStates';
+import { TransactionRow } from '../components/TransactionRow';
 import { useFeedback } from '../components/Feedback';
 import {
   useInfiniteQuery,
@@ -27,7 +26,6 @@ import {
   formatVnd,
   getTransactionTotalImpact,
   normalizeText,
-  transactionTypeLabel,
   type Transaction,
 } from '../lib/domain';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
@@ -902,7 +900,6 @@ export function Transactions() {
           <span></span>
         </div>
         {rows.map((transaction) => {
-          const tone = getTransactionListTone(transaction.transactionType);
           const purposeName =
             purposes.find((item) => item.id === transaction.purposeId)?.name ||
             '—';
@@ -913,81 +910,7 @@ export function Transactions() {
             paymentMethods.find(
               (item) => item.id === transaction.paymentMethodId,
             )?.name || '—';
-          return (
-            <div key={transaction.id}>
-            <article aria-label={`Giao dịch ${transaction.description}`} className={`relative rounded-2xl border border-black/10 p-4 shadow-sm transition duration-150 hover:-translate-y-0.5 hover:shadow-md dark:border-white/10 md:hidden ${tone.rowClass}`}>
-              <div className="flex items-start justify-between gap-3">
-                {selectMode && <input type="checkbox" className="mt-1 size-5 shrink-0 accent-[#155e46]" aria-label={`Chọn giao dịch ${transaction.description}`} checked={selectedIds.has(transaction.id)} onChange={() => toggleSelected(transaction.id)} />}
-                <div className="min-w-0 flex-1">
-                  {showTrash ? <span className="block truncate text-base font-bold">{transaction.description}</span> : <Link to={`/giao-dich/${transaction.id}`} className="block truncate text-base font-bold active:opacity-70">{transaction.description}</Link>}
-                  <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400"><span>{new Date(`${transaction.transactionDate}T00:00:00`).toLocaleDateString('vi-VN')}</span><span className={`rounded-full px-2 py-0.5 font-semibold ${tone.badgeClass}`}>{transactionTypeLabel(transaction.transactionType)}</span></div>
-                </div>
-                <div className="flex shrink-0 items-start gap-1"><strong className={`pt-1 text-base ${tone.amountClass} ${showTrash ? 'line-through opacity-70' : ''}`}>{formatVnd(transaction.amount)}</strong>{showTrash && <button type="button" className="rounded-lg p-2 text-red-600 hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-950/30" aria-label={`Xóa vĩnh viễn ${transaction.description}`} title="Xóa vĩnh viễn" onClick={() => { setSelectedIds(new Set([transaction.id])); void permanentlyDeleteSelected(); }}><Trash2 size={18}/></button>}{!showTrash && <button type="button" className="rounded-lg p-2 hover:bg-black/5 dark:hover:bg-white/5" aria-label={`Thao tác với ${transaction.description}`} aria-expanded={openMenuId === transaction.id} onClick={() => setOpenMenuId((value) => value === transaction.id ? null : transaction.id)}><MoreHorizontal size={19}/></button>}</div>
-              </div>
-              <div className="mt-3 flex flex-wrap gap-1.5"><span className="transaction-card-tag">{purposeName}</span><span className="transaction-card-tag">{expenseTypeName}</span>{paymentMethodName !== '—' && <span className="transaction-card-tag">{paymentMethodName}</span>}</div>
-              {openMenuId === transaction.id && <div className="absolute right-3 top-12 z-10 min-w-40 overflow-hidden rounded-xl border border-black/10 bg-white p-1 shadow-xl dark:border-white/10 dark:bg-[#203029]"><Link className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/5" to={`/giao-dich/${transaction.id}`} onClick={() => setOpenMenuId(null)}><Pencil size={16}/>Sửa</Link><button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/5" disabled={copyingId === transaction.id} onClick={() => { setOpenMenuId(null); void copyTransaction(transaction); }}><Copy size={16}/>Sao chép</button>{canDeleteTransaction(transaction, currentUserRole, currentUserId) && <button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-red-700 hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-950/30" disabled={deletingId === transaction.id} onClick={() => { setOpenMenuId(null); void remove(transaction.id); }}><Trash2 size={16}/>Xóa</button>}</div>}
-            </article>
-            <div
-              className={`hidden gap-1 border-t border-black/5 p-3 transition-colors hover:brightness-[.98] dark:border-white/5 dark:hover:brightness-110 md:grid md:min-w-[980px] md:items-center ${selectMode ? 'md:grid-cols-[32px_80px_minmax(160px,1fr)_130px_120px_145px_110px_70px]' : 'md:grid-cols-[80px_minmax(160px,1fr)_130px_120px_145px_110px_70px]'} ${tone.rowClass}`}
-            >
-              {selectMode && <input type="checkbox" className="size-5 accent-[#155e46]" aria-label={`Chọn giao dịch ${transaction.description} trên bảng`} checked={selectedIds.has(transaction.id)} onChange={() => toggleSelected(transaction.id)} />}
-              <span className="text-sm text-gray-500">
-                {new Date(
-                  `${transaction.transactionDate}T00:00:00`,
-                ).toLocaleDateString('vi-VN')}
-              </span>
-              <Link
-                to={`/giao-dich/${transaction.id}`}
-                className="text-sm font-semibold hover:underline"
-              >
-                {transaction.description}
-                <span
-                  className={`ml-2 inline-flex rounded-full px-2 py-0.5 align-middle text-[11px] font-semibold ${tone.badgeClass}`}
-                >
-                  {transactionTypeLabel(transaction.transactionType)}
-                </span>
-                <small className="mt-1 block font-normal text-gray-500 md:hidden">
-                  {purposeName} · {expenseTypeName} · {paymentMethodName}
-                </small>
-              </Link>
-              <span className="hidden text-sm md:block">{purposeName}</span>
-              <span className="hidden text-sm md:block">{expenseTypeName}</span>
-              <span className="hidden text-sm md:block">
-                {paymentMethodName}
-              </span>
-              <strong className={`text-sm font-bold ${tone.amountClass}`}>
-                {formatVnd(transaction.amount)}
-              </strong>
-              <span className="flex justify-start gap-1">
-                {showTrash && <button type="button" aria-label={`Khôi phục ${transaction.description}`} title="Khôi phục" className="p-2 text-emerald-700" onClick={() => { setSelectedIds(new Set([transaction.id])); void restoreSelected(); }}><RotateCcw size={17} /></button>}
-                {showTrash && <button type="button" aria-label={`Xóa vĩnh viễn ${transaction.description}`} title="Xóa vĩnh viễn" className="p-2 text-red-600" onClick={() => { setSelectedIds(new Set([transaction.id])); void permanentlyDeleteSelected(); }}><Trash2 size={17} /></button>}
-                <span className={showTrash ? 'hidden' : 'contents'}>
-                <button
-                  aria-label="Sao chép"
-                  className="p-2"
-                  disabled={copyingId === transaction.id}
-                  onClick={() => void copyTransaction(transaction)}
-                >
-                  <Copy size={17} />
-                </button>
-                {canDeleteTransaction(
-                  transaction,
-                  currentUserRole,
-                  currentUserId,
-                ) && (
-                  <button
-                    aria-label="Xóa"
-                    className="p-2 text-red-600"
-                    disabled={deletingId === transaction.id}
-                    onClick={() => void remove(transaction.id)}
-                  >
-                    <Trash2 size={17} />
-                  </button>
-                )}
-                </span>
-              </span>
-            </div></div>
-          );
+          return <TransactionRow key={transaction.id} transaction={transaction} purposeName={purposeName} expenseTypeName={expenseTypeName} paymentMethodName={paymentMethodName} showTrash={showTrash} selectMode={selectMode} selected={selectedIds.has(transaction.id)} openMenu={openMenuId === transaction.id} deleting={deletingId === transaction.id} copying={copyingId === transaction.id} currentUserRole={currentUserRole} currentUserId={currentUserId} onToggleSelected={toggleSelected} onSetSelected={setSelectedIds} onToggleMenu={(id) => setOpenMenuId((value) => value === id ? null : id)} onRestore={() => void restoreSelected()} onPermanentlyDelete={() => void permanentlyDeleteSelected()} onCopy={(item) => void copyTransaction(item)} onRemove={(id) => void remove(id)} />;
         })}
         {((showTrash ? trashQuery.isPending : transactionQuery.isPending) && isSupabaseConfigured) && <TransactionListSkeleton/>}
         {rows.length === 0 && !transactionQuery.isPending && (
