@@ -8,7 +8,7 @@
 - Sau thay đổi: Tách `TransactionRow`, thêm 3 regression tests và `pnpm test:coverage`; parser/template/export Excel được tải theo thao tác; cấu hình manual chunks cho vendor dependencies.
 - Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`, thêm `src/components/TransactionRow.tsx` và test, cập nhật `src/pages/ImportExport.tsx`, `src/test/setup.ts`, `vite.config.ts`, `package.json`, `pnpm-lock.yaml`, `.gitignore`. Không thay đổi database/API.
 - Kiểm thử: 16 test files / 53 tests đạt; coverage `src` đạt 52.24% statements, 65.99% branches; lint, typecheck và build đạt. Build còn cảnh báo riêng cho chunk ExcelJS deferred khoảng 937 KB.
-- Triển khai: Chờ PR, CI và Cloudflare Pages Git deployment vào production.
+- Triển khai: PR #26 đã squash-merge vào `main` với merge commit `fee08bb848768d588273f2a9dc686768b98bb42d`; CI production và Cloudflare Pages check đều thành công. Production [family-expense-8fo.pages.dev](https://family-expense-8fo.pages.dev) trả HTTP 200 khi smoke check.
 
 ## 2026-08-29
 
