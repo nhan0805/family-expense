@@ -15,7 +15,7 @@ import {
   LineChart,
 } from 'recharts';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowDownToLine, ArrowUpFromLine, Scale } from 'lucide-react';
 import { EmptyState, PageSkeleton } from '../components/AsyncStates';
@@ -24,6 +24,7 @@ import { formatCompactVnd, formatVnd, getNetExpense } from '../lib/domain';
 import { isSupabaseConfigured } from '../lib/supabase';
 import {
   fetchDashboardSummary,
+  fetchDashboardTrends,
   fetchTransactionYears,
 } from '../lib/transactionsApi';
 
@@ -78,17 +79,17 @@ export function Dashboard() {
   const monthKey = `${selectedYear}-${selectedMonth}`;
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [dueError, setDueError] = useState('');
-  const localAvailableYears = Array.from(
+  const localAvailableYears = useMemo(() => Array.from(
     new Set([
       currentYear,
       ...transactions
         .map((transaction) => transaction.transactionDate.slice(0, 4))
         .filter((year) => /^\d{4}$/.test(year)),
     ]),
-  ).sort((a, b) => Number(b) - Number(a));
-  const actualTransactions = transactions.filter(
+  ).sort((a, b) => Number(b) - Number(a)), [currentYear, transactions]);
+  const actualTransactions = useMemo(() => transactions.filter(
     (transaction) => !transaction.deletedAt && transaction.status === 'Thực tế',
-  );
+  ), [transactions]);
   const localDueTransactions = transactions
     .filter(
       (transaction) =>
@@ -97,9 +98,9 @@ export function Dashboard() {
         transaction.transactionDate <= todayKey(),
     )
     .sort((a, b) => a.transactionDate.localeCompare(b.transactionDate));
-  const localSelectedMonthTransactions = actualTransactions.filter(
+  const localSelectedMonthTransactions = useMemo(() => actualTransactions.filter(
     (transaction) => transaction.transactionDate.startsWith(monthKey),
-  );
+  ), [actualTransactions, monthKey]);
   const localTotalIncome = localSelectedMonthTransactions
     .filter(
       (transaction) =>
@@ -114,7 +115,7 @@ export function Dashboard() {
         transaction.transactionType === 'Tạm ứng',
     )
     .reduce((total, transaction) => total + transaction.amount, 0);
-  const localByPurpose = purposes
+  const localByPurpose = useMemo(() => purposes
     .map((purpose, index) => ({
       id: purpose.id,
       name: purpose.name,
@@ -128,8 +129,8 @@ export function Dashboard() {
         ),
       fill: chartColors[index % chartColors.length] || '#155e46',
     }))
-    .filter((item) => item.value > 0);
-  const localByExpenseType = expenseTypes
+    .filter((item) => item.value > 0), [purposes, localSelectedMonthTransactions]);
+  const localByExpenseType = useMemo(() => expenseTypes
     .map((expenseType, index) => ({
       id: expenseType.id,
       name: expenseType.name,
@@ -143,7 +144,7 @@ export function Dashboard() {
         ),
       fill: chartColors[index % chartColors.length] || '#155e46',
     }))
-    .filter((item) => item.value > 0);
+    .filter((item) => item.value > 0), [expenseTypes, localSelectedMonthTransactions]);
   const localTrend = recentMonths(monthKey, 6).map((item) => ({
     m: item.label,
     v: actualTransactions
@@ -163,6 +164,11 @@ export function Dashboard() {
         Number(selectedYear),
         Number(selectedMonth),
       ),
+    enabled: isSupabaseConfigured && Boolean(familyId),
+  });
+  const trendsQuery = useQuery({
+    queryKey: ['dashboard-trends', familyId, selectedYear, selectedMonth],
+    queryFn: () => fetchDashboardTrends(familyId, Number(selectedYear), Number(selectedMonth)),
     enabled: isSupabaseConfigured && Boolean(familyId),
   });
   const yearsQuery = useQuery({
@@ -203,14 +209,16 @@ export function Dashboard() {
     ? summaryQuery.data?.trend || []
     : localTrend;
   const trendMonths = recentMonths(monthKey, 6);
-  const incomeTrend = trendMonths.map((item) => ({
+  const localIncomeTrend = trendMonths.map((item) => ({
     m: item.label,
     v: actualTransactions.filter((transaction) => transaction.transactionDate.startsWith(item.key) && (transaction.transactionType === 'Thu nhập' || transaction.transactionType === 'Hoàn tiền')).reduce((total, transaction) => total + transaction.amount, 0),
   }));
-  const expenseTrend = trendMonths.map((item) => ({
+  const localExpenseTrend = trendMonths.map((item) => ({
     m: item.label,
     v: actualTransactions.filter((transaction) => transaction.transactionDate.startsWith(item.key) && (transaction.transactionType === 'Chi tiêu' || transaction.transactionType === 'Tạm ứng')).reduce((total, transaction) => total + transaction.amount, 0),
   }));
+  const incomeTrend = isSupabaseConfigured ? trendsQuery.data?.income || [] : localIncomeTrend;
+  const expenseTrend = isSupabaseConfigured ? trendsQuery.data?.expense || [] : localExpenseTrend;
   const dueTransactions = isSupabaseConfigured
     ? summaryQuery.data?.dueTransactions || []
     : localDueTransactions;
@@ -401,7 +409,7 @@ export function Dashboard() {
           </div>
         </div>
         <div className="card min-w-0 overflow-hidden p-4 lg:col-span-2">
-          <h3 className="font-bold">Chi ròng thực tế</h3>
+          <h3 className="font-bold">Thu ròng thực tế</h3>
           <div className="h-64 min-w-0 max-w-full">
             <ResponsiveContainer>
               <LineChart data={trend} margin={{ top: 24, right: 18, left: 8 }}>
@@ -416,7 +424,7 @@ export function Dashboard() {
                 <Tooltip formatter={(value) => formatVnd(Number(value))} />
                 <Legend verticalAlign="bottom" />
                 <Line
-                  name="Chi ròng thực tế"
+                  name="Thu ròng thực tế"
                   type="monotone"
                   dataKey="v"
                   stroke="#155e46"

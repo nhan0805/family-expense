@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useApp } from '../context/AppContext';
 import { Catalogs } from './Catalogs';
+import { LanguageProvider } from '../context/LanguageContext';
 
 vi.mock('../context/AppContext', () => ({ useApp: vi.fn() }));
 
@@ -9,6 +10,14 @@ const mockedUseApp = vi.mocked(useApp);
 const addCatalogItem = vi.fn();
 const updateCatalogItem = vi.fn();
 const deleteCatalogItem = vi.fn();
+
+function renderCatalogs() {
+  return render(
+    <LanguageProvider>
+      <Catalogs />
+    </LanguageProvider>,
+  );
+}
 
 function appState(role: 'owner' | 'member') {
   return {
@@ -37,7 +46,7 @@ describe('Quản lý danh mục', () => {
 
   it('cho owner thêm danh mục', async () => {
     mockedUseApp.mockReturnValue(appState('owner'));
-    render(<Catalogs />);
+    renderCatalogs();
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Thêm' })[0]!);
     fireEvent.change(screen.getByLabelText('Tên mục đích'), { target: { value: '  Giáo dục  ' } });
@@ -49,7 +58,7 @@ describe('Quản lý danh mục', () => {
   it('cho owner đổi tên và xóa danh mục', async () => {
     mockedUseApp.mockReturnValue(appState('owner'));
     vi.spyOn(window, 'confirm').mockReturnValue(true);
-    render(<Catalogs />);
+    renderCatalogs();
 
     fireEvent.click(screen.getByRole('button', { name: 'Sửa Sinh hoạt' }));
     fireEvent.change(screen.getByLabelText('Đổi tên mục đích'), { target: { value: 'Gia đình' } });
@@ -62,7 +71,7 @@ describe('Quản lý danh mục', () => {
 
   it('chỉ cho member xem danh mục', () => {
     mockedUseApp.mockReturnValue(appState('member'));
-    render(<Catalogs />);
+    renderCatalogs();
 
     expect(screen.getByText('Chỉ chủ gia đình mới có quyền chỉnh sửa.', { exact: false })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Thêm' })).not.toBeInTheDocument();
@@ -74,7 +83,7 @@ describe('Quản lý danh mục', () => {
     mockedUseApp.mockReturnValue(appState('owner'));
     deleteCatalogItem.mockResolvedValue('Không thể xóa vì danh mục đã được sử dụng trong bảng giao dịch.');
     vi.spyOn(window, 'confirm').mockReturnValue(true);
-    render(<Catalogs />);
+    renderCatalogs();
 
     fireEvent.click(screen.getByRole('button', { name: 'Xóa Sinh hoạt' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Không thể xóa vì danh mục đã được sử dụng');
