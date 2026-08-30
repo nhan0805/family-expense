@@ -2,6 +2,12 @@
 
 ## 2026-08-30
 
+### Mở giao dịch khi nhấn chart xu hướng
+
+- Nhấn cột Thu nhập hoặc Chi tiêu theo từng tháng sẽ mở màn hình Giao dịch với bộ lọc loại giao dịch, tháng và năm tương ứng.
+- Cập nhật `src/pages/Dashboard.tsx`; không thay đổi dữ liệu/API.
+- Kiểm thử và triển khai: Đang thực hiện.
+
 ### Kết nối dữ liệu RPC cho chart xu hướng
 
 - Sửa lỗi hai chart Thu nhập/Chi tiêu 6 tháng hiển thị toàn số 0 do chưa gọi `fetchDashboardTrends`.
