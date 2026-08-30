@@ -6,6 +6,7 @@ import {
   Download,
   FileCheck2,
   FileSpreadsheet,
+  Mail,
   Upload,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
@@ -29,11 +30,20 @@ const relationName = (value: unknown) => {
 };
 
 export function ImportExport() {
-  const { familyId, transactions, purposes, expenseTypes, paymentMethods } =
-    useApp();
+  const {
+    familyId,
+    currentUserEmail,
+    currentUserRole,
+    transactions,
+    purposes,
+    expenseTypes,
+    paymentMethods,
+  } = useApp();
   const [exporting, setExporting] = useState(false);
   const [message, setMessage] = useState('');
   const [exportMessage, setExportMessage] = useState('');
+  const [emailBusy, setEmailBusy] = useState(false);
+  const [emailMessage, setEmailMessage] = useState('');
   const [templateBusy, setTemplateBusy] = useState(false);
   const [checkingFile, setCheckingFile] = useState(false);
   const [importBusy, setImportBusy] = useState(false);
@@ -336,6 +346,62 @@ export function ImportExport() {
     }
   };
 
+  const sendTransactionsByEmail = async () => {
+    if (!isSupabaseConfigured || !familyId) {
+      setEmailMessage('Tính năng gửi email cần kết nối Supabase.');
+      return;
+    }
+    if (currentUserRole !== 'owner') {
+      setEmailMessage('Chỉ chủ gia đình mới có thể gửi danh sách giao dịch.');
+      return;
+    }
+    if (!currentUserEmail) {
+      setEmailMessage('Không tìm thấy email của tài khoản hiện tại.');
+      return;
+    }
+
+    setEmailBusy(true);
+    setEmailMessage('Đang chuẩn bị và gửi danh sách giao dịch…');
+    try {
+      const { data, error } = await supabase.functions.invoke(
+        'email-transactions',
+        { body: { familyId } },
+      );
+      if (error) {
+        let errorCode = '';
+        const context = (error as { context?: unknown }).context;
+        if (context instanceof Response) {
+          const payload = (await context.clone().json().catch(() => null)) as {
+            error?: string;
+          } | null;
+          errorCode = payload?.error || '';
+        }
+        setEmailMessage(
+          errorCode === 'NO_TRANSACTIONS'
+            ? 'Chưa có giao dịch đang hoạt động để gửi.'
+            : errorCode === 'SERVER_NOT_CONFIGURED'
+              ? 'Brevo chưa được cấu hình trên máy chủ.'
+              : errorCode === 'RATE_LIMITED'
+                ? 'Đã vượt giới hạn gửi email. Vui lòng thử lại sau.'
+                : errorCode === 'FILE_TOO_LARGE'
+                  ? 'Danh sách giao dịch quá lớn để gửi kèm email.'
+                : 'Không thể gửi email. Hãy kiểm tra cấu hình Brevo hoặc thử lại sau.',
+        );
+        return;
+      }
+      const count = Number(
+        (data as { transactionCount?: number } | null)?.transactionCount || 0,
+      );
+      setEmailMessage(
+        `Đã gửi ${count.toLocaleString('vi-VN')} giao dịch tới ${currentUserEmail}.`,
+      );
+    } catch {
+      setEmailMessage('Không thể gửi email. Vui lòng thử lại sau.');
+    } finally {
+      setEmailBusy(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -345,7 +411,7 @@ export function ImportExport() {
         </p>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid gap-5 lg:grid-cols-3">
         <DataCard
           icon={<FileSpreadsheet size={24} />}
           title="Tải template"
@@ -379,6 +445,35 @@ export function ImportExport() {
           {exportMessage && (
             <p className="mt-3 text-sm" role="status" aria-live="polite">
               {exportMessage}
+            </p>
+          )}
+        </DataCard>
+
+        <DataCard
+          icon={<Mail size={24} />}
+          title="Gửi qua email"
+          description="Gửi toàn bộ giao dịch đang hoạt động tới email tài khoản của chủ gia đình."
+          tone="blue"
+        >
+          <p className="text-sm text-gray-500">
+            Người nhận: {currentUserEmail || 'chưa xác định'}
+          </p>
+          <button
+            className="btn-secondary mt-3 inline-flex items-center justify-center gap-2"
+            disabled={
+              emailBusy ||
+              !isSupabaseConfigured ||
+              !familyId ||
+              currentUserRole !== 'owner'
+            }
+            onClick={() => void sendTransactionsByEmail()}
+          >
+            <Mail size={18} />
+            {emailBusy ? 'Đang gửi…' : 'Gửi danh sách giao dịch'}
+          </button>
+          {emailMessage && (
+            <p className="mt-3 text-sm" role="status" aria-live="polite">
+              {emailMessage}
             </p>
           )}
         </DataCard>

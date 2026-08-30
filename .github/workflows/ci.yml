@@ -23,3 +23,19 @@ jobs:
       - run: pnpm test
       - run: pnpm test:coverage
       - run: pnpm build
+
+  db-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Start local Supabase database
+        run: supabase start --exclude gotrue,realtime,storage-api,imgproxy,kong,postgrest,postgres-meta,studio,mailpit,edge-runtime,logflare,vector,supavisor
+      - name: Run database and RLS tests
+        run: supabase test db --local
+      - name: Stop local Supabase
+        if: ${{ always() }}
+        run: supabase stop

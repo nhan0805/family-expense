@@ -2,6 +2,22 @@
 
 ## 2026-08-30
 
+### Bổ sung offline/error recovery và kiểm thử DB/RLS trong CI
+
+- Trước thay đổi: Trạng thái online chỉ hiển thị cục bộ ở layout, lỗi tải dữ liệu còn phụ thuộc message kỹ thuật, form giao dịch không có cơ chế khôi phục bản nháp; pgTAP mới kiểm tra constraint/RPC và chưa chạy trong CI; backup/restore staging còn là hướng dẫn thủ công.
+- Sau thay đổi: App có trạng thái online phản ứng theo sự kiện mạng, retry có giới hạn cho query, thông báo lỗi tiếng Việt và nút tải lại; form giao dịch mới tự lưu/khôi phục bản nháp trên thiết bị, không coi mutation offline là thành công. CI có job Supabase local chạy pgTAP kiểm tra RLS/policy/constraint; thêm script drill staging có xác nhận target tách biệt, target trống và đối chiếu số dòng sau restore.
+- Kỹ thuật: Cập nhật `src/context/AppContext.tsx`, `src/components/Layout.tsx`, `src/main.tsx`, `src/pages/TransactionForm.tsx`; thêm `src/lib/errorRecovery.ts`, `src/lib/transactionDraft.ts`; cập nhật `supabase/tests/tenant_security.sql`, `.github/workflows/ci.yml`, `scripts/staging-backup-restore.sh`, `docs/OPERATIONS_RUNBOOK.md`, `HANDOFF.md` và `README.md`. Không thay đổi migration/schema/database production.
+- Kiểm thử: `pnpm test` đạt 60/60 test, `pnpm test:coverage` đạt 60/60 với 56% statements, `pnpm typecheck`, `pnpm lint`, `pnpm build`, `git diff --check`, `bash -n scripts/staging-backup-restore.sh` và CI YAML parse đạt. Supabase pgTAP local chưa chạy vì Docker daemon không khả dụng; backup/restore drill thực tế chưa chạy vì workspace chưa có `STAGING_DB_URL` và `RESTORE_DB_URL`; không đọc `.env.staging` và không dùng production.
+- Triển khai: Chưa deploy; cần chạy drill với staging source và restore target riêng theo runbook, sau đó mới ghi RTO/RPO thực tế.
+
+### Đồng bộ màu icon giá trị ròng theo bộ lọc
+
+- Trước thay đổi: Icon của thẻ “Giá trị ròng theo bộ lọc” luôn màu xanh, không đồng bộ với trạng thái giá trị đang hiển thị.
+- Sau thay đổi: Icon dùng màu đỏ khi chi nhiều hơn, màu xanh khi thu nhiều hơn và màu trung tính khi cân bằng, đồng bộ với màu số tiền và nền thẻ.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`; không thay đổi database/API.
+- Kiểm thử: `pnpm test` đạt 60/60 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` đạt. Build vẫn có cảnh báo chunk lớn hiện hữu cho ExcelJS.
+- Triển khai: Chưa deploy; chờ CI/CD qua Git và Cloudflare Pages.
+
 ### Refactor component, bổ sung coverage và tối ưu bundle
 
 - Trước thay đổi: `Transactions.tsx` chứa cả phần render từng dòng giao dịch; test chưa có lệnh coverage; `ImportExport` tải tĩnh thư viện Excel và build tạo chunk dùng chung lớn.

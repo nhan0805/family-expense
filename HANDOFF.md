@@ -235,7 +235,7 @@ Không log token, secret, email đầy đủ, nội dung AI hoặc chi tiết t�
 | Unit/RTL | `pnpm test` | Bắt buộc |
 | Production build/PWA | `pnpm build` | Bắt buộc |
 | E2E | `pnpm test:e2e` | Staging/release |
-| DB/RLS | Supabase local/staging tests | Cần bổ sung vào CI |
+| DB/RLS | Supabase local/staging tests | Đã thêm pgTAP policy/constraint job vào CI; staging drill theo runbook |
 
 Không ghi tài khoản test trong file. Tạo user/family riêng ở staging và lưu credential trong password manager của đội.
 
@@ -258,9 +258,9 @@ Không ghi tài khoản test trong file. Tạo user/family riêng ở staging v�
 | P0 | CI lint/typecheck/test/build + Cloudflare preview | Chủ dự án | Đã thực hiện | Hoàn thành |
 | P0 | Supabase/Cloudflare staging tách biệt | Chủ dự án | Đã thực hiện | Hoàn thành |
 - P0 | Supabase deploy workflow với dry-run và Git-based production path | Chủ dự án | 29/08/2026 | Hoàn thành; dry-run đã pass |
-| P1 | RLS negative tests và migration rehearsal | Chủ dự án | Mỗi release DB | Có test/migration; chưa tích hợp CI đầy đủ |
+| P1 | RLS negative tests và migration rehearsal | Chủ dự án | Mỗi release DB | Đã thêm pgTAP policy/constraint test vào CI; chờ GitHub run xác nhận; fixture cross-family cần dữ liệu test staging |
 | P1 | Monitoring/alert/error tracking không chứa PII | TBD | TBD | Chưa làm |
-| P1 | Backup restore và rollback drill | TBD | TBD | Chưa làm |
+| P1 | Backup restore và rollback drill | TBD | Mỗi quý | Đã có script/runbook an toàn; drill staging thực tế chờ `STAGING_DB_URL` và `RESTORE_DB_URL` |
 | P1 | Chốt retention/log/privacy policy | TBD | TBD | Cần quyết định |
 | P2 | Đánh giá migration enum Tiền vào/Tiền ra dài hạn | TBD | TBD | Theo dõi |
 | P3 | Storage chứng từ/recurring/queue khi có business case | TBD | TBD | Backlog |
