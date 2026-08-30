@@ -7,6 +7,14 @@
 - Nhấn cột Thu nhập/Chi tiêu theo tháng sẽ mở màn hình Giao dịch với bộ lọc tương ứng.
 - Cập nhật `src/pages/Dashboard.tsx`; kiểm thử và triển khai đang thực hiện.
 
+### Tách thư viện biểu đồ thành vendor chunk
+
+- Trước thay đổi: Chunk Dashboard chứa trực tiếp toàn bộ Recharts, khoảng 430 KB minified.
+- Sau thay đổi: Recharts được tách thành `charts-vendor`; chunk Dashboard còn khoảng 16 KB, thuận lợi cho cache dùng chung giữa các route.
+- Kỹ thuật: Cập nhật `vite.config.ts`; không thay đổi database/API hay hành vi biểu đồ.
+- Kiểm thử: `pnpm test` 61/61, lint, typecheck và build đạt; precache khoảng 2.12 MB.
+- Triển khai: Chưa deploy.
+
 <<<<<<< HEAD
 ### Mở giao dịch khi nhấn chart xu hướng
 =======
