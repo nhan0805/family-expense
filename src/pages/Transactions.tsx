@@ -757,7 +757,7 @@ export function Transactions() {
           </label>
         </div>
 
-        {filterChips.length > 0 && <div className="flex gap-2 overflow-x-auto pb-1 md:flex-wrap" aria-label="Bộ lọc đang áp dụng">{filterChips.map((chip) => <button type="button" key={chip.key} onClick={chip.clear} className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#e3f2e9] px-3 py-1.5 text-xs font-semibold text-[#145c43] transition hover:bg-[#d3eadd] dark:bg-emerald-950/60 dark:text-emerald-200"><span>{chip.label}</span><X size={13} aria-hidden="true"/><span className="sr-only">Bỏ bộ lọc {chip.label}</span></button>)}</div>}
+        {filterChips.length > 0 && <div className="flex gap-2 overflow-x-auto pb-1 md:flex-wrap" aria-label={en ? 'Active filters' : 'Bộ lọc đang áp dụng'}>{filterChips.map((chip) => <button type="button" key={chip.key} onClick={chip.clear} className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#e3f2e9] px-3 py-1.5 text-xs font-semibold text-[#145c43] transition hover:bg-[#d3eadd] dark:bg-emerald-950/60 dark:text-emerald-200"><span>{chip.label}</span><X size={13} aria-hidden="true"/><span className="sr-only">{en ? 'Remove filter' : 'Bỏ bộ lọc'} {chip.label}</span></button>)}</div>}
 
         <details className="group border-t border-black/10 pt-3 dark:border-white/10">
           <summary className="btn-secondary flex cursor-pointer list-none items-center justify-between gap-3 [&::-webkit-details-marker]:hidden">
@@ -766,17 +766,17 @@ export function Transactions() {
           </summary>
           <div className="ui-enter mt-3 grid gap-3 md:grid-cols-4">
           <label>
-            <span className="label">Loại giao dịch</span>
-            <select className="field" value={transactionType} onChange={(event) => setTransactionType(event.target.value)}><option value="">Tất cả loại</option><option value="Chi tiêu">Tiền ra</option><option value="Thu nhập">Tiền vào</option></select>
+            <span className="label">{en ? 'Transaction type' : 'Loại giao dịch'}</span>
+            <select className="field" value={transactionType} onChange={(event) => setTransactionType(event.target.value)}><option value="">{en ? 'All types' : 'Tất cả loại'}</option><option value="Chi tiêu">{en ? 'Money out' : 'Tiền ra'}</option><option value="Thu nhập">{en ? 'Money in' : 'Tiền vào'}</option></select>
           </label>
           <label>
-            <span className="label">Mục đích</span>
+            <span className="label">{en ? 'Purpose' : 'Mục đích'}</span>
             <select
               className="field"
               value={purposeId}
               onChange={(event) => setPurposeId(event.target.value)}
             >
-              <option value="">Tất cả mục đích</option>
+              <option value="">{en ? 'All purposes' : 'Tất cả mục đích'}</option>
               {purposes.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.name}
@@ -785,13 +785,13 @@ export function Transactions() {
             </select>
           </label>
           <label>
-            <span className="label">Danh mục</span>
+            <span className="label">{en ? 'Category' : 'Danh mục'}</span>
             <select
               className="field"
               value={expenseTypeId}
               onChange={(event) => setExpenseTypeId(event.target.value)}
             >
-              <option value="">Tất cả danh mục</option>
+              <option value="">{en ? 'All categories' : 'Tất cả danh mục'}</option>
               {expenseTypes.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.name}
@@ -800,13 +800,13 @@ export function Transactions() {
             </select>
           </label>
           <label>
-            <span className="label">Phương thức thanh toán</span>
+            <span className="label">{en ? 'Payment method' : 'Phương thức thanh toán'}</span>
             <select
               className="field"
               value={paymentMethodId}
               onChange={(event) => setPaymentMethodId(event.target.value)}
             >
-              <option value="">Tất cả phương thức</option>
+              <option value="">{en ? 'All payment methods' : 'Tất cả phương thức'}</option>
               {paymentMethods.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.name}
@@ -815,13 +815,13 @@ export function Transactions() {
             </select>
           </label>
           <label>
-            <span className="label">Tháng</span>
+            <span className="label">{en ? 'Month' : 'Tháng'}</span>
             <select
               className="field"
               value={month}
               onChange={(event) => setMonth(event.target.value)}
             >
-              <option value="">Tất cả tháng</option>
+              <option value="">{en ? 'All months' : 'Tất cả tháng'}</option>
               {monthOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
@@ -830,13 +830,13 @@ export function Transactions() {
             </select>
           </label>
           <label>
-            <span className="label">Năm</span>
+            <span className="label">{en ? 'Year' : 'Năm'}</span>
             <select
               className="field"
               value={year}
               onChange={(event) => setYear(event.target.value)}
             >
-              <option value="">Tất cả năm</option>
+              <option value="">{en ? 'All years' : 'Tất cả năm'}</option>
               {availableYears.map((item) => (
                 <option key={item} value={item}>
                   {item}
@@ -874,7 +874,7 @@ export function Transactions() {
               onClick={resetFilters}
             >
               <RotateCcw size={17} />
-              Xóa bộ lọc
+              {en ? 'Clear filters' : 'Xóa bộ lọc'}
             </button>
           </div>
           </div>
@@ -882,7 +882,7 @@ export function Transactions() {
       </section>
 
       <div className="order-3 flex items-center justify-between gap-3 rounded-xl border border-black/5 bg-white/70 px-3 py-2 shadow-sm dark:border-white/10 dark:bg-white/5">
-        <p className="text-base font-semibold text-gray-600 dark:text-gray-300">{showTrash ? 'Thùng rác' : 'Danh sách giao dịch'}</p>
+        <p className="text-base font-semibold text-gray-600 dark:text-gray-300">{showTrash ? (en ? 'Trash' : 'Thùng rác') : (en ? 'Transaction list' : 'Danh sách giao dịch')}</p>
         <div className="flex items-center gap-0">
           <button type="button" className={`grid size-10 place-items-center rounded-xl transition-colors focus:outline-none focus:ring-4 focus:ring-emerald-200/50 ${selectMode ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200' : 'text-gray-600 hover:bg-emerald-50 hover:text-emerald-700 dark:text-gray-300 dark:hover:bg-white/10'}`} aria-label={selectMode ? 'Đóng chọn nhiều giao dịch' : 'Chọn nhiều giao dịch'} title={selectMode ? 'Đóng chọn nhiều' : 'Chọn nhiều giao dịch'} aria-pressed={selectMode} onClick={() => selectMode ? closeSelectMode() : setSelectMode(true)}><ListChecks size={21}/></button>
           <button type="button" className={`flex h-10 items-center justify-center gap-1 rounded-xl px-1 transition-colors focus:outline-none focus:ring-4 focus:ring-amber-200/50 ${showTrash ? 'text-amber-700 dark:text-amber-300' : 'text-gray-600 hover:bg-amber-50 hover:text-amber-700 dark:text-gray-300 dark:hover:bg-white/10'}`} aria-label={showTrash ? 'Đóng giao dịch đã xóa' : 'Xem giao dịch đã xóa'} title={showTrash ? 'Đóng giao dịch đã xóa' : 'Xem giao dịch đã xóa'} aria-pressed={showTrash} onClick={() => { closeSelectMode(); setShowTrash((value) => !value); }}><ArchiveRestore size={19}/><span className="hidden text-sm font-semibold sm:inline">Đã xóa</span></button>
@@ -923,8 +923,8 @@ export function Transactions() {
         {((showTrash ? trashQuery.isPending : transactionQuery.isPending) && isSupabaseConfigured) && <TransactionListSkeleton/>}
         {rows.length === 0 && !transactionQuery.isPending && (
           hasFilters
-            ? <EmptyState title="Không tìm thấy giao dịch phù hợp" description="Hãy thử thay đổi từ khóa, thời gian hoặc danh mục lọc." action={<button className="btn-secondary" onClick={resetFilters}>Xóa bộ lọc</button>}/>
-            : <EmptyState title="Chưa có giao dịch" description="Thêm giao dịch đầu tiên để bắt đầu quản lý thu chi gia đình." action={<Link className="btn-primary inline-flex items-center gap-2" to="/giao-dich/moi"><Plus size={17}/>Thêm giao dịch</Link>}/>
+            ? <EmptyState title={en ? 'No matching transactions' : 'Không tìm thấy giao dịch phù hợp'} description={en ? 'Try changing the search term, date range or category filter.' : 'Hãy thử thay đổi từ khóa, thời gian hoặc danh mục lọc.'} action={<button className="btn-secondary" onClick={resetFilters}>{en ? 'Clear filters' : 'Xóa bộ lọc'}</button>}/>
+            : <EmptyState title={en ? 'No transactions yet' : 'Chưa có giao dịch'} description={en ? 'Add your first transaction to start managing family finances.' : 'Thêm giao dịch đầu tiên để bắt đầu quản lý thu chi gia đình.'} action={<Link className="btn-primary inline-flex items-center gap-2" to="/giao-dich/moi"><Plus size={17}/>{en ? 'Add transaction' : 'Thêm giao dịch'}</Link>}/>
         )}
       </div>
       {!showTrash && isSupabaseConfigured && transactionQuery.hasNextPage && (
@@ -934,8 +934,8 @@ export function Transactions() {
           onClick={() => void transactionQuery.fetchNextPage()}
         >
           {transactionQuery.isFetchingNextPage
-            ? 'Đang tải…'
-            : 'Tải thêm giao dịch'}
+            ? (en ? 'Loading…' : 'Đang tải…')
+            : (en ? 'Load more transactions' : 'Tải thêm giao dịch')}
         </button>
       )}
       {bulkEditOpen && (

@@ -7,8 +7,10 @@ export function ThemeSelect({ compact = false }: { compact?: boolean }) {
   const { language, setLanguage, t } = useOptionalLanguage();
   const Icon = preference === 'dark' ? Moon : preference === 'light' ? Sun : Laptop;
   return <div className={`${compact ? 'flex items-center gap-3' : 'flex w-full flex-col items-stretch gap-2'}`}><label className={`flex min-w-0 items-center gap-2 ${compact ? '' : 'grid w-full grid-cols-[minmax(0,1fr)_minmax(0,10rem)]'}`}>
-    <Icon size={18} aria-hidden="true" />
-    {!compact && <span className="whitespace-nowrap text-sm font-medium">{t('theme')}</span>}
+    <span className="flex min-w-0 items-center gap-2">
+      <Icon size={18} aria-hidden="true" />
+      {!compact && <span className="whitespace-nowrap text-sm font-medium">{t('theme')}</span>}
+    </span>
     <select
       className={`rounded-lg border border-black/10 bg-transparent px-2 py-1.5 text-sm dark:border-white/15 ${compact ? 'max-w-28' : 'w-full'}`}
       aria-label="Chế độ giao diện"
