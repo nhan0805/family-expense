@@ -2,14 +2,25 @@
 
 ## 2026-08-30
 
+### Cải thiện accessibility và khả năng phục hồi Dashboard
+
+- Sau thay đổi: Dashboard thông báo lỗi nếu bất kỳ query summary/trends/years thất bại; các lát/cột biểu đồ có thể điều hướng bằng bàn phím và có accessible name.
+- Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx` và mở rộng translation keys trong `src/context/LanguageContext.tsx`; không thay đổi database/API.
+- Kiểm thử: Đang chạy lint, typecheck, test và build.
+- Triển khai: Chờ quality gates và quy trình PR vào `main`.
+
+### Cập nhật handoff sau release Dashboard và đa ngôn ngữ
+
+- Cập nhật `HANDOFF.md` theo trạng thái production sau PR #55, #56 và #57: localization EN, selector đồng độ rộng, thứ tự chart và điều hướng click chart.
+- Kiểm thử/triển khai: CI `main` pass quality và `db-security`; Cloudflare Pages production merge commit `54983d914f83c7ff8ccb5cfed2c3d22020cdfcaf` thành công.
+
 ### Cho phép nhấn cột xu hướng để mở giao dịch
 
 - Nhấn cột Thu nhập/Chi tiêu theo tháng sẽ mở màn hình Giao dịch với bộ lọc tương ứng.
 - Cập nhật `src/pages/Dashboard.tsx`; kiểm thử và triển khai đang thực hiện.
 
-<<<<<<< HEAD
 ### Mở giao dịch khi nhấn chart xu hướng
-=======
+
 ### Hoàn thiện bản dịch giao diện Dashboard, Giao dịch và bộ chọn ngôn ngữ
 
 - Sau thay đổi: Dashboard và màn hình Giao dịch có nhãn, trạng thái và bộ lọc tiếng Anh khi chọn EN; bổ sung icon địa cầu và label Ngôn ngữ cho bộ chọn VI/EN, giữ responsive mobile.
@@ -18,7 +29,6 @@
 - Triển khai: Chưa deploy.
 
 ### Sửa db-security bỏ qua migration dịch chuyển dữ liệu Excel legacy
->>>>>>> origin/main
 
 - Nhấn cột Thu nhập hoặc Chi tiêu theo từng tháng sẽ mở màn hình Giao dịch với bộ lọc loại giao dịch, tháng và năm tương ứng.
 - Cập nhật `src/pages/Dashboard.tsx`; không thay đổi dữ liệu/API.
