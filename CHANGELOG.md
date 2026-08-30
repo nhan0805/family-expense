@@ -2,6 +2,22 @@
 
 ## 2026-08-30
 
+### Liên kết KPI Tổng quan với bộ lọc giao dịch
+
+- Trước thay đổi: Các KPI Tổng thu, Tổng chi và Giá trị ròng chỉ hiển thị số liệu, không mở được danh sách giao dịch tương ứng.
+- Sau thay đổi: Nhấn KPI sẽ mở tab Giao dịch với bộ lọc loại giao dịch và tháng/năm tương ứng; Giá trị ròng mở toàn bộ giao dịch trong kỳ.
+- Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx` và `src/pages/Dashboard.test.tsx`; không thay đổi database/API.
+- Kiểm thử: Sẽ chạy test, lint, typecheck và build.
+- Triển khai: Chưa deploy.
+
+### Bỏ danh sách giao dịch thực tế khỏi tab Tổng quan
+
+- Trước thay đổi: Tab Tổng quan có thêm khối liệt kê tối đa 5 giao dịch thực tế trong tháng.
+- Sau thay đổi: Gỡ khối danh sách này; các KPI, biểu đồ và luồng xác nhận giao dịch dự kiến vẫn giữ nguyên.
+- Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx` và `src/pages/Dashboard.test.tsx`; không thay đổi database/API.
+- Kiểm thử: Sẽ chạy test, lint, typecheck và build.
+- Triển khai: Chưa deploy.
+
 ### Gửi danh sách giao dịch qua email bằng Brevo
 
 - Trước thay đổi: Trang Quản lý dữ liệu chỉ cho tải file Excel về thiết bị, chưa có luồng gửi danh sách giao dịch qua email.
@@ -24,7 +40,7 @@
 - Sau thay đổi: Icon dùng màu đỏ khi chi nhiều hơn, màu xanh khi thu nhiều hơn và màu trung tính khi cân bằng, đồng bộ với màu số tiền và nền thẻ.
 - Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`; không thay đổi database/API.
 - Kiểm thử: `pnpm test` đạt 60/60 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` đạt. Build vẫn có cảnh báo chunk lớn hiện hữu cho ExcelJS.
-- Kiểm thử CI: Điều chỉnh job `db-security` để không chạy migration seed Excel phụ thuộc Auth user khi kiểm tra schema/RLS; không sửa migration production.
+- Kiểm thử CI: Điều chỉnh job `db-security` để không chạy các migration dữ liệu Excel phụ thuộc dataset/Auth user khi kiểm tra schema/RLS; không sửa migration production.
 - Triển khai: Chưa deploy; chờ CI/CD qua Git và Cloudflare Pages.
 
 ### Refactor component, bổ sung coverage và tối ưu bundle
