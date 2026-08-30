@@ -1,11 +1,14 @@
 import { Pencil, Plus, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import { useApp, type CatalogKind } from '../context/AppContext';
+import { useLanguage } from '../context/LanguageContext';
 import { EmptyState } from '../components/AsyncStates';
 
 type Editor = { kind: CatalogKind; id?: string } | null;
 
 export function Catalogs() {
+  const { language } = useLanguage();
+  const isEnglish = language === 'en';
   const { currentUserRole, purposes, expenseTypes, paymentMethods, addCatalogItem, updateCatalogItem, deleteCatalogItem } = useApp();
   const canManage = currentUserRole === 'owner';
   const [editor, setEditor] = useState<Editor>(null);
@@ -36,11 +39,11 @@ export function Catalogs() {
 
   const shared = { editor, name, saving, deletingId, onOpen: openEditor, onClose: closeEditor, onNameChange: setName, onSubmit: submit, onDelete: remove };
   return <div className="space-y-5">
-    <div><h2 className="text-2xl font-extrabold">Danh mục</h2><p className="text-sm text-gray-500">{canManage ? 'Bạn có thể thêm, đổi tên và xóa danh mục chưa được sử dụng.' : 'Bạn có thể xem danh mục. Chỉ chủ gia đình mới có quyền chỉnh sửa.'}</p></div>
+    <div><h2 className="text-2xl font-extrabold">{isEnglish ? 'Categories' : 'Danh mục'}</h2><p className="text-sm text-gray-500">{canManage ? (isEnglish ? 'You can add, rename and delete unused categories.' : 'Bạn có thể thêm, đổi tên và xóa danh mục chưa được sử dụng.') : (isEnglish ? 'You can view categories. Only the family owner can edit them.' : 'Bạn có thể xem danh mục. Chỉ chủ gia đình mới có quyền chỉnh sửa.')}</p></div>
     <div className="grid gap-4 lg:grid-cols-3">
-      <Catalog title="Mục đích" kind="purpose" items={purposes} canManage={canManage} error={errorKind === 'purpose' ? error : ''} {...shared}/>
-      <Catalog title="Danh mục" kind="expenseType" items={expenseTypes} canManage={canManage} error={errorKind === 'expenseType' ? error : ''} {...shared}/>
-      <Catalog title="Phương thức thanh toán" kind="paymentMethod" items={paymentMethods} canManage={canManage} error={errorKind === 'paymentMethod' ? error : ''} {...shared}/>
+      <Catalog title={isEnglish ? 'Purpose' : 'Mục đích'} kind="purpose" items={purposes} canManage={canManage} error={errorKind === 'purpose' ? error : ''} {...shared}/>
+      <Catalog title={isEnglish ? 'Expense type' : 'Danh mục'} kind="expenseType" items={expenseTypes} canManage={canManage} error={errorKind === 'expenseType' ? error : ''} {...shared}/>
+      <Catalog title={isEnglish ? 'Payment method' : 'Phương thức thanh toán'} kind="paymentMethod" items={paymentMethods} canManage={canManage} error={errorKind === 'paymentMethod' ? error : ''} {...shared}/>
     </div>
   </div>;
 }
