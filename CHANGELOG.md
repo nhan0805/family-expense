@@ -2,6 +2,12 @@
 
 ## 2026-08-30
 
+### Đổi tên chart xu hướng thành Chi ròng thực tế
+
+- Giữ dữ liệu 6 tháng gần nhất và đổi tiêu đề chart cuối thành “Chi ròng thực tế” để đồng bộ với nội dung số liệu.
+- Cập nhật `src/pages/Dashboard.tsx`; không thay đổi dữ liệu/API.
+- Kiểm thử và triển khai: Đang thực hiện.
+
 ### Tránh cắt nhãn giá trị trên biểu đồ tròn
 
 - Tăng vùng hiển thị và khoảng đệm phía trên cho chart tròn để nhãn giá trị lớn như 19,2M không bị che ở mép trên.
