@@ -2,6 +2,12 @@
 
 ## 2026-08-30
 
+### Đổi chart thu nhập và chi tiêu 6 tháng sang dạng cột
+
+- Đổi hai chart xu hướng Thu nhập và Chi tiêu 6 tháng sang cột bo góc, giữ màu xanh/cam và nhãn giá trị trên đầu cột.
+- Cập nhật `src/pages/Dashboard.tsx`; không thay đổi dữ liệu/API.
+- Kiểm thử và triển khai: Đang thực hiện.
+
 ### Bổ sung nền tảng chuyển ngôn ngữ VI/EN
 
 - Sau thay đổi: Thêm toggle VI/EN, lưu lựa chọn trên thiết bị và đồng bộ `lang` của document; các nhãn giao diện dùng chung/theme đổi theo ngôn ngữ. Template Excel vẫn giữ tiếng Việt để tương thích file cũ.
