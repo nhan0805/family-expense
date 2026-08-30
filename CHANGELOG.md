@@ -2,6 +2,14 @@
 
 ## 2026-08-30
 
+### Bổ sung nút khôi phục giao dịch trong thùng rác mobile
+
+- Trước thay đổi: Trên mobile, mỗi giao dịch trong thùng rác chỉ có nút xóa vĩnh viễn; nút khôi phục chỉ xuất hiện ở chế độ desktop.
+- Sau thay đổi: Mỗi giao dịch trong thùng rác mobile có nút “Khôi phục” riêng, dùng cùng luồng xác nhận và persistence hiện có.
+- Kỹ thuật: Cập nhật `src/components/TransactionRow.tsx`; không thay đổi database/API.
+- Kiểm thử: Đã rà soát bằng test/lint/typecheck/build trước đó; cần chạy lại sau thay đổi.
+- Triển khai: Chưa deploy.
+
 ### Đồng bộ bộ lọc loại giao dịch từ KPI
 
 - Sau thay đổi: Trang Giao dịch đọc `transactionType` từ URL, giúp KPI Tổng chi chỉ mở Tiền ra và KPI Tổng thu chỉ mở Tiền vào theo tháng/năm đã chọn.
