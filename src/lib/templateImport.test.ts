@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import ExcelJS from 'exceljs';
 import * as XLSX from 'xlsx';
-import { createTemplate, parseTemplate } from './templateImport';
+import { createTemplate, parseTemplate, templateHeaders } from './templateImport';
 const purposes = [{ id: 'p1', name: 'Sinh hoạt' }],
   types = [{ id: 'e1', name: 'Ăn uống' }],
   methods = [{ id: 'm1', name: 'Chuyển khoản' }];
@@ -41,5 +41,16 @@ describe('template import', () => {
       transactionType: 'Thu nhập',
       amount: 57683000,
     });
+  });
+
+  it('đọc ID giao dịch để phục vụ cập nhật', async () => {
+    const ws = XLSX.utils.aoa_to_sheet([
+      [...templateHeaders],
+      ['2026-08-26', 100000, 'Tiền ra', 'Thực tế', 'Ăn trưa', 'Chuyển khoản', 'Sinh hoạt', 'Ăn uống', '', '11111111-1111-4111-8111-111111111111'],
+    ]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Giao dịch');
+    const result = await parseTemplate(XLSX.write(wb, { type: 'array', bookType: 'xlsx' }), purposes, types, methods, []);
+    expect(result.valid[0]?.id).toBe('11111111-1111-4111-8111-111111111111');
   });
 });
