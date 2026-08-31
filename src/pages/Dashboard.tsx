@@ -63,8 +63,6 @@ const englishMonthNames = [
   'December',
 ] as const;
 const chartColors = ['#155e46', '#e6b85c', '#d97757', '#6081a8', '#7b6aa2', '#2c8a83'];
-const pieLabelMinPercent = 0.05;
-export const formatPieLabel = ({ percent, value }: Pick<PieLabelRenderProps, 'percent' | 'value'>) => Number(percent) >= pieLabelMinPercent ? formatCompactVnd(Number(value)).replace(' ₫', '') : null;
 const modeLabels: Record<DashboardMode, { vi: string; en: string }> = {
   month: { vi: 'Tháng', en: 'Month' },
   '6m': { vi: '6 tháng', en: '6 months' },
@@ -208,6 +206,27 @@ function groupTransactions(
 }
 
 type ExpenseChartItem = { id: string; name: string; value: number; fill: string };
+type PieChartItem = ExpenseChartItem & { isOther?: boolean; hiddenItems?: ExpenseChartItem[] };
+
+const pieLabelMinPercent = 0.05;
+const pieMaxSlices = 6;
+
+export const formatPieLabel = ({ percent, value }: Pick<PieLabelRenderProps, 'percent' | 'value'>) => Number(percent) >= pieLabelMinPercent ? formatCompactVnd(Number(value)).replace(' ₫', '') : null;
+
+export const summarizePieData = (data: ExpenseChartItem[]): PieChartItem[] => {
+  const sorted = data.filter((item) => item.value > 0).sort((a, b) => b.value - a.value);
+  if (sorted.length <= pieMaxSlices) return sorted;
+  const visible = sorted.slice(0, pieMaxSlices - 1);
+  const hiddenItems = sorted.slice(pieMaxSlices - 1);
+  return [...visible, {
+    id: 'other',
+    name: 'Khác',
+    value: hiddenItems.reduce((total, item) => total + item.value, 0),
+    fill: '#94a3b8',
+    isOther: true,
+    hiddenItems,
+  }];
+};
 
 export function Dashboard() {
   const navigate = useNavigate();
@@ -465,8 +484,17 @@ function MiniTrend({ values, label }: { values: number[]; label: string }) {
 
 function ExpensePieChart({ title, data, to, filterKey, en, income = false }: { title: string; data: ExpenseChartItem[]; to: string; filterKey: 'purposeId' | 'expenseTypeId'; en: boolean; income?: boolean }) {
   const navigate = useNavigate();
-  const openItem = (item: ExpenseChartItem) => { if (item.id && item.id !== 'uncategorized') navigate(`${to}&${filterKey}=${encodeURIComponent(item.id)}`); };
-  return <><h3 className="font-bold">{title}</h3><div className="h-72 min-w-0 max-w-full overflow-hidden pt-3">{data.length ? <ResponsiveContainer><PieChart margin={{ top: 18, right: 18, left: 18, bottom: 0 }}><Pie data={data} dataKey="value" nameKey="name" innerRadius={45} outerRadius={75} labelLine={false} label={formatPieLabel}>{data.map((item) => <Cell key={item.id || item.name} fill={item.fill} cursor={item.id !== 'uncategorized' ? 'pointer' : undefined} role={item.id !== 'uncategorized' ? 'button' : undefined} tabIndex={item.id !== 'uncategorized' ? 0 : undefined} aria-label={`${item.name}: ${formatVnd(item.value)}`} onClick={() => openItem(item)} onKeyDown={(event) => { if (item.id !== 'uncategorized' && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); openItem(item); } }} />)}</Pie><Tooltip formatter={(value) => formatVnd(Number(value))} /><Legend verticalAlign="bottom" iconType="circle" /></PieChart></ResponsiveContainer> : <EmptyState title={en ? 'No chart data' : 'Chưa có dữ liệu biểu đồ'} description={en ? `No actual ${income ? 'income' : 'expense'} transactions in this period.` : `Chưa có giao dịch thực tế ${income ? 'thu nhập' : 'chi tiêu'} trong kỳ này.`} />}</div></>;
+  const pieData = summarizePieData(data);
+  const otherItem = pieData.find((item) => item.isOther);
+  const openItem = (item: PieChartItem) => { if (item.id && item.id !== 'uncategorized' && !item.isOther) navigate(`${to}&${filterKey}=${encodeURIComponent(item.id)}`); };
+  return <><h3 className="font-bold">{title}</h3><div className="min-h-72 min-w-0 max-w-full pt-3">{pieData.length ? <><div className="h-56 sm:h-64"><ResponsiveContainer><PieChart margin={{ top: 18, right: 18, left: 18, bottom: 0 }}><Pie data={pieData} dataKey="value" nameKey="name" innerRadius={45} outerRadius={75} labelLine={false} label={formatPieLabel}>{pieData.map((item) => <Cell key={item.id || item.name} fill={item.fill} cursor={item.id !== 'uncategorized' && !item.isOther ? 'pointer' : undefined} role={item.id !== 'uncategorized' ? 'button' : undefined} tabIndex={item.id !== 'uncategorized' && !item.isOther ? 0 : undefined} aria-label={item.isOther ? `${item.name}: ${formatVnd(item.value)} (${item.hiddenItems?.length || 0} danh mục)` : `${item.name}: ${formatVnd(item.value)}`} onClick={() => openItem(item)} onKeyDown={(event) => { if (item.id !== 'uncategorized' && !item.isOther && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); openItem(item); } }} />)}</Pie><Tooltip content={<PieTooltip />} /></PieChart></ResponsiveContainer></div><ul className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs sm:grid-cols-3" aria-label={`${title} legend`}>{pieData.map((item) => <li key={item.id || item.name} className="flex min-w-0 items-center gap-1.5"><span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: item.fill }} aria-hidden="true" /><span className="truncate" title={`${item.name}: ${formatVnd(item.value)}`}>{item.name}</span></li>)}</ul>{otherItem && <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{en ? `${otherItem.hiddenItems?.length || 0} smaller categories grouped into “Other”; hover for details.` : `${otherItem.hiddenItems?.length || 0} danh mục nhỏ được gộp vào “Khác”; di chuột để xem chi tiết.`}</p>}</> : <EmptyState title={en ? 'No chart data' : 'Chưa có dữ liệu biểu đồ'} description={en ? `No actual ${income ? 'income' : 'expense'} transactions in this period.` : `Chưa có giao dịch thực tế ${income ? 'thu nhập' : 'chi tiêu'} trong kỳ này.`} />}</div></>;
+}
+
+function PieTooltip({ active, payload }: { active?: boolean; payload?: Array<{ payload?: PieChartItem; value?: number }> }) {
+  if (!active || !payload?.length) return null;
+  const item = payload[0]?.payload;
+  if (!item) return null;
+  return <div className="rounded-xl border border-black/10 bg-white px-3 py-2 text-xs shadow-lg dark:border-white/10 dark:bg-[#17251f]"><p className="font-bold">{item.name}: {formatVnd(item.value)}</p>{item.hiddenItems?.length ? <ul className="mt-1 space-y-0.5 text-gray-600 dark:text-gray-300">{item.hiddenItems.map((hiddenItem) => <li key={hiddenItem.id}>{hiddenItem.name}: {formatVnd(hiddenItem.value)}</li>)}</ul> : null}</div>;
 }
 
 function Kpi({ label, value, icon: Icon, tone, meta, to }: { label: string; value: number; icon: LucideIcon; tone: Tone; meta: string; to: string }) {

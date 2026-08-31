@@ -2,6 +2,13 @@
 
 ## 2026-08-31
 
+### Gộp danh mục nhỏ trên biểu đồ pie
+
+- Trước thay đổi: Pie chart hiển thị quá nhiều lát và legend khi có nhiều danh mục nhỏ.
+- Sau thay đổi: Giữ tối đa 5 danh mục lớn, gộp phần còn lại vào `Khác` và hiển thị chi tiết trong tooltip; vẫn giữ lọc giao dịch cho từng danh mục lớn.
+- Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx`; không đổi API/database.
+- Kiểm thử: `pnpm test` đạt 19/19 file và 67/67 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` đều pass. Chưa deploy production.
+
 ### Sửa insight khi lọc Dashboard theo một tháng
 
 - Trước thay đổi: Khi chọn một tháng, khu vực `Điểm đáng chú ý` vẫn hiển thị tháng cao nhất/thấp nhất lấy từ trend sáu tháng của biểu đồ.
