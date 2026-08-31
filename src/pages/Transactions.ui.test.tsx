@@ -34,6 +34,38 @@ describe('Giao dịch mobile', () => {
     expect(screen.getAllByText((content) => content.includes('250.000')).length).toBeGreaterThan(0);
   });
 
+  it('nhận đúng khoảng ngày khi mở từ KPI nhiều tháng', () => {
+    vi.mocked(useApp).mockReturnValue({
+      transactions: [
+        { id: 't1', transactionDate: '2025-09-15', transactionType: 'Chi tiêu', status: 'Thực tế', description: 'Trong đầu kỳ', amount: 100000, purposeId: 'p1', expenseTypeId: 'e1', paymentMethodId: 'm1', source: 'manual', aiGenerated: false, createdBy: 'u1' },
+        { id: 't2', transactionDate: '2026-02-28', transactionType: 'Chi tiêu', status: 'Thực tế', description: 'Trong cuối kỳ', amount: 200000, purposeId: 'p1', expenseTypeId: 'e1', paymentMethodId: 'm1', source: 'manual', aiGenerated: false, createdBy: 'u1' },
+        { id: 't3', transactionDate: '2026-03-01', transactionType: 'Chi tiêu', status: 'Thực tế', description: 'Ngoài kỳ', amount: 300000, purposeId: 'p1', expenseTypeId: 'e1', paymentMethodId: 'm1', source: 'manual', aiGenerated: false, createdBy: 'u1' },
+      ],
+      setTransactions: vi.fn(),
+      purposes: [{ id: 'p1', name: 'Sinh hoạt' }],
+      expenseTypes: [{ id: 'e1', name: 'Thực phẩm' }],
+      paymentMethods: [{ id: 'm1', name: 'Tiền mặt' }],
+      familyId: 'f1',
+      currentUserId: 'u1',
+      currentUserRole: 'owner',
+    } as unknown as ReturnType<typeof useApp>);
+    render(
+      <FeedbackProvider>
+        <QueryClientProvider client={new QueryClient()}>
+          <MemoryRouter initialEntries={['/giao-dich?transactionType=Chi%20ti%C3%AAu&dateFrom=2025-09-01&dateTo=2026-02-28']}>
+            <Transactions />
+          </MemoryRouter>
+        </QueryClientProvider>
+      </FeedbackProvider>,
+    );
+
+    expect(screen.getByRole('article', { name: 'Giao dịch Trong đầu kỳ' })).toBeInTheDocument();
+    expect(screen.getByRole('article', { name: 'Giao dịch Trong cuối kỳ' })).toBeInTheDocument();
+    expect(screen.queryByRole('article', { name: 'Giao dịch Ngoài kỳ' })).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Từ ngày')).toHaveValue('2025-09-01');
+    expect(screen.getByLabelText('Đến ngày')).toHaveValue('2026-02-28');
+  });
+
   it('chọn nhiều và chỉ sửa bốn trường bắt buộc', async () => {
     const setTransactions = vi.fn();
     vi.mocked(useApp).mockReturnValue({
