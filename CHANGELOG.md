@@ -2,6 +2,22 @@
 
 ## 2026-09-01
 
+### Tinh gọn bộ lọc và input số tiền trên mobile
+
+- Trước thay đổi: Bộ lọc chi tiết có khoảng cách và chiều cao ô nhập lớn; input số tiền có placeholder dài, chưa có phân cách hàng nghìn và có thể làm Safari zoom khi focus.
+- Sau thay đổi: Giảm khoảng cách giữa các trường, bỏ placeholder ở `Từ số tiền`/`Đến số tiền`, hiển thị số tiền VND dạng `1.234.567`, chỉ nhận chữ số và giữ input cỡ 16px để tránh zoom trên mobile.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`, `src/pages/Transactions.test.ts`, `src/pages/Transactions.ui.test.tsx`; không đổi API/database.
+- Kiểm thử: `pnpm test`, `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` đều pass; tổng cộng 19/19 file và 76/76 test.
+- Triển khai: Chưa deploy production.
+
+### Sửa lỗi lệch lớp KPI trên mobile
+
+- Trước thay đổi: KPI `Giá trị ròng` bị mất nền/border đầy đủ và lệch nội dung trên mobile vì link KPI nằm trong wrapper grid nhưng vẫn hiển thị dạng inline.
+- Sau thay đổi: Link KPI được hiển thị dạng block, chiếm đủ chiều cao ô grid; bố cục KPI một tháng và nhiều tháng giữ đúng card, icon, số tiền và nội dung phụ.
+- Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx`; bổ sung regression assertion trong `src/pages/Dashboard.test.tsx`; ổn định fixture tháng trong `src/pages/Transactions.ui.test.tsx` để test không phụ thuộc thời điểm chạy; không đổi API/database.
+- Kiểm thử: `pnpm test` đạt 19/19 file và 76/76 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass.
+- Triển khai: Chưa deploy production.
+
 ### Bắt buộc cập nhật handoff sau deploy
 
 - Trước thay đổi: Quy trình deploy chưa ghi rõ bước cập nhật handoff sau khi Cloudflare Pages production deploy thành công.
