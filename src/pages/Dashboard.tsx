@@ -451,13 +451,7 @@ export function Dashboard() {
                   stroke="#155e46"
                   strokeWidth={3}
                 >
-                  <LabelList
-                    dataKey="v"
-                    position="top"
-                    formatter={(value) =>
-                      formatCompactVnd(Number(value)).replace(' ₫', '')
-                    }
-                  />
+                  <LabelList dataKey="v" content={(props) => <NetValueLabel {...(props as { x?: number; y?: number; value?: number; index?: number })} />} />
                 </Line>
               </LineChart>
             </ResponsiveContainer>
@@ -583,6 +577,17 @@ function ExpenseBarChart({
       </div>
     </>
   );
+}
+
+function NetValueLabel(props: { x?: number; y?: number; value?: number; index?: number }) {
+  const x = Number(props.x || 0);
+  const y = Number(props.y || 0);
+  const value = Number(props.value || 0);
+  const index = props.index || 0;
+  const anchor = index === 0 ? 'start' : index === 5 ? 'end' : 'middle';
+  const offsetX = index === 0 ? 12 : index === 5 ? -12 : 0;
+  const offsetY = value < 0 ? 18 : -10;
+  return <text x={x + offsetX} y={y + offsetY} textAnchor={anchor} fill="#777" fontSize={16} fontWeight={600}>{formatCompactVnd(value).replace(' ₫', '')}</text>;
 }
 
 function Kpi({ label, value, icon: Icon, tone, to }: { label: string; value: number; icon: typeof Scale; tone: 'emerald' | 'rose' | 'sky'; to: string }) {

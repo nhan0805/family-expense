@@ -2,6 +2,13 @@
 
 ## 2026-08-31
 
+### Tránh chồng lấn nhãn số tiền trên chart Thu ròng
+
+- Sau thay đổi: Nhãn đầu/cuối được chừa mép, nhãn âm/dương đặt theo hướng phù hợp để không đè trục hoặc đường biểu đồ.
+- Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx`; không thay đổi dữ liệu/API.
+- Kiểm thử: Đang chạy test, lint, typecheck và build.
+- Triển khai: Chờ PR production.
+
 ### Sửa dữ liệu hai chart Chi tiêu theo mục đích và danh mục
 
 - Sau thay đổi: Hai chart Chi tiêu chỉ lấy Chi tiêu/Tạm ứng và trừ Hoàn tiền; không còn hiển thị Thu nhập.
