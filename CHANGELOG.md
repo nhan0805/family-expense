@@ -2,6 +2,13 @@
 
 ## 2026-08-31
 
+### Hiển thị icon theme và chữ VI/EN trên switch
+
+- Sau thay đổi: Switch giao diện hiển thị mặt trời/mặt trăng; switch ngôn ngữ hiển thị VI/EN ngay trên nút và vẫn giữ căn thẳng hai dòng.
+- Kỹ thuật: Cập nhật `src/components/ThemeSelect.tsx`; không thay đổi API/database.
+- Kiểm thử: Đang chạy test, lint, typecheck và build.
+- Triển khai: Chờ PR production.
+
 ### Căn thẳng switch giao diện và ngôn ngữ
 
 - Sau thay đổi: Hai switch dùng layout 3 cột cố định, luôn thẳng hàng dù nhãn VI/EN khác độ dài.
