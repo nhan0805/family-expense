@@ -7,13 +7,13 @@
 - Trước thay đổi: Label và leader line được render cho mọi lát pie, khiến các lát rất nhỏ dồn chữ và chồng lên nhau.
 - Sau thay đổi: Chỉ hiển thị số tiền trực tiếp cho lát chiếm từ 5% trở lên và tắt leader line; lát nhỏ vẫn giữ trong pie, legend, tooltip và accessibility label.
 - Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx`, bổ sung regression test trong `src/pages/Dashboard.test.tsx`; không đổi API/database.
-- Kiểm thử: `pnpm test` đạt 19/19 file và 67/67 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` đều pass. Chưa deploy production.
+- Kiểm thử: `pnpm test` đạt 19/19 file và 67/67 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` đều pass. Đã deploy production qua Git/Cloudflare Pages: [production](https://family-expense-8fo.pages.dev/) · [deployment](https://ddba3028.family-expense-8fo.pages.dev/).
 
 ### Chuyển biểu đồ danh mục sang pie chart
 
 - Sau thay đổi: `Chi tiêu theo danh mục` và `Thu nhập theo danh mục` dùng pie chart giống các biểu đồ phân bổ khác; vẫn giữ tooltip, legend và click để mở giao dịch đã lọc.
 - Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx`, `src/pages/Dashboard.test.tsx`; không đổi API/database.
-- Kiểm thử: `pnpm test` đạt 19/19 file và 67/67 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` đều pass. Chưa deploy production.
+- Kiểm thử: `pnpm test` đạt 19/19 file và 67/67 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` đều pass. Đã deploy production qua Git/Cloudflare Pages: [production](https://family-expense-8fo.pages.dev/) · [deployment](https://ddba3028.family-expense-8fo.pages.dev/).
 
 ### Khôi phục xác nhận giao dịch dự kiến tới hạn
 
