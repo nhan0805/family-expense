@@ -21,3 +21,9 @@ verify_jwt = true
 
 [functions.email-transactions]
 verify_jwt = true
+
+[functions.summarize-dashboard]
+verify_jwt = true
+
+[functions.search-transactions]
+verify_jwt = true

@@ -114,6 +114,7 @@ describe('Dashboard', () => {
     renderDashboard();
 
     expect(screen.getByText('Tổng quan tài chính')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Tóm tắt bằng AI' })).toBeDisabled();
     expect(screen.queryByText('Giao dịch thực tế trong tháng')).not.toBeInTheDocument();
     expect(
       screen.getAllByText('Chưa có dữ liệu biểu đồ'),
@@ -185,6 +186,12 @@ describe('Dashboard', () => {
     } as unknown as ReturnType<typeof useApp>);
     renderDashboard();
 
+    const periodGroup = screen.getByRole('group', { name: 'Kỳ xem' });
+    expect(periodGroup).toHaveClass('flex-nowrap', 'overflow-x-auto');
+    expect(screen.getByRole('button', { name: 'Tùy chỉnh' })).toHaveClass(
+      'shrink-0',
+      'whitespace-nowrap',
+    );
     fireEvent.change(screen.getByLabelText('Tháng'), { target: { value: '02' } });
     fireEvent.click(screen.getByRole('button', { name: '6 tháng' }));
 

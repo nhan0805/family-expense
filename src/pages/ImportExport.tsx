@@ -14,7 +14,7 @@ import { useOptionalLanguage } from '../context/LanguageContext';
 import { transactionTypeLabel, type Transaction } from '../lib/domain';
 import { formatImportCheckSummary } from '../lib/importSummary';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
-import type { TemplateError, TemplateRow } from '../lib/templateImport';
+import { inferImportMode, type TemplateError, type TemplateRow } from '../lib/templateImport';
 
 type ExportRow = Record<string, unknown>;
 type FilePickerWindow = Window & {
@@ -55,7 +55,6 @@ export function ImportExport() {
   const [validRows, setValidRows] = useState<TemplateRow[]>([]);
   const [importErrors, setImportErrors] = useState<TemplateError[]>([]);
   const [includeDuplicates, setIncludeDuplicates] = useState(false);
-  const [importMode, setImportMode] = useState<'insert' | 'update'>('insert');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const downloadTemplate = async () => {
@@ -220,6 +219,7 @@ export function ImportExport() {
       expenseTypeId: row.expenseTypeId,
       note: row.note,
     }));
+    const importMode = inferImportMode(rows);
     const { data, error } = await supabase.rpc('import_template_transactions', {
       p_family_id: familyId,
       p_file_name: fileName,
@@ -413,7 +413,7 @@ export function ImportExport() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-extrabold">{en ? 'Data management' : 'Quản lý dữ liệu'}</h2>
+        <h2 className="text-2xl font-extrabold">{en ? 'Data' : 'Dữ liệu'}</h2>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{en ? 'Excel currently uses Vietnamese templates for compatibility with existing files.' : 'Excel hiện dùng template tiếng Việt để tương thích với các file hiện có.'}</p>
         <p className="mt-1 text-sm text-gray-500">
           {en ? 'Import, export and manage family transaction data.' : 'Nhập, xuất và quản lý dữ liệu giao dịch của gia đình.'}
@@ -510,13 +510,6 @@ export function ImportExport() {
             <p className="mt-1 text-sm text-gray-500">
               {en ? 'Choose an .xlsx file downloaded from the app. Data is saved only after you review and confirm it.' : 'Chọn file .xlsx được tải từ ứng dụng. Dữ liệu chỉ được ghi sau khi bạn kiểm tra và xác nhận.'}
             </p>
-            <label className="mt-3 flex items-center gap-2 text-sm">
-              <span>{en ? 'Mode' : 'Chế độ'}</span>
-              <select value={importMode} onChange={(event) => setImportMode(event.target.value as 'insert' | 'update')} className="rounded border px-2 py-1">
-                <option value="insert">{en ? 'Add new' : 'Thêm mới'}</option>
-                <option value="update">{en ? 'Update by transaction ID' : 'Cập nhật theo ID giao dịch'}</option>
-              </select>
-            </label>
           </div>
         </div>
         <div className="space-y-4 p-4 sm:p-5">
@@ -604,6 +597,7 @@ export function ImportExport() {
                 />
                 <Stat label={en ? 'Errors' : 'Lỗi'} value={importErrors.length} />
               </div>
+              {validRows.length > 0 && <p className="text-sm text-gray-600 dark:text-gray-300">{en ? `${validRows.filter((row) => row.id).length} update · ${validRows.filter((row) => !row.id).length} new. Rows with an ID are updated; rows without an ID are added.` : `${validRows.filter((row) => row.id).length} cập nhật · ${validRows.filter((row) => !row.id).length} thêm mới. Dòng có ID sẽ cập nhật, dòng không có ID sẽ được thêm mới.`}</p>}
               {validRows.some((r) => r.duplicate) && (
                 <label className="flex items-center gap-2 text-sm">
                   <input
@@ -683,7 +677,7 @@ function DataCard({
       ? 'bg-[#e3f2e9] text-[#145c43] dark:bg-emerald-950/50 dark:text-emerald-300'
       : 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300';
   return (
-    <section className="card flex min-h-[250px] flex-col p-4 sm:p-5">
+    <section className="card self-start p-4 sm:p-5">
       <div className="flex items-start gap-3">
         <span className={`rounded-xl p-3 ${iconClass}`}>{icon}</span>
         <div>
@@ -691,7 +685,7 @@ function DataCard({
           <p className="mt-1 line-clamp-3 text-sm leading-6 text-gray-500">{description}</p>
         </div>
       </div>
-      <div className="mt-auto pt-5">{children}</div>
+      <div className="pt-4">{children}</div>
     </section>
   );
 }

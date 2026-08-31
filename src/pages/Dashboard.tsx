@@ -31,8 +31,9 @@ import type { LucideIcon } from 'lucide-react';
 import { EmptyState, PageSkeleton } from '../components/AsyncStates';
 import { useApp } from '../context/AppContext';
 import { useOptionalLanguage } from '../context/LanguageContext';
+import { dashboardSummaryResponseSchema } from '../lib/ai';
 import { formatCompactVnd, formatVnd, type CatalogItem, type Transaction } from '../lib/domain';
-import { isSupabaseConfigured } from '../lib/supabase';
+import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import {
   fetchDashboardDueTransactions,
   fetchDashboardTransactions,
@@ -243,6 +244,9 @@ export function Dashboard() {
   const [customTo, setCustomTo] = useState(todayKey());
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [dueError, setDueError] = useState('');
+  const [aiSummary, setAiSummary] = useState<{ key: string; summary: string; highlights: string[] } | null>(null);
+  const [aiSummaryBusy, setAiSummaryBusy] = useState(false);
+  const [aiSummaryError, setAiSummaryError] = useState('');
   const anchorKey = `${selectedYear}-${selectedMonth}`;
   const selectedPeriods = useMemo(() => periodsForMode(anchorKey, mode, customFrom, customTo), [anchorKey, mode, customFrom, customTo]);
   const selectedRange = useMemo(() => rangeForPeriods(selectedPeriods, mode === 'custom' ? customFrom : '', mode === 'custom' ? customTo : ''), [selectedPeriods, mode, customFrom, customTo]);
@@ -344,6 +348,7 @@ export function Dashboard() {
     trend: insightTrend,
   });
   const error = dashboardQuery.isError || dueQuery.isError || yearsQuery.isError;
+  const aiSummaryKey = `${selectedRange.from}|${selectedRange.to}|${periodLabel}`;
 
   const chooseMode = (nextMode: DashboardMode) => {
     setMode(nextMode);
@@ -351,6 +356,31 @@ export function Dashboard() {
   };
   const changeMonth = (event: ChangeEvent<HTMLSelectElement>) => setSelectedMonth(event.target.value);
   const changeYear = (event: ChangeEvent<HTMLSelectElement>) => setSelectedYear(event.target.value);
+  const runAiSummary = async () => {
+    if (!isSupabaseConfigured || !familyId || !validRange || aiSummaryBusy) return;
+    setAiSummaryBusy(true);
+    setAiSummaryError('');
+    try {
+      const { data, error: invokeError } = await supabase.functions.invoke('summarize-dashboard', {
+        body: {
+          familyId,
+          dateFrom: selectedRange.from,
+          dateTo: selectedRange.to,
+          periodLabel,
+          language: en ? 'en' : 'vi',
+          timezone: 'Asia/Ho_Chi_Minh',
+        },
+      });
+      if (invokeError) throw new Error('AI_REQUEST_FAILED');
+      const response = dashboardSummaryResponseSchema.safeParse(data);
+      if (!response.success) throw new Error('AI_RESPONSE_INVALID');
+      setAiSummary({ key: aiSummaryKey, ...response.data });
+    } catch {
+      setAiSummaryError(en ? 'AI summary is temporarily unavailable. Please try again.' : 'Chưa thể tạo tóm tắt AI. Vui lòng thử lại sau.');
+    } finally {
+      setAiSummaryBusy(false);
+    }
+  };
   const confirmDueTransaction = async (id: string, description: string) => {
     if (!window.confirm(en ? `Confirm “${description}” as actual?` : `Xác nhận giao dịch “${description}” đã phát sinh thực tế?`)) return;
     setConfirmingId(id);
@@ -414,7 +444,7 @@ export function Dashboard() {
 
       <section className="grid gap-4 lg:grid-cols-2"><div className="card min-w-0 overflow-hidden p-4"><ExpensePieChart title={en ? 'Income by purpose' : 'Thu nhập theo mục đích'} data={incomeByPurpose} to={periodFilterLink('Thu nhập')} filterKey="purposeId" en={en} income /></div><div className="card min-w-0 overflow-hidden p-4"><ExpensePieChart title={en ? 'Income by category' : 'Thu nhập theo danh mục'} data={incomeByExpenseType} to={periodFilterLink('Thu nhập')} filterKey="expenseTypeId" en={en} income /></div></section>
 
-      <section className="card border-amber-200 bg-amber-50/60 p-4 dark:border-amber-900/60 dark:bg-amber-950/20" aria-labelledby="dashboard-insights-title"><div className="mb-3 flex items-center gap-2"><Sparkles size={19} className="text-amber-600" aria-hidden="true" /><h3 id="dashboard-insights-title" className="font-bold">{en ? 'What stands out' : 'Điểm đáng chú ý'}</h3></div>{insights.length ? <ul className="grid gap-2 text-sm sm:grid-cols-2">{insights.map((insight) => <li key={insight} className="rounded-lg bg-white/70 p-3 dark:bg-white/5">{insight}</li>)}</ul> : <p className="text-sm text-gray-600 dark:text-gray-300">{en ? 'Insights will appear when there is enough actual data.' : 'Nhận xét sẽ xuất hiện khi có đủ dữ liệu giao dịch thực tế.'}</p>}</section>
+      <section className="card border-amber-200 bg-amber-50/60 p-4 dark:border-amber-900/60 dark:bg-amber-950/20" aria-labelledby="dashboard-insights-title"><div className="mb-3 flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-2"><Sparkles size={19} className="text-amber-600" aria-hidden="true" /><h3 id="dashboard-insights-title" className="font-bold">{en ? 'What stands out' : 'Điểm đáng chú ý'}</h3></div><button type="button" className="btn-secondary inline-flex shrink-0 items-center gap-2 text-sm" disabled={!isSupabaseConfigured || !validRange || aiSummaryBusy} onClick={() => void runAiSummary()} title={!isSupabaseConfigured ? (en ? 'Connect Supabase to use AI' : 'Cần kết nối Supabase để dùng AI') : undefined}><Sparkles size={16} aria-hidden="true" />{aiSummaryBusy ? (en ? 'Summarizing…' : 'Đang tóm tắt…') : (en ? 'Summarize with AI' : 'Tóm tắt bằng AI')}</button></div>{insights.length ? <ul className="grid gap-2 text-sm sm:grid-cols-2">{insights.map((insight) => <li key={insight} className="rounded-lg bg-white/70 p-3 dark:bg-white/5">{insight}</li>)}</ul> : <p className="text-sm text-gray-600 dark:text-gray-300">{en ? 'Insights will appear when there is enough actual data.' : 'Nhận xét sẽ xuất hiện khi có đủ dữ liệu giao dịch thực tế.'}</p>}{aiSummaryError && <p role="alert" className="mt-3 rounded-lg bg-red-100/70 p-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">{aiSummaryError}</p>}{aiSummary?.key === aiSummaryKey && <div className="mt-3 rounded-xl border border-amber-200 bg-white/75 p-3 text-sm dark:border-amber-900/60 dark:bg-white/5"><p className="leading-6">{aiSummary.summary}</p>{aiSummary.highlights.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5 text-gray-700 dark:text-gray-300">{aiSummary.highlights.map((highlight) => <li key={highlight}>{highlight}</li>)}</ul>}</div>}</section>
     </div>
   );
 }
