@@ -2,6 +2,22 @@
 
 ## 2026-08-31
 
+### Cải tiến Dashboard không có ngân sách
+
+- Trước thay đổi: Dashboard chủ yếu hiển thị một tháng và xu hướng cố định 6 tháng; local fallback chưa gom đúng Tạm ứng/Hoàn tiền trong breakdown.
+- Sau thay đổi: Thêm preset `Tháng/6 tháng/12 tháng/Năm/Tùy chỉnh`, 6 KPI gồm tổng chi/thu, thu ròng, trung bình, tháng cao nhất/thấp nhất, chart thu–chi theo tháng, top danh mục kèm micro-trend, insight dẫn xuất từ dữ liệu và giữ click-through sang Giao dịch.
+- Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx`, `src/pages/Dashboard.test.tsx`, `src/lib/transactionsApi.ts`; truy vấn giao dịch thực tế theo `family_id`, loại bỏ soft-deleted/dự kiến, phân trang 1.000 dòng; không thêm budget, dependency, migration hoặc thay đổi schema.
+- Kiểm thử: Dashboard test bổ sung kiểm tra Tạm ứng, Hoàn tiền, preset 6 tháng và kỳ tùy chỉnh theo ngày; `pnpm test` đạt 19/19 file và 63/63 test, `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` đều pass. Browser đã kiểm tra desktop/mobile, kỳ 6 tháng, kỳ tùy chỉnh, khoảng ngày không hợp lệ và không tràn ngang ở mobile.
+- Triển khai: Chưa deploy; chưa yêu cầu deploy production. Build chỉ phát cảnh báo chunk ExcelJS lớn đã tồn tại.
+
+### Đề xuất cải tiến Dashboard theo dashboard tham khảo
+
+- Trước đề xuất: Dashboard chủ yếu xem theo một tháng/năm, có KPI tổng thu/chi, breakdown theo mục đích/danh mục và xu hướng 6 tháng.
+- Đề xuất sau: Bổ sung preset kỳ xem `6 tháng/12 tháng/Năm/Tùy chỉnh`; hàng KPI có so sánh kỳ trước/năm trước; biểu đồ thực tế–ngân sách và vùng vượt ngân sách; breakdown theo thời gian; top danh mục/micro-trend; heatmap và insight có kiểm chứng theo các pha.
+- Phạm vi kỹ thuật dự kiến: Ưu tiên tái sử dụng `src/pages/Dashboard.tsx`, `src/lib/transactionsApi.ts`, Recharts và local fallback; chỉ thêm migration mới nếu cần tích hợp `budgets`, không sửa migration đã áp dụng.
+- Kiểm thử dự kiến: Test kỳ biên, empty/error từng query, ngân sách thiếu, click lọc giao dịch, local fallback; sau triển khai code chạy `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build` và E2E staging.
+- Trạng thái: Chưa triển khai; đã ghi backlog và tiêu chí chấp nhận trong `HANDOFF.md`. Hai ảnh tham khảo chỉ định hướng UI/UX, không phải nguồn dữ liệu hay yêu cầu nghiệp vụ.
+
 ### Tăng kích thước bubble và ẩn danh mục không có dữ liệu
 
 - Sau thay đổi: Packed Bubble chỉ render danh mục có giá trị dương; bubble lớn hơn để dễ đọc tên và số tiền.

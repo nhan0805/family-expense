@@ -119,6 +119,56 @@ export async function fetchTransactionYears(familyId: string) {
   return ((data || []) as number[]).map(String);
 }
 
+export async function fetchDashboardTransactions(
+  familyId: string,
+  dateFrom: string,
+  dateTo: string,
+): Promise<Transaction[]> {
+  const pageSize = 1000;
+  const rows: TransactionRow[] = [];
+  let offset = 0;
+
+  while (true) {
+    const { data, error } = await supabase
+      .from('transactions')
+      .select('*')
+      .eq('family_id', familyId)
+      .eq('status', 'Thực tế')
+      .is('deleted_at', null)
+      .gte('transaction_date', dateFrom)
+      .lte('transaction_date', dateTo)
+      .order('transaction_date', { ascending: true })
+      .order('id', { ascending: true })
+      .range(offset, offset + pageSize - 1);
+    if (error) throw error;
+
+    const page = (data || []) as TransactionRow[];
+    rows.push(...page);
+    if (page.length < pageSize) break;
+    offset += pageSize;
+  }
+
+  return rows.map(mapTransactionRow);
+}
+
+export async function fetchDashboardDueTransactions(
+  familyId: string,
+  today: string,
+): Promise<Transaction[]> {
+  const { data, error } = await supabase
+    .from('transactions')
+    .select('*')
+    .eq('family_id', familyId)
+    .eq('status', 'Dự kiến')
+    .is('deleted_at', null)
+    .lte('transaction_date', today)
+    .order('transaction_date', { ascending: true })
+    .order('id', { ascending: true })
+    .limit(20);
+  if (error) throw error;
+  return ((data || []) as TransactionRow[]).map(mapTransactionRow);
+}
+
 export async function fetchDeletedTransactionPage(familyId: string, filters: ServerTransactionFilters, page: number, pageSize = 50) {
   const { data, error } = await supabase.rpc('list_deleted_transactions', { p_family_id: familyId, p_limit: pageSize, p_offset: page * pageSize, p_query: filters.query, p_transaction_type: filters.transactionType, p_purpose_id: filters.purposeId || null, p_expense_type_id: filters.expenseTypeId || null, p_payment_method_id: filters.paymentMethodId || null, p_month: filters.month ? Number(filters.month) : null, p_year: filters.year ? Number(filters.year) : null, p_date_from: filters.dateFrom || null, p_date_to: filters.dateTo || null });
   if (error) throw error;

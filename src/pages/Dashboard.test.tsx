@@ -20,11 +20,12 @@ const transaction = (
   transactionDate: string,
   amount: number,
   status: Transaction['status'] = 'Thực tế',
+  transactionType: Transaction['transactionType'] = 'Chi tiêu',
 ): Transaction => ({
   id,
   transactionDate,
   amount,
-  transactionType: 'Chi tiêu',
+  transactionType,
   status,
   description: id,
   purposeId: 'p1',
@@ -131,5 +132,51 @@ describe('Dashboard', () => {
         'Tiền điện dự kiến',
       ),
     );
+  });
+
+  it('tính đúng Tạm ứng, Hoàn tiền và các preset kỳ xem', () => {
+    vi.mocked(useApp).mockReturnValue({
+      transactions: [
+        transaction('Chi tháng 1', '2026-01-10', 100_000),
+        transaction('Tạm ứng tháng 2', '2026-02-10', 200_000, 'Thực tế', 'Tạm ứng'),
+        transaction('Hoàn tiền tháng 2', '2026-02-12', 50_000, 'Thực tế', 'Hoàn tiền'),
+        transaction('Thu tháng 2', '2026-02-20', 500_000, 'Thực tế', 'Thu nhập'),
+      ],
+      purposes: [{ id: 'p1', name: 'Sinh hoạt' }],
+      expenseTypes: [{ id: 'e1', name: 'Thực phẩm' }],
+      confirmPlannedTransaction,
+    } as unknown as ReturnType<typeof useApp>);
+    renderDashboard();
+
+    fireEvent.change(screen.getByLabelText('Tháng'), { target: { value: '02' } });
+    fireEvent.click(screen.getByRole('button', { name: '6 tháng' }));
+
+    expect(screen.getByText('6 tháng đến T02/2026')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Mở giao dịch theo Tổng chi' })).toHaveTextContent('300.000');
+    expect(screen.getByRole('link', { name: 'Mở giao dịch theo Tổng thu' })).toHaveTextContent('550.000');
+    fireEvent.click(screen.getByRole('button', { name: 'Tháng' }));
+    expect(screen.getByRole('link', { name: 'Mở giao dịch theo Tổng chi' })).toHaveTextContent('200.000');
+    expect(screen.getByRole('button', { name: 'Thực phẩm: 150.000 ₫' })).toBeInTheDocument();
+  });
+
+  it('lọc chính xác ngày trong kỳ tùy chỉnh', () => {
+    vi.mocked(useApp).mockReturnValue({
+      transactions: [
+        transaction('Ngoài kỳ', '2026-02-01', 100_000),
+        transaction('Trong kỳ', '2026-02-15', 200_000),
+        transaction('Ngoài kỳ sau', '2026-03-01', 400_000),
+      ],
+      purposes: [{ id: 'p1', name: 'Sinh hoạt' }],
+      expenseTypes: [{ id: 'e1', name: 'Thực phẩm' }],
+      confirmPlannedTransaction,
+    } as unknown as ReturnType<typeof useApp>);
+    renderDashboard();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Tùy chỉnh' }));
+    fireEvent.input(screen.getByLabelText('Từ ngày'), { target: { value: '2026-02-10' } });
+    fireEvent.input(screen.getByLabelText('Đến ngày'), { target: { value: '2026-02-28' } });
+
+    expect(screen.getByRole('link', { name: 'Mở giao dịch theo Tổng chi' })).toHaveTextContent('200.000');
+    expect(screen.getByText('10/02/2026 – 28/02/2026')).toBeInTheDocument();
   });
 });
