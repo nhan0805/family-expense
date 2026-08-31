@@ -10,7 +10,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useApp } from '../context/AppContext';
 import type { Transaction } from '../lib/domain';
-import { Dashboard, formatPieLabel } from './Dashboard';
+import { Dashboard, formatPieLabel, summarizePieData } from './Dashboard';
 
 vi.mock('../context/AppContext', () => ({ useApp: vi.fn() }));
 vi.mock('../lib/supabase', () => ({ isSupabaseConfigured: false }));
@@ -81,6 +81,8 @@ describe('Dashboard', () => {
     expect(screen.queryByText('Trung bình / tháng')).not.toBeInTheDocument();
     expect(screen.queryByText('Tháng cao nhất')).not.toBeInTheDocument();
     expect(screen.queryByText('Tháng thấp nhất')).not.toBeInTheDocument();
+    expect(screen.queryByText(/có mức chi cao nhất trong kỳ xem/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/có mức chi thấp nhất trong kỳ xem/)).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Mở giao dịch theo Tổng thu' })).toHaveAttribute(
       'href',
       '/giao-dich?transactionType=Thu nhập&month=02&year=2026',
@@ -134,6 +136,14 @@ describe('Dashboard', () => {
     expect(screen.getByText('Chi tiêu theo danh mục')).toBeInTheDocument();
     expect(formatPieLabel({ percent: 0.95, value: 1_000_000 })).toBe('1M');
     expect(formatPieLabel({ percent: 0.01, value: 10_000 })).toBeNull();
+    const summarized = summarizePieData(expenseTypes.map((item, index) => ({
+      ...item,
+      value: index === 0 ? 1_000_000 : 1_000 * (10 - index),
+      fill: '#155e46',
+    })));
+    expect(summarized).toHaveLength(6);
+    expect(summarized.at(-1)).toMatchObject({ id: 'other', name: 'Khác', value: 14_000 });
+    expect(summarized.at(-1)?.hiddenItems).toHaveLength(4);
   });
 
   it('cho phép xác nhận giao dịch dự kiến đã đến hạn', async () => {
