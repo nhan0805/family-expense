@@ -6,7 +6,7 @@
 
 - Sau thay đổi: KPI `Tổng thu` được hiển thị trước `Tổng chi` trong hàng tổng quan Dashboard; dữ liệu, liên kết và công thức không thay đổi.
 - Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx`, bổ sung assertion thứ tự trong `src/pages/Dashboard.test.tsx`; không đổi API/database.
-- Kiểm thử: Đang chạy test, lint, typecheck và build.
+- Kiểm thử: `pnpm test` đạt 19/19 file và 67/67 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` đều pass. Chưa deploy production.
 
 ### Cập nhật hướng dẫn xem chi tiết trên mobile
 
