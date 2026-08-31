@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { FeedbackProvider } from '../components/Feedback';
 import { useApp } from '../context/AppContext';
-import { clearTransactionDraft } from '../lib/transactionDraft';
+import { clearTransactionDraft, readTransactionDraft, saveTransactionDraft } from '../lib/transactionDraft';
 import { TransactionForm } from './TransactionForm';
 
 vi.mock('../context/AppContext', () => ({ useApp: vi.fn() }));
@@ -94,5 +94,17 @@ describe('Form giao dịch hợp nhất', () => {
     expect(screen.getByText('Đã chuyển giọng nói thành nội dung. Hãy kiểm tra trước khi dùng AI.')).toBeInTheDocument();
     expect(invokeMock).not.toHaveBeenCalled();
     delete (window as typeof window & { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition;
+  });
+
+  it('xóa bản nháp khi hủy thêm giao dịch', async () => {
+    vi.mocked(useApp).mockReturnValue(appValue);
+    saveTransactionDraft('f1', { description: 'Bản nháp cần bỏ', amount: 450000 });
+    render(<FeedbackProvider><QueryClientProvider client={new QueryClient()}><MemoryRouter><TransactionForm/></MemoryRouter></QueryClientProvider></FeedbackProvider>);
+
+    await waitFor(() => expect(screen.getByText('Đã khôi phục bản nháp trên thiết bị. Hãy kiểm tra trước khi lưu.')).toBeInTheDocument());
+    expect(readTransactionDraft('f1')).not.toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Hủy' }));
+
+    expect(readTransactionDraft('f1')).toBeNull();
   });
 });

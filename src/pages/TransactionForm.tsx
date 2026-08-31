@@ -193,6 +193,10 @@ export function TransactionForm() {
     });
   }, [id, setValue, transactionDate]);
   useEffect(() => () => speechRecognitionRef.current?.stop(), []);
+  const handleCancel = () => {
+    if (!id && familyId) clearTransactionDraft(familyId);
+    nav(-1);
+  };
   const onSubmit = async (data: TransactionInput) => {
     if (isSupabaseConfigured && !online) {
       setSaveError(en ? 'You are offline. The draft was saved on this device; reconnect and try again.' : 'Đang mất kết nối mạng. Bản nháp đã được lưu trên thiết bị; hãy kết nối lại rồi thử lại.');
@@ -661,7 +665,7 @@ export function TransactionForm() {
             <button
               type="button"
               className="btn-secondary h-12 shrink-0 px-3 md:px-4"
-              onClick={() => nav(-1)}
+              onClick={handleCancel}
             >
               {en ? 'Cancel' : 'Hủy'}
             </button>
