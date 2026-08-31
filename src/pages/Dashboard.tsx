@@ -520,8 +520,8 @@ function packBubbles(data: ExpenseChartItem[]): PackedBubble[] {
   const height = 300;
   const padding = 12;
   const maxValue = Math.max(...data.map((item) => item.value), 1);
-  const maxRadius = data.length > 8 ? 43 : data.length > 5 ? 51 : 60;
-  const minRadius = data.length > 1 ? 21 : 30;
+  const maxRadius = data.length > 8 ? 52 : data.length > 5 ? 62 : 74;
+  const minRadius = data.length > 1 ? 26 : 36;
   const placed: PackedBubble[] = [];
 
   data.slice().sort((a, b) => b.value - a.value).forEach((item, index) => {
@@ -556,7 +556,7 @@ function PackedBubbleChart({
   filterKey?: 'purposeId' | 'expenseTypeId';
 }) {
   const navigate = useNavigate();
-  const bubbles = packBubbles(data);
+  const bubbles = packBubbles(data.filter((item) => item.value > 0));
   const openItem = (item: ExpenseChartItem) => {
     if (item.id) navigate(`${to}&${filterKey}=${encodeURIComponent(item.id)}`);
   };

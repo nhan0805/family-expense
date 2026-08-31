@@ -2,6 +2,13 @@
 
 ## 2026-08-31
 
+### Tăng kích thước bubble và ẩn danh mục không có dữ liệu
+
+- Sau thay đổi: Packed Bubble chỉ render danh mục có giá trị dương; bubble lớn hơn để dễ đọc tên và số tiền.
+- Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx`; không thay đổi API/database.
+- Kiểm thử: Đang chạy test, lint, typecheck và build.
+- Triển khai: Chờ PR production.
+
 ### Thử Packed Bubble Chart cho Thu/Chi theo danh mục
 
 - Sau thay đổi: Hai chart Thu nhập/Chi tiêu theo danh mục hiển thị dạng bubble; kích thước theo giá trị, click bubble mở giao dịch đã lọc và tooltip native hiển thị chi tiết.
