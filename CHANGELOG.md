@@ -8,7 +8,8 @@
 - Sau thay đổi: Giảm khoảng cách giữa các trường, bỏ placeholder ở `Từ số tiền`/`Đến số tiền`, hiển thị số tiền VND dạng `1.234.567`, chỉ nhận chữ số và giữ input cỡ 16px để tránh zoom trên mobile.
 - Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`, `src/pages/Transactions.test.ts`, `src/pages/Transactions.ui.test.tsx`; không đổi API/database.
 - Kiểm thử: `pnpm test`, `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` đều pass; tổng cộng 19/19 file và 76/76 test.
-- Triển khai: Chưa deploy production.
+- Triển khai: Đã merge PR #85 vào `main` với merge commit `84f6021a8b6bd607324a8501a5aadbf452aa5223`; CI #196 và Cloudflare Pages Preview #114 pass. Cloudflare Pages production phản hồi HTTP 200 tại [production](https://family-expense-8fo.pages.dev/).
+- Thời điểm xác minh: `01/09/2026 00:40` theo múi giờ `Asia/Ho_Chi_Minh`.
 
 ### Sửa lỗi lệch lớp KPI trên mobile
 
@@ -16,7 +17,7 @@
 - Sau thay đổi: Link KPI được hiển thị dạng block, chiếm đủ chiều cao ô grid; bố cục KPI một tháng và nhiều tháng giữ đúng card, icon, số tiền và nội dung phụ.
 - Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx`; bổ sung regression assertion trong `src/pages/Dashboard.test.tsx`; ổn định fixture tháng trong `src/pages/Transactions.ui.test.tsx` để test không phụ thuộc thời điểm chạy; không đổi API/database.
 - Kiểm thử: `pnpm test` đạt 19/19 file và 76/76 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass.
-- Triển khai: Chưa deploy production.
+- Triển khai: Đã deploy production cùng PR #85 qua GitHub merge và Cloudflare Pages Git integration; production phản hồi HTTP 200 tại [production](https://family-expense-8fo.pages.dev/).
 
 ### Bắt buộc cập nhật handoff sau deploy
 
