@@ -2,11 +2,20 @@
 
 ## 2026-09-01
 
+### Bắt buộc cập nhật handoff sau deploy
+
+- Trước thay đổi: Quy trình deploy chưa ghi rõ bước cập nhật handoff sau khi Cloudflare Pages production deploy thành công.
+- Sau thay đổi: Bổ sung quy định luôn cập nhật handoff ngay sau deploy, gồm commit merge, URL deployment, thời điểm deploy và trạng thái xác minh.
+- Kỹ thuật: Cập nhật `AGENTS.md`; không đổi code, API hoặc database.
+- Kiểm thử: Đã kiểm tra nội dung hướng dẫn và `git diff --check`.
+- Triển khai: Chưa deploy production; đây là cập nhật quy trình làm việc.
+
 ### Cập nhật handoff sau deploy tìm kiếm giao dịch
 
 - Trước thay đổi: Handoff chưa ghi nhận trạng thái production của tìm kiếm giao dịch theo số tiền và bằng giọng nói.
 - Sau thay đổi: Đã xác nhận PR #82 merge vào `main` với commit `abaedd9d893c9482753e925189e7be5fe105c76d`; CI #189, Preview Build #110 và `Supabase Production Deploy` #13 đều pass. Cloudflare Pages production phản hồi HTTP 200 tại [production](https://family-expense-8fo.pages.dev/).
 - Phạm vi handoff: Bao gồm bộ lọc số tiền, nút tìm kiếm bằng giọng nói và thay đổi bố cục KPI mobile đã được merge trong cùng release.
+- Thời điểm xác minh: `01/09/2026 00:05` theo múi giờ `Asia/Ho_Chi_Minh`.
 - Kiểm thử: Đã hoàn tất `pnpm test` 19/19 file và 75/75 test, `pnpm lint`, `pnpm typecheck`, `pnpm build`, Prettier cho Edge Functions và `git diff --check` trước khi merge.
 - Triển khai: Hoàn tất qua GitHub merge và Cloudflare Pages Git integration; migration/RPC Supabase đã được workflow production áp dụng thành công.
 
