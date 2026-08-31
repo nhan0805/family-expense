@@ -13,7 +13,7 @@
 - Trước thay đổi: Hướng dẫn danh mục gộp chỉ nói “di chuột”, không phù hợp với thiết bị cảm ứng.
 - Sau thay đổi: Dùng hướng dẫn “nhấn hoặc bấm” để người dùng mobile hiểu cách xem chi tiết.
 - Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx`; không đổi API/database.
-- Kiểm thử: `pnpm test` đạt 19/19 file và 67/67 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` đều pass. Chưa deploy production.
+- Kiểm thử: `pnpm test` đạt 19/19 file và 67/67 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` đều pass. Đã deploy production qua Git/Cloudflare Pages: [production](https://family-expense-8fo.pages.dev/) · [deployment](https://170cd4ed.family-expense-8fo.pages.dev/).
 
 ### Gộp danh mục nhỏ trên biểu đồ pie
 
