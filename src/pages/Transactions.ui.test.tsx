@@ -25,7 +25,7 @@ describe('Giao dịch mobile', () => {
     fireEvent.click(filterToggle);
     expect(filterDetails).toHaveAttribute('open');
     expect(screen.getByLabelText('Loại giao dịch')).toBeInTheDocument();
-    expect(screen.queryByLabelText('Trạng thái')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Trạng thái')).toBeInTheDocument();
     const transactionCard = screen.getByRole('article', { name: 'Giao dịch Đi chợ' });
     expect(transactionCard).toHaveClass('rounded-2xl', 'shadow-sm');
     expect(transactionCard).not.toHaveClass('border-t');

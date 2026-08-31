@@ -2,6 +2,21 @@
 
 ## 2026-08-31
 
+### Thêm bộ lọc trạng thái giao dịch
+
+- Trước thay đổi: Bộ lọc chi tiết chưa cho phép lọc riêng giao dịch `Thực tế` và `Dự kiến`.
+- Sau thay đổi: Thêm bộ lọc `Trạng thái` với lựa chọn `Tất cả trạng thái`, `Thực tế`, `Dự kiến`; áp dụng đồng nhất cho dữ liệu local, Supabase, thùng rác và filter chip.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`, `src/pages/Transactions.ui.test.tsx`; không thay đổi database/API.
+- Kiểm thử: Đang chạy test, lint, typecheck và build.
+
+### Cải thiện khả năng đọc số tiền trên KPI Dashboard
+
+- Trước thay đổi: KPI dùng số tiền VND đầy đủ trong ô 6 cột nên dễ bị cắt bằng dấu `…`, đồng thời một số tiêu đề bị truncate.
+- Sau thay đổi: KPI hiển thị số tiền dạng rút gọn `K/M` với chữ lớn hơn; vẫn giữ số tiền VND đầy đủ qua tooltip và accessible label, tiêu đề KPI được phép xuống dòng ngắn. Các KPI `Trung bình / tháng`, `Tháng cao nhất` và `Tháng thấp nhất` chỉ hiển thị khi filter bao phủ nhiều tháng.
+- Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx`, tái sử dụng `formatCompactVnd`; cập nhật assertion hiển thị trong `src/pages/Dashboard.test.tsx`; không đổi API/database.
+- Kiểm thử: `pnpm test` đạt 19/19 file và 64/64 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` đều pass. Browser local tải app shell không có log error/warning; route Dashboard cần Supabase local nên không dựng được dữ liệu tương tác trong môi trường kiểm tra này.
+- Triển khai: Chưa deploy trong lượt này; chờ yêu cầu deploy production.
+
 ### Import Excel cập nhật giao dịch theo ID
 
 - Trước thay đổi: Import Excel chỉ thêm giao dịch mới hoặc bỏ qua dòng nghi trùng; không cập nhật được giao dịch hiện có.
