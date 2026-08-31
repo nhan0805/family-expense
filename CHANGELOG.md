@@ -2,6 +2,13 @@
 
 ## 2026-08-31
 
+### Sửa cắt chữ meta KPI trên màn hình hẹp
+
+- Trước thay đổi: Meta như `12 tháng trong kỳ xem` bị cắt bằng dấu `…` trong card KPI hẹp.
+- Sau thay đổi: Meta KPI được phép tự xuống dòng để hiển thị đầy đủ trên mobile và desktop hẹp.
+- Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx`; không đổi API/database.
+- Kiểm thử: `pnpm test` đạt 19/19 file và 68/68 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` đều pass. Chưa deploy production.
+
 ### Rút gọn hiển thị so sánh KPI
 
 - Trước thay đổi: Dòng so sánh KPI dài bị cắt trên mobile.
