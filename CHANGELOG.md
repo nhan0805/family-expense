@@ -2,6 +2,13 @@
 
 ## 2026-08-31
 
+### Sửa insight khi lọc Dashboard theo một tháng
+
+- Trước thay đổi: Khi chọn một tháng, khu vực `Điểm đáng chú ý` vẫn hiển thị tháng cao nhất/thấp nhất lấy từ trend sáu tháng của biểu đồ.
+- Sau thay đổi: Insight tháng cao nhất/thấp nhất và xu hướng liên tiếp chỉ được tạo cho kỳ xem nhiều tháng; bộ lọc một tháng không còn hiển thị nhận xét ngoài kỳ.
+- Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx`, bổ sung regression test trong `src/pages/Dashboard.test.tsx`; không đổi API/database.
+- Kiểm thử: `pnpm test` đạt 19/19 file và 67/67 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` đều pass. Chưa deploy production.
+
 ### Giảm chồng lấp label biểu đồ pie
 
 - Trước thay đổi: Label và leader line được render cho mọi lát pie, khiến các lát rất nhỏ dồn chữ và chồng lên nhau.

@@ -314,7 +314,16 @@ export function Dashboard() {
     }),
     previousValue: comparisonTransactions.filter((transaction) => transaction.expenseTypeId === item.id).reduce((total, transaction) => total + expenseValue(transaction), 0),
   }));
-  const insights = buildInsights({ en, topCategories, highestMonth, lowestMonth, expenseChange, selectedExpense, trend });
+  const insightTrend = mode === 'month' ? [] : trend;
+  const insights = buildInsights({
+    en,
+    topCategories,
+    highestMonth: mode === 'month' ? { key: '', expense: 0 } : highestMonth,
+    lowestMonth: mode === 'month' ? { key: '', expense: 0 } : lowestMonth,
+    expenseChange,
+    selectedExpense,
+    trend: insightTrend,
+  });
   const error = dashboardQuery.isError || dueQuery.isError || yearsQuery.isError;
 
   const chooseMode = (nextMode: DashboardMode) => {

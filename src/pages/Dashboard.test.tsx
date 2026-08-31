@@ -81,6 +81,8 @@ describe('Dashboard', () => {
     expect(screen.queryByText('Trung bình / tháng')).not.toBeInTheDocument();
     expect(screen.queryByText('Tháng cao nhất')).not.toBeInTheDocument();
     expect(screen.queryByText('Tháng thấp nhất')).not.toBeInTheDocument();
+    expect(screen.queryByText(/có mức chi cao nhất trong kỳ xem/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/có mức chi thấp nhất trong kỳ xem/)).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Mở giao dịch theo Tổng thu' })).toHaveAttribute(
       'href',
       '/giao-dich?transactionType=Thu nhập&month=02&year=2026',
