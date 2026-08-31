@@ -1,5 +1,18 @@
 # Nhật ký thay đổi Family Expense
 
+## 2026-08-31
+
+### Sửa biểu đồ xu hướng chi tiêu thành 6 tháng
+
+- Sau thay đổi: RPC Dashboard trả về đủ 6 tháng gần nhất, đồng bộ với phần hiển thị trên frontend.
+- Kỹ thuật: Thêm migration `supabase/migrations/202608310001_dashboard_summary_six_months.sql`; đổi khoảng sinh tháng từ 5 thành 6, không đổi schema hay quy tắc nghiệp vụ.
+- Kiểm thử: Local 61/61 tests, lint, typecheck và build pass; CI/db-security sẽ chạy qua PR. Triển khai: Chờ merge và Supabase production workflow.
+
+### Cập nhật handoff sau deploy UI và chuẩn bị migration Dashboard
+
+- Sau thay đổi: Đồng bộ `HANDOFF.md` với PR #58/merge commit `55d4fdab`; xác nhận UI switch, accessibility Dashboard và migration RPC 6 tháng là các thay đổi mới nhất.
+- Triển khai: Frontend PR #58 đã deploy production; migration `202608310001_dashboard_summary_six_months.sql` được đưa vào PR tiếp theo để deploy qua Supabase workflow.
+
 ## 2026-08-30
 
 ### Đổi bộ chọn giao diện và ngôn ngữ sang switch

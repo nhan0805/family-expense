@@ -1,6 +1,6 @@
 # Family Expense — Project Handoff
 
-> Cập nhật: **30/08/2026** (`Asia/Ho_Chi_Minh`)
+> Cập nhật: **31/08/2026** (`Asia/Ho_Chi_Minh`)
 > Trạng thái: **Production đang hoạt động; tài liệu này là ngữ cảnh kỹ thuật cho các phiên làm việc tiếp theo**  
 > Production: <https://family-expense-8fo.pages.dev>
 
@@ -14,13 +14,20 @@
 - [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
 
-## Handoff mới nhất — release 30/08/2026
+## Handoff mới nhất — release 31/08/2026
 
-- Production đã nhận merge commit `4682364870797aeb6b5b29e4bbe3bd61f2e97e09` qua PR #31.
-- Cloudflare Pages production deployment của merge commit đã thành công; Supabase không có migration production mới trong release này.
-- Đã hoàn tất UI: thẻ Công cụ dữ liệu/Import được làm gọn; KPI Tổng thu/Tổng chi mở Giao dịch với bộ lọc Tiền vào/Tiền ra theo tháng; icon Giá trị ròng theo bộ lọc đổi màu theo trạng thái; bỏ danh sách giao dịch thực tế khỏi Tổng quan; thêm nút Khôi phục từng giao dịch trên mobile trong thùng rác.
+- PR #58 đã merge vào `main` với merge commit `55d4fdab617fd03e2203249eee5180180b5587b0`; Cloudflare Pages production đã deploy thành công và production smoke test trả HTTP 200.
+- UI đã đổi bộ chọn giao diện/ngôn ngữ thành switch; giao diện chỉ còn Sáng/Tối, lựa chọn `system` cũ được quy về Sáng. Dashboard có keyboard accessibility cho chart và báo lỗi từng nhóm dữ liệu.
+- Migration `supabase/migrations/202608310001_dashboard_summary_six_months.sql` đang chờ deploy production qua Supabase workflow; migration cập nhật RPC `get_dashboard_summary` để trả đủ 6 tháng xu hướng.
+- CI quality, `db-security`, preview và Cloudflare checks của PR #58 đều pass; local test 61/61, lint, typecheck và build pass.
+
+- Production đã nhận merge commit `54983d914f83c7ff8ccb5cfed2c3d22020cdfcaf` qua PR #57; trước đó PR #55 và #56 đã hoàn tất bộ lọc EN và đồng bộ selector.
+- Cloudflare Pages production deployment của merge commit đã thành công; URL production trả HTTP 200. Release không thay đổi database, enum nghiệp vụ, sheet hoặc tên cột Excel.
+- UI hiện hỗ trợ VI/EN cho các nhãn chính, bộ lọc tháng/năm hiển thị tên tháng tiếng Anh, hai selector Appearance/Language dùng chung độ rộng, và nút export dùng wording `Download Excel file`.
+- Dashboard hiện đặt `Income by purpose` bên trái và `Expenses by purpose` bên phải; đã bỏ nút `View transactions` dư, còn click trực tiếp vào lát/cột biểu đồ vẫn mở danh sách theo bộ lọc.
 - CI quality và `db-security` trên merge commit đều đạt; local validation gần nhất đạt 61/61 tests, lint, typecheck và build. Build vẫn có cảnh báo chunk ExcelJS lớn hiện hữu.
-- Working tree hiện chỉ còn file tạm `.pnpm-store/index.db-shm` và `.pnpm-store/index.db-wal`, không thuộc source release.
+- Tên danh mục/giao dịch do người dùng nhập có thể vẫn là tiếng Việt khi dùng EN theo chủ ý bảo toàn dữ liệu; nhãn giao diện được dịch riêng ở frontend.
+- Working tree tại thời điểm cập nhật vẫn có thay đổi chưa commit trên `CHANGELOG.md`, `vite.config.ts` và file tạm `.pnpm-store/*`; các thay đổi này không thuộc release PR #57 và không bị ghi đè.
 
 ## 1. Project Overview
 
