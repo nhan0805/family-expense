@@ -9,7 +9,7 @@
 - Kỹ thuật: Cập nhật `src/pages/TransactionForm.tsx`, `src/pages/Dashboard.tsx`, `src/pages/Transactions.tsx`, `src/lib/ai.ts`; thêm `supabase/functions/summarize-dashboard/index.ts` và `supabase/functions/search-transactions/index.ts`; cập nhật `supabase/functions/parse-expense/index.ts`, `supabase/config.toml`, `.github/workflows/supabase-deploy.yml`, `README.md`. Không đổi schema/database; không có system prompt tùy chỉnh trên frontend.
 - An toàn dữ liệu: Dashboard tự tổng hợp facts từ giao dịch trong family sau khi kiểm tra membership; Gemini chỉ nhận số liệu tổng hợp. Tìm kiếm AI chỉ trả về structured filters; mọi ID danh mục được kiểm tra lại và không AI function nào tự ghi giao dịch.
 - Kiểm thử: `pnpm test` đạt 19/19 file và 72/72 test; `pnpm lint`, `pnpm typecheck`, `pnpm build`, `pnpm exec prettier --check` cho Edge Functions và `git diff --check` đều pass. Build còn warning chunk lớn/dynamic import ExcelJS-xlsx đã có từ trước.
-- Triển khai: Chưa deploy production; hai Edge Function mới sẽ được deploy qua workflow Supabase sau khi thay đổi được merge vào `main`.
+- Triển khai: Đã merge PR #79 vào `main` với merge commit `ec86da3b31aa330575c35354279cd58ea542a9f8`; Cloudflare Pages production đã phản hồi HTTP 200 tại [production](https://family-expense-8fo.pages.dev/) và asset hash khớp build của merge commit. Workflow `Supabase Production Deploy` #12 và `CI` #185 đều pass; các Edge Function mới đã được triển khai qua workflow Supabase.
 
 ### Rút gọn meta KPI trên màn hình hẹp
 
