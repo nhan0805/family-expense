@@ -2,6 +2,13 @@
 
 ## 2026-08-31
 
+### Sửa dữ liệu hai chart Chi tiêu theo mục đích và danh mục
+
+- Sau thay đổi: Hai chart Chi tiêu chỉ lấy Chi tiêu/Tạm ứng và trừ Hoàn tiền; không còn hiển thị Thu nhập.
+- Kỹ thuật: Thêm migration `supabase/migrations/202608310003_fix_dashboard_expense_breakdowns.sql`; giữ chart Thu ròng theo công thức Thu nhập − Chi tiêu.
+- Kiểm thử: Đang chạy test, lint, typecheck và build.
+- Triển khai: Chờ PR production.
+
 ### Tăng tương phản chữ VI/EN trong dark mode
 
 - Sau thay đổi: Chữ VI/EN trên switch ngôn ngữ có màu xanh đậm cố định trên nền trắng; track bật/tắt có màu tương phản rõ hơn trong dark mode.
