@@ -76,8 +76,11 @@ describe('Dashboard', () => {
     expect(screen.getByText('Tháng 02/2026')).toBeInTheDocument();
     expect(screen.getByText('Chi tiêu theo danh mục')).toBeInTheDocument();
     expect(screen.getByText('Tổng chi').parentElement).toHaveTextContent(
-      '250.000',
+      '250K',
     );
+    expect(screen.queryByText('Trung bình / tháng')).not.toBeInTheDocument();
+    expect(screen.queryByText('Tháng cao nhất')).not.toBeInTheDocument();
+    expect(screen.queryByText('Tháng thấp nhất')).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Mở giao dịch theo Tổng thu' })).toHaveAttribute(
       'href',
       '/giao-dich?transactionType=Thu nhập&month=02&year=2026',
@@ -152,10 +155,21 @@ describe('Dashboard', () => {
     fireEvent.click(screen.getByRole('button', { name: '6 tháng' }));
 
     expect(screen.getByText('6 tháng đến T02/2026')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Mở giao dịch theo Tổng chi' })).toHaveTextContent('300.000');
-    expect(screen.getByRole('link', { name: 'Mở giao dịch theo Tổng thu' })).toHaveTextContent('550.000');
+    expect(screen.getByText('Trung bình / tháng')).toBeInTheDocument();
+    expect(screen.getByText('Tháng cao nhất')).toBeInTheDocument();
+    expect(screen.getByText('Tháng thấp nhất')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Mở giao dịch theo Tổng chi' })).toHaveTextContent('300K');
+    expect(screen.getByRole('link', { name: 'Mở giao dịch theo Tổng thu' })).toHaveTextContent('550K');
+    expect(screen.getByRole('link', { name: 'Mở giao dịch theo Tổng chi' })).toHaveAttribute(
+      'href',
+      expect.stringContaining('dateFrom=2025-09-01'),
+    );
+    expect(screen.getByRole('link', { name: 'Mở giao dịch theo Tổng chi' })).toHaveAttribute(
+      'href',
+      expect.stringContaining('dateTo=2026-02-28'),
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Tháng' }));
-    expect(screen.getByRole('link', { name: 'Mở giao dịch theo Tổng chi' })).toHaveTextContent('200.000');
+    expect(screen.getByRole('link', { name: 'Mở giao dịch theo Tổng chi' })).toHaveTextContent('200K');
     expect(screen.getByRole('button', { name: 'Thực phẩm: 150.000 ₫' })).toBeInTheDocument();
   });
 
@@ -176,7 +190,7 @@ describe('Dashboard', () => {
     fireEvent.input(screen.getByLabelText('Từ ngày'), { target: { value: '2026-02-10' } });
     fireEvent.input(screen.getByLabelText('Đến ngày'), { target: { value: '2026-02-28' } });
 
-    expect(screen.getByRole('link', { name: 'Mở giao dịch theo Tổng chi' })).toHaveTextContent('200.000');
+    expect(screen.getByRole('link', { name: 'Mở giao dịch theo Tổng chi' })).toHaveTextContent('200K');
     expect(screen.getByText('10/02/2026 – 28/02/2026')).toBeInTheDocument();
   });
 });

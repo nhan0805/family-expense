@@ -104,6 +104,17 @@ export const getInitialTransactionPeriod = (
 export const getInitialTransactionType = (value: string | null) =>
   value === 'Chi tiêu' || value === 'Thu nhập' ? value : '';
 
+const isIsoDateParam = (value: string | null) =>
+  /^\d{4}-\d{2}-\d{2}$/.test(value || '');
+
+export const getInitialTransactionDateRange = (
+  dateFromParam: string | null,
+  dateToParam: string | null,
+) => ({
+  dateFrom: isIsoDateParam(dateFromParam) ? dateFromParam || '' : '',
+  dateTo: isIsoDateParam(dateToParam) ? dateToParam || '' : '',
+});
+
 export const getTransactionListTone = (
   transactionType: Transaction['transactionType'],
 ) => {
@@ -237,8 +248,13 @@ export function Transactions() {
     searchParams.get('month'),
     searchParams.get('year'),
   );
-  const initialMonth = initialPeriod.month;
-  const initialYear = initialPeriod.year;
+  const initialDateRange = getInitialTransactionDateRange(
+    searchParams.get('dateFrom'),
+    searchParams.get('dateTo'),
+  );
+  const hasInitialDateRange = Boolean(initialDateRange.dateFrom || initialDateRange.dateTo);
+  const initialMonth = hasInitialDateRange ? '' : initialPeriod.month;
+  const initialYear = hasInitialDateRange ? '' : initialPeriod.year;
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [transactionType, setTransactionType] = useState(() =>
@@ -250,8 +266,8 @@ export function Transactions() {
   const [paymentMethodId, setPaymentMethodId] = useState('');
   const [month, setMonth] = useState(initialMonth);
   const [year, setYear] = useState(initialYear);
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
+  const [dateFrom, setDateFrom] = useState(initialDateRange.dateFrom);
+  const [dateTo, setDateTo] = useState(initialDateRange.dateTo);
   const [sort, setSort] = useState<SortOption>('date-desc');
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -785,7 +801,7 @@ export function Transactions() {
             <span>{en ? 'Detailed filters' : 'Bộ lọc chi tiết'}{activeFilterCount ? ` (${activeFilterCount})` : ''}</span>
             <ChevronDown className="shrink-0 transition-transform group-open:rotate-180" size={18} aria-hidden="true" />
           </summary>
-          <div className="ui-enter mt-3 grid gap-3 md:grid-cols-4">
+          <div className="ui-enter mt-3 grid gap-2 md:grid-cols-4 xl:grid-cols-5 [&_.field]:py-2.5 [&_.field]:text-sm">
           <label>
             <span className="label">{en ? 'Transaction type' : 'Loại giao dịch'}</span>
             <select className="field" value={transactionType} onChange={(event) => setTransactionType(event.target.value)}><option value="">{en ? 'All types' : 'Tất cả loại'}</option><option value="Chi tiêu">{en ? 'Money out' : 'Tiền ra'}</option><option value="Thu nhập">{en ? 'Money in' : 'Tiền vào'}</option></select>

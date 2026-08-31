@@ -2,6 +2,20 @@
 
 ## 2026-08-31
 
+### Tinh gọn bố cục bộ lọc giao dịch
+
+- Sau thay đổi: Bộ lọc chi tiết dùng bố cục 5 cột trên màn hình lớn, 4 cột tablet, 2 cột mobile; giảm khoảng cách và chiều cao ô nhập để giao diện gọn hơn.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`; không thay đổi logic, database hoặc API.
+- Kiểm thử: Đang chạy test, lint, typecheck và build.
+
+### Sửa click-through KPI theo kỳ nhiều tháng
+
+- Trước thay đổi: KPI Dashboard tạo link `dateFrom/dateTo` cho kỳ nhiều tháng nhưng trang Giao dịch bỏ qua hai query này và giữ filter tháng/năm mặc định, nên danh sách mở ra không đúng kỳ.
+- Sau thay đổi: Trang Giao dịch nhận khoảng ngày từ URL, tự bỏ filter tháng/năm mặc định khi có khoảng ngày và hiển thị đúng các giao dịch trong kỳ KPI đã chọn.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`; bổ sung regression test cho click-through trong `src/pages/Dashboard.test.tsx` và `src/pages/Transactions.ui.test.tsx`; không đổi API/database.
+- Kiểm thử: `pnpm test` đạt 19/19 file và 65/65 test; `pnpm test:coverage`, `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` đều pass. Browser đã kiểm tra route có query khoảng ngày; môi trường local chưa có Supabase/family nên route chuyển tới màn hình tạo gia đình, không có log error/warning. E2E chưa chạy được vì máy thiếu browser binary Playwright.
+- Triển khai: Chưa deploy; chờ xác nhận quality gates.
+
 ### Thêm bộ lọc trạng thái giao dịch
 
 - Trước thay đổi: Bộ lọc chi tiết chưa cho phép lọc riêng giao dịch `Thực tế` và `Dự kiến`.
