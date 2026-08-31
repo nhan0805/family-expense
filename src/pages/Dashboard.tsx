@@ -590,6 +590,17 @@ function NetValueLabel(props: { x?: number; y?: number; value?: number; index?: 
   return <text x={x + offsetX} y={y + offsetY} textAnchor={anchor} fill="#777" fontSize={16} fontWeight={600}>{formatCompactVnd(value).replace(' ₫', '')}</text>;
 }
 
+function NetValueLabel(props: { x?: number; y?: number; value?: number; index?: number }) {
+  const x = Number(props.x || 0);
+  const y = Number(props.y || 0);
+  const value = Number(props.value || 0);
+  const index = props.index || 0;
+  const anchor = index === 0 ? 'start' : index === 5 ? 'end' : 'middle';
+  const offsetX = index === 0 ? 12 : index === 5 ? -12 : 0;
+  const offsetY = value < 0 ? 18 : -10;
+  return <text x={x + offsetX} y={y + offsetY} textAnchor={anchor} fill="#777" fontSize={16} fontWeight={600}>{formatCompactVnd(value).replace(' ₫', '')}</text>;
+}
+
 function Kpi({ label, value, icon: Icon, tone, to }: { label: string; value: number; icon: typeof Scale; tone: 'emerald' | 'rose' | 'sky'; to: string }) {
   const toneClass = tone === 'emerald' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300' : tone === 'rose' ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300' : 'bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300';
   return (
