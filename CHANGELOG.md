@@ -2,6 +2,14 @@
 
 ## 2026-09-01
 
+### Sửa lỗi iPhone tự zoom khi nhập số tiền
+
+- Trước thay đổi: Input số tiền có class `text-base` nhưng bị rule của lưới bộ lọc ép lại thành `text-sm`, nên Safari vẫn phóng to khi focus.
+- Sau thay đổi: Hai input số tiền dùng override `!text-base` với `font-size: 16px`, giữ bàn phím số và không thay đổi giá trị lọc/API.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx` và regression assertion trong `src/pages/Transactions.ui.test.tsx`; không đổi API/database.
+- Kiểm thử: `pnpm test` đạt 19/19 file và 76/76 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` đều pass.
+- Triển khai: Chưa deploy production.
+
 ### Tinh gọn bộ lọc và input số tiền trên mobile
 
 - Trước thay đổi: Bộ lọc chi tiết có khoảng cách và chiều cao ô nhập lớn; input số tiền có placeholder dài, chưa có phân cách hàng nghìn và có thể làm Safari zoom khi focus.
