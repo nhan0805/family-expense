@@ -1089,7 +1089,7 @@ export function Transactions() {
           <label className="min-w-0">
             <span className="label">{en ? 'Minimum amount' : 'Từ số tiền'}</span>
             <input
-              className="field text-base"
+              className="field !text-base"
               type="text"
               inputMode="numeric"
               value={formatAmountFilterInput(amountMin)}
@@ -1099,7 +1099,7 @@ export function Transactions() {
           <label className="min-w-0">
             <span className="label">{en ? 'Maximum amount' : 'Đến số tiền'}</span>
             <input
-              className="field text-base"
+              className="field !text-base"
               type="text"
               inputMode="numeric"
               value={formatAmountFilterInput(amountMax)}

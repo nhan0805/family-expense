@@ -30,7 +30,7 @@ describe('Giao dịch mobile', () => {
     const maxAmountInput = screen.getByLabelText('Đến số tiền');
     expect(minAmountInput).toHaveAttribute('type', 'text');
     expect(minAmountInput).toHaveAttribute('inputmode', 'numeric');
-    expect(minAmountInput).toHaveClass('text-base');
+    expect(minAmountInput).toHaveClass('!text-base');
     expect(minAmountInput).not.toHaveAttribute('placeholder');
     expect(maxAmountInput).not.toHaveAttribute('placeholder');
     fireEvent.change(minAmountInput, { target: { value: '1234567' } });
