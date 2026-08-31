@@ -26,13 +26,46 @@ describe('Giao dịch mobile', () => {
     expect(filterDetails).toHaveAttribute('open');
     expect(screen.getByLabelText('Loại giao dịch')).toBeInTheDocument();
     expect(screen.getByLabelText('Trạng thái')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Tìm kiếm bằng AI' })).toBeDisabled();
+    expect(screen.getByLabelText('Từ số tiền')).toBeInTheDocument();
+    expect(screen.getByLabelText('Đến số tiền')).toBeInTheDocument();
+    const aiSearchButton = screen.getByRole('button', { name: 'Tìm kiếm bằng AI' });
+    expect(aiSearchButton).toBeDisabled();
+    expect(aiSearchButton.className).toContain('bg-gradient-to-r');
+    expect(aiSearchButton.className).toContain('active:scale-[.98]');
     const transactionCard = screen.getByRole('article', { name: 'Giao dịch Đi chợ' });
     expect(transactionCard).toHaveClass('rounded-2xl', 'shadow-sm');
     expect(transactionCard).not.toHaveClass('border-t');
     fireEvent.click(screen.getByRole('button', { name: 'Thao tác với Đi chợ' }));
     expect(screen.getByText('Sao chép')).toBeInTheDocument();
     expect(screen.getAllByText((content) => content.includes('250.000')).length).toBeGreaterThan(0);
+  });
+
+  it('chuyển giọng nói thành từ khóa tìm kiếm', async () => {
+    class SpeechRecognitionMock {
+      static latest: SpeechRecognitionMock | null = null;
+      lang = '';
+      continuous = false;
+      interimResults = false;
+      onresult: ((event: { results: ArrayLike<{ 0: { transcript: string }; isFinal: boolean }> }) => void) | null = null;
+      onerror: ((event: { error: string }) => void) | null = null;
+      onend: (() => void) | null = null;
+      start = vi.fn();
+      stop = vi.fn();
+      constructor() { SpeechRecognitionMock.latest = this; }
+    }
+    Object.defineProperty(window, 'webkitSpeechRecognition', { configurable: true, value: SpeechRecognitionMock });
+    vi.mocked(useApp).mockReturnValue({
+      transactions: [], setTransactions: vi.fn(), purposes: [], expenseTypes: [], paymentMethods: [], familyId: 'f1', currentUserId: 'u1', currentUserRole: 'owner',
+    } as unknown as ReturnType<typeof useApp>);
+    render(<FeedbackProvider><QueryClientProvider client={new QueryClient()}><MemoryRouter><Transactions/></MemoryRouter></QueryClientProvider></FeedbackProvider>);
+    const input = screen.getByPlaceholderText('Tìm nội dung hoặc ghi chú…');
+    fireEvent.click(screen.getByRole('button', { name: 'Nhập tìm kiếm bằng giọng nói' }));
+    expect(screen.getByRole('button', { name: 'Dừng nhập bằng giọng nói' })).toHaveAttribute('aria-pressed', 'true');
+    SpeechRecognitionMock.latest?.onresult?.({ results: [{ 0: { transcript: 'chi tiêu tháng 8' }, isFinal: true }] });
+    await waitFor(() => expect(input).toHaveValue('chi tiêu tháng 8'));
+    fireEvent.click(screen.getByRole('button', { name: 'Dừng nhập bằng giọng nói' }));
+    expect(SpeechRecognitionMock.latest?.stop).toHaveBeenCalled();
+    delete (window as typeof window & { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition;
   });
 
   it('nhận đúng khoảng ngày khi mở từ KPI nhiều tháng', () => {

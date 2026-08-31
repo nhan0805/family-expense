@@ -11,6 +11,10 @@ import {
   X,
   ArchiveRestore,
   Sparkles,
+  Check,
+  LoaderCircle,
+  Mic,
+  MicOff,
 } from 'lucide-react';
 import { EmptyState, TransactionListSkeleton } from '../components/AsyncStates';
 import { TransactionRow } from '../components/TransactionRow';
@@ -20,7 +24,7 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { useOptionalLanguage } from '../context/LanguageContext';
@@ -48,12 +52,37 @@ type TransactionFilters = {
   purposeId: string;
   expenseTypeId: string;
   paymentMethodId: string;
+  amountMin: string;
+  amountMax: string;
   month: string;
   year: string;
   dateFrom: string;
   dateTo: string;
   sort: SortOption;
 };
+type SpeechRecognitionEventLike = {
+  results: ArrayLike<{ 0: { transcript: string }; isFinal: boolean }>;
+};
+type SpeechRecognitionErrorLike = { error: string };
+type SpeechRecognitionLike = {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorLike) => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+};
+type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
+
+function getSpeechRecognition() {
+  const speechWindow = window as typeof window & {
+    SpeechRecognition?: SpeechRecognitionConstructor;
+    webkitSpeechRecognition?: SpeechRecognitionConstructor;
+  };
+  return speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition;
+}
 type BulkEditValues = {
   purposeId: string;
   expenseTypeId: string;
@@ -212,6 +241,12 @@ export const filterAndSortTransactions = (
         transaction.paymentMethodId !== filters.paymentMethodId
       )
         return false;
+      const amountMin = filters.amountMin ? Number(filters.amountMin) : null;
+      const amountMax = filters.amountMax ? Number(filters.amountMax) : null;
+      if (amountMin !== null && (!Number.isFinite(amountMin) || transaction.amount < amountMin))
+        return false;
+      if (amountMax !== null && (!Number.isFinite(amountMax) || transaction.amount > amountMax))
+        return false;
       if (
         filters.month &&
         transaction.transactionDate.slice(5, 7) !== filters.month
@@ -267,6 +302,8 @@ export function Transactions() {
   const [purposeId, setPurposeId] = useState(() => searchParams.get('purposeId') || '');
   const [expenseTypeId, setExpenseTypeId] = useState(() => searchParams.get('expenseTypeId') || '');
   const [paymentMethodId, setPaymentMethodId] = useState('');
+  const [amountMin, setAmountMin] = useState('');
+  const [amountMax, setAmountMax] = useState('');
   const [month, setMonth] = useState(initialMonth);
   const [year, setYear] = useState(initialYear);
   const [dateFrom, setDateFrom] = useState(initialDateRange.dateFrom);
@@ -283,8 +320,12 @@ export function Transactions() {
   const [bulkEditValues, setBulkEditValues] = useState<BulkEditValues>(emptyBulkEditValues);
   const [showTrash, setShowTrash] = useState(false);
   const [aiSearchBusy, setAiSearchBusy] = useState(false);
+  const [aiSearchCompleted, setAiSearchCompleted] = useState(false);
   const [aiSearchMessage, setAiSearchMessage] = useState('');
   const [aiSearchError, setAiSearchError] = useState('');
+  const [voiceListening, setVoiceListening] = useState(false);
+  const [voiceSupported] = useState(() => Boolean(getSpeechRecognition()));
+  const speechRecognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
   useEffect(() => {
     const timeout = window.setTimeout(() => setDebouncedQuery(query), 300);
@@ -307,6 +348,8 @@ export function Transactions() {
         purposeId,
         expenseTypeId,
         paymentMethodId,
+        amountMin,
+        amountMax,
         month,
         year,
         dateFrom,
@@ -320,6 +363,8 @@ export function Transactions() {
       purposeId,
       expenseTypeId,
       paymentMethodId,
+      amountMin,
+      amountMax,
       month,
       year,
       dateFrom,
@@ -336,6 +381,8 @@ export function Transactions() {
       purposeId,
       expenseTypeId,
       paymentMethodId,
+      amountMin,
+      amountMax,
       month,
       year,
       dateFrom,
@@ -348,6 +395,8 @@ export function Transactions() {
       purposeId,
       expenseTypeId,
       paymentMethodId,
+      amountMin,
+      amountMax,
       month,
       year,
       dateFrom,
@@ -376,7 +425,7 @@ export function Transactions() {
     enabled: isSupabaseConfigured && Boolean(familyId),
     staleTime: 5 * 60_000,
   });
-  const trashFilters = { query, transactionType, status, purposeId, expenseTypeId, paymentMethodId, month, year, dateFrom, dateTo, sort } satisfies TransactionFilters;
+  const trashFilters = { query, transactionType, status, purposeId, expenseTypeId, paymentMethodId, amountMin, amountMax, month, year, dateFrom, dateTo, sort } satisfies TransactionFilters;
   const localTrashRows = useMemo(() => filterAndSortTransactions(transactions.filter((item) => item.deletedAt && (currentUserRole === 'owner' || item.createdBy === currentUserId)), trashFilters, true), [transactions, currentUserRole, currentUserId, trashFilters]);
   const rows = showTrash
     ? (isSupabaseConfigured ? trashQuery.data?.rows || [] : localTrashRows)
@@ -394,6 +443,8 @@ export function Transactions() {
     purposeId,
     expenseTypeId,
     paymentMethodId,
+    amountMin,
+    amountMax,
     month,
     year,
     dateFrom,
@@ -408,6 +459,8 @@ export function Transactions() {
     purposeId ||
     expenseTypeId ||
     paymentMethodId ||
+    amountMin ||
+    amountMax ||
     month ||
     year ||
     dateFrom ||
@@ -420,6 +473,8 @@ export function Transactions() {
     purposeId,
     expenseTypeId,
     paymentMethodId,
+    amountMin,
+    amountMax,
     month,
     year,
     dateFrom,
@@ -431,6 +486,8 @@ export function Transactions() {
     purposeId && { key: 'purposeId', label: purposes.find((item) => item.id === purposeId)?.name || 'Mục đích', clear: () => setPurposeId('') },
     expenseTypeId && { key: 'expenseTypeId', label: expenseTypes.find((item) => item.id === expenseTypeId)?.name || 'Danh mục', clear: () => setExpenseTypeId('') },
     paymentMethodId && { key: 'paymentMethodId', label: paymentMethods.find((item) => item.id === paymentMethodId)?.name || 'Thanh toán', clear: () => setPaymentMethodId('') },
+    amountMin && { key: 'amountMin', label: `${en ? 'From' : 'Từ'} ${formatVnd(Number(amountMin))}`, clear: () => setAmountMin('') },
+    amountMax && { key: 'amountMax', label: `${en ? 'Up to' : 'Đến'} ${formatVnd(Number(amountMax))}`, clear: () => setAmountMax('') },
     month && { key: 'month', label: en ? (englishMonthNames[Number(month) - 1] || `Month ${Number(month)}`) : `Tháng ${Number(month)}`, clear: () => setMonth('') },
     year && { key: 'year', label: `${en ? 'Year' : 'Năm'} ${year}`, clear: () => setYear('') },
     dateFrom && { key: 'dateFrom', label: `${en ? 'From' : 'Từ'} ${new Date(`${dateFrom}T00:00:00`).toLocaleDateString('vi-VN')}`, clear: () => setDateFrom('') },
@@ -456,6 +513,8 @@ export function Transactions() {
     setPurposeId('');
     setExpenseTypeId('');
     setPaymentMethodId('');
+    setAmountMin('');
+    setAmountMax('');
     setMonth('');
     setYear('');
     setDateFrom('');
@@ -743,6 +802,55 @@ export function Transactions() {
     notify('Đã tạo bản sao giao dịch.');
   };
 
+  const toggleVoiceSearch = () => {
+    if (voiceListening) {
+      speechRecognitionRef.current?.stop();
+      setVoiceListening(false);
+      return;
+    }
+    const Recognition = getSpeechRecognition();
+    if (!Recognition) {
+      notify(en ? 'This browser does not support voice input.' : 'Trình duyệt này chưa hỗ trợ nhập bằng giọng nói.', 'info');
+      return;
+    }
+    const recognition = new Recognition();
+    recognition.lang = en ? 'en-US' : 'vi-VN';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.onresult = (event) => {
+      const transcript = Array.from(event.results)
+        .filter((result) => result.isFinal)
+        .map((result) => result[0].transcript.trim())
+        .filter(Boolean)
+        .join(' ');
+      if (!transcript) return;
+      setQuery((currentQuery) => [currentQuery.trim(), transcript].filter(Boolean).join(' '));
+      setAiSearchCompleted(false);
+      setAiSearchMessage('');
+      setAiSearchError('');
+      notify(en ? 'Voice converted to search text. Review it before using AI.' : 'Đã chuyển giọng nói thành nội dung tìm kiếm. Hãy kiểm tra trước khi nhấn AI.', 'success');
+    };
+    recognition.onerror = (event) => {
+      const permissionDenied = event.error === 'not-allowed' || event.error === 'service-not-allowed';
+      notify(
+        permissionDenied
+          ? (en ? 'Microphone permission was not granted. Allow it in browser settings.' : 'Chưa được cấp quyền micro. Hãy cho phép trong cài đặt trình duyệt.')
+          : (en ? 'Speech was not recognized. Try again or type with the keyboard.' : 'Không nhận dạng được giọng nói. Vui lòng thử lại hoặc nhập bằng bàn phím.'),
+        'error',
+      );
+      setVoiceListening(false);
+    };
+    recognition.onend = () => setVoiceListening(false);
+    speechRecognitionRef.current = recognition;
+    try {
+      recognition.start();
+      setVoiceListening(true);
+    } catch {
+      setVoiceListening(false);
+      notify(en ? 'Could not start the microphone. Please try again.' : 'Không thể bật micro lúc này. Vui lòng thử lại.', 'error');
+    }
+  };
+
   const runAiSearch = async () => {
     const searchText = query.trim();
     if (searchText.length < 3) {
@@ -751,6 +859,7 @@ export function Transactions() {
     }
     if (!isSupabaseConfigured || !familyId || aiSearchBusy) return;
     setAiSearchBusy(true);
+    setAiSearchCompleted(false);
     setAiSearchError('');
     setAiSearchMessage('');
     try {
@@ -772,6 +881,8 @@ export function Transactions() {
       setPurposeId(filters.purposeId || '');
       setExpenseTypeId(filters.expenseTypeId || '');
       setPaymentMethodId(filters.paymentMethodId || '');
+      setAmountMin(filters.amountMin === null ? '' : String(filters.amountMin));
+      setAmountMax(filters.amountMax === null ? '' : String(filters.amountMax));
       setSort(filters.sort);
       if (filters.dateFrom || filters.dateTo) {
         setMonth('');
@@ -784,6 +895,8 @@ export function Transactions() {
         setDateFrom('');
         setDateTo('');
       }
+      setAiSearchCompleted(true);
+      window.setTimeout(() => setAiSearchCompleted(false), 1800);
       setAiSearchMessage(response.data.explanation || (en ? 'AI filters applied.' : 'Đã áp dụng bộ lọc AI.'));
     } catch {
       setAiSearchError(en ? 'AI search is temporarily unavailable. Please try again.' : 'Chưa thể phân tích tìm kiếm bằng AI. Vui lòng thử lại sau.');
@@ -851,13 +964,35 @@ export function Transactions() {
                 />
                 <input
                   className="field min-w-0"
-                  style={{ paddingLeft: '2.75rem' }}
+                  style={{ paddingLeft: '2.75rem', paddingRight: voiceSupported ? '3rem' : undefined }}
                   value={query}
-                  onChange={(event) => { setQuery(event.target.value); setAiSearchMessage(''); setAiSearchError(''); }}
+                  onChange={(event) => { setQuery(event.target.value); setAiSearchCompleted(false); setAiSearchMessage(''); setAiSearchError(''); }}
                   placeholder={en ? 'Search description or notes…' : 'Tìm nội dung hoặc ghi chú…'}
                 />
+                {voiceSupported && (
+                  <button
+                    type="button"
+                    className={`absolute inset-y-1 right-1 grid aspect-square place-items-center rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-violet-300 ${voiceListening ? 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300' : 'text-gray-500 hover:bg-gray-100 hover:text-violet-700 dark:text-gray-300 dark:hover:bg-white/10'}`}
+                    aria-label={voiceListening ? (en ? 'Stop voice input' : 'Dừng nhập bằng giọng nói') : (en ? 'Enter search by voice' : 'Nhập tìm kiếm bằng giọng nói')}
+                    aria-pressed={voiceListening}
+                    title={voiceListening ? (en ? 'Stop listening' : 'Dừng nghe') : (en ? 'Enter search by voice' : 'Nhập tìm kiếm bằng giọng nói')}
+                    onClick={toggleVoiceSearch}
+                  >
+                    {voiceListening ? <MicOff className="animate-pulse" size={19} /> : <Mic size={19} />}
+                  </button>
+                )}
               </div>
-              <button type="button" className="btn-secondary inline-flex shrink-0 items-center gap-2 self-stretch px-3 text-sm" disabled={!isSupabaseConfigured || showTrash || aiSearchBusy} onClick={() => void runAiSearch()} aria-label={en ? 'Search with AI' : 'Tìm kiếm bằng AI'} title={showTrash ? (en ? 'AI search is available in the active transaction list' : 'Tìm kiếm AI dùng cho danh sách giao dịch đang hoạt động') : !isSupabaseConfigured ? (en ? 'Connect Supabase to use AI' : 'Cần kết nối Supabase để dùng AI') : undefined}><Sparkles size={16} aria-hidden="true" /><span className="hidden sm:inline">{aiSearchBusy ? (en ? 'Analyzing…' : 'Đang lọc…') : 'AI'}</span></button>
+              <button
+                type="button"
+                className={`flex h-[46px] shrink-0 items-center justify-center gap-2 rounded-xl px-3 text-sm font-bold text-white shadow-sm transition-all focus:outline-none focus:ring-4 focus:ring-violet-300/40 active:scale-[.98] disabled:cursor-not-allowed disabled:bg-none disabled:bg-gray-300 disabled:text-gray-500 disabled:shadow-none dark:disabled:bg-gray-700 dark:disabled:text-gray-400 ${aiSearchCompleted ? 'bg-emerald-600' : 'bg-gradient-to-r from-violet-600 to-sky-500 hover:from-violet-700 hover:to-sky-600'}`}
+                disabled={!isSupabaseConfigured || showTrash || aiSearchBusy || voiceListening || query.trim().length < 3}
+                onClick={() => void runAiSearch()}
+                aria-label={en ? 'Search with AI' : 'Tìm kiếm bằng AI'}
+                title={showTrash ? (en ? 'AI search is available in the active transaction list' : 'Tìm kiếm AI dùng cho danh sách giao dịch đang hoạt động') : !isSupabaseConfigured ? (en ? 'Connect Supabase to use AI' : 'Cần kết nối Supabase để dùng AI') : query.trim().length < 3 ? (en ? 'Enter at least 3 characters' : 'Nhập ít nhất 3 ký tự') : undefined}
+              >
+                {aiSearchBusy ? <LoaderCircle className="animate-spin" size={18} /> : aiSearchCompleted ? <Check size={18} /> : <Sparkles size={18} />}
+                <span className="hidden sm:inline">{aiSearchBusy ? (en ? 'Analyzing…' : 'Đang lọc…') : aiSearchCompleted ? (en ? 'Applied' : 'Đã lọc') : (en ? 'AI suggest' : 'Gợi ý AI')}</span>
+              </button>
             </div>
           </label>
           <label>
@@ -942,6 +1077,32 @@ export function Transactions() {
                 </option>
               ))}
             </select>
+          </label>
+          <label className="min-w-0">
+            <span className="label">{en ? 'Minimum amount' : 'Từ số tiền'}</span>
+            <input
+              className="field"
+              type="number"
+              min="0"
+              step="1000"
+              inputMode="numeric"
+              value={amountMin}
+              onChange={(event) => setAmountMin(event.target.value)}
+              placeholder={en ? 'e.g. 500000' : 'Ví dụ 500000'}
+            />
+          </label>
+          <label className="min-w-0">
+            <span className="label">{en ? 'Maximum amount' : 'Đến số tiền'}</span>
+            <input
+              className="field"
+              type="number"
+              min="0"
+              step="1000"
+              inputMode="numeric"
+              value={amountMax}
+              onChange={(event) => setAmountMax(event.target.value)}
+              placeholder={en ? 'e.g. 2000000' : 'Ví dụ 2000000'}
+            />
           </label>
           <label>
             <span className="label">{en ? 'Month' : 'Tháng'}</span>

@@ -28,6 +28,8 @@ export const transactionSearchFiltersSchema = z.object({
   purposeId: z.string().uuid().nullable(),
   expenseTypeId: z.string().uuid().nullable(),
   paymentMethodId: z.string().uuid().nullable(),
+  amountMin: z.number().nonnegative().nullable(),
+  amountMax: z.number().nonnegative().nullable(),
   month: z.number().int().min(1).max(12).nullable(),
   year: z.number().int().min(2000).max(2200).nullable(),
   dateFrom: isoDateSchema.nullable(),
