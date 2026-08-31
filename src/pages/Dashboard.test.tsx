@@ -75,9 +75,9 @@ describe('Dashboard', () => {
 
     expect(screen.getByText('Tháng 02/2026')).toBeInTheDocument();
     expect(screen.getByText('Chi tiêu theo danh mục')).toBeInTheDocument();
-    expect(screen.getByText('Tổng chi').parentElement).toHaveTextContent(
-      '250K',
-    );
+    expect(screen.queryByRole('button', { name: 'Tháng trước' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Tháng này' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Mở giao dịch theo Tổng chi' })).toHaveTextContent('250K');
     expect(screen.queryByText('Trung bình / tháng')).not.toBeInTheDocument();
     expect(screen.queryByText('Tháng cao nhất')).not.toBeInTheDocument();
     expect(screen.queryByText('Tháng thấp nhất')).not.toBeInTheDocument();
@@ -93,7 +93,7 @@ describe('Dashboard', () => {
       'href',
       '/giao-dich?month=02&year=2026',
     );
-    expect(screen.getByText('Giá trị ròng').parentElement?.parentElement?.firstElementChild).toHaveClass('bg-rose-100');
+    expect(screen.getByRole('link', { name: 'Mở giao dịch theo Giá trị ròng' }).querySelector('span')).toHaveClass('bg-rose-100');
     expect(screen.queryByText('Giao dịch thực tế trong tháng')).not.toBeInTheDocument();
     expect(screen.queryByText('Chi tháng 2')).not.toBeInTheDocument();
     expect(screen.queryByText('Chi tháng 1')).not.toBeInTheDocument();
@@ -113,6 +113,29 @@ describe('Dashboard', () => {
     expect(
       screen.getAllByText('Chưa có dữ liệu biểu đồ'),
     ).toHaveLength(4);
+  });
+
+  it('ẩn bubble không có nhãn giá trị', () => {
+    const expenseTypes = Array.from({ length: 9 }, (_, index) => ({
+      id: `e${index + 1}`,
+      name: `Danh mục ${index + 1}`,
+    }));
+    vi.mocked(useApp).mockReturnValue({
+      transactions: expenseTypes.map((item, index) => ({
+        ...transaction(`Khoản ${index + 1}`, `2026-08-${String(index + 1).padStart(2, '0')}`, index === 0 ? 1_000_000 : 1_000 * (10 - index)),
+        expenseTypeId: item.id,
+      })),
+      purposes: [{ id: 'p1', name: 'Sinh hoạt' }],
+      expenseTypes,
+      confirmPlannedTransaction,
+    } as unknown as ReturnType<typeof useApp>);
+    renderDashboard();
+
+    const chart = screen.getByRole('list', { name: 'Chi tiêu theo danh mục' });
+    const circles = chart.querySelectorAll('circle');
+    const labels = chart.querySelectorAll('text');
+    expect(circles.length).toBeGreaterThan(0);
+    expect(labels).toHaveLength(circles.length * 2);
   });
 
   it('cho phép xác nhận giao dịch dự kiến đã đến hạn', async () => {
