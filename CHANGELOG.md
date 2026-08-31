@@ -2,6 +2,13 @@
 
 ## 2026-08-31
 
+### Căn thẳng switch giao diện và ngôn ngữ
+
+- Sau thay đổi: Hai switch dùng layout 3 cột cố định, luôn thẳng hàng dù nhãn VI/EN khác độ dài.
+- Kỹ thuật: Cập nhật `src/components/ThemeSelect.tsx`; không thay đổi API/database.
+- Kiểm thử: Đang chạy test, lint, typecheck và build.
+- Triển khai: Chờ PR production.
+
 ### Sửa biểu đồ xu hướng chi tiêu thành 6 tháng
 
 - Sau thay đổi: RPC Dashboard trả về đủ 6 tháng gần nhất, đồng bộ với phần hiển thị trên frontend.
