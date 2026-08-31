@@ -169,8 +169,12 @@ export function Dashboard() {
       .filter((transaction) => transaction.transactionDate.startsWith(item.key))
       .reduce(
         (total, transaction) =>
-          total -
-          getNetExpense(transaction.amount, transaction.transactionType),
+          total +
+          (transaction.transactionType === 'Thu nhập' || transaction.transactionType === 'Hoàn tiền'
+            ? transaction.amount
+            : transaction.transactionType === 'Chi tiêu' || transaction.transactionType === 'Tạm ứng'
+              ? -transaction.amount
+              : 0),
         0,
       ),
   }));

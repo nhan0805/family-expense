@@ -2,6 +2,13 @@
 
 ## 2026-08-31
 
+### Sửa công thức chart Thu ròng thành Thu nhập trừ Chi tiêu
+
+- Sau thay đổi: Chart Thu ròng hiển thị đúng `Thu nhập − Chi tiêu`; cả dữ liệu local fallback và RPC Supabase được đồng bộ chiều dấu.
+- Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx`, thêm migration `supabase/migrations/202608310002_dashboard_net_income_sign.sql`; không sửa migration đã áp dụng.
+- Kiểm thử: Đang chạy test, lint, typecheck và build.
+- Triển khai: Chờ PR production.
+
 ### Đổi tên chart thành Thu ròng
 
 - Sau thay đổi: Chart cuối Dashboard hiển thị “Thu ròng”/“Net income”, giữ nguyên công thức Thu nhập − Chi tiêu và dữ liệu hiện có.
