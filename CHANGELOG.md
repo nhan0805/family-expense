@@ -2,6 +2,20 @@
 
 ## 2026-08-31
 
+### Rút gọn hiển thị so sánh KPI
+
+- Trước thay đổi: Dòng so sánh KPI dài bị cắt trên mobile.
+- Sau thay đổi: Thay chữ Tăng/Giảm bằng icon xu hướng và phần trăm; nội dung đầy đủ vẫn có qua accessible label/tooltip.
+- Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx`; không đổi API/database.
+- Kiểm thử: `pnpm test` đạt 19/19 file và 68/68 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` đều pass.
+
+### Tối ưu bộ lọc Dashboard và trang Dữ liệu trên mobile
+
+- Trước thay đổi: Bộ lọc `Tháng/6 tháng/12 tháng/Năm/Tùy chỉnh` có thể xuống dòng trên màn hình hẹp; tab còn dài và các card dữ liệu có nhiều khoảng trống.
+- Sau thay đổi: Bộ lọc giữ một hàng và cuộn ngang trên mobile; đổi nhãn tab/trang thành `Dữ liệu`; card `Tải template`, `Xuất dữ liệu` và `Gửi qua email` dùng chiều cao theo nội dung. Import tự nhận diện: dòng có ID cập nhật, dòng không có ID thêm mới; dòng có ID không bị đánh dấu trùng.
+- Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx`, `src/context/LanguageContext.tsx`, `src/pages/ImportExport.tsx`, `src/lib/templateImport.ts`, `README.md`; không đổi API/database.
+- Kiểm thử: `pnpm test` đạt 19/19 file và 68/68 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` đều pass; chưa deploy production.
+
 ### Đổi vị trí KPI Tổng thu và Tổng chi
 
 - Sau thay đổi: KPI `Tổng thu` được hiển thị trước `Tổng chi` trong hàng tổng quan Dashboard; dữ liệu, liên kết và công thức không thay đổi.

@@ -15,7 +15,7 @@ import {
 } from 'recharts';
 import type { PieLabelRenderProps } from 'recharts';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMemo, useState, type ChangeEvent } from 'react';
+import { useMemo, useState, type ChangeEvent, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   ArrowDownToLine,
@@ -379,8 +379,8 @@ export function Dashboard() {
 
       <section className="card space-y-4 p-4" aria-label={en ? 'Dashboard period controls' : 'Bộ lọc kỳ Dashboard'}>
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-          <div className="flex min-w-0 flex-wrap gap-1 rounded-xl bg-black/5 p-1 dark:bg-white/5">
-            {(Object.keys(modeLabels) as DashboardMode[]).map((item) => <button key={item} type="button" aria-pressed={mode === item} className={`rounded-lg px-3 py-2 text-sm font-semibold ${mode === item ? 'bg-[#247df2] text-white shadow-sm' : 'hover:bg-white dark:hover:bg-white/10'}`} onClick={() => chooseMode(item)}>{modeLabels[item][en ? 'en' : 'vi']}</button>)}
+          <div className="flex min-w-0 max-w-full flex-nowrap gap-1 overflow-x-auto overscroll-x-contain rounded-xl bg-black/5 p-1 dark:bg-white/5" role="group" aria-label={en ? 'View periods' : 'Kỳ xem'}>
+            {(Object.keys(modeLabels) as DashboardMode[]).map((item) => <button key={item} type="button" aria-pressed={mode === item} className={`shrink-0 whitespace-nowrap rounded-lg px-2.5 py-2 text-sm font-semibold sm:px-3 ${mode === item ? 'bg-[#247df2] text-white shadow-sm' : 'hover:bg-white dark:hover:bg-white/10'}`} onClick={() => chooseMode(item)}>{modeLabels[item][en ? 'en' : 'vi']}</button>)}
           </div>
           <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
             <label className="min-w-0"><span className="label">{en ? 'Month' : 'Tháng'}</span><select id="dashboard-month" aria-label={en ? 'Month' : 'Tháng'} className="field bg-white px-2 dark:bg-[#17251f] sm:min-w-32" value={selectedMonth} onChange={changeMonth}>{monthOptions.map((option) => <option key={option.value} value={option.value}>{en ? englishMonthNames[Number(option.value) - 1] : option.label}</option>)}</select></label>
@@ -434,7 +434,9 @@ function renderChange(value: number | null, en: boolean, suffix: string) {
   if (value === null) return en ? 'No comparison data' : 'Chưa có kỳ so sánh';
   if (value === 0) return `${en ? 'No change' : 'Không đổi'} · ${en ? suffix : 'so với kỳ trước'}`;
   const direction = value > 0 ? (en ? 'Up' : 'Tăng') : (en ? 'Down' : 'Giảm');
-  return `${direction} ${formatPercent(value)}% · ${en ? suffix : 'so với kỳ trước'}`;
+  const Icon = value > 0 ? TrendingUp : TrendingDown;
+  const fullText = `${direction} ${formatPercent(value)}% · ${en ? suffix : 'so với kỳ trước'}`;
+  return <span className="inline-flex min-w-0 items-center gap-1" aria-label={fullText}><Icon size={13} aria-hidden="true" /><span>{formatPercent(value)}%</span><span className="sr-only"> · {en ? suffix : 'so với kỳ trước'}</span></span>;
 }
 
 function buildInsights({
@@ -497,7 +499,7 @@ function PieTooltip({ active, payload }: { active?: boolean; payload?: Array<{ p
   return <div className="rounded-xl border border-black/10 bg-white px-3 py-2 text-xs shadow-lg dark:border-white/10 dark:bg-[#17251f]"><p className="font-bold">{item.name}: {formatVnd(item.value)}</p>{item.hiddenItems?.length ? <ul className="mt-1 space-y-0.5 text-gray-600 dark:text-gray-300">{item.hiddenItems.map((hiddenItem) => <li key={hiddenItem.id}>{hiddenItem.name}: {formatVnd(hiddenItem.value)}</li>)}</ul> : null}</div>;
 }
 
-function Kpi({ label, value, icon: Icon, tone, meta, to }: { label: string; value: number; icon: LucideIcon; tone: Tone; meta: string; to: string }) {
+function Kpi({ label, value, icon: Icon, tone, meta, to }: { label: string; value: number; icon: LucideIcon; tone: Tone; meta: ReactNode; to: string }) {
   const toneClass = tone === 'emerald' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300' : tone === 'rose' ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300' : tone === 'violet' ? 'bg-violet-100 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300' : 'bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300';
-  return <Link to={to} className="card min-w-0 p-3 transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137050] sm:p-4" aria-label={`Mở giao dịch theo ${label}`}><div className="min-w-0"><div className="flex items-center gap-2"><span className={`grid size-9 shrink-0 place-items-center rounded-xl ${toneClass}`}><Icon size={18} aria-hidden="true" /></span><p className="min-h-8 min-w-0 flex-1 text-xs font-semibold leading-4 text-gray-500 dark:text-gray-400">{label}</p></div><p className="mt-2 max-w-full break-words whitespace-normal text-lg font-extrabold leading-tight sm:text-xl" title={formatVnd(value)} aria-label={`${label}: ${formatVnd(value)}`}>{formatCompactVnd(value)}</p></div><p className="mt-3 truncate text-xs text-gray-500 dark:text-gray-400" title={meta}>{meta}</p></Link>;
+  return <Link to={to} className="card min-w-0 p-3 transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137050] sm:p-4" aria-label={`Mở giao dịch theo ${label}`}><div className="min-w-0"><div className="flex items-center gap-2"><span className={`grid size-9 shrink-0 place-items-center rounded-xl ${toneClass}`}><Icon size={18} aria-hidden="true" /></span><p className="min-h-8 min-w-0 flex-1 text-xs font-semibold leading-4 text-gray-500 dark:text-gray-400">{label}</p></div><p className="mt-2 max-w-full break-words whitespace-normal text-lg font-extrabold leading-tight sm:text-xl" title={formatVnd(value)} aria-label={`${label}: ${formatVnd(value)}`}>{formatCompactVnd(value)}</p></div><p className="mt-3 flex min-w-0 items-center gap-1 truncate text-xs text-gray-500 dark:text-gray-400">{meta}</p></Link>;
 }
