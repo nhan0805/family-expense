@@ -244,6 +244,7 @@ export function Transactions() {
   const [transactionType, setTransactionType] = useState(() =>
     getInitialTransactionType(searchParams.get('transactionType')),
   );
+  const [status, setStatus] = useState(() => searchParams.get('status') || '');
   const [purposeId, setPurposeId] = useState(() => searchParams.get('purposeId') || '');
   const [expenseTypeId, setExpenseTypeId] = useState(() => searchParams.get('expenseTypeId') || '');
   const [paymentMethodId, setPaymentMethodId] = useState('');
@@ -279,7 +280,7 @@ export function Transactions() {
       filterAndSortTransactions(transactions, {
         query,
         transactionType,
-        status: '',
+        status,
         purposeId,
         expenseTypeId,
         paymentMethodId,
@@ -301,13 +302,14 @@ export function Transactions() {
       dateFrom,
       dateTo,
       sort,
+      status,
     ],
   );
   const serverFilters = useMemo(
     () => ({
       query: debouncedQuery,
       transactionType,
-      status: '',
+      status,
       purposeId,
       expenseTypeId,
       paymentMethodId,
@@ -328,6 +330,7 @@ export function Transactions() {
       dateFrom,
       dateTo,
       sort,
+      status,
     ],
   );
   const transactionQuery = useInfiniteQuery({
@@ -350,7 +353,7 @@ export function Transactions() {
     enabled: isSupabaseConfigured && Boolean(familyId),
     staleTime: 5 * 60_000,
   });
-  const trashFilters = { query, transactionType, status: '', purposeId, expenseTypeId, paymentMethodId, month, year, dateFrom, dateTo, sort } satisfies TransactionFilters;
+  const trashFilters = { query, transactionType, status, purposeId, expenseTypeId, paymentMethodId, month, year, dateFrom, dateTo, sort } satisfies TransactionFilters;
   const localTrashRows = useMemo(() => filterAndSortTransactions(transactions.filter((item) => item.deletedAt && (currentUserRole === 'owner' || item.createdBy === currentUserId)), trashFilters, true), [transactions, currentUserRole, currentUserId, trashFilters]);
   const rows = showTrash
     ? (isSupabaseConfigured ? trashQuery.data?.rows || [] : localTrashRows)
@@ -378,6 +381,7 @@ export function Transactions() {
   const hasFilters = Boolean(
     query ||
     transactionType ||
+    status ||
     purposeId ||
     expenseTypeId ||
     paymentMethodId ||
@@ -389,6 +393,7 @@ export function Transactions() {
   );
   const activeFilterCount = [
     transactionType,
+    status,
     purposeId,
     expenseTypeId,
     paymentMethodId,
@@ -399,6 +404,7 @@ export function Transactions() {
   ].filter(Boolean).length;
   const filterChips = [
     transactionType && { key: 'transactionType', label: transactionType, clear: () => setTransactionType('') },
+    status && { key: 'status', label: status, clear: () => setStatus('') },
     purposeId && { key: 'purposeId', label: purposes.find((item) => item.id === purposeId)?.name || 'Mục đích', clear: () => setPurposeId('') },
     expenseTypeId && { key: 'expenseTypeId', label: expenseTypes.find((item) => item.id === expenseTypeId)?.name || 'Danh mục', clear: () => setExpenseTypeId('') },
     paymentMethodId && { key: 'paymentMethodId', label: paymentMethods.find((item) => item.id === paymentMethodId)?.name || 'Thanh toán', clear: () => setPaymentMethodId('') },
@@ -423,6 +429,7 @@ export function Transactions() {
   const resetFilters = () => {
     setQuery('');
     setTransactionType('');
+    setStatus('');
     setPurposeId('');
     setExpenseTypeId('');
     setPaymentMethodId('');
@@ -782,6 +789,14 @@ export function Transactions() {
           <label>
             <span className="label">{en ? 'Transaction type' : 'Loại giao dịch'}</span>
             <select className="field" value={transactionType} onChange={(event) => setTransactionType(event.target.value)}><option value="">{en ? 'All types' : 'Tất cả loại'}</option><option value="Chi tiêu">{en ? 'Money out' : 'Tiền ra'}</option><option value="Thu nhập">{en ? 'Money in' : 'Tiền vào'}</option></select>
+          </label>
+          <label>
+            <span className="label">{en ? 'Status' : 'Trạng thái'}</span>
+            <select className="field" value={status} onChange={(event) => setStatus(event.target.value)}>
+              <option value="">{en ? 'All statuses' : 'Tất cả trạng thái'}</option>
+              <option value="Thực tế">{en ? 'Actual' : 'Thực tế'}</option>
+              <option value="Dự kiến">{en ? 'Planned' : 'Dự kiến'}</option>
+            </select>
           </label>
           <label>
             <span className="label">{en ? 'Purpose' : 'Mục đích'}</span>
