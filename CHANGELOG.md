@@ -7,23 +7,23 @@
 - Trước thay đổi: Giao dịch `Dự kiến` tới hạn không có khu vực xác nhận riêng.
 - Sau thay đổi: Tab Giao dịch hiển thị các giao dịch dự kiến đến hạn, cho phép xác nhận từng dòng hoặc xác nhận tất cả; trạng thái được chuyển sang `Thực tế` sau khi lưu thành công.
 - Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`, `src/pages/Transactions.ui.test.tsx`; không đổi database/API.
-- Kiểm thử: `pnpm test` đạt 19/19 file và 67/67 test; lint, typecheck, build và `git diff --check` đều pass. Chưa deploy production.
+- Kiểm thử: `pnpm test` đạt 19/19 file và 67/67 test; lint, typecheck, build và `git diff --check` đều pass. Đã deploy production qua Git/Cloudflare Pages: [production](https://family-expense-8fo.pages.dev/) · [deployment](https://cc619d3b.family-expense-8fo.pages.dev/).
 
 ### Ẩn bubble không có giá trị hiển thị
 
 - Trước thay đổi: Biểu đồ bubble vẫn vẽ các vòng tròn nhỏ nhưng không đủ chỗ hiển thị tên và số tiền, khiến chúng trông như không có giá trị.
 - Sau thay đổi: Chỉ giữ các bubble đủ kích thước để hiển thị đồng thời tên danh mục và giá trị rút gọn; bubble có giá trị bằng 0 vẫn không được vẽ.
 - Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx`, bổ sung regression test trong `src/pages/Dashboard.test.tsx`; không đổi API/database.
-- Kiểm thử: `pnpm test` đạt 19/19 file và 66/66 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` đều pass. Regression test xác nhận bubble không có nhãn giá trị bị loại khỏi SVG; Browser local chưa dựng được Dashboard có dữ liệu vì thiếu Supabase/family.
-- Triển khai: Chưa deploy trong lượt này; chờ yêu cầu deploy.
+- Kiểm thử: `pnpm test` đạt 19/19 file và 67/67 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` đều pass. Regression test xác nhận bubble không có nhãn giá trị bị loại khỏi SVG; Browser local chưa dựng được Dashboard có dữ liệu vì thiếu Supabase/family.
+- Triển khai: Đã deploy production qua Git/Cloudflare Pages: [production](https://family-expense-8fo.pages.dev/) · [deployment](https://cc619d3b.family-expense-8fo.pages.dev/).
 
 ### Sửa tràn KPI và bỏ nút Trước/Nay
 
 - Trước thay đổi: Số tiền KPI dài như `1.295,1M ₫` bị tràn khỏi card 6 cột; header còn có hai nút `Trước` và `Nay` không cần thiết.
 - Sau thay đổi: Đưa số tiền KPI xuống dòng riêng dưới nhãn/icon, cho phép ngắt dòng an toàn và giảm cỡ chữ nhẹ; loại bỏ hai nút `Trước` và `Nay`.
 - Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx`, bổ sung assertion UI trong `src/pages/Dashboard.test.tsx`; không đổi API/database.
-- Kiểm thử: Đã chạy cùng bộ quality gates: `pnpm test` đạt 19/19 file và 66/66 test; lint, typecheck, build và `git diff --check` đều pass.
-- Triển khai: Chưa deploy trong lượt này; chờ yêu cầu deploy.
+- Kiểm thử: Đã chạy cùng bộ quality gates: `pnpm test` đạt 19/19 file và 67/67 test; lint, typecheck, build và `git diff --check` đều pass.
+- Triển khai: Đã deploy production qua Git/Cloudflare Pages: [production](https://family-expense-8fo.pages.dev/) · [deployment](https://cc619d3b.family-expense-8fo.pages.dev/).
 
 ### Tinh gọn bố cục bộ lọc giao dịch
 
@@ -52,7 +52,7 @@
 - Sau thay đổi: KPI hiển thị số tiền dạng rút gọn `K/M` với chữ lớn hơn; vẫn giữ số tiền VND đầy đủ qua tooltip và accessible label, tiêu đề KPI được phép xuống dòng ngắn. Các KPI `Trung bình / tháng`, `Tháng cao nhất` và `Tháng thấp nhất` chỉ hiển thị khi filter bao phủ nhiều tháng.
 - Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx`, tái sử dụng `formatCompactVnd`; cập nhật assertion hiển thị trong `src/pages/Dashboard.test.tsx`; không đổi API/database.
 - Kiểm thử: `pnpm test` đạt 19/19 file và 64/64 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` đều pass. Browser local tải app shell không có log error/warning; route Dashboard cần Supabase local nên không dựng được dữ liệu tương tác trong môi trường kiểm tra này.
-- Triển khai: Chưa deploy trong lượt này; chờ yêu cầu deploy production.
+- Triển khai: Đã deploy production qua Git/Cloudflare Pages: [production](https://family-expense-8fo.pages.dev/) · [deployment](https://cc619d3b.family-expense-8fo.pages.dev/).
 
 ### Import Excel cập nhật giao dịch theo ID
 
