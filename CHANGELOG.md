@@ -14,7 +14,7 @@
 - Sau thay đổi: Trang Giao dịch nhận khoảng ngày từ URL, tự bỏ filter tháng/năm mặc định khi có khoảng ngày và hiển thị đúng các giao dịch trong kỳ KPI đã chọn.
 - Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`; bổ sung regression test cho click-through trong `src/pages/Dashboard.test.tsx` và `src/pages/Transactions.ui.test.tsx`; không đổi API/database.
 - Kiểm thử: `pnpm test` đạt 19/19 file và 65/65 test; `pnpm test:coverage`, `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` đều pass. Browser đã kiểm tra route có query khoảng ngày; môi trường local chưa có Supabase/family nên route chuyển tới màn hình tạo gia đình, không có log error/warning. E2E chưa chạy được vì máy thiếu browser binary Playwright.
-- Triển khai: Chưa deploy; chờ xác nhận quality gates.
+- Triển khai: PR #67 đã merge vào `main` với merge commit `a8d9f405`; Cloudflare Pages check báo deploy thành công cho commit này. Production `https://family-expense-8fo.pages.dev/` và deployment URL `https://c34c0d4a.family-expense-8fo.pages.dev/` đều trả HTTP 200.
 
 ### Thêm bộ lọc trạng thái giao dịch
 
