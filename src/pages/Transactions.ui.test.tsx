@@ -24,6 +24,9 @@ describe('Giao dịch mobile', () => {
     expect(filterDetails).not.toHaveAttribute('open');
     fireEvent.click(filterToggle);
     expect(filterDetails).toHaveAttribute('open');
+    const detailedFilterGrid = filterDetails?.querySelector('.ui-enter');
+    expect(detailedFilterGrid).toHaveClass('md:grid-cols-3', 'xl:grid-cols-4', 'gap-3');
+    expect(detailedFilterGrid).not.toHaveClass('xl:grid-cols-5');
     expect(screen.getByLabelText('Loại giao dịch')).toBeInTheDocument();
     expect(screen.getByLabelText('Trạng thái')).toBeInTheDocument();
     const minAmountInput = screen.getByLabelText('Từ số tiền');
