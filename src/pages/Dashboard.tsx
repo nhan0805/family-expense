@@ -169,8 +169,12 @@ export function Dashboard() {
       .filter((transaction) => transaction.transactionDate.startsWith(item.key))
       .reduce(
         (total, transaction) =>
-          total -
-          getNetExpense(transaction.amount, transaction.transactionType),
+          total +
+          (transaction.transactionType === 'Thu nhập' || transaction.transactionType === 'Hoàn tiền'
+            ? transaction.amount
+            : transaction.transactionType === 'Chi tiêu' || transaction.transactionType === 'Tạm ứng'
+              ? -transaction.amount
+              : 0),
         0,
       ),
   }));
@@ -426,7 +430,7 @@ export function Dashboard() {
           </div>
         </div>
         <div className="card min-w-0 overflow-hidden p-4 lg:col-span-2">
-          <h3 className="font-bold">{en ? 'Actual net spending' : 'Chi ròng thực tế'}</h3>
+          <h3 className="font-bold">{en ? 'Net income' : 'Thu ròng'}</h3>
           <div className="h-64 min-w-0 max-w-full">
             <ResponsiveContainer>
               <LineChart data={trend} margin={{ top: 24, right: 18, left: 8 }}>
@@ -441,7 +445,7 @@ export function Dashboard() {
                 <Tooltip formatter={(value) => formatVnd(Number(value))} />
                 <Legend verticalAlign="bottom" />
                 <Line
-                  name={en ? 'Actual net spending' : 'Chi ròng thực tế'}
+                  name={en ? 'Net income' : 'Thu ròng'}
                   type="monotone"
                   dataKey="v"
                   stroke="#155e46"

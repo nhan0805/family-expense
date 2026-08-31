@@ -2,6 +2,34 @@
 
 ## 2026-08-31
 
+### Sửa công thức chart Thu ròng thành Thu nhập trừ Chi tiêu
+
+- Sau thay đổi: Chart Thu ròng hiển thị đúng `Thu nhập − Chi tiêu`; cả dữ liệu local fallback và RPC Supabase được đồng bộ chiều dấu.
+- Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx`, thêm migration `supabase/migrations/202608310002_dashboard_net_income_sign.sql`; không sửa migration đã áp dụng.
+- Kiểm thử: Đang chạy test, lint, typecheck và build.
+- Triển khai: Chờ PR production.
+
+### Đổi tên chart thành Thu ròng
+
+- Sau thay đổi: Chart cuối Dashboard hiển thị “Thu ròng”/“Net income”, giữ nguyên công thức Thu nhập − Chi tiêu và dữ liệu hiện có.
+- Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx`; không thay đổi API/database.
+- Kiểm thử: Đang chạy test, lint, typecheck và build.
+- Triển khai: Chờ PR production.
+
+### Hiển thị icon theme và chữ VI/EN trên switch
+
+- Sau thay đổi: Switch giao diện hiển thị mặt trời/mặt trăng; switch ngôn ngữ hiển thị VI/EN ngay trên nút và vẫn giữ căn thẳng hai dòng.
+- Kỹ thuật: Cập nhật `src/components/ThemeSelect.tsx`; không thay đổi API/database.
+- Kiểm thử: Đang chạy test, lint, typecheck và build.
+- Triển khai: Chờ PR production.
+
+### Căn thẳng switch giao diện và ngôn ngữ
+
+- Sau thay đổi: Hai switch dùng layout 3 cột cố định, luôn thẳng hàng dù nhãn VI/EN khác độ dài.
+- Kỹ thuật: Cập nhật `src/components/ThemeSelect.tsx`; không thay đổi API/database.
+- Kiểm thử: Đang chạy test, lint, typecheck và build.
+- Triển khai: Chờ PR production.
+
 ### Sửa biểu đồ xu hướng chi tiêu thành 6 tháng
 
 - Sau thay đổi: RPC Dashboard trả về đủ 6 tháng gần nhất, đồng bộ với phần hiển thị trên frontend.
