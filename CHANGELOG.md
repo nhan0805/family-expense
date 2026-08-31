@@ -2,6 +2,13 @@
 
 ## 2026-08-31
 
+### Đổi tên chart thành Thu ròng
+
+- Sau thay đổi: Chart cuối Dashboard hiển thị “Thu ròng”/“Net income”, giữ nguyên công thức Thu nhập − Chi tiêu và dữ liệu hiện có.
+- Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx`; không thay đổi API/database.
+- Kiểm thử: Đang chạy test, lint, typecheck và build.
+- Triển khai: Chờ PR production.
+
 ### Hiển thị icon theme và chữ VI/EN trên switch
 
 - Sau thay đổi: Switch giao diện hiển thị mặt trời/mặt trăng; switch ngôn ngữ hiển thị VI/EN ngay trên nút và vẫn giữ căn thẳng hai dòng.
