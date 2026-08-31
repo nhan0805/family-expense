@@ -13,6 +13,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import type { PieLabelRenderProps } from 'recharts';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState, type ChangeEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -62,6 +63,8 @@ const englishMonthNames = [
   'December',
 ] as const;
 const chartColors = ['#155e46', '#e6b85c', '#d97757', '#6081a8', '#7b6aa2', '#2c8a83'];
+const pieLabelMinPercent = 0.05;
+export const formatPieLabel = ({ percent, value }: Pick<PieLabelRenderProps, 'percent' | 'value'>) => Number(percent) >= pieLabelMinPercent ? formatCompactVnd(Number(value)).replace(' ₫', '') : null;
 const modeLabels: Record<DashboardMode, { vi: string; en: string }> = {
   month: { vi: 'Tháng', en: 'Month' },
   '6m': { vi: '6 tháng', en: '6 months' },
@@ -377,11 +380,11 @@ export function Dashboard() {
 
       <section className="card min-w-0 overflow-hidden p-4 sm:p-5" aria-labelledby="dashboard-trend-title"><div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between"><div><h3 id="dashboard-trend-title" className="text-lg font-bold">{en ? 'Spending and income trend' : 'Xu hướng thu chi'}</h3><p className="text-sm text-gray-500 dark:text-gray-400">{mode === 'month' ? (en ? 'Six months ending in the selected month' : 'Sáu tháng kết thúc tại tháng đang chọn') : (en ? 'Monthly breakdown for this view' : 'Phân bổ theo từng tháng trong kỳ xem')}</p></div><div className="text-right text-sm"><p className="font-bold text-[#d96f4f]">{formatVnd(selectedExpense)}</p><p className="text-gray-500">{en ? 'expenses in view' : 'chi trong kỳ xem'}</p></div></div><div className="h-80 min-w-0 max-w-full">{trend.some((item) => item.expense || item.income) ? <ResponsiveContainer><ComposedChart data={trend} margin={{ top: 20, right: 12, left: 4, bottom: 6 }}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="label" /><YAxis tickFormatter={(value) => formatCompactVnd(Number(value)).replace(' ₫', '')} width={54} /><Tooltip labelFormatter={(label) => formatPeriodKey(String(trend.find((item) => item.label === label)?.key || ''), en)} formatter={(value) => formatVnd(Number(value))} /><Legend verticalAlign="top" align="right" /><Bar name={en ? 'Expenses' : 'Chi tiêu'} dataKey="expense" fill="#d96f4f" radius={[8, 8, 0, 0]} cursor="pointer" onClick={(_, index) => { const period = trend[index]; if (period) navigate(`/giao-dich?transactionType=Chi tiêu&month=${period.key.slice(5, 7)}&year=${period.key.slice(0, 4)}`); }}><LabelList dataKey="expense" position="top" formatter={(value) => Number(value) > 0 ? formatCompactVnd(Number(value)).replace(' ₫', '') : ''} /></Bar><Line name={en ? 'Income' : 'Thu nhập'} type="monotone" dataKey="income" stroke="#155e46" strokeWidth={3} dot={{ r: 4 }} /><Line name={en ? 'Net value' : 'Thu ròng'} type="monotone" dataKey="net" stroke="#247df2" strokeWidth={2} strokeDasharray="5 5" dot={false} /></ComposedChart></ResponsiveContainer> : <EmptyState title={en ? 'No trend data' : 'Chưa có dữ liệu xu hướng'} description={en ? 'The trend will appear when the selected period has actual transactions.' : 'Xu hướng sẽ xuất hiện khi kỳ đang chọn có giao dịch thực tế.'} />}</div></section>
 
-      <section className="grid gap-4 lg:grid-cols-2"><div className="card min-w-0 overflow-hidden p-4"><ExpensePieChart title={en ? 'Expenses by purpose' : 'Chi tiêu theo mục đích'} data={byPurpose} to={periodFilterLink()} filterKey="purposeId" en={en} /></div><div className="card min-w-0 overflow-hidden p-4"><PackedBubbleChart title={en ? 'Expenses by category' : 'Chi tiêu theo danh mục'} data={byExpenseType} to={periodFilterLink()} filterKey="expenseTypeId" en={en} /></div></section>
+      <section className="grid gap-4 lg:grid-cols-2"><div className="card min-w-0 overflow-hidden p-4"><ExpensePieChart title={en ? 'Expenses by purpose' : 'Chi tiêu theo mục đích'} data={byPurpose} to={periodFilterLink()} filterKey="purposeId" en={en} /></div><div className="card min-w-0 overflow-hidden p-4"><ExpensePieChart title={en ? 'Expenses by category' : 'Chi tiêu theo danh mục'} data={byExpenseType} to={periodFilterLink()} filterKey="expenseTypeId" en={en} /></div></section>
 
       <section className="card min-w-0 overflow-hidden p-4 sm:p-5"><div className="mb-4 flex items-start justify-between gap-3"><div><h3 className="text-lg font-bold">{en ? 'Top categories over time' : 'Top danh mục theo thời gian'}</h3><p className="text-sm text-gray-500 dark:text-gray-400">{en ? 'Click a row to inspect the filtered transactions.' : 'Bấm vào một dòng để xem các giao dịch đã lọc.'}</p></div><TrendingUp className="text-[#247df2]" size={22} aria-hidden="true" /></div>{topCategories.length ? <div className="space-y-2">{topCategories.map((item) => <Link key={item.id} to={`${periodFilterLink(undefined)}&expenseTypeId=${encodeURIComponent(item.id)}`} className="grid grid-cols-[minmax(0,1fr)_minmax(120px,1.6fr)_auto] items-center gap-3 rounded-xl border border-black/5 p-3 hover:bg-black/[.025] focus-visible:outline focus-visible:ring-2 focus-visible:ring-[#137050] dark:border-white/10 dark:hover:bg-white/5"><div className="min-w-0"><p className="truncate font-semibold">{item.name}</p><p className="text-xs text-gray-500">{formatVnd(item.value)}</p></div><MiniTrend values={item.trend} label={`${item.name}: ${formatVnd(item.value)}`} /><ChangeBadge value={changePercent(item.value, item.previousValue)} en={en} /></Link>)}</div> : <div className="rounded-xl bg-black/[.025] px-4 py-7 text-center text-sm text-gray-500 dark:bg-white/[.04]">{en ? 'No category data in this period.' : 'Chưa có dữ liệu danh mục trong kỳ này.'}</div>}</section>
 
-      <section className="grid gap-4 lg:grid-cols-2"><div className="card min-w-0 overflow-hidden p-4"><ExpensePieChart title={en ? 'Income by purpose' : 'Thu nhập theo mục đích'} data={incomeByPurpose} to={periodFilterLink('Thu nhập')} filterKey="purposeId" en={en} income /></div><div className="card min-w-0 overflow-hidden p-4"><PackedBubbleChart title={en ? 'Income by category' : 'Thu nhập theo danh mục'} data={incomeByExpenseType} to={periodFilterLink('Thu nhập')} filterKey="expenseTypeId" en={en} income /></div></section>
+      <section className="grid gap-4 lg:grid-cols-2"><div className="card min-w-0 overflow-hidden p-4"><ExpensePieChart title={en ? 'Income by purpose' : 'Thu nhập theo mục đích'} data={incomeByPurpose} to={periodFilterLink('Thu nhập')} filterKey="purposeId" en={en} income /></div><div className="card min-w-0 overflow-hidden p-4"><ExpensePieChart title={en ? 'Income by category' : 'Thu nhập theo danh mục'} data={incomeByExpenseType} to={periodFilterLink('Thu nhập')} filterKey="expenseTypeId" en={en} income /></div></section>
 
       <section className="card border-amber-200 bg-amber-50/60 p-4 dark:border-amber-900/60 dark:bg-amber-950/20" aria-labelledby="dashboard-insights-title"><div className="mb-3 flex items-center gap-2"><Sparkles size={19} className="text-amber-600" aria-hidden="true" /><h3 id="dashboard-insights-title" className="font-bold">{en ? 'What stands out' : 'Điểm đáng chú ý'}</h3></div>{insights.length ? <ul className="grid gap-2 text-sm sm:grid-cols-2">{insights.map((insight) => <li key={insight} className="rounded-lg bg-white/70 p-3 dark:bg-white/5">{insight}</li>)}</ul> : <p className="text-sm text-gray-600 dark:text-gray-300">{en ? 'Insights will appear when there is enough actual data.' : 'Nhận xét sẽ xuất hiện khi có đủ dữ liệu giao dịch thực tế.'}</p>}</section>
     </div>
@@ -454,41 +457,7 @@ function MiniTrend({ values, label }: { values: number[]; label: string }) {
 function ExpensePieChart({ title, data, to, filterKey, en, income = false }: { title: string; data: ExpenseChartItem[]; to: string; filterKey: 'purposeId' | 'expenseTypeId'; en: boolean; income?: boolean }) {
   const navigate = useNavigate();
   const openItem = (item: ExpenseChartItem) => { if (item.id && item.id !== 'uncategorized') navigate(`${to}&${filterKey}=${encodeURIComponent(item.id)}`); };
-  return <><h3 className="font-bold">{title}</h3><div className="h-72 min-w-0 max-w-full overflow-hidden pt-3">{data.length ? <ResponsiveContainer><PieChart margin={{ top: 18, right: 18, left: 18, bottom: 0 }}><Pie data={data} dataKey="value" nameKey="name" innerRadius={45} outerRadius={75} labelLine label={({ value }) => formatCompactVnd(Number(value)).replace(' ₫', '')}>{data.map((item) => <Cell key={item.id || item.name} fill={item.fill} cursor={item.id !== 'uncategorized' ? 'pointer' : undefined} role={item.id !== 'uncategorized' ? 'button' : undefined} tabIndex={item.id !== 'uncategorized' ? 0 : undefined} aria-label={`${item.name}: ${formatVnd(item.value)}`} onClick={() => openItem(item)} onKeyDown={(event) => { if (item.id !== 'uncategorized' && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); openItem(item); } }} />)}</Pie><Tooltip formatter={(value) => formatVnd(Number(value))} /><Legend verticalAlign="bottom" iconType="circle" /></PieChart></ResponsiveContainer> : <EmptyState title={en ? 'No chart data' : 'Chưa có dữ liệu biểu đồ'} description={en ? `No actual ${income ? 'income' : 'expense'} transactions in this period.` : `Chưa có giao dịch thực tế ${income ? 'thu nhập' : 'chi tiêu'} trong kỳ này.`} />}</div></>;
-}
-
-function PackedBubbleChart({ title, data, to, filterKey, en, income = false }: { title: string; data: ExpenseChartItem[]; to: string; filterKey: 'purposeId' | 'expenseTypeId'; en: boolean; income?: boolean }) {
-  const navigate = useNavigate();
-  const bubbles = packBubbles(data.filter((item) => item.value > 0)).filter((item) => item.r >= 30);
-  const openItem = (item: ExpenseChartItem) => { if (item.id && item.id !== 'uncategorized') navigate(`${to}&${filterKey}=${encodeURIComponent(item.id)}`); };
-  return <><h3 className="font-bold">{title}</h3><div className="h-72 min-w-0 max-w-full overflow-hidden pt-3">{bubbles.length ? <svg className="h-full w-full" viewBox="0 0 640 300" role="list" aria-label={title} preserveAspectRatio="xMidYMid meet">{bubbles.map((item) => { const shortName = item.name.length > 14 ? `${item.name.slice(0, 13)}…` : item.name; const showName = item.r >= 30; return <g key={item.id || item.name} role={item.id !== 'uncategorized' ? 'button' : undefined} tabIndex={item.id !== 'uncategorized' ? 0 : -1} aria-label={`${item.name}: ${formatVnd(item.value)}`} className="cursor-pointer outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" onClick={() => openItem(item)} onKeyDown={(event) => { if (item.id !== 'uncategorized' && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); openItem(item); } }}><title>{`${item.name}: ${formatVnd(item.value)}`}</title><circle cx={item.x} cy={item.y} r={item.r} fill={item.fill} opacity="0.92" stroke="white" strokeWidth="2" />{showName && <text x={item.x} y={item.y - 3} textAnchor="middle" fill="white" fontSize={item.r >= 42 ? 14 : 11} fontWeight="700" pointerEvents="none">{shortName}</text>}{showName && <text x={item.x} y={item.y + 15} textAnchor="middle" fill="white" fontSize={item.r >= 42 ? 13 : 10} fontWeight="600" pointerEvents="none">{formatCompactVnd(item.value).replace(' ₫', '')}</text>}</g>; })}</svg> : <EmptyState title={en ? 'No chart data' : 'Chưa có dữ liệu biểu đồ'} description={en ? `No actual ${income ? 'income' : 'expense'} transactions in this period.` : `Chưa có giao dịch thực tế ${income ? 'thu nhập' : 'chi tiêu'} trong kỳ này.`} />}</div></>;
-}
-
-type PackedBubble = ExpenseChartItem & { x: number; y: number; r: number };
-
-function packBubbles(data: ExpenseChartItem[]): PackedBubble[] {
-  const width = 640;
-  const height = 300;
-  const padding = 12;
-  const maxValue = Math.max(...data.map((item) => item.value), 1);
-  const maxRadius = data.length > 8 ? 52 : data.length > 5 ? 62 : 74;
-  const minRadius = data.length > 1 ? 26 : 36;
-  const placed: PackedBubble[] = [];
-  data.slice().sort((a, b) => b.value - a.value).forEach((item, index) => {
-    const radius = Math.max(minRadius, Math.sqrt(item.value / maxValue) * maxRadius);
-    if (index === 0) { placed.push({ ...item, x: width / 2, y: height / 2, r: radius }); return; }
-    let candidate: PackedBubble | null = null;
-    for (let step = 0; step < 1600 && !candidate; step += 1) {
-      const angle = step * 0.43;
-      const distance = 18 + step * 1.45;
-      const x = width / 2 + Math.cos(angle) * distance;
-      const y = height / 2 + Math.sin(angle) * distance * 0.62;
-      if (x - radius < padding || x + radius > width - padding || y - radius < padding || y + radius > height - padding) continue;
-      if (placed.every((bubble) => Math.hypot(x - bubble.x, y - bubble.y) >= radius + bubble.r + 5)) candidate = { ...item, x, y, r: radius };
-    }
-    if (candidate) placed.push(candidate);
-  });
-  return placed;
+  return <><h3 className="font-bold">{title}</h3><div className="h-72 min-w-0 max-w-full overflow-hidden pt-3">{data.length ? <ResponsiveContainer><PieChart margin={{ top: 18, right: 18, left: 18, bottom: 0 }}><Pie data={data} dataKey="value" nameKey="name" innerRadius={45} outerRadius={75} labelLine={false} label={formatPieLabel}>{data.map((item) => <Cell key={item.id || item.name} fill={item.fill} cursor={item.id !== 'uncategorized' ? 'pointer' : undefined} role={item.id !== 'uncategorized' ? 'button' : undefined} tabIndex={item.id !== 'uncategorized' ? 0 : undefined} aria-label={`${item.name}: ${formatVnd(item.value)}`} onClick={() => openItem(item)} onKeyDown={(event) => { if (item.id !== 'uncategorized' && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); openItem(item); } }} />)}</Pie><Tooltip formatter={(value) => formatVnd(Number(value))} /><Legend verticalAlign="bottom" iconType="circle" /></PieChart></ResponsiveContainer> : <EmptyState title={en ? 'No chart data' : 'Chưa có dữ liệu biểu đồ'} description={en ? `No actual ${income ? 'income' : 'expense'} transactions in this period.` : `Chưa có giao dịch thực tế ${income ? 'thu nhập' : 'chi tiêu'} trong kỳ này.`} />}</div></>;
 }
 
 function Kpi({ label, value, icon: Icon, tone, meta, to }: { label: string; value: number; icon: LucideIcon; tone: Tone; meta: string; to: string }) {

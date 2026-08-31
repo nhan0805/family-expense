@@ -2,6 +2,19 @@
 
 ## 2026-08-31
 
+### Giảm chồng lấp label biểu đồ pie
+
+- Trước thay đổi: Label và leader line được render cho mọi lát pie, khiến các lát rất nhỏ dồn chữ và chồng lên nhau.
+- Sau thay đổi: Chỉ hiển thị số tiền trực tiếp cho lát chiếm từ 5% trở lên và tắt leader line; lát nhỏ vẫn giữ trong pie, legend, tooltip và accessibility label.
+- Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx`, bổ sung regression test trong `src/pages/Dashboard.test.tsx`; không đổi API/database.
+- Kiểm thử: `pnpm test` đạt 19/19 file và 67/67 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` đều pass. Chưa deploy production.
+
+### Chuyển biểu đồ danh mục sang pie chart
+
+- Sau thay đổi: `Chi tiêu theo danh mục` và `Thu nhập theo danh mục` dùng pie chart giống các biểu đồ phân bổ khác; vẫn giữ tooltip, legend và click để mở giao dịch đã lọc.
+- Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx`, `src/pages/Dashboard.test.tsx`; không đổi API/database.
+- Kiểm thử: `pnpm test` đạt 19/19 file và 67/67 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` đều pass. Chưa deploy production.
+
 ### Khôi phục xác nhận giao dịch dự kiến tới hạn
 
 - Trước thay đổi: Giao dịch `Dự kiến` tới hạn không có khu vực xác nhận riêng.

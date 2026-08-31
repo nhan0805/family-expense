@@ -10,7 +10,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useApp } from '../context/AppContext';
 import type { Transaction } from '../lib/domain';
-import { Dashboard } from './Dashboard';
+import { Dashboard, formatPieLabel } from './Dashboard';
 
 vi.mock('../context/AppContext', () => ({ useApp: vi.fn() }));
 vi.mock('../lib/supabase', () => ({ isSupabaseConfigured: false }));
@@ -115,7 +115,7 @@ describe('Dashboard', () => {
     ).toHaveLength(4);
   });
 
-  it('ẩn bubble không có nhãn giá trị', () => {
+  it('ẩn label pie của lát nhỏ để tránh chồng lấp', () => {
     const expenseTypes = Array.from({ length: 9 }, (_, index) => ({
       id: `e${index + 1}`,
       name: `Danh mục ${index + 1}`,
@@ -131,11 +131,9 @@ describe('Dashboard', () => {
     } as unknown as ReturnType<typeof useApp>);
     renderDashboard();
 
-    const chart = screen.getByRole('list', { name: 'Chi tiêu theo danh mục' });
-    const circles = chart.querySelectorAll('circle');
-    const labels = chart.querySelectorAll('text');
-    expect(circles.length).toBeGreaterThan(0);
-    expect(labels).toHaveLength(circles.length * 2);
+    expect(screen.getByText('Chi tiêu theo danh mục')).toBeInTheDocument();
+    expect(formatPieLabel({ percent: 0.95, value: 1_000_000 })).toBe('1M');
+    expect(formatPieLabel({ percent: 0.01, value: 10_000 })).toBeNull();
   });
 
   it('cho phép xác nhận giao dịch dự kiến đã đến hạn', async () => {
@@ -193,7 +191,7 @@ describe('Dashboard', () => {
     );
     fireEvent.click(screen.getByRole('button', { name: 'Tháng' }));
     expect(screen.getByRole('link', { name: 'Mở giao dịch theo Tổng chi' })).toHaveTextContent('200K');
-    expect(screen.getByRole('button', { name: 'Thực phẩm: 150.000 ₫' })).toBeInTheDocument();
+    expect(screen.getByText('Chi tiêu theo danh mục')).toBeInTheDocument();
   });
 
   it('lọc chính xác ngày trong kỳ tùy chỉnh', () => {
