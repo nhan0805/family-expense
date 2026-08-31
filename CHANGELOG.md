@@ -2,6 +2,13 @@
 
 ## 2026-08-31
 
+### Tăng tương phản chữ VI/EN trong dark mode
+
+- Sau thay đổi: Chữ VI/EN trên switch ngôn ngữ có màu xanh đậm cố định trên nền trắng; track bật/tắt có màu tương phản rõ hơn trong dark mode.
+- Kỹ thuật: Cập nhật `src/components/ThemeSelect.tsx`; không thay đổi API/database.
+- Kiểm thử: Đang chạy test, lint, typecheck và build.
+- Triển khai: Chờ PR production.
+
 ### Sửa công thức chart Thu ròng thành Thu nhập trừ Chi tiêu
 
 - Sau thay đổi: Chart Thu ròng hiển thị đúng `Thu nhập − Chi tiêu`; cả dữ liệu local fallback và RPC Supabase được đồng bộ chiều dấu.
