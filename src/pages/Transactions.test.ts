@@ -2,10 +2,12 @@ import { describe, expect, it } from 'vitest';
 import type { Transaction } from '../lib/domain';
 import {
   compareTransactions,
+  formatAmountFilterInput,
   filterAndSortTransactions,
   getInitialTransactionPeriod,
   getInitialTransactionType,
   getTransactionListTone,
+  normalizeAmountFilterInput,
 } from './Transactions';
 
 const transaction = (id: string, transactionDate: string): Transaction => ({
@@ -150,5 +152,11 @@ describe('sắp xếp giao dịch theo ngày', () => {
       month: '', year: '', dateFrom: '', dateTo: '', sort: 'date-desc' as const,
     };
     expect(filterAndSortTransactions(rows, filters).map((item) => item.id)).toEqual(['middle']);
+  });
+
+  it('định dạng số tiền lọc theo phân cách hàng nghìn và giữ dữ liệu số nguyên', () => {
+    expect(normalizeAmountFilterInput('1.234.567 đ')).toBe('1234567');
+    expect(formatAmountFilterInput('0001234567')).toBe('1.234.567');
+    expect(formatAmountFilterInput('')).toBe('');
   });
 });

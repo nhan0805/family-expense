@@ -147,6 +147,14 @@ export const getInitialTransactionDateRange = (
   dateTo: isIsoDateParam(dateToParam) ? dateToParam || '' : '',
 });
 
+export const normalizeAmountFilterInput = (value: string) =>
+  value.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
+
+export const formatAmountFilterInput = (value: string) => {
+  const normalized = normalizeAmountFilterInput(value);
+  return normalized.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+};
+
 export const getTransactionListTone = (
   transactionType: Transaction['transactionType'],
 ) => {
@@ -1020,7 +1028,7 @@ export function Transactions() {
             <span>{en ? 'Detailed filters' : 'Bộ lọc chi tiết'}{activeFilterCount ? ` (${activeFilterCount})` : ''}</span>
             <ChevronDown className="shrink-0 transition-transform group-open:rotate-180" size={18} aria-hidden="true" />
           </summary>
-          <div className="ui-enter mt-3 grid gap-2 md:grid-cols-4 xl:grid-cols-5 [&_.field]:py-2.5 [&_.field]:text-sm">
+          <div className="ui-enter mt-2 grid gap-x-2 gap-y-1.5 md:grid-cols-4 xl:grid-cols-5 [&_.field]:py-2 [&_.field]:text-sm [&_.label]:mb-1 [&_.label]:leading-tight">
           <label>
             <span className="label">{en ? 'Transaction type' : 'Loại giao dịch'}</span>
             <select className="field" value={transactionType} onChange={(event) => setTransactionType(event.target.value)}><option value="">{en ? 'All types' : 'Tất cả loại'}</option><option value="Chi tiêu">{en ? 'Money out' : 'Tiền ra'}</option><option value="Thu nhập">{en ? 'Money in' : 'Tiền vào'}</option></select>
@@ -1081,27 +1089,21 @@ export function Transactions() {
           <label className="min-w-0">
             <span className="label">{en ? 'Minimum amount' : 'Từ số tiền'}</span>
             <input
-              className="field"
-              type="number"
-              min="0"
-              step="1000"
+              className="field text-base"
+              type="text"
               inputMode="numeric"
-              value={amountMin}
-              onChange={(event) => setAmountMin(event.target.value)}
-              placeholder={en ? 'e.g. 500000' : 'Ví dụ 500000'}
+              value={formatAmountFilterInput(amountMin)}
+              onChange={(event) => setAmountMin(normalizeAmountFilterInput(event.target.value))}
             />
           </label>
           <label className="min-w-0">
             <span className="label">{en ? 'Maximum amount' : 'Đến số tiền'}</span>
             <input
-              className="field"
-              type="number"
-              min="0"
-              step="1000"
+              className="field text-base"
+              type="text"
               inputMode="numeric"
-              value={amountMax}
-              onChange={(event) => setAmountMax(event.target.value)}
-              placeholder={en ? 'e.g. 2000000' : 'Ví dụ 2000000'}
+              value={formatAmountFilterInput(amountMax)}
+              onChange={(event) => setAmountMax(normalizeAmountFilterInput(event.target.value))}
             />
           </label>
           <label>
