@@ -55,6 +55,7 @@ export function ImportExport() {
   const [validRows, setValidRows] = useState<TemplateRow[]>([]);
   const [importErrors, setImportErrors] = useState<TemplateError[]>([]);
   const [includeDuplicates, setIncludeDuplicates] = useState(false);
+  const [importMode, setImportMode] = useState<'insert' | 'update'>('insert');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const downloadTemplate = async () => {
@@ -207,6 +208,7 @@ export function ImportExport() {
     setImportBusy(true);
     setMessage(en ? 'Saving data…' : 'Đang ghi dữ liệu…');
     const payload = rows.map((row) => ({
+      id: row.id || null,
       rowNumber: row.rowNumber,
       transactionDate: row.transactionDate,
       amount: row.amount,
@@ -223,6 +225,7 @@ export function ImportExport() {
       p_file_name: fileName,
       p_rows: payload,
       p_issues: importErrors,
+      p_mode: importMode,
     });
     setImportBusy(false);
     if (error) {
@@ -283,6 +286,7 @@ export function ImportExport() {
         isSupabaseConfigured && familyId ? await loadAllTransactions() : [];
       const rows = cloudRows.length
         ? cloudRows.map((row) => ({
+            'ID giao dịch': row.id,
             Ngày: row.transaction_date,
             'Loại giao dịch': transactionTypeLabel(String(row.transaction_type ?? '')),
             'Trạng thái': row.status,
@@ -297,6 +301,7 @@ export function ImportExport() {
         : transactions
             .filter((transaction) => !transaction.deletedAt)
             .map((transaction) => ({
+              'ID giao dịch': transaction.id,
               Ngày: transaction.transactionDate,
               'Loại giao dịch': transactionTypeLabel(transaction.transactionType),
               'Trạng thái': transaction.status,
@@ -505,6 +510,13 @@ export function ImportExport() {
             <p className="mt-1 text-sm text-gray-500">
               {en ? 'Choose an .xlsx file downloaded from the app. Data is saved only after you review and confirm it.' : 'Chọn file .xlsx được tải từ ứng dụng. Dữ liệu chỉ được ghi sau khi bạn kiểm tra và xác nhận.'}
             </p>
+            <label className="mt-3 flex items-center gap-2 text-sm">
+              <span>{en ? 'Mode' : 'Chế độ'}</span>
+              <select value={importMode} onChange={(event) => setImportMode(event.target.value as 'insert' | 'update')} className="rounded border px-2 py-1">
+                <option value="insert">{en ? 'Add new' : 'Thêm mới'}</option>
+                <option value="update">{en ? 'Update by transaction ID' : 'Cập nhật theo ID giao dịch'}</option>
+              </select>
+            </label>
           </div>
         </div>
         <div className="space-y-4 p-4 sm:p-5">

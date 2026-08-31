@@ -2,6 +2,13 @@
 
 ## 2026-08-31
 
+### Import Excel cập nhật giao dịch theo ID
+
+- Trước thay đổi: Import Excel chỉ thêm giao dịch mới hoặc bỏ qua dòng nghi trùng; không cập nhật được giao dịch hiện có.
+- Sau thay đổi: File export/template có cột `ID giao dịch`; chế độ cập nhật dùng ID và kiểm tra `family_id`, còn dòng không có ID được xử lý theo chế độ thêm mới.
+- Kỹ thuật: Cập nhật `src/pages/ImportExport.tsx`, `src/lib/templateImport.ts`, thêm migration `supabase/migrations/202608310004_import_update_by_id.sql`; RPC trả số lượng thêm mới/cập nhật và giữ kiểm tra RLS/membership.
+- Kiểm thử: `pnpm test` đạt 64/64; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` đều pass. Chưa deploy production; migration cần qua PR và Supabase workflow.
+
 ### Cải tiến Dashboard không có ngân sách
 
 - Trước thay đổi: Dashboard chủ yếu hiển thị một tháng và xu hướng cố định 6 tháng; local fallback chưa gom đúng Tạm ứng/Hoàn tiền trong breakdown.

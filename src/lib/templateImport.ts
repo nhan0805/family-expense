@@ -18,8 +18,10 @@ export const templateHeaders = [
   'Mục đích',
   'Danh mục',
   'Ghi chú',
+  'ID giao dịch',
 ] as const;
 export type TemplateRow = {
+  id: string;
   rowNumber: number;
   transactionDate: string;
   amount: number;
@@ -34,6 +36,7 @@ export type TemplateRow = {
 };
 export type TemplateError = { rowNumber: number; messages: string[] };
 const schema = z.object({
+  id: z.string().uuid().or(z.literal('')),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   amount: z.number().int().positive(),
   type: z.enum(templateTransactionTypes),
@@ -73,7 +76,7 @@ export async function createTemplate(
     fgColor: { argb: 'FF155E46' },
   };
   ws.autoFilter = 'A1:I1001';
-  ws.columns = [14, 18, 20, 16, 36, 26, 28, 26, 36].map((width) => ({ width }));
+  ws.columns = [14, 18, 20, 16, 36, 26, 28, 26, 36, 38].map((width) => ({ width }));
   lists.addRow([
     'Loại giao dịch',
     'Trạng thái',
@@ -100,6 +103,7 @@ export async function createTemplate(
   guide.addRows([
     ['HƯỚNG DẪN IMPORT'],
     ['Mỗi dòng là một giao dịch; không đổi tên sheet hoặc tiêu đề.'],
+    ['ID giao dịch chỉ điền khi muốn cập nhật giao dịch hiện có. Không sửa ID.'],
     ['Số tiền là số nguyên dương, không nhập ký hiệu đ.'],
     ['Chọn các giá trị danh mục từ dropdown.'],
     ['Tối đa 1.000 dòng mỗi file.'],
@@ -194,15 +198,16 @@ export async function parseTemplate(
     const value = (name: string, templatePosition: number) =>
       values[isFullExport ? headerIndex(name) : templatePosition];
     const raw = {
-      date: dateValue(value('Ngày', 0)),
-      amount: Number(value(isFullExport ? 'Số tiền' : 'Số tiền (VND)', 1)),
-      type: norm(value('Loại giao dịch', 2)),
-      status: norm(value('Trạng thái', 3)),
-      description: norm(value('Nội dung', 4)),
-      payment: norm(value('Phương thức thanh toán', 5)),
-      purpose: norm(value('Mục đích', 6)),
-      expense: norm(value('Danh mục', 7)),
-      note: norm(value('Ghi chú', 8)),
+      id: norm(value('ID giao dịch', isFullExport ? -1 : 9)),
+      date: dateValue(value('Ngày', isFullExport ? 0 : 0)),
+      amount: Number(value(isFullExport ? 'Số tiền' : 'Số tiền (VND)', isFullExport ? 4 : 1)),
+      type: norm(value('Loại giao dịch', isFullExport ? 1 : 2)),
+      status: norm(value('Trạng thái', isFullExport ? 2 : 3)),
+      description: norm(value('Nội dung', isFullExport ? 3 : 4)),
+      payment: norm(value('Phương thức thanh toán', isFullExport ? 5 : 5)),
+      purpose: norm(value('Mục đích', isFullExport ? 6 : 6)),
+      expense: norm(value('Danh mục', isFullExport ? 7 : 7)),
+      note: norm(value('Ghi chú', isFullExport ? 8 : 8)),
     };
     const parsed = schema.safeParse(raw);
     const messages = parsed.success
@@ -227,6 +232,7 @@ export async function parseTemplate(
           raw.description.toLocaleLowerCase('vi-VN'),
     );
     valid.push({
+      id: raw.id,
       rowNumber: n,
       transactionDate: raw.date,
       amount: raw.amount,
