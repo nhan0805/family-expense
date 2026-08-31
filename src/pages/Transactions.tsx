@@ -1,5 +1,6 @@
 import {
   ChevronDown,
+  CheckCheck,
   RotateCcw,
   Search,
   Trash2,
@@ -279,6 +280,7 @@ export function Transactions() {
   const [bulkEditBusy, setBulkEditBusy] = useState(false);
   const [bulkEditValues, setBulkEditValues] = useState<BulkEditValues>(emptyBulkEditValues);
   const [showTrash, setShowTrash] = useState(false);
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
   useEffect(() => {
     const timeout = window.setTimeout(() => setDebouncedQuery(query), 300);
     return () => window.clearTimeout(timeout);
@@ -603,6 +605,29 @@ export function Transactions() {
     closeSelectMode();
     notify(`Đã cập nhật ${updatedCount} giao dịch.`);
   };
+  const duePlannedTransactions = rows.filter((item) => !showTrash && item.status === 'Dự kiến' && item.transactionDate <= today);
+  const confirmPlannedTransactions = async (items: Transaction[]) => {
+    if (!items.length) return;
+    if (!await askConfirm({ title: 'Xác nhận giao dịch dự kiến?', description: `${items.length} giao dịch đến hạn sẽ chuyển sang Thực tế.`, confirmLabel: 'Xác nhận' })) return;
+    setBulkEditBusy(true);
+    setDeleteError('');
+    if (isSupabaseConfigured) {
+      const { data, error } = await supabase.from('transactions').update({ status: 'Thực tế', updated_by: currentUserId }).eq('family_id', familyId).in('id', items.map((item) => item.id)).eq('status', 'Dự kiến').is('deleted_at', null).select('id');
+      if (error || data?.length !== items.length) {
+        setDeleteError(error?.message || 'Một số giao dịch không thể xác nhận.');
+        setBulkEditBusy(false);
+        return;
+      }
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['transactions', familyId] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard', familyId] }),
+      ]);
+    } else {
+      setTransactions((current) => current.map((item) => items.some((planned) => planned.id === item.id) ? { ...item, status: 'Thực tế' } : item));
+    }
+    setBulkEditBusy(false);
+    notify(`Đã xác nhận ${items.length} giao dịch.`);
+  };
   const remove = async (id: string) => {
     const transaction = rows.find((item) => item.id === id);
     if (
@@ -925,6 +950,17 @@ export function Transactions() {
           </div>
         </details>
       </section>
+
+      {duePlannedTransactions.length > 0 && (
+        <section className="order-2 rounded-2xl border border-amber-200 bg-amber-50/70 p-4 shadow-sm dark:border-amber-900/50 dark:bg-amber-950/20" aria-labelledby="due-planned-title">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-start gap-3"><span className="grid size-10 shrink-0 place-items-center rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300"><CheckCheck size={20} /></span><div><h2 id="due-planned-title" className="font-extrabold">{en ? 'Planned transactions due' : 'Giao dịch dự kiến tới hạn'}</h2><p className="mt-1 text-sm text-amber-900/75 dark:text-amber-100/75">{en ? `${duePlannedTransactions.length} transaction(s) are due for confirmation.` : `${duePlannedTransactions.length} giao dịch cần xác nhận đã thực hiện.`}</p></div></div>
+            <button type="button" className="btn-primary shrink-0 text-sm" disabled={bulkEditBusy} onClick={() => void confirmPlannedTransactions(duePlannedTransactions)}>{en ? 'Confirm all' : 'Xác nhận tất cả'}</button>
+          </div>
+          <div className="mt-3 space-y-2">{duePlannedTransactions.slice(0, 5).map((item) => <div key={item.id} className="flex items-center justify-between gap-3 rounded-xl bg-white/75 px-3 py-2 text-sm dark:bg-white/5"><span className="min-w-0 truncate font-semibold">{item.description}</span><button type="button" className="shrink-0 rounded-lg px-2 py-1 text-xs font-bold text-amber-800 hover:bg-amber-100 dark:text-amber-200 dark:hover:bg-amber-950/50" disabled={bulkEditBusy} onClick={() => void confirmPlannedTransactions([item])}>{en ? 'Confirm' : 'Xác nhận'}</button></div>)}</div>
+          {duePlannedTransactions.length > 5 && <p className="mt-2 text-xs text-amber-900/70 dark:text-amber-100/70">{en ? `Showing 5 of ${duePlannedTransactions.length}.` : `Đang hiển thị 5/${duePlannedTransactions.length} giao dịch.`}</p>}
+        </section>
+      )}
 
       <div className="order-3 flex items-center justify-between gap-3 rounded-xl border border-black/5 bg-white/70 px-3 py-2 shadow-sm dark:border-white/10 dark:bg-white/5">
         <p className="text-base font-semibold text-gray-600 dark:text-gray-300">{showTrash ? (en ? 'Trash' : 'Thùng rác') : (en ? 'Transaction list' : 'Danh sách giao dịch')}</p>

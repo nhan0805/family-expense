@@ -2,6 +2,29 @@
 
 ## 2026-08-31
 
+### Khôi phục xác nhận giao dịch dự kiến tới hạn
+
+- Trước thay đổi: Giao dịch `Dự kiến` tới hạn không có khu vực xác nhận riêng.
+- Sau thay đổi: Tab Giao dịch hiển thị các giao dịch dự kiến đến hạn, cho phép xác nhận từng dòng hoặc xác nhận tất cả; trạng thái được chuyển sang `Thực tế` sau khi lưu thành công.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx`, `src/pages/Transactions.ui.test.tsx`; không đổi database/API.
+- Kiểm thử: `pnpm test` đạt 19/19 file và 67/67 test; lint, typecheck, build và `git diff --check` đều pass. Chưa deploy production.
+
+### Ẩn bubble không có giá trị hiển thị
+
+- Trước thay đổi: Biểu đồ bubble vẫn vẽ các vòng tròn nhỏ nhưng không đủ chỗ hiển thị tên và số tiền, khiến chúng trông như không có giá trị.
+- Sau thay đổi: Chỉ giữ các bubble đủ kích thước để hiển thị đồng thời tên danh mục và giá trị rút gọn; bubble có giá trị bằng 0 vẫn không được vẽ.
+- Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx`, bổ sung regression test trong `src/pages/Dashboard.test.tsx`; không đổi API/database.
+- Kiểm thử: `pnpm test` đạt 19/19 file và 66/66 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` đều pass. Regression test xác nhận bubble không có nhãn giá trị bị loại khỏi SVG; Browser local chưa dựng được Dashboard có dữ liệu vì thiếu Supabase/family.
+- Triển khai: Chưa deploy trong lượt này; chờ yêu cầu deploy.
+
+### Sửa tràn KPI và bỏ nút Trước/Nay
+
+- Trước thay đổi: Số tiền KPI dài như `1.295,1M ₫` bị tràn khỏi card 6 cột; header còn có hai nút `Trước` và `Nay` không cần thiết.
+- Sau thay đổi: Đưa số tiền KPI xuống dòng riêng dưới nhãn/icon, cho phép ngắt dòng an toàn và giảm cỡ chữ nhẹ; loại bỏ hai nút `Trước` và `Nay`.
+- Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx`, bổ sung assertion UI trong `src/pages/Dashboard.test.tsx`; không đổi API/database.
+- Kiểm thử: Đã chạy cùng bộ quality gates: `pnpm test` đạt 19/19 file và 66/66 test; lint, typecheck, build và `git diff --check` đều pass.
+- Triển khai: Chưa deploy trong lượt này; chờ yêu cầu deploy.
+
 ### Tinh gọn bố cục bộ lọc giao dịch
 
 - Sau thay đổi: Bộ lọc chi tiết dùng bố cục 5 cột trên màn hình lớn, 4 cột tablet, 2 cột mobile; giảm khoảng cách và chiều cao ô nhập để giao diện gọn hơn.

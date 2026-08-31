@@ -66,6 +66,20 @@ describe('Giao dịch mobile', () => {
     expect(screen.getByLabelText('Đến ngày')).toHaveValue('2026-02-28');
   });
 
+  it('hiển thị và xác nhận giao dịch dự kiến đã tới hạn', async () => {
+    const setTransactions = vi.fn();
+    vi.mocked(useApp).mockReturnValue({
+      transactions: [{ id: 'planned-1', transactionDate: '2026-08-30', transactionType: 'Chi tiêu', status: 'Dự kiến', description: 'Tiền điện', amount: 300000, purposeId: 'p1', expenseTypeId: 'e1', paymentMethodId: 'm1', source: 'manual', aiGenerated: false, createdBy: 'u1' }],
+      setTransactions, purposes: [{ id: 'p1', name: 'Sinh hoạt' }], expenseTypes: [{ id: 'e1', name: 'Hóa đơn' }], paymentMethods: [{ id: 'm1', name: 'Chuyển khoản' }], familyId: 'f1', currentUserId: 'u1', currentUserRole: 'owner',
+    } as unknown as ReturnType<typeof useApp>);
+    render(<FeedbackProvider><QueryClientProvider client={new QueryClient()}><MemoryRouter><Transactions/></MemoryRouter></QueryClientProvider></FeedbackProvider>);
+    expect(screen.getByRole('heading', { name: 'Giao dịch dự kiến tới hạn' })).toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole('button', { name: 'Xác nhận' })[0]!);
+    fireEvent.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Xác nhận' }));
+    await waitFor(() => expect(setTransactions).toHaveBeenCalled());
+    expect(screen.getByText('Đã xác nhận 1 giao dịch.')).toBeInTheDocument();
+  });
+
   it('chọn nhiều và chỉ sửa bốn trường bắt buộc', async () => {
     const setTransactions = vi.fn();
     vi.mocked(useApp).mockReturnValue({
