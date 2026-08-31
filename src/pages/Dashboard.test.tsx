@@ -98,7 +98,9 @@ describe('Dashboard', () => {
       'href',
       '/giao-dich?month=02&year=2026',
     );
-    expect(screen.getByRole('link', { name: 'Mở giao dịch theo Giá trị ròng' }).querySelector('span')).toHaveClass('bg-rose-100');
+    const netKpi = screen.getByRole('link', { name: 'Mở giao dịch theo Giá trị ròng' });
+    expect(netKpi).toHaveClass('block', 'h-full');
+    expect(netKpi.querySelector('span')).toHaveClass('bg-rose-100');
     expect(screen.queryByText('Giao dịch thực tế trong tháng')).not.toBeInTheDocument();
     expect(screen.queryByText('Chi tháng 2')).not.toBeInTheDocument();
     expect(screen.queryByText('Chi tháng 1')).not.toBeInTheDocument();
@@ -199,6 +201,10 @@ describe('Dashboard', () => {
     expect(screen.getByText('Trung bình / tháng')).toBeInTheDocument();
     expect(screen.getByText('Tháng cao nhất')).toBeInTheDocument();
     expect(screen.getByText('Tháng thấp nhất')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Mở giao dịch theo Giá trị ròng' })).toHaveClass(
+      'block',
+      'h-full',
+    );
     expect(screen.getByRole('link', { name: 'Mở giao dịch theo Tổng chi' })).toHaveTextContent('300K');
     expect(screen.getByRole('link', { name: 'Mở giao dịch theo Tổng thu' })).toHaveTextContent('550K');
     expect(screen.getByRole('link', { name: 'Mở giao dịch theo Tổng chi' })).toHaveAttribute(
