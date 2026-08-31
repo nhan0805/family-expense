@@ -2,6 +2,21 @@
 
 ## 2026-08-31
 
+### Bổ sung lọc số tiền cho tìm kiếm AI
+
+- Trước thay đổi: Tìm kiếm bằng AI chưa trả về hoặc áp dụng được điều kiện theo số tiền; nút AI chưa có feedback trực quan giống nút `Gợi ý AI` trong form giao dịch.
+- Sau thay đổi: Hỗ trợ lọc theo `Từ số tiền`/`Đến số tiền`, bao gồm các câu như `trên 500 nghìn`, `dưới 2 triệu` và `từ 500 nghìn đến 2 triệu`; nút AI có màu gradient, trạng thái đang phân tích và trạng thái `Đã lọc` sau khi áp dụng.
+- Kỹ thuật: Cập nhật `src/lib/ai.ts`, `src/pages/Transactions.tsx`, `src/lib/transactionsApi.ts`, `supabase/functions/search-transactions/index.ts`; thêm migration `supabase/migrations/202608310005_transaction_amount_filters.sql` cho RPC danh sách giao dịch và thùng rác; không đổi bảng dữ liệu.
+- Kiểm thử: Đang chạy test, lint, typecheck, build và kiểm tra migration.
+- Triển khai: Chưa deploy production.
+
+### Cân đối bố cục ba KPI theo tháng
+
+- Trước thay đổi: Khi xem một tháng, KPI `Giá trị ròng` đứng một mình ở hàng thứ hai trên mobile.
+- Sau thay đổi: `Giá trị ròng` chiếm toàn hàng trên màn hình hẹp và trở lại một cột ở màn hình lớn; kỳ nhiều tháng giữ bố cục sáu KPI.
+- Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx`; không đổi API/database.
+- Kiểm thử: Đang chạy test, lint, typecheck và build.
+
 ### Thêm ba tính năng AI có kiểm soát cho giao dịch và Dashboard
 
 - Trước thay đổi: AI nhập giao dịch chưa tham khảo cách phân loại thực tế của gia đình; Dashboard chỉ có insight tĩnh; ô tìm kiếm giao dịch chỉ nhận từ khóa thông thường.

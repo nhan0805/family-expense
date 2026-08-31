@@ -104,6 +104,8 @@ describe('sắp xếp giao dịch theo ngày', () => {
       purposeId: 'sinh-hoat',
       expenseTypeId: 'nuoc',
       paymentMethodId: '',
+      amountMin: '',
+      amountMax: '',
       month: '',
       year: '',
       dateFrom: '',
@@ -120,7 +122,7 @@ describe('sắp xếp giao dịch theo ngày', () => {
       transaction('thang-2-2026', '2026-02-10'),
     ];
     const filters = {
-      query: '', transactionType: '', status: '', purposeId: '', expenseTypeId: '', paymentMethodId: '',
+      query: '', transactionType: '', status: '', purposeId: '', expenseTypeId: '', paymentMethodId: '', amountMin: '', amountMax: '',
       month: '02', year: '2025', dateFrom: '', dateTo: '', sort: 'date-desc' as const,
     };
     expect(filterAndSortTransactions(rows, filters).map((item) => item.id)).toEqual(['thang-2-2025']);
@@ -132,9 +134,21 @@ describe('sắp xếp giao dịch theo ngày', () => {
       { ...transaction('an-trua', '2026-08-11'), description: 'Ăn trưa' },
     ];
     const filters = {
-      query: 'dien nuoc da nang', transactionType: '', status: '', purposeId: '', expenseTypeId: '', paymentMethodId: '',
+      query: 'dien nuoc da nang', transactionType: '', status: '', purposeId: '', expenseTypeId: '', paymentMethodId: '', amountMin: '', amountMax: '',
       month: '', year: '', dateFrom: '', dateTo: '', sort: 'date-desc' as const,
     };
     expect(filterAndSortTransactions(rows, filters).map((item) => item.id)).toEqual(['dien-nuoc']);
+  });
+  it('lọc theo khoảng số tiền', () => {
+    const rows = [
+      { ...transaction('small', '2026-08-10'), amount: 100000 },
+      { ...transaction('middle', '2026-08-11'), amount: 500000 },
+      { ...transaction('large', '2026-08-12'), amount: 2000000 },
+    ];
+    const filters = {
+      query: '', transactionType: '', status: '', purposeId: '', expenseTypeId: '', paymentMethodId: '', amountMin: '500000', amountMax: '1500000',
+      month: '', year: '', dateFrom: '', dateTo: '', sort: 'date-desc' as const,
+    };
+    expect(filterAndSortTransactions(rows, filters).map((item) => item.id)).toEqual(['middle']);
   });
 });
