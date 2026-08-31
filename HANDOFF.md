@@ -72,6 +72,13 @@ Mục tiêu là chuyển Dashboard từ màn hình xem số liệu theo tháng t
 
 **Thứ tự ưu tiên đề xuất:** P1 bộ lọc kỳ + KPI so sánh; P1 chart thu–chi; P2 breakdown theo thời gian; P2 top danh mục/micro-trend; P3 heatmap và insight nâng cao. Các mục trong phạm vi hiện tại đã được triển khai ở handoff phía trên; heatmap và budget không thuộc phiên này.
 
+### Handoff phiên làm việc — Dashboard mobile và thứ tự KPI (31/08/2026)
+
+- Đổi thứ tự hai KPI đầu Dashboard để `Tổng thu` đứng trước `Tổng chi`.
+- Cập nhật hướng dẫn danh mục gộp từ “di chuột để xem chi tiết” thành “nhấn hoặc bấm … để xem chi tiết”, phù hợp với mobile/touch.
+- File chính: `src/pages/Dashboard.tsx`, `src/pages/Dashboard.test.tsx`, `CHANGELOG.md`.
+- Không thay đổi API/database. Quality gates đã pass; chờ PR merge để deploy production.
+
 ## 1. Project Overview
 
 | Hạng mục | Nội dung |

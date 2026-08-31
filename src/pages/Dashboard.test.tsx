@@ -78,6 +78,9 @@ describe('Dashboard', () => {
     expect(screen.queryByRole('button', { name: 'Tháng trước' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Tháng này' })).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Mở giao dịch theo Tổng chi' })).toHaveTextContent('250K');
+    const kpiLinks = screen.getAllByRole('link', { name: /Mở giao dịch theo Tổng (thu|chi)/ });
+    expect(kpiLinks[0]).toHaveAccessibleName('Mở giao dịch theo Tổng thu');
+    expect(kpiLinks[1]).toHaveAccessibleName('Mở giao dịch theo Tổng chi');
     expect(screen.queryByText('Trung bình / tháng')).not.toBeInTheDocument();
     expect(screen.queryByText('Tháng cao nhất')).not.toBeInTheDocument();
     expect(screen.queryByText('Tháng thấp nhất')).not.toBeInTheDocument();
