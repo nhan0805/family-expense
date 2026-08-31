@@ -2,6 +2,13 @@
 
 ## 2026-08-31
 
+### Thử Packed Bubble Chart cho Thu/Chi theo danh mục
+
+- Sau thay đổi: Hai chart Thu nhập/Chi tiêu theo danh mục hiển thị dạng bubble; kích thước theo giá trị, click bubble mở giao dịch đã lọc và tooltip native hiển thị chi tiết.
+- Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx`; không thêm dependency, không thay đổi API/database.
+- Kiểm thử: Đang chạy test, lint, typecheck và build.
+- Triển khai: Chờ PR production.
+
 ### Tránh chồng lấn nhãn số tiền trên chart Thu ròng
 
 - Sau thay đổi: Nhãn đầu/cuối được chừa mép, nhãn âm/dương đặt theo hướng phù hợp để không đè trục hoặc đường biểu đồ.
