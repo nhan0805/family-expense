@@ -2,85 +2,31 @@
 
 ## 2026-08-30
 
-### Bỏ nút xem giao dịch trên biểu đồ
+### Đổi bộ chọn giao diện và ngôn ngữ sang switch
 
-- Sau thay đổi: Loại nút “Xem giao dịch” khỏi các biểu đồ Dashboard vì từng lát/ cột biểu đồ đã có thể bấm để mở giao dịch theo bộ lọc tương ứng.
-- Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx`; giữ nguyên điều hướng khi click vào dữ liệu biểu đồ.
-- Kiểm thử: Chờ test, lint, typecheck và build.
+- Sau thay đổi: Giao diện chỉ còn Sáng/Tối bằng nút switch; ngôn ngữ VI/EN cũng chuyển đổi bằng switch, không còn lựa chọn Theo thiết bị.
+- Kỹ thuật: Cập nhật `src/context/ThemeContext.tsx`, `src/components/ThemeSelect.tsx` và test tương ứng; lựa chọn `system` cũ được đọc thành Sáng để tương thích.
+- Kiểm thử: Đang chạy test, lint, typecheck và build.
 - Triển khai: Chưa deploy.
 
-### Đổi thứ tự biểu đồ Dashboard
+### Cải thiện accessibility và khả năng phục hồi Dashboard
 
-- Trước thay đổi: Biểu đồ chi tiêu theo mục đích nằm bên trái và biểu đồ thu nhập nằm bên phải.
-- Sau thay đổi: Biểu đồ `Income by purpose` nằm bên trái, `Expenses by purpose` nằm bên phải; dữ liệu và link lọc không thay đổi.
-- Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx`; không đổi dữ liệu/API.
-- Kiểm thử: Chờ test, lint, typecheck và build.
-- Triển khai: Chưa deploy.
+- Sau thay đổi: Dashboard thông báo lỗi nếu bất kỳ query summary/trends/years thất bại; các lát/cột biểu đồ có thể điều hướng bằng bàn phím và có accessible name.
+- Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx` và mở rộng translation keys trong `src/context/LanguageContext.tsx`; không thay đổi database/API.
+- Kiểm thử: Đang chạy lint, typecheck, test và build.
+- Triển khai: Chờ quality gates và quy trình PR vào `main`.
 
-### Đồng bộ độ rộng bộ chọn khi dùng tiếng Anh
+### Cập nhật handoff sau release Dashboard và đa ngôn ngữ
 
-- Trước thay đổi: Nhãn “Appearance” và “Language” có độ dài khác nhau làm hai khung select rộng không đều khi chọn EN.
-- Sau thay đổi: Hai select dùng chung một cột grid nên luôn cùng độ rộng; đổi wording nút export thành “Download Excel file”.
-- Kỹ thuật: Cập nhật `src/components/ThemeSelect.tsx` và `src/pages/ImportExport.tsx`; không đổi dữ liệu/API.
-- Kiểm thử: Chờ test, lint, typecheck và build.
-- Triển khai: Chưa deploy.
+- Cập nhật `HANDOFF.md` theo trạng thái production sau PR #55, #56 và #57: localization EN, selector đồng độ rộng, thứ tự chart và điều hướng click chart.
+- Kiểm thử/triển khai: CI `main` pass quality và `db-security`; Cloudflare Pages production merge commit `54983d914f83c7ff8ccb5cfed2c3d22020cdfcaf` thành công.
 
-### Hoàn thiện bản dịch bộ lọc tháng/năm và các nhãn giao dịch còn sót
+### Cho phép nhấn cột xu hướng để mở giao dịch
 
-- Trước thay đổi: Khi chọn EN, option tháng vẫn hiển thị “Tháng 8”, một số chip bộ lọc, nhãn ngày, tiêu đề bảng, legend Dashboard và thao tác giao dịch vẫn còn tiếng Việt.
-- Sau thay đổi: Option hiển thị tên tháng tiếng Anh như “August”, chip hiển thị tên tháng/Year/From/To, và các nhãn/aria label liên quan chuyển theo VI/EN; giá trị query, enum nghiệp vụ và dữ liệu Excel giữ nguyên.
-- Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx`, `src/pages/Transactions.tsx`, `src/components/Layout.tsx`, `src/components/ThemeSelect.tsx`.
-- Kiểm thử: Chờ test, lint, typecheck và build.
-- Triển khai: Chưa deploy.
+- Nhấn cột Thu nhập/Chi tiêu theo tháng sẽ mở màn hình Giao dịch với bộ lọc tương ứng.
+- Cập nhật `src/pages/Dashboard.tsx`; kiểm thử và triển khai đang thực hiện.
 
-### Sửa label đè lên khung chọn giao diện/ngôn ngữ
-
-- Sau thay đổi: Cột label dùng kích thước theo nội dung, cột select giữ chiều rộng cố định nên không còn chồng lấn trên sidebar hẹp.
-- Kỹ thuật: Cập nhật `src/components/ThemeSelect.tsx`; không đổi dữ liệu/API.
-- Kiểm thử: Chờ CI.
-- Triển khai: Chưa deploy.
-
-### Rà soát toàn bộ text hiển thị còn lại
-
-- Sau thay đổi: Dịch thêm thông báo thao tác, xác nhận, AI, accessibility label và bảng kiểm tra Import/Export theo VI/EN.
-- Kỹ thuật: Cập nhật `src/pages/TransactionForm.tsx` và `src/pages/ImportExport.tsx`; giữ nguyên enum, sheet và cột Excel tiếng Việt.
-- Kiểm thử: TypeScript và diff check pass; chờ CI.
-- Triển khai: Chưa deploy.
-
-### Rà soát bản dịch action Thành viên và Danh mục
-
-- Sau thay đổi: Dịch thêm nhãn accessibility, trạng thái loading/empty, thao tác đổi tên/xóa và thông báo xác nhận theo locale.
-- Kỹ thuật: Cập nhật `src/pages/Members.tsx` và `src/pages/Catalogs.tsx`; không đổi dữ liệu/API.
-- Kiểm thử: Chờ CI.
-- Triển khai: Chưa deploy.
-
-### Hoàn thiện thêm bản dịch Form giao dịch và bộ lọc Giao dịch
-
-- Sau thay đổi: Các nhãn, trạng thái, nút, empty state và lựa chọn lọc chính hiển thị theo VI/EN; giá trị enum lưu trữ vẫn giữ nguyên tiếng Việt.
-- Kỹ thuật: Cập nhật `src/pages/TransactionForm.tsx` và `src/pages/Transactions.tsx`; không thay đổi database/Excel.
-- Kiểm thử: TypeScript và diff check pass; chờ CI.
-- Triển khai: Chưa deploy.
-
-### Dịch tiếp Form giao dịch và Quản lý dữ liệu
-
-- Sau thay đổi: Bổ sung bản dịch tiếng Anh cho tiêu đề, mô tả và nhãn chính của Form giao dịch và Import/Export.
-- Kỹ thuật: Cập nhật `src/pages/TransactionForm.tsx` và `src/pages/ImportExport.tsx`; không đổi dữ liệu Excel/database.
-- Kiểm thử: Chờ CI.
-- Triển khai: Chưa deploy.
-
-### Dịch tiếp màn hình Tạo gia đình và Thành viên
-
-- Sau thay đổi: Các tiêu đề, mô tả, nút và placeholder chuyển sang tiếng Anh khi chọn EN.
-- Kỹ thuật: Cập nhật `src/pages/CreateFamily.tsx` và `src/pages/Members.tsx`; không thay đổi dữ liệu/API.
-- Kiểm thử: Chờ CI.
-- Triển khai: Chưa deploy.
-
-### Căn đều chiều rộng khung chọn giao diện và ngôn ngữ
-
-- Sau thay đổi: Hai khung chọn có cùng chiều rộng, icon/label căn thẳng hàng và không tràn trên sidebar hẹp.
-- Kỹ thuật: Cập nhật `src/components/ThemeSelect.tsx`; không đổi dữ liệu hay API.
-- Kiểm thử: TypeScript/CI.
-- Triển khai: Chờ merge và Cloudflare Pages deploy.
+### Mở giao dịch khi nhấn chart xu hướng
 
 ### Hoàn thiện bản dịch giao diện Dashboard, Giao dịch và bộ chọn ngôn ngữ
 
@@ -91,62 +37,34 @@
 
 ### Sửa db-security bỏ qua migration dịch chuyển dữ liệu Excel legacy
 
-- Sau thay đổi: Loại migration phụ thuộc 2.083 giao dịch Excel khỏi database rỗng dùng cho structural test; không thay đổi production database.
-- Kỹ thuật: Cập nhật `.github/workflows/ci.yml`.
-### Sửa pgTAP assertion foreign key cho db-security
+- Nhấn cột Thu nhập hoặc Chi tiêu theo từng tháng sẽ mở màn hình Giao dịch với bộ lọc loại giao dịch, tháng và năm tương ứng.
+- Cập nhật `src/pages/Dashboard.tsx`; không thay đổi dữ liệu/API.
+- Kiểm thử và triển khai: Đang thực hiện.
 
-- Sau thay đổi: Dùng `pg_constraint` và `ok()` thay cho `has_constraint()` không tồn tại trong pgTAP CI.
-- Kỹ thuật: Cập nhật `supabase/tests/tenant_security.sql`; không đổi production database.
-- Kiểm thử: Chờ CI xác nhận.
-- Triển khai: Chưa deploy.
+### Kết nối dữ liệu RPC cho chart xu hướng
+
+- Sửa lỗi hai chart Thu nhập/Chi tiêu 6 tháng hiển thị toàn số 0 do chưa gọi `fetchDashboardTrends`.
+- Cập nhật `src/pages/Dashboard.tsx`; chart nay lấy đúng dữ liệu từ RPC khi dùng Supabase.
+- Kiểm thử: 61/61 tests, typecheck và lint đạt. Triển khai: Đang thực hiện.
+
+### Đổi chart xu hướng 6 tháng sang dạng cột
+
+- Hai chart Thu nhập và Chi tiêu 6 tháng hiển thị dạng cột bo góc, giữ màu xanh/cam và nhãn giá trị.
+- Sửa CI để kiểm thử DB không bị chặn bởi migration dữ liệu Excel phụ thuộc Auth user.
+- Kiểm thử: Đã đạt local test/typecheck; chờ CI chạy lại. Triển khai: Đang thực hiện.
 
 ### Đổi chart thu nhập và chi tiêu 6 tháng sang dạng cột
-### Sửa CI bỏ qua migration dữ liệu Excel phụ thuộc Auth user
-
-- Sau thay đổi: Job `db-security` tạm thời di chuyển migration Excel user-dependent trước khi khởi động Supabase local, để structural tests chạy trên database rỗng.
-- Kỹ thuật: Cập nhật `.github/workflows/ci.yml`; không thay đổi production database.
-- Kiểm thử: Chờ CI xác nhận.
-- Triển khai: Chưa deploy.
-
-### Tối ưu tải asset PWA và tính toán Dashboard
 
 - Đổi hai chart xu hướng Thu nhập và Chi tiêu 6 tháng sang cột bo góc, giữ màu xanh/cam và nhãn giá trị trên đầu cột.
 - Cập nhật `src/pages/Dashboard.tsx`; không thay đổi dữ liệu/API.
 - Kiểm thử và triển khai: Đang thực hiện.
-- Trước thay đổi: PWA precache cả chunk ExcelJS/XLSX lớn; một số phép tính Dashboard local lặp lại sau mỗi lần render.
-- Sau thay đổi: Loại chunk ExcelJS/XLSX khỏi precache; memo hóa danh sách năm, giao dịch thực tế và breakdown local.
-- Kỹ thuật: Cập nhật `vite.config.ts` và `src/pages/Dashboard.tsx`; không thay đổi database/API. Excel vẫn dynamic import khi người dùng thao tác.
-- Kiểm thử: Đang chạy test, lint, typecheck và build.
-- Triển khai: Chưa deploy.
-### Sửa tràn layout bộ chọn ngôn ngữ trên sidebar mobile/hẹp
 
-- Trước thay đổi: Nhãn Giao diện bị xuống dòng và bộ chọn VI/EN có thể tràn khỏi sidebar.
-- Sau thay đổi: Các bộ chọn được xếp responsive theo cột khi sidebar hẹp; nhãn không bị vỡ dòng.
-- Kỹ thuật: Cập nhật `src/components/ThemeSelect.tsx`; không đổi database/API.
-- Kiểm thử: `pnpm test` đạt 61/61; lint, typecheck và build đạt.
-- Triển khai: Đang chờ PR #36.
-
-### Sửa tên chart thành Thu ròng thực tế
-
-- Đổi tên chart và chú giải từ “Chi ròng thực tế” thành “Thu ròng thực tế”, đúng với công thức Thu nhập − Chi tiêu.
-- Cập nhật `src/pages/Dashboard.tsx`; không thay đổi dữ liệu/API.
-- Kiểm thử và triển khai: Chưa thực hiện.
-
-### Tối ưu tải asset PWA và tính toán Dashboard
-
-- Trước thay đổi: PWA precache cả chunk ExcelJS/XLSX lớn dù chỉ được dùng khi người dùng thao tác Import/Export; một số phép tính Dashboard local lặp lại sau mỗi lần render.
-- Sau thay đổi: Loại các chunk `exceljs` và `xlsx` khỏi precache để giảm kích thước cache cài đặt/cập nhật PWA; memo hóa danh sách năm và breakdown local theo danh mục.
-- Kỹ thuật: Cập nhật `vite.config.ts`, `src/pages/Dashboard.tsx`; không thay đổi database/API. Excel vẫn được tải theo thao tác dynamic import và cần mạng nếu chưa có trong cache.
-- Kiểm thử: Đã chạy production build; cần hoàn tất test/lint/typecheck trước merge.
-- Triển khai: Chưa deploy.
-
-### Bổ sung nền tảng chuyển ngôn ngữ VI/EN
 ### Bổ sung nền tảng chuyển ngôn ngữ VI/EN
 
 - Sau thay đổi: Thêm toggle VI/EN, lưu lựa chọn trên thiết bị và đồng bộ `lang` của document; các nhãn giao diện dùng chung/theme đổi theo ngôn ngữ. Template Excel vẫn giữ tiếng Việt để tương thích file cũ.
 - Kỹ thuật: Thêm `src/context/LanguageContext.tsx`; cập nhật `src/components/Layout.tsx`, `src/components/ThemeSelect.tsx`, `src/main.tsx`, `src/pages/ImportExport.tsx`; không đổi database/API.
 - Kiểm thử: `pnpm test` đạt 61/61; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` đạt. Build còn cảnh báo chunk ExcelJS lớn hiện hữu.
-- Triển khai: PR #35 đã merge vào `main` với merge commit `75f50e4551a3feca23c93e9a5ddaf3c8f0638970`; CI quality/db-security và Cloudflare Pages check đều thành công. Production trả HTTP 200 tại https://family-expense-8fo.pages.dev.
+- Triển khai: Chưa deploy.
 
 ### Sửa chiều tính chart Chi ròng thực tế
 

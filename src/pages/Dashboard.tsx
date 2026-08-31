@@ -311,12 +311,12 @@ export function Dashboard() {
           </div>
         </div>
       </div>
-      {summaryQuery.isError && (
+      {(summaryQuery.isError || trendsQuery.isError || yearsQuery.isError) && (
         <p
           role="alert"
           className="rounded-xl bg-red-50 p-3 text-sm text-red-700"
         >
-          {en ? 'Could not load dashboard data. Please try again.' : 'Không thể tải dữ liệu Dashboard. Vui lòng thử lại.'}
+          {en ? 'Could not load part of the dashboard. Please try again.' : 'Không thể tải một phần Dashboard. Vui lòng thử lại.'}
         </p>
       )}
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -500,7 +500,7 @@ function ExpensePieChart({
                 }
               >
                 {data.map((item) => (
-                  <Cell key={item.name} fill={item.fill} cursor={item.id ? 'pointer' : undefined} onClick={() => openItem(item)} />
+                  <Cell key={item.name} fill={item.fill} cursor={item.id ? 'pointer' : undefined} role={item.id ? 'button' : undefined} tabIndex={item.id ? 0 : undefined} aria-label={item.id ? `${item.name}: ${formatVnd(item.value)}` : undefined} onClick={() => openItem(item)} onKeyDown={(event) => { if (item.id && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); openItem(item); } }} />
                 ))}
               </Pie>
               <Tooltip formatter={(value) => formatVnd(Number(value))} />
@@ -560,7 +560,7 @@ function ExpenseBarChart({
                 <Tooltip formatter={(value) => formatVnd(Number(value))} />
                 <Bar dataKey="value" name="Tiền ra" radius={[6, 6, 0, 0]}>
                   {data.map((item) => (
-                  <Cell key={item.name} fill={item.fill} cursor={item.id ? 'pointer' : undefined} onClick={() => openItem(item)} />
+                  <Cell key={item.name} fill={item.fill} cursor={item.id ? 'pointer' : undefined} role={item.id ? 'button' : undefined} tabIndex={item.id ? 0 : undefined} aria-label={item.id ? `${item.name}: ${formatVnd(item.value)}` : undefined} onClick={() => openItem(item)} onKeyDown={(event) => { if (item.id && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); openItem(item); } }} />
                   ))}
                   <LabelList
                     dataKey="value"

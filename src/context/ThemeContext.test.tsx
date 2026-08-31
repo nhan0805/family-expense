@@ -24,15 +24,15 @@ describe('ThemeProvider', () => {
 
   it('lưu lựa chọn tối và áp class trước toàn ứng dụng', () => {
     render(<ThemeProvider><ThemeSelect/></ThemeProvider>);
-    fireEvent.change(screen.getByLabelText('Chế độ giao diện'), { target: { value: 'dark' } });
+    fireEvent.click(screen.getByRole('switch', { name: 'Giao diện' }));
     expect(document.documentElement).toHaveClass('dark');
     expect(window.localStorage.getItem('family-expense-theme')).toBe('dark');
   });
 
-  it('xóa lựa chọn cứng khi chuyển về theo thiết bị', () => {
-    window.localStorage.setItem('family-expense-theme', 'light');
+  it('chuyển về sáng bằng switch và lưu lựa chọn', () => {
+    window.localStorage.setItem('family-expense-theme', 'dark');
     render(<ThemeProvider><ThemeSelect/></ThemeProvider>);
-    fireEvent.change(screen.getByLabelText('Chế độ giao diện'), { target: { value: 'system' } });
-    expect(window.localStorage.getItem('family-expense-theme')).toBeNull();
+    fireEvent.click(screen.getByRole('switch', { name: 'Giao diện' }));
+    expect(window.localStorage.getItem('family-expense-theme')).toBe('light');
   });
 });
