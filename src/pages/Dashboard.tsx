@@ -400,10 +400,10 @@ export function Dashboard() {
           />
         </div>
         <div className="card min-w-0 overflow-hidden p-4">
-          <ExpenseBarChart title={en ? 'Income by category' : 'Thu nhập theo danh mục'} data={incomeByExpenseType} to={`/giao-dich?transactionType=Thu nhập&month=${selectedMonth}&year=${selectedYear}`} filterKey="expenseTypeId" />
+          <PackedBubbleChart title={en ? 'Income by category' : 'Thu nhập theo danh mục'} data={incomeByExpenseType} to={`/giao-dich?transactionType=Thu nhập&month=${selectedMonth}&year=${selectedYear}`} filterKey="expenseTypeId" />
         </div>
         <div className="card min-w-0 overflow-hidden p-4">
-          <ExpenseBarChart
+          <PackedBubbleChart
             title={en ? 'Expenses by category' : 'Chi tiêu theo danh mục'}
             data={byExpenseType}
             to={`/giao-dich?month=${selectedMonth}&year=${selectedYear}`}
@@ -513,7 +513,38 @@ function ExpensePieChart({
   );
 }
 
-function ExpenseBarChart({
+type PackedBubble = ExpenseChartItem & { x: number; y: number; r: number };
+
+function packBubbles(data: ExpenseChartItem[]): PackedBubble[] {
+  const width = 640;
+  const height = 300;
+  const padding = 12;
+  const maxValue = Math.max(...data.map((item) => item.value), 1);
+  const maxRadius = data.length > 8 ? 43 : data.length > 5 ? 51 : 60;
+  const minRadius = data.length > 1 ? 21 : 30;
+  const placed: PackedBubble[] = [];
+
+  data.slice().sort((a, b) => b.value - a.value).forEach((item, index) => {
+    const radius = Math.max(minRadius, Math.sqrt(item.value / maxValue) * maxRadius);
+    if (index === 0) {
+      placed.push({ ...item, x: width / 2, y: height / 2, r: radius });
+      return;
+    }
+    let candidate: PackedBubble | null = null;
+    for (let step = 0; step < 1600 && !candidate; step += 1) {
+      const angle = step * 0.43;
+      const distance = 18 + step * 1.45;
+      const x = width / 2 + Math.cos(angle) * distance;
+      const y = height / 2 + Math.sin(angle) * distance * 0.62;
+      if (x - radius < padding || x + radius > width - padding || y - radius < padding || y + radius > height - padding) continue;
+      if (placed.every((bubble) => Math.hypot(x - bubble.x, y - bubble.y) >= radius + bubble.r + 5)) candidate = { ...item, x, y, r: radius };
+    }
+    if (candidate) placed.push(candidate);
+  });
+  return placed;
+}
+
+function PackedBubbleChart({
   title,
   data,
   to,
@@ -525,58 +556,27 @@ function ExpenseBarChart({
   filterKey?: 'purposeId' | 'expenseTypeId';
 }) {
   const navigate = useNavigate();
+  const bubbles = packBubbles(data);
   const openItem = (item: ExpenseChartItem) => {
     if (item.id) navigate(`${to}&${filterKey}=${encodeURIComponent(item.id)}`);
   };
-  const chartWidth = Math.max(520, data.length * 78);
-  return (
-    <>
-      <h3 className="font-bold">{title}</h3>
-      <div className="h-72 w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain">
-        {data.length ? (
-          <div className="h-full" style={{ minWidth: chartWidth }}>
-            <ResponsiveContainer>
-              <BarChart
-                data={data}
-                margin={{ top: 28, right: 12, bottom: 12, left: 4 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis
-                  dataKey="name"
-                  interval={0}
-                  angle={-25}
-                  textAnchor="end"
-                  height={68}
-                  tick={{ fontSize: 11 }}
-                />
-                <YAxis
-                  tickFormatter={(value) =>
-                    formatCompactVnd(Number(value)).replace(' ₫', '')
-                  }
-                  width={48}
-                />
-                <Tooltip formatter={(value) => formatVnd(Number(value))} />
-                <Bar dataKey="value" name="Tiền ra" radius={[6, 6, 0, 0]}>
-                  {data.map((item) => (
-                  <Cell key={item.name} fill={item.fill} cursor={item.id ? 'pointer' : undefined} role={item.id ? 'button' : undefined} tabIndex={item.id ? 0 : undefined} aria-label={item.id ? `${item.name}: ${formatVnd(item.value)}` : undefined} onClick={() => openItem(item)} onKeyDown={(event) => { if (item.id && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); openItem(item); } }} />
-                  ))}
-                  <LabelList
-                    dataKey="value"
-                    position="top"
-                    formatter={(value) =>
-                      formatCompactVnd(Number(value)).replace(' ₫', '')
-                    }
-                  />
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        ) : (
-          <EmptyState title="Chưa có dữ liệu biểu đồ" description="Biểu đồ sẽ xuất hiện khi tháng này có giao dịch chi tiêu thực tế."/>
-        )}
-      </div>
-    </>
-  );
+  return <>
+    <h3 className="font-bold">{title}</h3>
+    <div className="h-72 min-w-0 max-w-full overflow-hidden pt-3">
+      {bubbles.length ? <svg className="h-full w-full" viewBox="0 0 640 300" role="list" aria-label={title} preserveAspectRatio="xMidYMid meet">
+        {bubbles.map((item) => {
+          const shortName = item.name.length > 14 ? `${item.name.slice(0, 13)}…` : item.name;
+          const showName = item.r >= 30;
+          return <g key={item.id || item.name} role={item.id ? 'button' : undefined} tabIndex={item.id ? 0 : -1} aria-label={`${item.name}: ${formatVnd(item.value)}`} className="cursor-pointer outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" onClick={() => openItem(item)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openItem(item); } }}>
+            <title>{`${item.name}: ${formatVnd(item.value)}`}</title>
+            <circle cx={item.x} cy={item.y} r={item.r} fill={item.fill} opacity="0.92" stroke="white" strokeWidth="2" />
+            {showName && <text x={item.x} y={item.y - 3} textAnchor="middle" fill="white" fontSize={item.r >= 42 ? 14 : 11} fontWeight="700" pointerEvents="none">{shortName}</text>}
+            {showName && <text x={item.x} y={item.y + 15} textAnchor="middle" fill="white" fontSize={item.r >= 42 ? 13 : 10} fontWeight="600" pointerEvents="none">{formatCompactVnd(item.value).replace(' ₫', '')}</text>}
+          </g>;
+        })}
+      </svg> : <EmptyState title="Chưa có dữ liệu biểu đồ" description="Biểu đồ sẽ xuất hiện khi tháng này có giao dịch thực tế."/>}
+    </div>
+  </>;
 }
 
 function NetValueLabel(props: { x?: number; y?: number; value?: number; index?: number }) {
