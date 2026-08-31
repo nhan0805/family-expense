@@ -1,5 +1,15 @@
 # Nhật ký thay đổi Family Expense
 
+## 2026-09-01
+
+### Cập nhật handoff sau deploy tìm kiếm giao dịch
+
+- Trước thay đổi: Handoff chưa ghi nhận trạng thái production của tìm kiếm giao dịch theo số tiền và bằng giọng nói.
+- Sau thay đổi: Đã xác nhận PR #82 merge vào `main` với commit `abaedd9d893c9482753e925189e7be5fe105c76d`; CI #189, Preview Build #110 và `Supabase Production Deploy` #13 đều pass. Cloudflare Pages production phản hồi HTTP 200 tại [production](https://family-expense-8fo.pages.dev/).
+- Phạm vi handoff: Bao gồm bộ lọc số tiền, nút tìm kiếm bằng giọng nói và thay đổi bố cục KPI mobile đã được merge trong cùng release.
+- Kiểm thử: Đã hoàn tất `pnpm test` 19/19 file và 75/75 test, `pnpm lint`, `pnpm typecheck`, `pnpm build`, Prettier cho Edge Functions và `git diff --check` trước khi merge.
+- Triển khai: Hoàn tất qua GitHub merge và Cloudflare Pages Git integration; migration/RPC Supabase đã được workflow production áp dụng thành công.
+
 ## 2026-08-31
 
 ### Bổ sung lọc số tiền cho tìm kiếm AI
@@ -8,7 +18,7 @@
 - Sau thay đổi: Hỗ trợ lọc theo `Từ số tiền`/`Đến số tiền`, bao gồm các câu như `trên 500 nghìn`, `dưới 2 triệu` và `từ 500 nghìn đến 2 triệu`; nút AI có màu gradient, trạng thái đang phân tích và trạng thái `Đã lọc` sau khi áp dụng.
 - Kỹ thuật: Cập nhật `src/lib/ai.ts`, `src/pages/Transactions.tsx`, `src/lib/transactionsApi.ts`, `supabase/functions/search-transactions/index.ts`; thêm migration `supabase/migrations/202608310005_transaction_amount_filters.sql` cho RPC danh sách giao dịch và thùng rác; không đổi bảng dữ liệu.
 - Kiểm thử: `pnpm test` đạt 19/19 file và 75/75 test; `pnpm lint`, `pnpm typecheck`, `pnpm build`, `pnpm exec prettier --check` cho Edge Functions và `git diff --check` đều pass. Migration sẽ được kiểm tra thêm trong workflow database khi deploy.
-- Triển khai: Chưa deploy production.
+- Triển khai: Đã merge PR #82 vào `main` với commit `abaedd9d893c9482753e925189e7be5fe105c76d`; CI #189 và `Supabase Production Deploy` #13 pass. Cloudflare Pages production phản hồi HTTP 200 tại [production](https://family-expense-8fo.pages.dev/).
 
 ### Cân đối bố cục ba KPI theo tháng
 
@@ -16,7 +26,7 @@
 - Sau thay đổi: `Giá trị ròng` chiếm toàn hàng trên màn hình hẹp và trở lại một cột ở màn hình lớn; kỳ nhiều tháng giữ bố cục sáu KPI.
 - Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx`; không đổi API/database.
 - Kiểm thử: `pnpm test` đạt 19/19 file và 75/75 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` đều pass.
-- Triển khai: Chưa deploy production.
+- Triển khai: Đã merge PR #82 vào `main` với commit `abaedd9d893c9482753e925189e7be5fe105c76d`; CI #189 pass. Cloudflare Pages production phản hồi HTTP 200 tại [production](https://family-expense-8fo.pages.dev/).
 
 ### Thêm ba tính năng AI có kiểm soát cho giao dịch và Dashboard
 
