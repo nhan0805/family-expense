@@ -6,8 +6,8 @@
 
 - Trước thay đổi: KPI `Giá trị ròng` bị mất nền/border đầy đủ và lệch nội dung trên mobile vì link KPI nằm trong wrapper grid nhưng vẫn hiển thị dạng inline.
 - Sau thay đổi: Link KPI được hiển thị dạng block, chiếm đủ chiều cao ô grid; bố cục KPI một tháng và nhiều tháng giữ đúng card, icon, số tiền và nội dung phụ.
-- Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx`; bổ sung regression assertion trong `src/pages/Dashboard.test.tsx`; không đổi API/database.
-- Kiểm thử: `src/pages/Dashboard.test.tsx` đạt 6/6 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Full `pnpm test` hiện còn 4 lỗi có sẵn ở `src/pages/Transactions.ui.test.tsx` (71/75 test pass), không liên quan thay đổi KPI.
+- Kỹ thuật: Cập nhật `src/pages/Dashboard.tsx`; bổ sung regression assertion trong `src/pages/Dashboard.test.tsx`; ổn định fixture tháng trong `src/pages/Transactions.ui.test.tsx` để test không phụ thuộc thời điểm chạy; không đổi API/database.
+- Kiểm thử: `pnpm test` đạt 19/19 file và 75/75 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass.
 - Triển khai: Chưa deploy production.
 
 ### Bắt buộc cập nhật handoff sau deploy
