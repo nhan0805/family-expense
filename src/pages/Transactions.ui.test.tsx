@@ -26,6 +26,7 @@ describe('Giao dịch mobile', () => {
     expect(filterDetails).toHaveAttribute('open');
     expect(screen.getByLabelText('Loại giao dịch')).toBeInTheDocument();
     expect(screen.getByLabelText('Trạng thái')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Tìm kiếm bằng AI' })).toBeDisabled();
     const transactionCard = screen.getByRole('article', { name: 'Giao dịch Đi chợ' });
     expect(transactionCard).toHaveClass('rounded-2xl', 'shadow-sm');
     expect(transactionCard).not.toHaveClass('border-t');

@@ -35,6 +35,14 @@ export type TemplateRow = {
   duplicate: boolean;
 };
 export type TemplateError = { rowNumber: number; messages: string[] };
+export type ImportMode = 'insert' | 'update';
+
+export function inferImportMode(rows: Array<Pick<TemplateRow, 'id'>>): ImportMode {
+  return rows.length > 0 && rows.every((row) => Boolean(row.id))
+    ? 'update'
+    : 'insert';
+}
+
 const schema = z.object({
   id: z.string().uuid().or(z.literal('')),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -223,7 +231,7 @@ export async function parseTemplate(
       errors.push({ rowNumber: n, messages });
       return;
     }
-    const duplicate = transactions.some(
+    const duplicate = !raw.id && transactions.some(
       (t) =>
         !t.deletedAt &&
         t.transactionDate === raw.date &&

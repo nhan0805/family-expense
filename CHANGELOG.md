@@ -2,6 +2,15 @@
 
 ## 2026-08-31
 
+### Thêm ba tính năng AI có kiểm soát cho giao dịch và Dashboard
+
+- Trước thay đổi: AI nhập giao dịch chưa tham khảo cách phân loại thực tế của gia đình; Dashboard chỉ có insight tĩnh; ô tìm kiếm giao dịch chỉ nhận từ khóa thông thường.
+- Sau thay đổi: `parse-expense` tham khảo tối đa 20 mẫu giao dịch thực tế cùng family nhưng không gửi số tiền cũ; Dashboard có nút `Tóm tắt bằng AI` theo kỳ đang xem; trang Giao dịch có nút `AI` để chuyển câu tự nhiên thành bộ lọc và áp dụng vào danh sách.
+- Kỹ thuật: Cập nhật `src/pages/TransactionForm.tsx`, `src/pages/Dashboard.tsx`, `src/pages/Transactions.tsx`, `src/lib/ai.ts`; thêm `supabase/functions/summarize-dashboard/index.ts` và `supabase/functions/search-transactions/index.ts`; cập nhật `supabase/functions/parse-expense/index.ts`, `supabase/config.toml`, `.github/workflows/supabase-deploy.yml`, `README.md`. Không đổi schema/database; không có system prompt tùy chỉnh trên frontend.
+- An toàn dữ liệu: Dashboard tự tổng hợp facts từ giao dịch trong family sau khi kiểm tra membership; Gemini chỉ nhận số liệu tổng hợp. Tìm kiếm AI chỉ trả về structured filters; mọi ID danh mục được kiểm tra lại và không AI function nào tự ghi giao dịch.
+- Kiểm thử: `pnpm test` đạt 19/19 file và 72/72 test; `pnpm lint`, `pnpm typecheck`, `pnpm build`, `pnpm exec prettier --check` cho Edge Functions và `git diff --check` đều pass. Build còn warning chunk lớn/dynamic import ExcelJS-xlsx đã có từ trước.
+- Triển khai: Chưa deploy production; hai Edge Function mới sẽ được deploy qua workflow Supabase sau khi thay đổi được merge vào `main`.
+
 ### Rút gọn meta KPI trên màn hình hẹp
 
 - Trước thay đổi: Meta như `12 tháng trong kỳ xem` bị cắt bằng dấu `…` trong card KPI hẹp.

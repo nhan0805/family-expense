@@ -8,7 +8,7 @@ Web app quản lý chi tiêu gia đình bằng tiếng Việt, mobile-first, có
 
 - Frontend: React 19, TypeScript strict, Vite, React Router, Tailwind CSS, TanStack Query, React Hook Form + Zod, Recharts và vite-plugin-pwa.
 - Backend: Supabase Cloud (PostgreSQL, Auth, RLS, Edge Functions). Storage đã sẵn sàng để bổ sung chứng từ sau MVP nhưng hiện chưa dùng.
-- AI: Supabase Edge Function `parse-expense` gọi Gemini GenerateContent qua HTTP, dùng JSON Schema structured output; model lấy từ `GEMINI_MODEL`.
+- AI: Supabase Edge Functions `parse-expense`, `summarize-dashboard` và `search-transactions` gọi Gemini GenerateContent qua HTTP, dùng JSON Schema structured output; gợi ý danh mục tham khảo lịch sử cùng family, Dashboard chỉ gửi số liệu tổng hợp, và tìm kiếm AI chỉ trả về bộ lọc để người dùng áp dụng.
 - Hosting: frontend Cloudflare Pages; dữ liệu, auth và function trên Supabase.
 
 Mặc định dùng VND, `Asia/Ho_Chi_Minh`, ngày `dd/MM/yyyy`; `amount` luôn dương và ý nghĩa ròng được xác định bằng `transaction_type`.
@@ -65,7 +65,7 @@ Function kiểm tra JWT, membership theo `family_id`, validate request/response 
 
 ## Gửi danh sách giao dịch qua Brevo
 
-Tính năng **Quản lý dữ liệu → Gửi danh sách giao dịch** gọi Edge Function `email-transactions`. Function chỉ cho owner gửi danh sách giao dịch chưa bị xóa tới email tài khoản hiện tại, tự query theo `family_id` và gửi file CSV qua Brevo. Không đặt API key Brevo ở frontend.
+Tính năng **Dữ liệu → Gửi danh sách giao dịch** gọi Edge Function `email-transactions`. Function chỉ cho owner gửi danh sách giao dịch chưa bị xóa tới email tài khoản hiện tại, tự query theo `family_id` và gửi file CSV qua Brevo. Không đặt API key Brevo ở frontend.
 
 Tạo API key có quyền gửi trong Brevo, xác minh sender email, rồi lưu secret ở Supabase:
 

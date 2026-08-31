@@ -532,7 +532,7 @@ export function TransactionForm() {
               </button>
             </div>
             {errors.description?.message && <span className="mt-1 block text-xs text-red-600">{errors.description.message}</span>}
-            <p className="mt-1 text-xs text-gray-500">{en ? 'Type or use the microphone to convert speech to text, then select AI if needed. The app does not store audio and suggestions are never saved automatically.' : 'Nhập tay hoặc dùng micro để chuyển giọng nói thành chữ, sau đó nhấn AI nếu cần. App không lưu audio và gợi ý không được tự động lưu.'}</p>
+            <p className="mt-1 text-xs text-gray-500">{en ? 'Type or use the microphone to convert speech to text, then select AI if needed. AI can use your family’s confirmed history to suggest categories. The app does not store audio and suggestions are never saved automatically.' : 'Nhập tay hoặc dùng micro để chuyển giọng nói thành chữ, sau đó nhấn AI nếu cần. AI có thể tham khảo lịch sử đã xác nhận của gia đình để gợi ý danh mục. App không lưu audio và gợi ý không được tự động lưu.'}</p>
           </div>
           {aiResult && aiResultVisible && (
             <section className={`ui-enter rounded-xl border p-4 md:col-span-3 ${aiTone === 'warning' ? 'border-amber-300 bg-amber-50 text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100' : 'border-violet-200 bg-gradient-to-r from-violet-50 to-sky-50 text-violet-950 dark:border-violet-800 dark:from-violet-950/35 dark:to-sky-950/25 dark:text-violet-100'}`} aria-label={en ? 'AI suggestion summary' : 'Tóm tắt gợi ý AI'}>

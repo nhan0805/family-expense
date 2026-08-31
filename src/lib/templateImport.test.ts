@@ -1,11 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import ExcelJS from 'exceljs';
 import * as XLSX from 'xlsx';
-import { createTemplate, parseTemplate, templateHeaders } from './templateImport';
+import { createTemplate, inferImportMode, parseTemplate, templateHeaders } from './templateImport';
 const purposes = [{ id: 'p1', name: 'Sinh hoạt' }],
   types = [{ id: 'e1', name: 'Ăn uống' }],
   methods = [{ id: 'm1', name: 'Chuyển khoản' }];
 describe('template import', () => {
+  it('tự nhận diện thêm mới và cập nhật theo ID', () => {
+    expect(inferImportMode([{ id: '' }])).toBe('insert');
+    expect(inferImportMode([{ id: '11111111-1111-4111-8111-111111111111' }])).toBe('update');
+    expect(inferImportMode([{ id: '11111111-1111-4111-8111-111111111111' }, { id: '' }])).toBe('insert');
+  });
+
   it('tạo template có validation và đọc dòng hợp lệ', async () => {
     const buffer = await createTemplate(purposes, types, methods);
     const wb = new ExcelJS.Workbook();
@@ -52,5 +58,6 @@ describe('template import', () => {
     XLSX.utils.book_append_sheet(wb, ws, 'Giao dịch');
     const result = await parseTemplate(XLSX.write(wb, { type: 'array', bookType: 'xlsx' }), purposes, types, methods, []);
     expect(result.valid[0]?.id).toBe('11111111-1111-4111-8111-111111111111');
+    expect(result.valid[0]?.duplicate).toBe(false);
   });
 });

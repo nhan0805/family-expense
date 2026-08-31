@@ -10,6 +10,7 @@ import {
   WalletCards,
   X,
   ArchiveRestore,
+  Sparkles,
 } from 'lucide-react';
 import { EmptyState, TransactionListSkeleton } from '../components/AsyncStates';
 import { TransactionRow } from '../components/TransactionRow';
@@ -23,6 +24,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { useOptionalLanguage } from '../context/LanguageContext';
+import { transactionSearchResponseSchema } from '../lib/ai';
 import {
   canDeleteTransaction,
   formatVnd,
@@ -280,6 +282,9 @@ export function Transactions() {
   const [bulkEditBusy, setBulkEditBusy] = useState(false);
   const [bulkEditValues, setBulkEditValues] = useState<BulkEditValues>(emptyBulkEditValues);
   const [showTrash, setShowTrash] = useState(false);
+  const [aiSearchBusy, setAiSearchBusy] = useState(false);
+  const [aiSearchMessage, setAiSearchMessage] = useState('');
+  const [aiSearchError, setAiSearchError] = useState('');
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
   useEffect(() => {
     const timeout = window.setTimeout(() => setDebouncedQuery(query), 300);
@@ -738,6 +743,55 @@ export function Transactions() {
     notify('Đã tạo bản sao giao dịch.');
   };
 
+  const runAiSearch = async () => {
+    const searchText = query.trim();
+    if (searchText.length < 3) {
+      setAiSearchError(en ? 'Enter at least 3 characters for an AI search.' : 'Nhập ít nhất 3 ký tự để tìm kiếm bằng AI.');
+      return;
+    }
+    if (!isSupabaseConfigured || !familyId || aiSearchBusy) return;
+    setAiSearchBusy(true);
+    setAiSearchError('');
+    setAiSearchMessage('');
+    try {
+      const { data, error } = await supabase.functions.invoke('search-transactions', {
+        body: {
+          familyId,
+          text: searchText,
+          language: en ? 'en' : 'vi',
+          timezone: 'Asia/Ho_Chi_Minh',
+        },
+      });
+      if (error) throw new Error('AI_REQUEST_FAILED');
+      const response = transactionSearchResponseSchema.safeParse(data);
+      if (!response.success) throw new Error('AI_RESPONSE_INVALID');
+      const { filters } = response.data;
+      setQuery(filters.query);
+      setTransactionType(filters.transactionType || '');
+      setStatus(filters.status || '');
+      setPurposeId(filters.purposeId || '');
+      setExpenseTypeId(filters.expenseTypeId || '');
+      setPaymentMethodId(filters.paymentMethodId || '');
+      setSort(filters.sort);
+      if (filters.dateFrom || filters.dateTo) {
+        setMonth('');
+        setYear('');
+        setDateFrom(filters.dateFrom || '');
+        setDateTo(filters.dateTo || '');
+      } else {
+        setMonth(filters.month ? String(filters.month).padStart(2, '0') : '');
+        setYear(filters.year ? String(filters.year) : '');
+        setDateFrom('');
+        setDateTo('');
+      }
+      setAiSearchMessage(response.data.explanation || (en ? 'AI filters applied.' : 'Đã áp dụng bộ lọc AI.'));
+    } catch {
+      setAiSearchError(en ? 'AI search is temporarily unavailable. Please try again.' : 'Chưa thể phân tích tìm kiếm bằng AI. Vui lòng thử lại sau.');
+    } finally {
+      setAiSearchBusy(false);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -789,18 +843,21 @@ export function Transactions() {
         <div className="grid gap-3 md:grid-cols-[minmax(240px,1fr)_220px]">
           <label className="col-span-2 md:col-span-1">
             <span className="label">{en ? 'Search' : 'Tìm kiếm'}</span>
-            <div className="relative">
-              <Search
-                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"
-                size={18}
-              />
-              <input
-                className="field"
-                style={{ paddingLeft: '2.75rem' }}
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder={en ? 'Search description or notes…' : 'Tìm nội dung hoặc ghi chú…'}
-              />
+            <div className="flex min-w-0 gap-2">
+              <div className="relative min-w-0 flex-1">
+                <Search
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"
+                  size={18}
+                />
+                <input
+                  className="field min-w-0"
+                  style={{ paddingLeft: '2.75rem' }}
+                  value={query}
+                  onChange={(event) => { setQuery(event.target.value); setAiSearchMessage(''); setAiSearchError(''); }}
+                  placeholder={en ? 'Search description or notes…' : 'Tìm nội dung hoặc ghi chú…'}
+                />
+              </div>
+              <button type="button" className="btn-secondary inline-flex shrink-0 items-center gap-2 self-stretch px-3 text-sm" disabled={!isSupabaseConfigured || showTrash || aiSearchBusy} onClick={() => void runAiSearch()} aria-label={en ? 'Search with AI' : 'Tìm kiếm bằng AI'} title={showTrash ? (en ? 'AI search is available in the active transaction list' : 'Tìm kiếm AI dùng cho danh sách giao dịch đang hoạt động') : !isSupabaseConfigured ? (en ? 'Connect Supabase to use AI' : 'Cần kết nối Supabase để dùng AI') : undefined}><Sparkles size={16} aria-hidden="true" /><span className="hidden sm:inline">{aiSearchBusy ? (en ? 'Analyzing…' : 'Đang lọc…') : 'AI'}</span></button>
             </div>
           </label>
           <label>
@@ -818,6 +875,8 @@ export function Transactions() {
             </select>
           </label>
         </div>
+        {aiSearchError && <p role="alert" className="rounded-lg bg-red-50 p-2 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">{aiSearchError}</p>}
+        {aiSearchMessage && <p role="status" className="rounded-lg bg-emerald-50 p-2 text-sm text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200">{aiSearchMessage}</p>}
 
         {filterChips.length > 0 && <div className="flex gap-2 overflow-x-auto pb-1 md:flex-wrap" aria-label={en ? 'Active filters' : 'Bộ lọc đang áp dụng'}>{filterChips.map((chip) => <button type="button" key={chip.key} onClick={chip.clear} className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#e3f2e9] px-3 py-1.5 text-xs font-semibold text-[#145c43] transition hover:bg-[#d3eadd] dark:bg-emerald-950/60 dark:text-emerald-200"><span>{chip.label}</span><X size={13} aria-hidden="true"/><span className="sr-only">{en ? 'Remove filter' : 'Bỏ bộ lọc'} {chip.label}</span></button>)}</div>}
 
