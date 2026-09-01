@@ -678,15 +678,15 @@ function DataCard({
       ? 'bg-[#e3f2e9] text-[#145c43] dark:bg-emerald-950/50 dark:text-emerald-300'
       : 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300';
   return (
-    <section className="data-card card self-start p-4 sm:p-5">
+    <section className="data-card card p-4 sm:p-5">
       <div className="flex items-start gap-3">
         <span className={`data-card-icon rounded-xl p-3 ${iconClass}`}>{icon}</span>
         <div className="data-card-content">
           <h3 className="text-lg font-extrabold">{title}</h3>
-          <p className="mt-1 line-clamp-3 text-sm leading-6 text-gray-500">{description}</p>
+          <p className="data-card-description mt-1 line-clamp-3 text-sm leading-6 text-gray-500">{description}</p>
         </div>
       </div>
-      <div className="pt-4">{children}</div>
+      <div className="data-card-actions">{children}</div>
     </section>
   );
 }

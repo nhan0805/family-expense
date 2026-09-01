@@ -35,6 +35,8 @@ describe('Gửi danh sách giao dịch qua email', () => {
     });
     render(<ImportExport />);
 
+    expect(document.querySelectorAll('.data-card')).toHaveLength(3);
+    expect(document.querySelectorAll('.data-card-actions')).toHaveLength(3);
     fireEvent.click(
       screen.getByRole('button', { name: 'Gửi danh sách giao dịch' }),
     );

@@ -18,15 +18,15 @@
 }
 
 .dark {
-  --app-bg: #0f1814;
+  --app-bg: #0d1712;
   --surface: #17251f;
-  --surface-muted: #203029;
-  --surface-subtle: #1b2c25;
-  --border: #33463f;
-  --border-strong: #43574f;
-  --text: #e7f0eb;
-  --muted: #aebbb4;
-  --primary-soft: #173f31;
+  --surface-muted: #244037;
+  --surface-subtle: #1d3027;
+  --border: #49635a;
+  --border-strong: #638074;
+  --text: #eff8f2;
+  --muted: #c1cec7;
+  --primary-soft: #1c523d;
   color-scheme: dark;
 }
 
@@ -144,6 +144,17 @@ body {
   content: '';
 }
 
+.dark .brand-wordmark,
+.dark .page-kicker {
+  color: #8bdab0;
+}
+
+.dark .app-nav-link-active,
+.dark .app-bottom-nav-link-active {
+  color: #b7efd0;
+  background: #1c523d;
+}
+
 .app-bottom-nav {
   border-color: color-mix(in srgb, var(--border) 88%, transparent);
   background: color-mix(in srgb, var(--surface) 96%, transparent);
@@ -250,6 +261,11 @@ body {
   color: color-mix(in srgb, var(--muted) 80%, transparent);
 }
 
+.dark .field::placeholder {
+  color: #c1cec7;
+  opacity: 1;
+}
+
 .field.field-with-trailing-action {
   padding-inline-end: 3.5rem;
 }
@@ -262,6 +278,11 @@ body {
 .field:focus {
   border-color: #197254;
   box-shadow: 0 0 0 3px #19725420;
+}
+
+.dark .field:focus {
+  border-color: #73c9a2;
+  box-shadow: 0 0 0 3px #73c9a233;
 }
 
 .field:disabled {
@@ -433,6 +454,23 @@ summary:focus-visible {
 .filter-chip:hover {
   border-color: #82b99a;
   background: #d3eadd;
+}
+
+.dark .filter-chip {
+  border-color: #8fd4b2;
+  background: #1d5a43;
+  color: #e0f7e9;
+  box-shadow: inset 0 0 0 1px #ffffff0d;
+}
+
+.dark .filter-chip:hover {
+  border-color: #b5ebca;
+  background: #267052;
+  color: #ffffff;
+}
+
+.dark .filter-details {
+  border-top-color: color-mix(in srgb, var(--border) 88%, transparent);
 }
 
 .attention-card {
@@ -711,11 +749,15 @@ summary:focus-visible {
 }
 
 .data-tools-grid {
-  align-items: start;
+  align-items: stretch;
 }
 
 .data-card {
   min-width: 0;
+  height: 100%;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
   box-shadow: 0 8px 22px #102a2108;
 }
 
@@ -727,6 +769,14 @@ summary:focus-visible {
   min-width: 0;
 }
 
+.data-card-description {
+  min-height: 4.5rem;
+}
+
+.data-card-actions {
+  margin-top: auto;
+  padding-top: 1rem;
+}
 .data-upload-zone {
   min-height: 14rem;
   border-color: var(--border-strong);

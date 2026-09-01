@@ -16,7 +16,15 @@
 - Sau thay đổi: Chuẩn hóa hierarchy heading và section, panel form, trạng thái cảnh báo/lỗi, vùng mở rộng, nút nguy hiểm, danh sách danh mục, avatar thành viên, vùng chọn file kéo-thả và bảng preview; tăng vùng chạm/focus và giữ layout gọn trên mobile.
 - Kỹ thuật: Cập nhật `src/index.css`, `src/pages/TransactionForm.tsx`, `src/pages/Catalogs.tsx`, `src/pages/Members.tsx`, `src/pages/ImportExport.tsx`; bổ sung regression assertions trong `src/pages/TransactionForm.test.tsx`, `src/pages/Catalogs.test.tsx`, `src/pages/Members.test.tsx`, `src/pages/ImportExport.test.tsx`. Không thay đổi API, schema, migration, RLS/RPC, dữ liệu hoặc quy tắc nghiệp vụ.
 - Kiểm thử: `pnpm test` đạt 19/19 file và 78/78 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. E2E local vẫn chưa chạy được vì môi trường thiếu Playwright browser binaries; không cài thêm dependency trong phiên này. Build còn cảnh báo chunk lớn/dynamic import ExcelJS đã có từ trước.
-- Triển khai: Chưa deploy production; đã sẵn sàng qua GitHub PR + Cloudflare Pages Git integration sau khi CI hoàn tất.
+- Triển khai: Đã merge PR #93 vào `main` với merge commit `f8dbd2e55580c7530b7413126c6eef8a972971dd`; CI main [33521789893](https://github.com/nhan0805/family-expense/actions/runs/33521789893) và Cloudflare Pages production deployment [d44453ef-9379-4bd6-8b9c-a6e5efa69298](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/d44453ef-9379-4bd6-8b9c-a6e5efa69298) đều pass. Production smoke test `https://family-expense-8fo.pages.dev/` trả HTTP 200 lúc `01/09/2026 21:50` (`Asia/Ho_Chi_Minh`). Không có migration/database change trong release này.
+
+### Sửa tương phản dark mode và cân đối card dữ liệu
+
+- Trước thay đổi: Một số chữ phụ, icon tìm kiếm và chip bộ lọc trong dark mode có màu gần nền nên khó đọc; ba card công cụ dữ liệu có chiều cao và vị trí nút khác nhau.
+- Sau thay đổi: Tăng độ sáng cho text/muted text, border, placeholder, focus state và filter chip trong dark mode; căn ba card dữ liệu cùng chiều cao với nhóm nút thẳng hàng ở đáy.
+- Kỹ thuật: Cập nhật `src/index.css`, `src/pages/Transactions.tsx`, `src/pages/ImportExport.tsx`; bổ sung assertion layout trong `src/pages/ImportExport.test.tsx`. Không thay đổi API, schema, database hoặc logic lọc/import.
+- Kiểm thử: `pnpm test` đạt 19/19 file và 78/78 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build còn cảnh báo chunk lớn/dynamic import ExcelJS đã có từ trước.
+- Triển khai: Chưa deploy production; thay đổi đang chờ yêu cầu publish tiếp theo.
 
 ### Chốt và tự động purge `ai_usage_logs` sau 30 ngày
 
