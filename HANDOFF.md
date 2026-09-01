@@ -23,6 +23,7 @@
 - Không thay đổi API, schema hoặc database. Dự kiến deploy qua PR và Cloudflare Pages Git integration.
 
 ### Handoff — sửa lỗi Hủy bản nháp giao dịch (01/09/2026)
+### Handoff — sửa lỗi Hủy bản nháp giao dịch (01/09/2026)
 
 - Nút `Hủy` trong form thêm giao dịch trước đây chỉ điều hướng bằng `nav(-1)`, không xóa bản nháp đã lưu trên thiết bị.
 - Đã bổ sung handler xóa draft theo `family_id` trước khi điều hướng; khi sửa giao dịch có `id`, thao tác Hủy không xóa draft của luồng thêm giao dịch.
@@ -30,6 +31,7 @@
 - Validation local: `pnpm test` 19/19 file, 77/77 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build chỉ còn các cảnh báo chunk lớn/dynamic import ExcelJS đã có từ trước.
 - Không thay đổi API, schema hoặc database. PR #87 đã merge vào `main` với merge commit `980bfe7ce4c999043d96ecdefe55f15c52e61d82`; `quality`, `db-security`, Preview và Cloudflare Pages đều pass.
 - Production smoke test: `https://family-expense-8fo.pages.dev/` trả HTTP 200 lúc `01/09/2026 01:07` (`Asia/Ho_Chi_Minh`). Không tạo deploy thứ hai chỉ để cập nhật handoff.
+
 
 ### Handoff phiên làm việc — KPI mobile và bộ lọc giao dịch (01/09/2026)
 
