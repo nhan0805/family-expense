@@ -8,7 +8,7 @@
 - Sau thay đổi: Dùng Dracula Red `#FF5555` cho thao tác destructive; nền dark mode chỉ còn tint đỏ nhẹ `#FF55550D`, hover dùng `#FF55551F`, border giữ độ tương phản vừa đủ và focus ring dùng Purple `#BD93F9`.
 - Kỹ thuật: Cập nhật style dùng chung `.danger-button`, `.danger-zone` trong `src/index.css`; cập nhật title trong `src/pages/Members.tsx`; thêm regression assertion trong `src/pages/Members.test.tsx`. Không thay đổi API, schema, database, quyền hoặc quy tắc nghiệp vụ.
 - Kiểm thử: `pnpm test` đạt 19/19 file, 83/83 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build chỉ còn các cảnh báo chunk lớn/dynamic import ExcelJS đã có từ trước.
-- Triển khai dự kiến: Commit/push branch, tạo PR vào `main`, bật auto-merge; frontend sẽ deploy qua Cloudflare Pages Git integration sau khi merge. Không dùng deploy thủ công.
+- Triển khai: PR [#98](https://github.com/nhan0805/family-expense/pull/98) đã merge vào `main` với merge commit `072d4f5cbbfb8afd8e4f8a6945aaa68ba3ea307a`. Required checks quality/db-security/preview và Cloudflare Preview pass; [CI main](https://github.com/nhan0805/family-expense/actions/runs/33538050283) thành công. Cloudflare Pages production đang phục vụ bundle mới `assets/index-BCErojJQ.js` và `assets/index-C6TDvkQo.css`; smoke test GET HTML/CSS đều HTTP 200 lúc `02/09/2026 00:31` (`Asia/Ho_Chi_Minh`). Không có migration nên không cần Supabase Production Deploy; không dùng deploy thủ công và không tạo deploy lần hai chỉ để cập nhật tài liệu.
 
 ### Loại bỏ Hoàn tiền và Tạm ứng khỏi hệ thống giao dịch
 
