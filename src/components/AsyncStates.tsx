@@ -24,7 +24,7 @@ export function TransactionListSkeleton({ rows = 5 }: { rows?: number }) {
 
 export function EmptyState({ title, description, icon: Icon = Inbox, action }: { title: string; description?: string; icon?: LucideIcon; action?: ReactNode }) {
   return <div className="flex flex-col items-center justify-center px-5 py-10 text-center" role="status">
-    <span className="mb-3 grid size-12 place-items-center rounded-2xl bg-[#e5f2eb] text-[#155e46] dark:bg-emerald-950/60 dark:text-emerald-300"><Icon size={24} aria-hidden="true"/></span>
+    <span className="mb-3 grid size-12 place-items-center rounded-2xl bg-[#e5f2eb] text-[#155e46] dark:bg-[#44475a] dark:text-[#bd93f9]"><Icon size={24} aria-hidden="true"/></span>
     <h3 className="font-bold">{title}</h3>
     {description && <p className="mt-1 max-w-md text-sm text-gray-500 dark:text-gray-400">{description}</p>}
     {action && <div className="mt-4">{action}</div>}

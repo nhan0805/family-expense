@@ -2,13 +2,21 @@
 
 ## 2026-09-01
 
+### Thử nghiệm bảng màu Dracula Official cho dark mode
+
+- Trước thay đổi: Dark mode dùng nền xanh đậm và các điểm nhấn xanh lá.
+- Sau thay đổi: Dark mode dùng nền `#282A36`, surface `#343746`/`#44475A`, chữ `#F8F8F2`, cùng điểm nhấn tím `#BD93F9`, hồng `#FF79C6`, cyan `#8BE9FD`; giữ màu đỏ/vàng cho trạng thái cảnh báo và lỗi.
+- Kỹ thuật: Cập nhật `src/index.css`, `src/context/ThemeContext.tsx`, `src/components/ThemeSelect.tsx`, `src/components/AsyncStates.tsx`, `src/components/Feedback.tsx`, `src/components/TransactionRow.tsx`, `src/pages/Dashboard.tsx`, `src/pages/Transactions.tsx`, `src/pages/ImportExport.tsx`, `src/pages/Login.tsx`, `src/pages/ResetPassword.tsx`, `src/pages/CreateFamily.tsx`; không thay đổi API, schema, database hoặc quy tắc nghiệp vụ.
+- Kiểm thử: `pnpm test` đạt 19/19 file và 80/80 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` đều pass. Build vẫn có cảnh báo chunk lớn/dynamic import ExcelJS đã có từ trước.
+- Triển khai: Chưa deploy production.
+
 ### Tăng tương phản avatar chữ cái trong danh sách thành viên
 
 - Trước thay đổi: Avatar chữ cái cạnh tên thành viên trong dark mode dùng màu chữ xanh đậm trên nền xanh, nên nhìn hơi mờ.
 - Sau thay đổi: Tăng độ sáng chữ cái, nền và viền riêng cho dark mode để avatar nổi bật hơn mà vẫn giữ phong cách màu xanh của ứng dụng.
 - Kỹ thuật: Cập nhật `.dark .member-avatar` trong `src/index.css`; bổ sung regression test trong `src/pages/Members.test.tsx`. Không thay đổi API, schema, database, quyền hoặc dữ liệu thành viên.
 - Kiểm thử: `pnpm test` đạt 19/19 file và 80/80 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. `pnpm test:e2e` bị chặn trong sandbox do không được bind `127.0.0.1:5173`; không cài thêm dependency. Build còn các cảnh báo chunk lớn/dynamic import ExcelJS đã có từ trước.
-- Triển khai: Chưa deploy production; thay đổi đang chờ quy trình GitHub PR và Cloudflare Pages Git integration.
+- Triển khai: Đã merge PR #95 vào `main` với merge commit `ec0c1427f1e6d9ee33d02666433149b1927731ba`; CI main quality/db-security pass. Cloudflare Pages production qua Git integration đã phục vụ build mới, production smoke test `https://family-expense-8fo.pages.dev/` trả HTTP 200 lúc `01/09/2026 23:08` (`Asia/Ho_Chi_Minh`). Không tạo deploy lần hai chỉ để cập nhật tài liệu.
 
 ### Đưa nút sao chép/xóa của từng dòng giao dịch lại gần số tiền
 
@@ -16,7 +24,7 @@
 - Sau thay đổi: Gộp vùng thao tác vào cùng cột với số tiền, đặt nút sao chép/xóa ngay cạnh số tiền; bảng dùng `w-full`, giới hạn tối thiểu còn `940px`, và các ô chữ dài được phép co/truncate để không đẩy nút ra ngoài.
 - Kỹ thuật: Cập nhật `src/components/TransactionRow.tsx`, `src/pages/Transactions.tsx`; bổ sung regression test trong `src/components/TransactionRow.test.tsx`. Không thay đổi API, schema, database hoặc quy tắc nghiệp vụ.
 - Kiểm thử: `pnpm test` đạt 19/19 file và 79/79 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. `pnpm test:e2e` bị chặn trong sandbox do không được bind `127.0.0.1:5173`; không cài thêm dependency. Build còn các cảnh báo chunk lớn/dynamic import ExcelJS đã có từ trước.
-- Triển khai: Chưa deploy production; thay đổi đang chờ quy trình GitHub PR và Cloudflare Pages Git integration.
+- Triển khai: Đã merge PR #95 vào `main` với merge commit `ec0c1427f1e6d9ee33d02666433149b1927731ba`; CI main quality/db-security pass. Cloudflare Pages production qua Git integration đã phục vụ build mới, production smoke test `https://family-expense-8fo.pages.dev/` trả HTTP 200 lúc `01/09/2026 23:08` (`Asia/Ho_Chi_Minh`). Không tạo deploy lần hai chỉ để cập nhật tài liệu.
 
 ### Cải thiện UI đợt 1 — visual polish Dashboard, Layout và giao dịch
 

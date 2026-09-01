@@ -1203,7 +1203,7 @@ export function Transactions() {
         </div>
       </div>
       {selectMode && (
-        <div className="order-3 sticky top-2 z-40 flex w-full items-center gap-2 rounded-xl border border-emerald-900/15 bg-emerald-50/95 p-2.5 shadow-md backdrop-blur dark:border-white/15 dark:bg-[#17251f]/95">
+        <div className="order-3 sticky top-2 z-40 flex w-full items-center gap-2 rounded-xl border border-emerald-900/15 bg-emerald-50/95 p-2.5 shadow-md backdrop-blur dark:border-white/15 dark:bg-[#343746]/95">
           <div className="min-w-0 flex-1"><p className="truncate text-sm font-bold">{en ? `Selected ${selectedIds.size} transaction(s)` : `Đã chọn ${selectedIds.size} giao dịch`}</p><p className="hidden text-xs text-gray-500 sm:block">{en ? 'Up to 100 transactions per batch' : 'Tối đa 100 giao dịch mỗi lần'}</p></div>
           <button type="button" className="btn-secondary shrink-0 px-3 text-sm" onClick={() => setSelectedIds(new Set(rows.slice(0, 100).map((item) => item.id)))}>{en ? 'Select all' : 'Chọn tất cả'}</button>
           {showTrash && <button type="button" className="grid size-10 shrink-0 place-items-center rounded-xl bg-red-600 text-white shadow-sm" disabled={rows.length === 0 || bulkEditBusy} onClick={() => { setSelectedIds(new Set(rows.slice(0, 100).map((item) => item.id))); window.setTimeout(() => void permanentlyDeleteSelected(), 0); }} aria-label={en ? 'Delete all transactions in trash' : 'Xóa tất cả giao dịch trong thùng rác'} title={en ? 'Delete all transactions in trash' : 'Xóa tất cả giao dịch trong thùng rác'}><Trash2 size={18}/></button>}
@@ -1253,7 +1253,7 @@ export function Transactions() {
       )}
       {bulkEditOpen && (
         <div className="fixed inset-0 z-[70] grid place-items-start bg-black/35 p-3 sm:p-4" role="presentation">
-          <section role="dialog" aria-modal="true" aria-labelledby="bulk-edit-title" className="mt-32 max-h-[calc(100vh-8rem)] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl dark:bg-[#17251f] sm:mt-20 sm:max-h-[78vh] sm:translate-x-32 sm:rounded-3xl sm:p-5">
+          <section role="dialog" aria-modal="true" aria-labelledby="bulk-edit-title" className="mt-32 max-h-[calc(100vh-8rem)] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl dark:bg-[#343746] sm:mt-20 sm:max-h-[78vh] sm:translate-x-32 sm:rounded-3xl sm:p-5">
             <div className="flex items-start justify-between gap-3"><div><h2 id="bulk-edit-title" className="text-xl font-extrabold">Sửa {selectedIds.size} giao dịch</h2><p className="mt-1 text-sm text-gray-500">Chỉ các trường có giá trị mới sẽ được cập nhật.</p></div><button type="button" className="rounded-lg p-2 hover:bg-black/5 dark:hover:bg-white/10" aria-label="Đóng sửa hàng loạt" onClick={() => setBulkEditOpen(false)}><X size={20}/></button></div>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <BulkSelect label="Mục đích" value={bulkEditValues.purposeId} onChange={(value) => setBulkEditValues((current) => ({ ...current, purposeId: value }))} options={purposes} />

@@ -66,9 +66,9 @@ export function Login() {
 
   const title = en ? (mode === 'login' ? 'Log in' : mode === 'signup' ? 'Create account' : mode === 'magic' ? 'Magic link' : 'Forgot password') : (mode === 'login' ? 'Đăng nhập' : mode === 'signup' ? 'Tạo tài khoản' : mode === 'magic' ? 'Liên kết đăng nhập' : 'Quên mật khẩu');
 
-  return <main className="grid min-h-screen place-items-center bg-[#f6f7f2] p-4 dark:bg-[#0f1814]">
+  return <main className="grid min-h-screen place-items-center bg-[#f6f7f2] p-4 dark:bg-[#282a36]">
     <form className="card w-full max-w-md space-y-4 p-7" onSubmit={submit}>
-      <p className="text-xs font-bold tracking-widest text-[#137050]">FAMILY EXPENSE</p>
+      <p className="text-xs font-bold tracking-widest text-[#137050] dark:text-[#bd93f9]">FAMILY EXPENSE</p>
       <h1 className="text-2xl font-extrabold">{title}</h1>
       {mode === 'forgot' && <p className="text-sm text-gray-500">{en ? 'Enter your account email to receive a password reset link.' : 'Nhập email tài khoản để nhận liên kết đặt lại mật khẩu.'}</p>}
       <label><span className="label">Email</span><input className="field" type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} /></label>

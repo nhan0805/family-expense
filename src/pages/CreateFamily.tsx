@@ -46,13 +46,13 @@ export function CreateFamily() {
     window.location.assign('/dang-nhap');
   };
   return (
-    <main className="grid min-h-screen place-items-center bg-[#f6f7f2] p-4 dark:bg-[#0f1814]">
+    <main className="grid min-h-screen place-items-center bg-[#f6f7f2] p-4 dark:bg-[#282a36]">
       <form className="card w-full max-w-lg space-y-5 p-7" onSubmit={submit}>
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#dceee5] text-[#155e46]">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#dceee5] text-[#155e46] dark:bg-[#44475a] dark:text-[#bd93f9]">
           <HousePlus />
         </div>
         <div>
-          <p className="text-xs font-bold tracking-widest text-[#137050]">
+          <p className="text-xs font-bold tracking-widest text-[#137050] dark:text-[#bd93f9]">
             FAMILY EXPENSE
           </p>
           <h1 className="mt-1 text-2xl font-extrabold">{en ? 'Create a new family' : 'Tạo gia đình mới'}</h1>
