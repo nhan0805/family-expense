@@ -2,6 +2,14 @@
 
 ## 2026-09-02
 
+### Đồng bộ khu vực xóa với Dracula dark mode
+
+- Trước thay đổi: Nút xóa thành viên/giao dịch và khối `Xóa gia đình` dùng nền đỏ tím tùy biến, màu chữ chưa khớp accent Dracula và thiếu focus state rõ ràng.
+- Sau thay đổi: Dùng Dracula Red `#FF5555` cho thao tác destructive; nền dark mode chỉ còn tint đỏ nhẹ `#FF55550D`, hover dùng `#FF55551F`, border giữ độ tương phản vừa đủ và focus ring dùng Purple `#BD93F9`.
+- Kỹ thuật: Cập nhật style dùng chung `.danger-button`, `.danger-zone` trong `src/index.css`; cập nhật title trong `src/pages/Members.tsx`; thêm regression assertion trong `src/pages/Members.test.tsx`. Không thay đổi API, schema, database, quyền hoặc quy tắc nghiệp vụ.
+- Kiểm thử: `pnpm test` đạt 19/19 file, 83/83 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build chỉ còn các cảnh báo chunk lớn/dynamic import ExcelJS đã có từ trước.
+- Triển khai dự kiến: Commit/push branch, tạo PR vào `main`, bật auto-merge; frontend sẽ deploy qua Cloudflare Pages Git integration sau khi merge. Không dùng deploy thủ công.
+
 ### Loại bỏ Hoàn tiền và Tạm ứng khỏi hệ thống giao dịch
 
 - Trước thay đổi: Database enum và một số logic legacy vẫn chấp nhận/đọc hai loại `Hoàn tiền` và `Tạm ứng`, dù form mới đã chỉ hiển thị Tiền ra/Tiền vào.
@@ -9,7 +17,7 @@
 - Kỹ thuật: Thêm migration `supabase/migrations/202609010004_remove_legacy_transaction_kinds.sql`; cập nhật domain, tone giao dịch, Dashboard, Data tools, test, Edge Function và tài liệu hướng dẫn. Không sửa migration đã áp dụng.
 - Sau kiểm tra CI preview: loại bỏ các nhánh so sánh legacy còn sót trong Dashboard và danh sách giao dịch để TypeScript/build remote đồng nhất với enum mới.
 - Kiểm thử: `pnpm test` đạt 19/19 file, 83/83 test; `pnpm lint`, `pnpm typecheck`, `pnpm build`, Prettier cho Edge Function và `git diff --check` pass. E2E local bị chặn vì thiếu Playwright browser binaries; Supabase local chưa chạy vì thiếu container `supabase_db_family-expense`.
-- Triển khai dự kiến: Commit/push branch, tạo PR vào `main`, bật auto-merge; migration sẽ chạy qua Supabase Production Deploy và frontend qua Cloudflare Pages Git integration sau khi PR merge.
+- Triển khai: PR [#97](https://github.com/nhan0805/family-expense/pull/97) đã merge vào `main` với merge commit `4c25e05a72e031e36a325f1c86a900ab3009c4dc`. Required checks preview/quality/db-security pass; [CI main](https://github.com/nhan0805/family-expense/actions/runs/33535859191) và [Supabase Production Deploy](https://github.com/nhan0805/family-expense/actions/runs/33535859149) đều thành công. Cloudflare Pages production đang phục vụ build có asset `assets/index-CDFnrdjO.css`; smoke test `https://family-expense-8fo.pages.dev/` trả HTTP 200 lúc `02/09/2026 00:09` (`Asia/Ho_Chi_Minh`). Không tạo deploy lần hai chỉ để cập nhật tài liệu.
 
 ## 2026-09-01
 

@@ -389,7 +389,7 @@ export function Members() {
       )}
       {isOwner && (
         <section className="danger-zone card p-5">
-          <h3 className="font-bold text-red-700 dark:text-red-300">
+          <h3 className="font-bold text-red-700 dark:text-[#ff5555]">
             {en ? 'Delete family' : 'Xóa gia đình'}
           </h3>
           <p className="mt-1 text-sm text-gray-500">

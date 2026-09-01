@@ -635,6 +635,7 @@ summary:focus-visible {
   color: #b42318;
   font-weight: 750;
   cursor: pointer;
+  transition: border-color .16s ease, background-color .16s ease, color .16s ease;
 }
 
 .danger-button:hover:not(:disabled) {
@@ -649,13 +650,18 @@ summary:focus-visible {
 
 .dark .danger-button {
   border-color: #ff555566;
-  background: #3b2938;
-  color: #ff9aa2;
+  background: #ff55550d;
+  color: #ff5555;
 }
 
 .dark .danger-button:hover:not(:disabled) {
   border-color: #ff5555;
-  background: #523044;
+  background: #ff55551f;
+}
+
+.danger-button:focus-visible {
+  outline: 2px solid #bd93f9;
+  outline-offset: 2px;
 }
 
 .inline-feedback {
@@ -803,7 +809,7 @@ summary:focus-visible {
 
 .dark .danger-zone {
   border-color: #ff555566;
-  background: color-mix(in srgb, #3b2938 72%, var(--surface));
+  background: #ff55550d;
 }
 
 .data-tools-grid {
