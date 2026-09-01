@@ -4,13 +4,17 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { FeedbackProvider } from '../components/Feedback';
 import { useApp } from '../context/AppContext';
-import { Transactions } from './Transactions';
+import { sanitizeAiSearchExplanation, Transactions } from './Transactions';
 
 vi.mock('../context/AppContext', () => ({ useApp: vi.fn() }));
 vi.mock('../lib/supabase', () => ({ isSupabaseConfigured: false, supabase: {} }));
 
 describe('Giao dịch mobile', () => {
   afterEach(() => { cleanup(); vi.clearAllMocks(); });
+
+  it('ẩn ID kỹ thuật khỏi giải thích bộ lọc AI', () => {
+    expect(sanitizeAiSearchExplanation("Đã lọc mục 'Tiền lãi' (ID: 0035874c-dfeb-47d2-a5f5-33a2e6071b7d) cho năm 2026.")).toBe("Đã lọc mục 'Tiền lãi' cho năm 2026.");
+  });
   it('hiển thị bộ lọc trực tiếp và menu ba chấm trên card', () => {
     const setTransactions = vi.fn();
     vi.mocked(useApp).mockReturnValue({

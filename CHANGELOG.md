@@ -2,12 +2,21 @@
 
 ## 2026-09-01
 
+### Ẩn ID kỹ thuật trong thông báo bộ lọc AI
+
+- Trước thay đổi: Thông báo sau khi AI áp dụng bộ lọc có thể hiển thị UUID của danh mục, gây khó đọc và không có ích cho người dùng.
+- Sau thay đổi: Loại bỏ UUID khỏi nội dung thông báo trên giao diện; ID nội bộ vẫn được giữ nguyên để áp dụng bộ lọc.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx` và regression test trong `src/pages/Transactions.ui.test.tsx`; không đổi API/database.
+- Kiểm thử: Đã thêm assertion kiểm tra UUID không xuất hiện trong giải thích bộ lọc AI; chưa chạy toàn bộ quality suite.
+- Triển khai: Chưa deploy production.
+
 ### Cân đối bộ lọc chi tiết trên web
 
 - Trước thay đổi: 12 trường lọc dùng 5 cột trên màn hình lớn nên hàng cuối chỉ còn một vài ô, tạo khoảng trống và bố cục lệch.
 - Sau thay đổi: Bộ lọc dùng 4 cột trên desktop và 3 cột trên tablet, chia đều thành các hàng; khoảng cách giữa các trường được thống nhất, mobile vẫn xếp một cột.
 - Kỹ thuật: Cập nhật `src/pages/Transactions.tsx` và regression assertion trong `src/pages/Transactions.ui.test.tsx`; không đổi API/database.
 - Kiểm thử: `pnpm test` đạt 19/19 file và 77/77 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` đều pass. Build chỉ còn các cảnh báo chunk lớn/dynamic import ExcelJS đã có từ trước.
+- Triển khai: Đã merge PR #88 vào `main` với merge commit `d24572ad52e98961ba0f374771d2d39213a2af0c`; các workflow `quality`, `db-security`, Supabase Preview và Cloudflare Pages đều pass. Production phản hồi HTTP 200 tại [production](https://family-expense-8fo.pages.dev/) lúc `01/09/2026 08:18` (`Asia/Ho_Chi_Minh`).
 
 ### Sửa lỗi nút Hủy không xóa bản nháp giao dịch
 
@@ -15,7 +24,8 @@
 - Sau thay đổi: Khi hủy luồng thêm giao dịch, bản nháp theo `family_id` được xóa trước khi điều hướng; luồng sửa giao dịch hiện có không bị ảnh hưởng.
 - Kỹ thuật: Cập nhật `src/pages/TransactionForm.tsx` và bổ sung regression test trong `src/pages/TransactionForm.test.tsx`; không đổi API/database.
 - Kiểm thử: `pnpm test` đạt 19/19 file và 77/77 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` đều pass. Build chỉ còn các cảnh báo chunk lớn/dynamic import ExcelJS đã có từ trước.
-- Triển khai: Dự kiến đi cùng PR #87 qua GitHub và Cloudflare Pages Git integration.
+- Triển khai: Đã merge PR #87 vào `main` với merge commit `980bfe7ce4c999043d96ecdefe55f15c52e61d82`; `quality`, `db-security`, Preview và Cloudflare Pages đều pass. Production phản hồi HTTP 200 tại [production](https://family-expense-8fo.pages.dev/).
+- Thời điểm xác minh: `01/09/2026 01:07` theo múi giờ `Asia/Ho_Chi_Minh`.
 
 ### Sửa lỗi iPhone tự zoom khi nhập số tiền
 
@@ -23,7 +33,15 @@
 - Sau thay đổi: Hai input số tiền dùng override `!text-base` với `font-size: 16px`, giữ bàn phím số và không thay đổi giá trị lọc/API.
 - Kỹ thuật: Cập nhật `src/pages/Transactions.tsx` và regression assertion trong `src/pages/Transactions.ui.test.tsx`; không đổi API/database.
 - Kiểm thử: `pnpm test` đạt 19/19 file và 76/76 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` đều pass.
-- Triển khai: Chưa deploy production.
+- Triển khai: Đã deploy production cùng PR #87 qua GitHub và Cloudflare Pages Git integration; production phản hồi HTTP 200 tại [production](https://family-expense-8fo.pages.dev/).
+
+### Đưa cập nhật handoff lên trước deploy
+
+- Trước thay đổi: Handoff được yêu cầu cập nhật ngay sau production deploy, có thể khiến phải tạo thêm commit và deploy lần hai.
+- Sau thay đổi: Handoff/changelog phải được cập nhật đầy đủ trước commit, merge và deploy; sau deploy chỉ xác minh hoặc ghi nhận trạng thái không ảnh hưởng artifact đã deploy.
+- Kỹ thuật: Cập nhật `AGENTS.md`; không đổi code, API hoặc database.
+- Kiểm thử: Đã kiểm tra nội dung hướng dẫn và `git diff --check`.
+- Triển khai: Chưa deploy production; đây là cập nhật quy trình làm việc.
 
 ### Tinh gọn bộ lọc và input số tiền trên mobile
 

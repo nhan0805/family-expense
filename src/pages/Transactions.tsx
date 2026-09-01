@@ -76,6 +76,13 @@ type SpeechRecognitionLike = {
 };
 type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
 
+export function sanitizeAiSearchExplanation(explanation: string) {
+  return explanation
+    .replace(/\s*\(ID:\s*[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\)/gi, '')
+    .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/gi, '')
+    .trim();
+}
+
 function getSpeechRecognition() {
   const speechWindow = window as typeof window & {
     SpeechRecognition?: SpeechRecognitionConstructor;
@@ -905,7 +912,7 @@ export function Transactions() {
       }
       setAiSearchCompleted(true);
       window.setTimeout(() => setAiSearchCompleted(false), 1800);
-      setAiSearchMessage(response.data.explanation || (en ? 'AI filters applied.' : 'Đã áp dụng bộ lọc AI.'));
+      setAiSearchMessage(sanitizeAiSearchExplanation(response.data.explanation) || (en ? 'AI filters applied.' : 'Đã áp dụng bộ lọc AI.'));
     } catch {
       setAiSearchError(en ? 'AI search is temporarily unavailable. Please try again.' : 'Chưa thể phân tích tìm kiếm bằng AI. Vui lòng thử lại sau.');
     } finally {
