@@ -28,7 +28,7 @@
 - Thông báo giải thích sau khi AI áp dụng bộ lọc đã loại bỏ UUID kỹ thuật; các ID nội bộ vẫn được giữ để áp dụng bộ lọc.
 - Cập nhật `src/pages/Transactions.tsx` và regression test trong `src/pages/Transactions.ui.test.tsx`; không thay đổi API, schema hoặc database.
 - Validation local: `pnpm test` 19/19 file, 78/78 test, `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build còn cảnh báo chunk lớn/dynamic import ExcelJS đã có từ trước.
-- Trạng thái triển khai dự kiến: commit và push branch hiện tại, tạo PR vào `main`, bật auto-merge và triển khai qua Cloudflare Pages Git integration sau khi merge.
+- Trạng thái triển khai: Đã merge PR #89 vào `main` với merge commit `7bbcd87fc7dc4f42828de14f07d0a7186bc15134`; `quality`, `db-security`, Cloudflare Preview và Cloudflare Pages đều pass. Production smoke test trả HTTP 200 lúc `01/09/2026 08:52` (`Asia/Ho_Chi_Minh`).
 
 ### Handoff — sửa lỗi Hủy bản nháp giao dịch (01/09/2026)
 
@@ -62,7 +62,7 @@
 
 - PR #58 đã merge vào `main` với merge commit `55d4fdab617fd03e2203249eee5180180b5587b0`; Cloudflare Pages production đã deploy thành công và production smoke test trả HTTP 200.
 - UI đã đổi bộ chọn giao diện/ngôn ngữ thành switch; giao diện chỉ còn Sáng/Tối, lựa chọn `system` cũ được quy về Sáng. Dashboard có keyboard accessibility cho chart và báo lỗi từng nhóm dữ liệu.
-- Migration `supabase/migrations/202608310001_dashboard_summary_six_months.sql` đang chờ deploy production qua Supabase workflow; migration cập nhật RPC `get_dashboard_summary` để trả đủ 6 tháng xu hướng.
+- Migration `supabase/migrations/202608310001_dashboard_summary_six_months.sql` đã được áp dụng production qua Supabase workflow run [33348318894](https://github.com/nhan0805/family-expense/actions/runs/33348318894) ngày `31/08/2026 08:41` (`Asia/Ho_Chi_Minh`); migration cập nhật RPC `get_dashboard_summary` để trả đủ 6 tháng xu hướng.
 - CI quality, `db-security`, preview và Cloudflare checks của PR #58 đều pass; local test 61/61, lint, typecheck và build pass.
 
 - Production đã nhận merge commit `54983d914f83c7ff8ccb5cfed2c3d22020cdfcaf` qua PR #57; trước đó PR #55 và #56 đã hoàn tất bộ lọc EN và đồng bộ selector.
@@ -274,7 +274,7 @@ Plan, billing owner và renewal date: **TBD — xác minh trong tài khoản nh�
 - [ ] Xác minh backup/PITR và retention theo Supabase plan.
 - [ ] Restore drill sang project không-production tối thiểu hàng quý.
 - [x] Xóa thông thường là soft delete và có màn hình Đã xóa/khôi phục.
-- [ ] Chốt retention cho thùng rác và `ai_usage_logs`.
+- [x] Chốt retention thùng rác: giao dịch soft-delete được giữ 30 ngày kể từ `deleted_at`; migration `202609010001_purge_deleted_transactions_after_30_days.sql` cấu hình Supabase Cron chạy hằng ngày lúc 02:15 (`Asia/Ho_Chi_Minh`, 19:15 UTC) để chỉ purge dòng có `deleted_at` quá 30 ngày. Retention `ai_usage_logs` vẫn TBD.
 - [ ] Cân nhắc export định kỳ ngoài nhà cung cấp theo RPO.
 
 Mục tiêu kiến trúc đề xuất cho MVP: **RPO 24 giờ, RTO 4 giờ**; chưa được coi là đạt cho đến khi restore drill thành công.
@@ -370,7 +370,7 @@ Không ghi tài khoản test trong file. Tạo user/family riêng ở staging v�
 | P1 | RLS negative tests và migration rehearsal | Chủ dự án | Mỗi release DB | Structural pgTAP policy/constraint test đã pass trong CI; fixture cross-family vẫn cần dữ liệu test staging |
 | P1 | Monitoring/alert/error tracking không chứa PII | TBD | TBD | Chưa làm |
 | P1 | Backup restore và rollback drill | TBD | Mỗi quý | Đã có script/runbook an toàn; drill staging thực tế chờ `STAGING_DB_URL` và `RESTORE_DB_URL` |
-| P1 | Chốt retention/log/privacy policy | TBD | TBD | Cần quyết định |
+| P1 | Chốt retention/log/privacy policy | Chủ dự án | 01/09/2026 | Đã chốt và mã hóa retention thùng rác 30 ngày; retention `ai_usage_logs` vẫn cần quyết định |
 | P2 | Đánh giá migration enum Tiền vào/Tiền ra dài hạn | TBD | TBD | Theo dõi |
 | P3 | Storage chứng từ/recurring/queue khi có business case | TBD | TBD | Backlog |
 
