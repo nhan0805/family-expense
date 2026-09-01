@@ -978,7 +978,7 @@ export function Transactions() {
             <div className="flex min-w-0 gap-2">
               <div className="relative min-w-0 flex-1">
                 <Search
-                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-200"
                   size={18}
                 />
                 <input
