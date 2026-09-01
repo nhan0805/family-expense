@@ -22,6 +22,8 @@ describe('Giao dịch mobile', () => {
       setTransactions, purposes: [{ id: 'p1', name: 'Sinh hoạt' }, { id: 'p2', name: 'Du lịch' }], expenseTypes: [{ id: 'e1', name: 'Thực phẩm' }], paymentMethods: [{ id: 'm1', name: 'Tiền mặt' }], familyId: 'f1', currentUserId: 'u1', currentUserRole: 'owner',
     } as unknown as ReturnType<typeof useApp>);
     render(<FeedbackProvider><QueryClientProvider client={new QueryClient()}><MemoryRouter initialEntries={['/giao-dich?month=09&year=2026']}><Transactions/></MemoryRouter></QueryClientProvider></FeedbackProvider>);
+    expect(screen.getByRole('heading', { name: 'Giao dịch' })).toHaveClass('page-title');
+    expect(screen.getByRole('region', { name: 'Tìm kiếm và bộ lọc giao dịch' })).toHaveClass('filter-panel');
     expect(screen.getByRole('region', { name: 'Tìm kiếm và bộ lọc giao dịch' })).not.toHaveClass('sticky');
     const filterToggle = screen.getByText(/Bộ lọc chi tiết/);
     const filterDetails = filterToggle.closest('details');
@@ -48,7 +50,7 @@ describe('Giao dịch mobile', () => {
     expect(aiSearchButton.className).toContain('bg-gradient-to-r');
     expect(aiSearchButton.className).toContain('active:scale-[.98]');
     const transactionCard = screen.getByRole('article', { name: 'Giao dịch Đi chợ' });
-    expect(transactionCard).toHaveClass('rounded-2xl', 'shadow-sm');
+    expect(transactionCard).toHaveClass('rounded-2xl', 'shadow-sm', 'transaction-card');
     expect(transactionCard).not.toHaveClass('border-t');
     fireEvent.click(screen.getByRole('button', { name: 'Thao tác với Đi chợ' }));
     expect(screen.getByText('Sao chép')).toBeInTheDocument();
