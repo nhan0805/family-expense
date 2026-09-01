@@ -164,16 +164,15 @@ const changePercent = (current: number, previous: number) =>
   previous === 0 ? (current === 0 ? 0 : null) : ((current - previous) / previous) * 100;
 
 const isIncome = (type: Transaction['transactionType']) =>
-  type === 'Thu nhập' || type === 'Hoàn tiền';
+  type === 'Thu nhập';
 
 const isExpense = (type: Transaction['transactionType']) =>
-  type === 'Chi tiêu' || type === 'Tạm ứng';
+  type === 'Chi tiêu';
 
 const incomeValue = (transaction: Transaction) => (isIncome(transaction.transactionType) ? transaction.amount : 0);
 
 const expenseValue = (transaction: Transaction) => {
   if (isExpense(transaction.transactionType)) return transaction.amount;
-  if (transaction.transactionType === 'Hoàn tiền') return -transaction.amount;
   return 0;
 };
 

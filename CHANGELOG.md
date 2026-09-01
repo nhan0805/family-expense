@@ -7,6 +7,7 @@
 - Trước thay đổi: Database enum và một số logic legacy vẫn chấp nhận/đọc hai loại `Hoàn tiền` và `Tạm ứng`, dù form mới đã chỉ hiển thị Tiền ra/Tiền vào.
 - Sau thay đổi: Chỉ còn `Chi tiêu` và `Thu nhập` trong schema, validation, Dashboard, danh sách, import/export và Edge Function; dữ liệu legacy còn sót trong quá trình reset được chuẩn hóa thành `Thu nhập`/`Chi tiêu` tương ứng. Dark mode đồng bộ Pink `#FF79C6`, Green `#50FA7B`, Purple `#BD93F9` và Cyan `#8BE9FD` cho dòng giao dịch, KPI, icon/title và nút chọn kỳ.
 - Kỹ thuật: Thêm migration `supabase/migrations/202609010004_remove_legacy_transaction_kinds.sql`; cập nhật domain, tone giao dịch, Dashboard, Data tools, test, Edge Function và tài liệu hướng dẫn. Không sửa migration đã áp dụng.
+- Sau kiểm tra CI preview: loại bỏ các nhánh so sánh legacy còn sót trong Dashboard và danh sách giao dịch để TypeScript/build remote đồng nhất với enum mới.
 - Kiểm thử: `pnpm test` đạt 19/19 file, 83/83 test; `pnpm lint`, `pnpm typecheck`, `pnpm build`, Prettier cho Edge Function và `git diff --check` pass. E2E local bị chặn vì thiếu Playwright browser binaries; Supabase local chưa chạy vì thiếu container `supabase_db_family-expense`.
 - Triển khai dự kiến: Commit/push branch, tạo PR vào `main`, bật auto-merge; migration sẽ chạy qua Supabase Production Deploy và frontend qua Cloudflare Pages Git integration sau khi PR merge.
 
