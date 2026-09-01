@@ -274,7 +274,7 @@ Plan, billing owner và renewal date: **TBD — xác minh trong tài khoản nh�
 - [ ] Xác minh backup/PITR và retention theo Supabase plan.
 - [ ] Restore drill sang project không-production tối thiểu hàng quý.
 - [x] Xóa thông thường là soft delete và có màn hình Đã xóa/khôi phục.
-- [x] Chốt retention: giao dịch soft-delete được giữ 30 ngày kể từ `deleted_at`; `ai_usage_logs` được giữ 30 ngày kể từ `created_at`. Migration `202609010002_purge_ai_usage_logs_after_30_days.sql` nối thêm purge log AI vào Supabase Cron hằng ngày lúc 02:15 (`Asia/Ho_Chi_Minh`, 19:15 UTC). Mỗi hàm chỉ xóa dữ liệu quá hạn trong đúng bảng mục tiêu.
+- [x] Chốt retention: giao dịch soft-delete được giữ 30 ngày kể từ `deleted_at`; `ai_usage_logs` được giữ 30 ngày kể từ `created_at`. Migration `202609010002_purge_ai_usage_logs_after_30_days.sql` đã nối purge log AI vào Supabase Cron production hằng ngày lúc 02:15 (`Asia/Ho_Chi_Minh`, 19:15 UTC), qua workflow [33515888401](https://github.com/nhan0805/family-expense/actions/runs/33515888401). Mỗi hàm chỉ xóa dữ liệu quá hạn trong đúng bảng mục tiêu.
 - [ ] Cân nhắc export định kỳ ngoài nhà cung cấp theo RPO.
 
 Mục tiêu kiến trúc đề xuất cho MVP: **RPO 24 giờ, RTO 4 giờ**; chưa được coi là đạt cho đến khi restore drill thành công.
@@ -370,7 +370,7 @@ Không ghi tài khoản test trong file. Tạo user/family riêng ở staging v�
 | P1 | RLS negative tests và migration rehearsal | Chủ dự án | Mỗi release DB | Structural pgTAP policy/constraint test đã pass trong CI; fixture cross-family vẫn cần dữ liệu test staging |
 | P1 | Monitoring/alert/error tracking không chứa PII | TBD | TBD | Chưa làm |
 | P1 | Backup restore và rollback drill | TBD | Mỗi quý | Đã có script/runbook an toàn; drill staging thực tế chờ `STAGING_DB_URL` và `RESTORE_DB_URL` |
-| P1 | Chốt retention/log/privacy policy | Chủ dự án | 01/09/2026 | Đã chốt retention thùng rác và `ai_usage_logs` là 30 ngày; migration mới chờ deploy production |
+| P1 | Chốt retention/log/privacy policy | Chủ dự án | 01/09/2026 | Đã chốt và deploy retention thùng rác và `ai_usage_logs` là 30 ngày; cần theo dõi Cron run đầu tiên |
 | P2 | Đánh giá migration enum Tiền vào/Tiền ra dài hạn | TBD | TBD | Theo dõi |
 | P3 | Storage chứng từ/recurring/queue khi có business case | TBD | TBD | Backlog |
 

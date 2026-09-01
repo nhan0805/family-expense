@@ -7,8 +7,8 @@
 - Trước thay đổi: Retention của `ai_usage_logs` chưa được chốt; Cron chỉ xử lý giao dịch trong thùng rác.
 - Sau thay đổi: `ai_usage_logs` được giữ 30 ngày từ `created_at`, sau đó purge cùng lịch Cron hằng ngày lúc 02:15 giờ Việt Nam.
 - Kỹ thuật: Thêm migration `supabase/migrations/202609010002_purge_ai_usage_logs_after_30_days.sql`; chỉ xóa log quá hạn trong `ai_usage_logs`, không xóa giao dịch hoặc bảng khác.
-- Kiểm thử: Đã rà soát điều kiện bảng/cột, quyền RPC và chạy `git diff --check`; chưa chạy migration production.
-- Triển khai: Chờ review/merge và Supabase production workflow.
+- Kiểm thử: Đã rà soát điều kiện bảng/cột, quyền RPC và chạy `git diff --check`; quality, db-security và preview đều pass.
+- Triển khai: Đã merge PR #91 với merge commit `c9bde54f044489bb456746b472ef8c0e4a914726`; Supabase production workflow [33515888401](https://github.com/nhan0805/family-expense/actions/runs/33515888401) đã áp dụng migration thành công ngày `01/09/2026 20:51` (`Asia/Ho_Chi_Minh`). Cron purge giao dịch và `ai_usage_logs` đã được cấu hình trên production.
 
 ### Tự động purge giao dịch trong thùng rác sau 30 ngày
 
@@ -24,7 +24,7 @@
 - Sau thay đổi: Giao dịch trong thùng rác được giữ 30 ngày kể từ `deleted_at`, sau đó mới được xóa vĩnh viễn.
 - Kỹ thuật: Cập nhật `HANDOFF.md`; job purge được triển khai bằng migration riêng và chưa thực hiện purge ngay tại thời điểm deploy.
 - Kiểm thử: Đã kiểm tra lại cơ chế soft-delete/purge hiện có và `git diff --check`.
-- Triển khai: Chính sách và job purge đã được triển khai production qua PR #90.
+- Triển khai: Chính sách và job purge đã được triển khai production qua PR #90; retention `ai_usage_logs` được nối vào cùng Cron qua PR #91.
 
 ### Xác minh migration Dashboard 6 tháng đã deploy production
 
