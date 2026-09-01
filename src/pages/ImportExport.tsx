@@ -533,7 +533,7 @@ export function ImportExport() {
             </span>
             <button
               type="button"
-              className="rounded-lg border border-[#b8c9bf] bg-white px-4 py-2 text-sm font-semibold dark:bg-[#17251f]"
+              className="rounded-lg border border-[#b8c9bf] bg-white px-4 py-2 text-sm font-semibold dark:bg-[#343746]"
               onClick={() => void chooseImportFile()}
             >
               {en ? 'Choose Excel file' : 'Chọn file Excel'}
