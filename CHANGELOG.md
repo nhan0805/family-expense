@@ -2,21 +2,29 @@
 
 ## 2026-09-01
 
+### Chốt và tự động purge `ai_usage_logs` sau 30 ngày
+
+- Trước thay đổi: Retention của `ai_usage_logs` chưa được chốt; Cron chỉ xử lý giao dịch trong thùng rác.
+- Sau thay đổi: `ai_usage_logs` được giữ 30 ngày từ `created_at`, sau đó purge cùng lịch Cron hằng ngày lúc 02:15 giờ Việt Nam.
+- Kỹ thuật: Thêm migration `supabase/migrations/202609010002_purge_ai_usage_logs_after_30_days.sql`; chỉ xóa log quá hạn trong `ai_usage_logs`, không xóa giao dịch hoặc bảng khác.
+- Kiểm thử: Đã rà soát điều kiện bảng/cột, quyền RPC và chạy `git diff --check`; chưa chạy migration production.
+- Triển khai: Chờ review/merge và Supabase production workflow.
+
 ### Tự động purge giao dịch trong thùng rác sau 30 ngày
 
 - Trước thay đổi: Giao dịch soft-delete có chính sách giữ 30 ngày nhưng chưa có job tự động thực thi.
 - Sau thay đổi: Thêm Supabase Cron chạy hằng ngày lúc 02:15 để xóa vĩnh viễn giao dịch có `deleted_at` quá 30 ngày.
 - Kỹ thuật: Thêm migration `supabase/migrations/202609010001_purge_deleted_transactions_after_30_days.sql`; hàm chỉ `DELETE` khi `deleted_at IS NOT NULL` và không tác động `ai_usage_logs` hoặc giao dịch đang hoạt động.
-- Kiểm thử: Đã rà soát điều kiện purge, quyền thực thi và chạy `git diff --check`; chưa chạy migration production.
-- Triển khai: Chờ review/merge và Supabase production workflow; không tự động xóa dữ liệu production trong lượt này.
+- Kiểm thử: Đã rà soát điều kiện purge, quyền thực thi và chạy `git diff --check`; quality, db-security và preview đều pass.
+- Triển khai: Đã merge PR #90 với merge commit `b4580710188ba86f2e26dd690c88fe37bf5b9037`; Supabase production workflow [33510763918](https://github.com/nhan0805/family-expense/actions/runs/33510763918) đã áp dụng migration thành công ngày `01/09/2026 20:00` (`Asia/Ho_Chi_Minh`). Cron purge đã được cấu hình trên production.
 
 ### Chốt retention giao dịch trong thùng rác
 
 - Trước thay đổi: Retention cho giao dịch soft-delete chưa được quyết định.
 - Sau thay đổi: Giao dịch trong thùng rác được giữ 30 ngày kể từ `deleted_at`, sau đó mới được xóa vĩnh viễn.
-- Kỹ thuật: Cập nhật `HANDOFF.md`; chưa thêm job purge và chưa xóa dữ liệu production.
+- Kỹ thuật: Cập nhật `HANDOFF.md`; job purge được triển khai bằng migration riêng và chưa thực hiện purge ngay tại thời điểm deploy.
 - Kiểm thử: Đã kiểm tra lại cơ chế soft-delete/purge hiện có và `git diff --check`.
-- Triển khai: Đây là quyết định chính sách; việc triển khai job purge cần một thay đổi kỹ thuật riêng.
+- Triển khai: Chính sách và job purge đã được triển khai production qua PR #90.
 
 ### Xác minh migration Dashboard 6 tháng đã deploy production
 
