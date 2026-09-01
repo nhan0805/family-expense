@@ -39,6 +39,8 @@ describe('Quản lý danh mục', () => {
     mockedUseApp.mockReturnValue(appState('owner'));
     render(<Catalogs />);
 
+    expect(screen.getByRole('heading', { name: 'Danh mục', level: 2 })).toHaveClass('page-title');
+    expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(3);
     fireEvent.click(screen.getAllByRole('button', { name: 'Thêm' })[0]!);
     fireEvent.change(screen.getByLabelText('Tên mục đích'), { target: { value: '  Giáo dục  ' } });
     fireEvent.click(screen.getByRole('button', { name: 'Lưu danh mục' }));

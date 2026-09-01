@@ -8,7 +8,15 @@
 - Sau thay đổi: Chuẩn hóa token màu/bề mặt/border/shadow/radius, tăng độ rõ typography và trạng thái tương tác; làm mới app shell, mobile menu/bottom navigation/FAB, hierarchy Dashboard và transaction list mà không đổi nghiệp vụ.
 - Kỹ thuật: Cập nhật `src/index.css`, `src/components/Layout.tsx`, `src/components/TransactionRow.tsx`, `src/pages/Dashboard.tsx`, `src/pages/Transactions.tsx`; bổ sung visual regression assertions trong `src/pages/Dashboard.test.tsx` và `src/pages/Transactions.ui.test.tsx`; không đổi API, schema hoặc database.
 - Kiểm thử: `pnpm test` đạt 19/19 file và 78/78 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. `pnpm test:e2e` đã thử nhưng bị chặn vì môi trường chưa có Playwright browser binaries; không tự tải dependency mới. Build chỉ còn cảnh báo chunk lớn/dynamic import ExcelJS đã có từ trước.
-- Triển khai: Chưa deploy production; thay đổi hiện ở working tree để review. Khi deploy sẽ tiếp tục qua GitHub PR + Cloudflare Pages Git integration.
+- Triển khai: Đã merge PR #92 vào `main` với merge commit `d827acb17aa29c68e623f1480ea7b628e0cf78e7`; CI main [33519998011](https://github.com/nhan0805/family-expense/actions/runs/33519998011), Cloudflare Pages và các kiểm tra liên quan đều pass. Production smoke test `https://family-expense-8fo.pages.dev/` trả HTTP 200 lúc `01/09/2026 21:32` (`Asia/Ho_Chi_Minh`).
+
+### Cải thiện UI đợt 2 — form giao dịch, danh mục, thành viên và dữ liệu
+
+- Trước thay đổi: Form giao dịch, màn hình quản lý danh mục/thành viên và nhập/xuất dữ liệu còn dùng nhiều lớp trình bày rời rạc; các nhóm nội dung, trạng thái an toàn và thao tác mobile chưa có nhịp thị giác thống nhất.
+- Sau thay đổi: Chuẩn hóa hierarchy heading và section, panel form, trạng thái cảnh báo/lỗi, vùng mở rộng, nút nguy hiểm, danh sách danh mục, avatar thành viên, vùng chọn file kéo-thả và bảng preview; tăng vùng chạm/focus và giữ layout gọn trên mobile.
+- Kỹ thuật: Cập nhật `src/index.css`, `src/pages/TransactionForm.tsx`, `src/pages/Catalogs.tsx`, `src/pages/Members.tsx`, `src/pages/ImportExport.tsx`; bổ sung regression assertions trong `src/pages/TransactionForm.test.tsx`, `src/pages/Catalogs.test.tsx`, `src/pages/Members.test.tsx`, `src/pages/ImportExport.test.tsx`. Không thay đổi API, schema, migration, RLS/RPC, dữ liệu hoặc quy tắc nghiệp vụ.
+- Kiểm thử: `pnpm test` đạt 19/19 file và 78/78 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. E2E local vẫn chưa chạy được vì môi trường thiếu Playwright browser binaries; không cài thêm dependency trong phiên này. Build còn cảnh báo chunk lớn/dynamic import ExcelJS đã có từ trước.
+- Triển khai: Chưa deploy production; đã sẵn sàng qua GitHub PR + Cloudflare Pages Git integration sau khi CI hoàn tất.
 
 ### Chốt và tự động purge `ai_usage_logs` sau 30 ngày
 

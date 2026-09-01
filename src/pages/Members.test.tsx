@@ -28,7 +28,7 @@ describe('Members', () => {
     render(<Members />);
     expect(
       screen.getByRole('heading', { name: 'Gia đình của tôi' }),
-    ).toBeInTheDocument();
+    ).toHaveClass('page-title');
     expect(
       screen.getByRole('button', { name: 'Thêm vào gia đình' }),
     ).toBeInTheDocument();
