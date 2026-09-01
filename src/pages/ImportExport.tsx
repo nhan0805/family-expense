@@ -411,24 +411,25 @@ export function ImportExport() {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-extrabold">{en ? 'Data' : 'Dữ liệu'}</h2>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{en ? 'Excel currently uses Vietnamese templates for compatibility with existing files.' : 'Excel hiện dùng template tiếng Việt để tương thích với các file hiện có.'}</p>
+    <div className="data-page space-y-6">
+      <div className="page-header">
+        <p className="page-kicker">{en ? 'Data center' : 'Trung tâm dữ liệu'}</p>
+        <h2 className="page-title">{en ? 'Data' : 'Dữ liệu'}</h2>
+        <p className="page-subtitle">{en ? 'Excel currently uses Vietnamese templates for compatibility with existing files.' : 'Excel hiện dùng template tiếng Việt để tương thích với các file hiện có.'}</p>
         <p className="mt-1 text-sm text-gray-500">
           {en ? 'Import, export and manage family transaction data.' : 'Nhập, xuất và quản lý dữ liệu giao dịch của gia đình.'}
         </p>
       </div>
 
       <section aria-labelledby="data-tools-title">
-        <div className="mb-3 flex items-end justify-between gap-3">
+        <div className="section-header mb-3 items-end">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#137050]">{en ? 'Data tools' : 'Công cụ dữ liệu'}</p>
             <h3 id="data-tools-title" className="mt-1 text-lg font-extrabold">{en ? 'Import, export and share' : 'Nhập, xuất và chia sẻ'}</h3>
           </div>
           <span className="hidden text-xs text-gray-500 sm:inline">{en ? 'Family data' : 'Dữ liệu của gia đình'}</span>
         </div>
-        <div className="grid gap-4 lg:grid-cols-3">
+        <div className="data-tools-grid grid gap-4 lg:grid-cols-3">
         <DataCard
           icon={<FileSpreadsheet size={24} />}
           title={en ? 'Download template' : 'Tải template'}
@@ -497,9 +498,9 @@ export function ImportExport() {
         </div>
       </section>
 
-      <section className="card overflow-hidden">
-        <div className="flex items-start gap-3 border-b border-black/10 bg-[#fbfdfb] p-4 dark:border-white/10 dark:bg-white/[0.02] sm:p-5">
-          <span className="rounded-xl bg-[#e3f2e9] p-3 text-[#145c43] dark:bg-emerald-950/50 dark:text-emerald-300">
+      <section className="data-import-card card overflow-hidden">
+        <div className="data-import-header flex items-start gap-3 border-b border-black/10 bg-[#fbfdfb] p-4 dark:border-white/10 dark:bg-white/[0.02] sm:p-5">
+          <span className="data-card-icon rounded-xl bg-[#e3f2e9] p-3 text-[#145c43] dark:bg-emerald-950/50 dark:text-emerald-300">
             <Upload size={24} />
           </span>
           <div>
@@ -514,7 +515,7 @@ export function ImportExport() {
         </div>
         <div className="space-y-4 p-4 sm:p-5">
           <div
-            className="flex min-h-56 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#b8c9bf] bg-[#f7faf7] px-5 py-7 text-center transition hover:border-[#145c43] hover:bg-[#eef5f0] dark:bg-white/5"
+            className="data-upload-zone flex min-h-56 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#b8c9bf] bg-[#f7faf7] px-5 py-7 text-center transition hover:border-[#145c43] hover:bg-[#eef5f0] dark:bg-white/5"
             onDragOver={(event) => {
               event.preventDefault();
               event.dataTransfer.dropEffect = 'copy';
@@ -551,7 +552,7 @@ export function ImportExport() {
           </div>
           {(fileName || checkingFile || fileError) && (
             <div
-              className={`min-h-14 rounded-xl border p-4 text-sm ${
+              className={`data-file-status min-h-14 rounded-xl border p-4 text-sm ${
                 fileError
                   ? 'border-red-200 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200'
                   : 'border-[#cfe0d4] bg-[#f5faf6] text-[#245743] dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200'
@@ -586,7 +587,7 @@ export function ImportExport() {
           )}
           {(validRows.length > 0 || importErrors.length > 0) && (
             <>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="data-stats grid grid-cols-3">
                 <Stat
                   label={en ? 'Valid' : 'Hợp lệ'}
                   value={validRows.filter((r) => !r.duplicate).length}
@@ -608,7 +609,7 @@ export function ImportExport() {
                   {en ? 'Import rows that may be duplicates anyway' : 'Vẫn import các dòng có thể trùng'}
                 </label>
               )}
-              <div className="max-h-80 overflow-auto rounded-xl border">
+              <div className="data-preview max-h-80 overflow-auto rounded-xl border">
                 <table className="w-full min-w-[700px] text-left text-sm">
                   <thead className="bg-[#eef2ed]">
                     <tr>
@@ -677,10 +678,10 @@ function DataCard({
       ? 'bg-[#e3f2e9] text-[#145c43] dark:bg-emerald-950/50 dark:text-emerald-300'
       : 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300';
   return (
-    <section className="card self-start p-4 sm:p-5">
+    <section className="data-card card self-start p-4 sm:p-5">
       <div className="flex items-start gap-3">
-        <span className={`rounded-xl p-3 ${iconClass}`}>{icon}</span>
-        <div>
+        <span className={`data-card-icon rounded-xl p-3 ${iconClass}`}>{icon}</span>
+        <div className="data-card-content">
           <h3 className="text-lg font-extrabold">{title}</h3>
           <p className="mt-1 line-clamp-3 text-sm leading-6 text-gray-500">{description}</p>
         </div>
@@ -692,7 +693,7 @@ function DataCard({
 
 function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-xl bg-[#eef4ef] p-3 text-center dark:bg-white/5">
+    <div className="data-stat rounded-xl p-3 text-center">
       <strong className="block text-xl">{value}</strong>
       <span className="text-xs text-gray-500">{label}</span>
     </div>

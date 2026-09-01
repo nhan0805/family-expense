@@ -55,7 +55,7 @@ describe('Gửi danh sách giao dịch qua email', () => {
     mockedUseApp.mockReturnValue(appState('member'));
     render(<ImportExport />);
 
-    expect(screen.getByRole('heading', { name: 'Dữ liệu' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Dữ liệu' })).toHaveClass('page-title');
     expect(screen.queryByLabelText('Chế độ')).not.toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Gửi danh sách giao dịch' }),
