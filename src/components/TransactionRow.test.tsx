@@ -66,4 +66,15 @@ describe('TransactionRow', () => {
     fireEvent.click(screen.getAllByRole('button', { name: 'Khôi phục Mua thực phẩm' })[0]!);
     expect(onRestore).toHaveBeenCalledOnce();
   });
+
+  it('đặt nút thao tác desktop cạnh số tiền để giảm cuộn ngang', () => {
+    renderRow();
+    const desktopRow = document.querySelector<HTMLElement>('.transaction-table-row');
+    expect(desktopRow).toHaveClass('w-full', 'md:min-w-[940px]');
+    expect(desktopRow?.className).toContain('md:grid-cols-[80px_minmax(160px,1fr)_130px_120px_145px_210px]');
+
+    const amount = desktopRow?.querySelector('.transaction-row-amount');
+    const actions = desktopRow?.querySelector('.transaction-row-actions');
+    expect(amount?.parentElement).toBe(actions?.parentElement);
+  });
 });

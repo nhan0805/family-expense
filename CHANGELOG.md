@@ -2,6 +2,22 @@
 
 ## 2026-09-01
 
+### Tăng tương phản avatar chữ cái trong danh sách thành viên
+
+- Trước thay đổi: Avatar chữ cái cạnh tên thành viên trong dark mode dùng màu chữ xanh đậm trên nền xanh, nên nhìn hơi mờ.
+- Sau thay đổi: Tăng độ sáng chữ cái, nền và viền riêng cho dark mode để avatar nổi bật hơn mà vẫn giữ phong cách màu xanh của ứng dụng.
+- Kỹ thuật: Cập nhật `.dark .member-avatar` trong `src/index.css`; bổ sung regression test trong `src/pages/Members.test.tsx`. Không thay đổi API, schema, database, quyền hoặc dữ liệu thành viên.
+- Kiểm thử: `pnpm test` đạt 19/19 file và 80/80 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. `pnpm test:e2e` bị chặn trong sandbox do không được bind `127.0.0.1:5173`; không cài thêm dependency. Build còn các cảnh báo chunk lớn/dynamic import ExcelJS đã có từ trước.
+- Triển khai: Chưa deploy production; thay đổi đang chờ quy trình GitHub PR và Cloudflare Pages Git integration.
+
+### Đưa nút sao chép/xóa của từng dòng giao dịch lại gần số tiền
+
+- Trước thay đổi: Bảng giao dịch desktop tách riêng cột thao tác ở ngoài cùng và dùng chiều rộng intrinsic `w-max`, khiến nút sao chép/xóa có thể nằm ngoài vùng nhìn thấy và phải cuộn ngang để thao tác.
+- Sau thay đổi: Gộp vùng thao tác vào cùng cột với số tiền, đặt nút sao chép/xóa ngay cạnh số tiền; bảng dùng `w-full`, giới hạn tối thiểu còn `940px`, và các ô chữ dài được phép co/truncate để không đẩy nút ra ngoài.
+- Kỹ thuật: Cập nhật `src/components/TransactionRow.tsx`, `src/pages/Transactions.tsx`; bổ sung regression test trong `src/components/TransactionRow.test.tsx`. Không thay đổi API, schema, database hoặc quy tắc nghiệp vụ.
+- Kiểm thử: `pnpm test` đạt 19/19 file và 79/79 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. `pnpm test:e2e` bị chặn trong sandbox do không được bind `127.0.0.1:5173`; không cài thêm dependency. Build còn các cảnh báo chunk lớn/dynamic import ExcelJS đã có từ trước.
+- Triển khai: Chưa deploy production; thay đổi đang chờ quy trình GitHub PR và Cloudflare Pages Git integration.
+
 ### Cải thiện UI đợt 1 — visual polish Dashboard, Layout và giao dịch
 
 - Trước thay đổi: Visual system còn rời rạc giữa header/sidebar, Dashboard và danh sách giao dịch; card, button, input, focus state và khoảng cách chưa dùng chung một hệ quy chiếu rõ ràng.
@@ -24,7 +40,7 @@
 - Sau thay đổi: Tăng độ sáng cho text/muted text, border, placeholder, focus state và filter chip trong dark mode; căn ba card dữ liệu cùng chiều cao với nhóm nút thẳng hàng ở đáy.
 - Kỹ thuật: Cập nhật `src/index.css`, `src/pages/Transactions.tsx`, `src/pages/ImportExport.tsx`; bổ sung assertion layout trong `src/pages/ImportExport.test.tsx`. Không thay đổi API, schema, database hoặc logic lọc/import.
 - Kiểm thử: `pnpm test` đạt 19/19 file và 78/78 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build còn cảnh báo chunk lớn/dynamic import ExcelJS đã có từ trước.
-- Triển khai: Chưa deploy production; thay đổi đang chờ yêu cầu publish tiếp theo.
+- Triển khai: Đã merge PR #94 vào `main` với merge commit `76bd413e6a033eef10d1590d4ba7254ad2338066`; CI main [33525304734](https://github.com/nhan0805/family-expense/actions/runs/33525304734) và Cloudflare Pages production deployment [c7f06a12-adfb-48db-9246-501425f2a543](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/c7f06a12-adfb-48db-9246-501425f2a543) đều pass. Production smoke test `https://family-expense-8fo.pages.dev/` trả HTTP 200 lúc `01/09/2026 22:23` (`Asia/Ho_Chi_Minh`). Không có migration/database change trong release này.
 
 ### Chốt và tự động purge `ai_usage_logs` sau 30 ngày
 

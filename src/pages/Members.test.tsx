@@ -1,6 +1,7 @@
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useApp } from '../context/AppContext';
+import { supabase } from '../lib/supabase';
 import { Members } from './Members';
 
 vi.mock('../context/AppContext', () => ({ useApp: vi.fn() }));
@@ -63,5 +64,35 @@ describe('Members', () => {
     await waitFor(() =>
       expect(screen.getByText('Danh sách thành viên (0)')).toBeInTheDocument(),
     );
+  });
+
+  it('hiển thị avatar chữ cái đủ tương phản trong danh sách thành viên', async () => {
+    vi.mocked(supabase.rpc)
+      .mockResolvedValueOnce({
+        data: [{
+          id: 'member-1',
+          user_id: 'member-user-1',
+          display_name: 'Nhan',
+          email: 'nhan@example.com',
+          role: 'member',
+          status: 'active',
+          created_at: '2026-09-01T00:00:00Z',
+        }],
+        error: null,
+      } as never)
+      .mockResolvedValueOnce({ data: true, error: null } as never);
+    vi.mocked(useApp).mockReturnValue({
+      familyId: 'family-1',
+      familyName: 'Gia đình của tôi',
+      currentUserEmail: 'owner@example.com',
+      currentUserId: 'owner-1',
+      currentUserRole: 'owner',
+      updateFamilyName: vi.fn(),
+      deleteFamily: vi.fn(),
+    } as unknown as ReturnType<typeof useApp>);
+    render(<Members />);
+
+    const avatar = await screen.findByText('N', { selector: '.member-avatar' });
+    expect(avatar).toHaveAttribute('aria-hidden', 'true');
   });
 });

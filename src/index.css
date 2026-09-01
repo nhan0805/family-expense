@@ -726,6 +726,12 @@ summary:focus-visible {
   font-weight: 850;
 }
 
+.dark .member-avatar {
+  border-color: #579b7d;
+  background: #205f47;
+  color: #a7edc5;
+}
+
 .status-badge {
   display: inline-flex;
   align-items: center;
