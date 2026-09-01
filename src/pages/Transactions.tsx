@@ -1028,7 +1028,7 @@ export function Transactions() {
             <span>{en ? 'Detailed filters' : 'Bộ lọc chi tiết'}{activeFilterCount ? ` (${activeFilterCount})` : ''}</span>
             <ChevronDown className="shrink-0 transition-transform group-open:rotate-180" size={18} aria-hidden="true" />
           </summary>
-          <div className="ui-enter mt-2 grid gap-x-2 gap-y-1.5 md:grid-cols-4 xl:grid-cols-5 [&_.field]:py-2 [&_.field]:text-sm [&_.label]:mb-1 [&_.label]:leading-tight">
+          <div className="ui-enter mt-3 grid items-stretch gap-3 md:grid-cols-3 xl:grid-cols-4 [&_.field]:py-2 [&_.field]:text-sm [&_.label]:mb-1 [&_.label]:leading-tight">
           <label>
             <span className="label">{en ? 'Transaction type' : 'Loại giao dịch'}</span>
             <select className="field" value={transactionType} onChange={(event) => setTransactionType(event.target.value)}><option value="">{en ? 'All types' : 'Tất cả loại'}</option><option value="Chi tiêu">{en ? 'Money out' : 'Tiền ra'}</option><option value="Thu nhập">{en ? 'Money in' : 'Tiền vào'}</option></select>

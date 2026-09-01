@@ -2,6 +2,13 @@
 
 ## 2026-09-01
 
+### Cân đối bộ lọc chi tiết trên web
+
+- Trước thay đổi: 12 trường lọc dùng 5 cột trên màn hình lớn nên hàng cuối chỉ còn một vài ô, tạo khoảng trống và bố cục lệch.
+- Sau thay đổi: Bộ lọc dùng 4 cột trên desktop và 3 cột trên tablet, chia đều thành các hàng; khoảng cách giữa các trường được thống nhất, mobile vẫn xếp một cột.
+- Kỹ thuật: Cập nhật `src/pages/Transactions.tsx` và regression assertion trong `src/pages/Transactions.ui.test.tsx`; không đổi API/database.
+- Kiểm thử: `pnpm test` đạt 19/19 file và 77/77 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` đều pass. Build chỉ còn các cảnh báo chunk lớn/dynamic import ExcelJS đã có từ trước.
+
 ### Sửa lỗi nút Hủy không xóa bản nháp giao dịch
 
 - Trước thay đổi: Nút `Hủy` chỉ rời màn hình, bản nháp vẫn còn trong `localStorage` và được khôi phục khi mở lại form thêm giao dịch.
