@@ -35,7 +35,11 @@ describe('Members', () => {
     ).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Xóa gia đình' }),
-    ).toBeInTheDocument();
+    ).toHaveClass('danger-button');
+    expect(
+      screen.getByRole('heading', { name: 'Xóa gia đình' }),
+    ).toHaveClass('dark:text-[#ff5555]');
+    expect(document.querySelector('.danger-zone')).toHaveClass('card');
     await waitFor(() =>
       expect(screen.getByText('Danh sách thành viên (0)')).toBeInTheDocument(),
     );

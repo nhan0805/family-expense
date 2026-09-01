@@ -14,6 +14,13 @@
 - [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
 
+### Handoff — đồng bộ khu vực xóa với Dracula dark mode (02/09/2026)
+
+- Nút xóa thành viên/giao dịch và khối `Xóa gia đình` dùng Dracula Red `#FF5555`, nền tint dark nhẹ hơn, hover rõ vừa đủ và focus ring Purple `#BD93F9`; không còn nền đỏ tím tùy biến nặng trên màn hình Members.
+- Files chính: `src/index.css`, `src/pages/Members.tsx`; regression assertion trong `src/pages/Members.test.tsx`. Không thay đổi API, schema, database, quyền hoặc quy tắc nghiệp vụ.
+- Validation local: `pnpm test` 19/19 file, 83/83 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build còn cảnh báo chunk lớn/dynamic import ExcelJS.
+- Trạng thái triển khai dự kiến: Commit/push branch, tạo PR vào `main`, bật auto-merge; frontend sẽ deploy qua Cloudflare Pages Git integration sau khi merge. Không dùng deploy thủ công.
+
 ### Handoff — đồng bộ accent Dracula cho giao dịch, KPI và công cụ dữ liệu (01/09/2026)
 
 - Chi tiêu dùng Dracula Pink `#FF79C6`, Thu nhập dùng Dracula Green `#50FA7B`; nền dòng nhẹ hơn, số tiền/badge vẫn rõ. Kicker dùng Purple `#BD93F9`, icon dùng Green/Cyan, KPI và nút chọn kỳ được đồng bộ accent trong dark mode.
