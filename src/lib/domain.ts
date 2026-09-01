@@ -1,7 +1,9 @@
 import { z } from 'zod';
 export const transactionTypes = [
   'Chi tiêu',
+  'Hoàn tiền',
   'Thu nhập',
+  'Tạm ứng',
 ] as const;
 export const transactionTypeLabel = (type: string) => type === 'Chi tiêu' ? 'Tiền ra' : type === 'Thu nhập' ? 'Tiền vào' : type;
 export const statuses = ['Thực tế', 'Dự kiến'] as const;
@@ -179,9 +181,9 @@ export const getCatalogDisplayName = (
   language: CatalogLanguage,
 ) => language === 'en' ? item?.nameEn?.trim() || item?.name || '' : item?.name || '';
 export const getNetExpense = (amount: number, type: string) =>
-  type === 'Chi tiêu' ? amount : 0;
+  type === 'Hoàn tiền' ? -amount : type === 'Chi tiêu' ? amount : 0;
 export const getTransactionTotalImpact = (amount: number, type: string) =>
-  type === 'Thu nhập' ? -amount : amount;
+  type === 'Thu nhập' || type === 'Hoàn tiền' ? -amount : amount;
 export const formatVnd = (value: number) =>
   new Intl.NumberFormat('vi-VN', {
     style: 'currency',
