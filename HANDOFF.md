@@ -29,7 +29,7 @@
 - RPC `get_dashboard_summary`, `get_dashboard_trends` và `list_family_transactions` đã được cập nhật để dùng công thức `Chi tiêu − Thu nhập`; dữ liệu sau migration không còn phụ thuộc loại legacy.
 - Files chính: `src/lib/domain.ts`, `src/pages/Dashboard.tsx`, `src/pages/Transactions.tsx`, `src/components/TransactionRow.tsx`, `src/lib/importExcel.ts`, `supabase/functions/summarize-dashboard/index.ts`; test domain/Dashboard/Transactions/import Excel đã cập nhật.
 - Validation local: `pnpm test` 19/19 file, 83/83 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. E2E chưa chạy được vì thiếu Playwright browser binaries; Supabase local chưa chạy vì thiếu container.
-- Trạng thái triển khai dự kiến: Chờ commit/push branch, PR vào `main`, required checks, Supabase Production Deploy và Cloudflare Pages Git integration.
+- Trạng thái triển khai: Đã merge PR [#97](https://github.com/nhan0805/family-expense/pull/97) vào `main` với merge commit `4c25e05a72e031e36a325f1c86a900ab3009c4dc`. Required checks preview/quality/db-security pass; [CI main](https://github.com/nhan0805/family-expense/actions/runs/33535859191) và [Supabase Production Deploy](https://github.com/nhan0805/family-expense/actions/runs/33535859149) thành công. Cloudflare Pages production smoke test `https://family-expense-8fo.pages.dev/` trả HTTP 200 lúc `02/09/2026 00:09` (`Asia/Ho_Chi_Minh`), HTML trỏ tới asset `assets/index-CDFnrdjO.css`. Không tạo deploy lần hai chỉ để cập nhật tài liệu.
 
 ### Handoff — tên danh mục tiếng Anh theo ngôn ngữ giao diện (01/09/2026)
 
