@@ -2,13 +2,37 @@
 
 ## 2026-09-01
 
+### Tự động purge giao dịch trong thùng rác sau 30 ngày
+
+- Trước thay đổi: Giao dịch soft-delete có chính sách giữ 30 ngày nhưng chưa có job tự động thực thi.
+- Sau thay đổi: Thêm Supabase Cron chạy hằng ngày lúc 02:15 để xóa vĩnh viễn giao dịch có `deleted_at` quá 30 ngày.
+- Kỹ thuật: Thêm migration `supabase/migrations/202609010001_purge_deleted_transactions_after_30_days.sql`; hàm chỉ `DELETE` khi `deleted_at IS NOT NULL` và không tác động `ai_usage_logs` hoặc giao dịch đang hoạt động.
+- Kiểm thử: Đã rà soát điều kiện purge, quyền thực thi và chạy `git diff --check`; chưa chạy migration production.
+- Triển khai: Chờ review/merge và Supabase production workflow; không tự động xóa dữ liệu production trong lượt này.
+
+### Chốt retention giao dịch trong thùng rác
+
+- Trước thay đổi: Retention cho giao dịch soft-delete chưa được quyết định.
+- Sau thay đổi: Giao dịch trong thùng rác được giữ 30 ngày kể từ `deleted_at`, sau đó mới được xóa vĩnh viễn.
+- Kỹ thuật: Cập nhật `HANDOFF.md`; chưa thêm job purge và chưa xóa dữ liệu production.
+- Kiểm thử: Đã kiểm tra lại cơ chế soft-delete/purge hiện có và `git diff --check`.
+- Triển khai: Đây là quyết định chính sách; việc triển khai job purge cần một thay đổi kỹ thuật riêng.
+
+### Xác minh migration Dashboard 6 tháng đã deploy production
+
+- Trước thay đổi: `HANDOFF.md` vẫn ghi migration `202608310001_dashboard_summary_six_months.sql` đang chờ deploy production.
+- Sau thay đổi: Đối chiếu GitHub Actions run [33348318894](https://github.com/nhan0805/family-expense/actions/runs/33348318894), thành công ngày `31/08/2026 08:41` (`Asia/Ho_Chi_Minh`); log xác nhận `supabase db push` đã áp dụng migration và hoàn tất.
+- Kỹ thuật: Chỉ cập nhật `HANDOFF.md` và `CHANGELOG.md`; không chạy lại migration, không thay đổi schema/database.
+- Kiểm thử: Đã kiểm tra log workflow, trạng thái Git và `git diff --check`.
+- Triển khai: Migration đã có trên Supabase production; các tồn đọng backup/monitoring không bị thay đổi.
+
 ### Ẩn ID kỹ thuật trong thông báo bộ lọc AI
 
 - Trước thay đổi: Thông báo sau khi AI áp dụng bộ lọc có thể hiển thị UUID của danh mục, gây khó đọc và không có ích cho người dùng.
 - Sau thay đổi: Loại bỏ UUID khỏi nội dung thông báo trên giao diện; ID nội bộ vẫn được giữ nguyên để áp dụng bộ lọc.
 - Kỹ thuật: Cập nhật `src/pages/Transactions.tsx` và regression test trong `src/pages/Transactions.ui.test.tsx`; không đổi API/database.
 - Kiểm thử: Đã thêm assertion kiểm tra UUID không xuất hiện trong giải thích bộ lọc AI; chưa chạy toàn bộ quality suite.
-- Triển khai: Chưa deploy production.
+- Triển khai: Đã merge PR #89 vào `main` với merge commit `7bbcd87fc7dc4f42828de14f07d0a7186bc15134`; quality, db-security, Preview và Cloudflare Pages đều pass. Production phản hồi HTTP 200 tại [production](https://family-expense-8fo.pages.dev/) lúc `01/09/2026 08:52` (`Asia/Ho_Chi_Minh`).
 
 ### Cân đối bộ lọc chi tiết trên web
 
