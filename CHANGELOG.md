@@ -1,6 +1,32 @@
 # Nhật ký thay đổi Family Expense
 
+## 2026-09-02
+
+### Loại bỏ Hoàn tiền và Tạm ứng khỏi hệ thống giao dịch
+
+- Trước thay đổi: Database enum và một số logic legacy vẫn chấp nhận/đọc hai loại `Hoàn tiền` và `Tạm ứng`, dù form mới đã chỉ hiển thị Tiền ra/Tiền vào.
+- Sau thay đổi: Chỉ còn `Chi tiêu` và `Thu nhập` trong schema, validation, Dashboard, danh sách, import/export và Edge Function; dữ liệu legacy còn sót trong quá trình reset được chuẩn hóa thành `Thu nhập`/`Chi tiêu` tương ứng. Dark mode đồng bộ Pink `#FF79C6`, Green `#50FA7B`, Purple `#BD93F9` và Cyan `#8BE9FD` cho dòng giao dịch, KPI, icon/title và nút chọn kỳ.
+- Kỹ thuật: Thêm migration `supabase/migrations/202609010004_remove_legacy_transaction_kinds.sql`; cập nhật domain, tone giao dịch, Dashboard, Data tools, test, Edge Function và tài liệu hướng dẫn. Không sửa migration đã áp dụng.
+- Kiểm thử: `pnpm test` đạt 19/19 file, 83/83 test; `pnpm lint`, `pnpm typecheck`, `pnpm build`, Prettier cho Edge Function và `git diff --check` pass. E2E local bị chặn vì thiếu Playwright browser binaries; Supabase local chưa chạy vì thiếu container `supabase_db_family-expense`.
+- Triển khai dự kiến: Commit/push branch, tạo PR vào `main`, bật auto-merge; migration sẽ chạy qua Supabase Production Deploy và frontend qua Cloudflare Pages Git integration sau khi PR merge.
+
 ## 2026-09-01
+
+### Đồng bộ accent Dracula cho giao dịch, KPI và công cụ dữ liệu
+
+- Trước thay đổi: Một số nền/icon/title trên Dashboard và Data chưa theo đúng accent Dracula, nổi bật là xanh lá/xanh dương cũ trên nền tối.
+- Sau thay đổi: Chi tiêu dùng Dracula Pink `#FF79C6`, Thu nhập dùng Dracula Green `#50FA7B`; kicker dùng Purple `#BD93F9`, icon dùng Green/Cyan, KPI dùng đúng accent theo ngữ nghĩa và nút chọn kỳ dùng Purple trong dark mode.
+- Kỹ thuật: Cập nhật `src/components/TransactionRow.tsx`, `src/pages/Dashboard.tsx`, `src/pages/ImportExport.tsx`; bổ sung assertion trong `src/pages/Transactions.test.ts`, `src/pages/Dashboard.test.tsx`, `src/pages/ImportExport.test.tsx`. Hoàn tiền và Tạm ứng không thay đổi.
+- Kiểm thử: Đang chạy quality suite sau thay đổi.
+- Triển khai dự kiến: Chưa deploy production; sẽ đi qua PR vào `main`, Supabase Production Deploy nếu migration đi kèm và Cloudflare Pages Git integration.
+
+### Loại bỏ Hoàn tiền và Tạm ứng khỏi hệ thống giao dịch
+
+- Trước thay đổi: Database enum và một số logic legacy vẫn chấp nhận/đọc hai loại `Hoàn tiền` và `Tạm ứng`, dù form mới đã chỉ hiển thị Tiền ra/Tiền vào.
+- Sau thay đổi: Chỉ còn `Chi tiêu` và `Thu nhập` trong schema, validation, Dashboard, danh sách, import/export và Edge Function; dữ liệu legacy còn sót trong quá trình reset sẽ được chuẩn hóa lần cuối thành `Thu nhập`/`Chi tiêu` tương ứng.
+- Kỹ thuật: Thêm migration `supabase/migrations/202609010004_remove_legacy_transaction_kinds.sql`; cập nhật `src/lib/domain.ts`, `src/pages/Dashboard.tsx`, `src/pages/Transactions.tsx`, `src/components/TransactionRow.tsx`, `src/lib/importExcel.ts`, `src/lib/templateImport.ts`, `supabase/functions/summarize-dashboard/index.ts` và script tài liệu/import. Không sửa migration đã áp dụng.
+- Kiểm thử: `pnpm test` đạt 19/19 file, 83/83 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. E2E local bị chặn vì thiếu Playwright browser binaries; Supabase local không chạy vì không có container `supabase_db_family-expense`.
+- Triển khai dự kiến: Commit/push branch, tạo PR vào `main`, bật auto-merge; migration sẽ chạy qua Supabase Production Deploy và frontend qua Cloudflare Pages Git integration sau khi PR merge.
 
 ### Hỗ trợ tên danh mục tiếng Anh theo ngôn ngữ giao diện
 

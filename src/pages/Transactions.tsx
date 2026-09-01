@@ -174,6 +174,22 @@ export const getTransactionListTone = (
       badgeClass:
         'border border-emerald-300 bg-emerald-200 text-emerald-950 shadow-sm dark:border-[#50fa7b99] dark:bg-[#50fa7b1f] dark:text-[#50fa7b]',
     };
+  if (transactionType === 'Hoàn tiền')
+    return {
+      rowClass:
+        'bg-gradient-to-r from-sky-100/90 via-sky-50/55 to-transparent dark:from-sky-950/65 dark:via-sky-950/25 dark:to-transparent',
+      amountClass: 'text-sky-700 dark:text-sky-300',
+      badgeClass:
+        'border border-sky-300 bg-sky-200 text-sky-950 shadow-sm dark:border-sky-700 dark:bg-sky-900 dark:text-sky-100',
+    };
+  if (transactionType === 'Tạm ứng')
+    return {
+      rowClass:
+        'bg-gradient-to-r from-amber-100/90 via-amber-50/55 to-transparent dark:from-amber-950/65 dark:via-amber-950/25 dark:to-transparent',
+      amountClass: 'text-amber-700 dark:text-amber-300',
+      badgeClass:
+        'border border-amber-300 bg-amber-200 text-amber-950 shadow-sm dark:border-amber-700 dark:bg-amber-900 dark:text-amber-100',
+    };
   return {
     rowClass:
       'bg-gradient-to-r from-rose-100/90 via-rose-50/55 to-transparent dark:from-[#ff79c61f] dark:via-[#ff79c608] dark:to-transparent',

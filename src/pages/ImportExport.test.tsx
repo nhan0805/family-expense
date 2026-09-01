@@ -37,6 +37,10 @@ describe('Gửi danh sách giao dịch qua email', () => {
 
     expect(document.querySelectorAll('.data-card')).toHaveLength(3);
     expect(document.querySelectorAll('.data-card-actions')).toHaveLength(3);
+    expect(screen.getByText('Công cụ dữ liệu')).toHaveClass('dark:text-[#bd93f9]');
+    const dataCards = document.querySelectorAll('.data-card');
+    expect(dataCards[0]?.querySelector('.data-card-icon')).toHaveClass('dark:bg-[#50fa7b1f]', 'dark:text-[#50fa7b]');
+    expect(dataCards[1]?.querySelector('.data-card-icon')).toHaveClass('dark:bg-[#8be9fd1f]', 'dark:text-[#8be9fd]');
     fireEvent.click(
       screen.getByRole('button', { name: 'Gửi danh sách giao dịch' }),
     );

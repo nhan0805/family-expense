@@ -9,10 +9,26 @@ import {
   getTransactionTotalImpact,
   normalizeText,
   statusForTransactionDate,
+  transactionTypes,
   transactionSchema,
   type Transaction,
 } from './domain';
 describe('định dạng và quy tắc giao dịch', () => {
+  it('chỉ cho phép Chi tiêu và Thu nhập', () => {
+    expect(transactionTypes).toEqual(['Chi tiêu', 'Thu nhập']);
+    expect(transactionSchema.safeParse({
+      transactionDate: '2026-08-25',
+      transactionType: 'Hoàn tiền',
+      status: 'Thực tế',
+      description: 'Giao dịch legacy',
+      amount: 100,
+      purposeId: 'p',
+      expenseTypeId: 'e',
+      paymentMethodId: 'm',
+      source: 'manual',
+      aiGenerated: false,
+    }).success).toBe(false);
+  });
   it('ưu tiên tên tiếng Anh và fallback về tiếng Việt', () => {
     const item = { id: 'p1', name: 'Du lịch', nameEn: 'Travel' };
     expect(getCatalogDisplayName(item, 'en')).toBe('Travel');

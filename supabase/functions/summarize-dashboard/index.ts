@@ -85,8 +85,8 @@ const json = (body: unknown, status = 200) =>
     status,
     headers: { ...cors, 'Content-Type': 'application/json' },
   });
-const isIncome = (type: string) => type === 'Thu nhập' || type === 'Hoàn tiền';
-const isExpense = (type: string) => type === 'Chi tiêu' || type === 'Tạm ứng';
+const isIncome = (type: string) => type === 'Thu nhập';
+const isExpense = (type: string) => type === 'Chi tiêu';
 const monthKey = (value: string) => value.slice(0, 7);
 const addMonth = (value: string) => {
   const year = Number(value.slice(0, 4));

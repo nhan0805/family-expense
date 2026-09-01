@@ -164,15 +164,18 @@ const changePercent = (current: number, previous: number) =>
   previous === 0 ? (current === 0 ? 0 : null) : ((current - previous) / previous) * 100;
 
 const isIncome = (type: Transaction['transactionType']) =>
-  type === 'Thu nhập';
+  type === 'Thu nhập' || type === 'Hoàn tiền';
 
 const isExpense = (type: Transaction['transactionType']) =>
-  type === 'Chi tiêu';
+  type === 'Chi tiêu' || type === 'Tạm ứng';
 
 const incomeValue = (transaction: Transaction) => (isIncome(transaction.transactionType) ? transaction.amount : 0);
 
-const expenseValue = (transaction: Transaction) =>
-  isExpense(transaction.transactionType) ? transaction.amount : 0;
+const expenseValue = (transaction: Transaction) => {
+  if (isExpense(transaction.transactionType)) return transaction.amount;
+  if (transaction.transactionType === 'Hoàn tiền') return -transaction.amount;
+  return 0;
+};
 
 const sumIncome = (transactions: Transaction[]) => transactions.reduce((total, item) => total + incomeValue(item), 0);
 const sumExpense = (transactions: Transaction[]) => transactions.reduce((total, item) => total + (isExpense(item.transactionType) ? item.amount : 0), 0);
@@ -408,7 +411,7 @@ export function Dashboard() {
       <section className="card dashboard-controls space-y-4 p-4 sm:p-5" aria-label={en ? 'Dashboard period controls' : 'Bộ lọc kỳ Dashboard'}>
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <div className="period-switcher flex min-w-0 max-w-full flex-nowrap gap-1 overflow-x-auto overscroll-x-contain rounded-xl p-1" role="group" aria-label={en ? 'View periods' : 'Kỳ xem'}>
-            {(Object.keys(modeLabels) as DashboardMode[]).map((item) => <button key={item} type="button" aria-pressed={mode === item} className={`shrink-0 whitespace-nowrap rounded-lg px-2.5 py-2 text-sm font-semibold transition sm:px-3 ${mode === item ? 'bg-[#155e46] text-white shadow-sm hover:bg-[#0f4b38]' : 'text-gray-600 hover:text-[#155e46] dark:text-gray-300 dark:hover:text-white'}`} onClick={() => chooseMode(item)}>{modeLabels[item][en ? 'en' : 'vi']}</button>)}
+            {(Object.keys(modeLabels) as DashboardMode[]).map((item) => <button key={item} type="button" aria-pressed={mode === item} className={`shrink-0 whitespace-nowrap rounded-lg px-2.5 py-2 text-sm font-semibold transition sm:px-3 ${mode === item ? 'bg-[#155e46] text-white shadow-sm hover:bg-[#0f4b38] dark:bg-[#bd93f9] dark:text-[#282a36] dark:hover:bg-[#a779ed]' : 'text-gray-600 hover:text-[#155e46] dark:text-gray-300 dark:hover:text-[#bd93f9]'}`} onClick={() => chooseMode(item)}>{modeLabels[item][en ? 'en' : 'vi']}</button>)}
           </div>
           <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
             <label className="min-w-0"><span className="label">{en ? 'Month' : 'Tháng'}</span><select id="dashboard-month" aria-label={en ? 'Month' : 'Tháng'} className="field px-2 sm:min-w-32" value={selectedMonth} onChange={changeMonth}>{monthOptions.map((option) => <option key={option.value} value={option.value}>{en ? englishMonthNames[Number(option.value) - 1] : option.label}</option>)}</select></label>
@@ -528,6 +531,6 @@ function PieTooltip({ active, payload }: { active?: boolean; payload?: Array<{ p
 }
 
 function Kpi({ label, value, icon: Icon, tone, meta, to }: { label: string; value: number; icon: LucideIcon; tone: Tone; meta: ReactNode; to: string }) {
-  const toneClass = tone === 'emerald' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300' : tone === 'rose' ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300' : tone === 'violet' ? 'bg-violet-100 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300' : 'bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300';
-  return <Link to={to} className="card card-interactive kpi-card group block h-full min-w-0 p-3 transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137050] sm:p-4" aria-label={`Mở giao dịch theo ${label}`}><div className="min-w-0"><div className="flex items-center gap-2"><span className={`kpi-icon grid size-9 shrink-0 place-items-center rounded-xl ${toneClass}`}><Icon size={18} aria-hidden="true" /></span><p className="min-h-8 min-w-0 flex-1 text-xs font-semibold leading-4 text-gray-500 dark:text-gray-400">{label}</p></div><p className="kpi-value mt-2 max-w-full break-words whitespace-normal text-lg font-extrabold leading-tight sm:text-xl" title={formatVnd(value)} aria-label={`${label}: ${formatVnd(value)}`}>{formatCompactVnd(value)}</p></div><p className="kpi-meta mt-3 flex min-w-0 items-center gap-1 truncate text-xs leading-4">{meta}</p></Link>;
+  const toneClass = tone === 'emerald' ? 'bg-emerald-100 text-emerald-700 dark:bg-[#50fa7b1f] dark:text-[#50fa7b]' : tone === 'rose' ? 'bg-rose-100 text-rose-700 dark:bg-[#ff79c61f] dark:text-[#ff79c6]' : tone === 'violet' ? 'bg-violet-100 text-violet-700 dark:bg-[#bd93f91f] dark:text-[#bd93f9]' : 'bg-sky-100 text-sky-700 dark:bg-[#8be9fd1f] dark:text-[#8be9fd]';
+  return <Link to={to} className="card card-interactive kpi-card group block h-full min-w-0 p-3 transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137050] dark:focus-visible:ring-[#bd93f9] sm:p-4" aria-label={`Mở giao dịch theo ${label}`}><div className="min-w-0"><div className="flex items-center gap-2"><span className={`kpi-icon grid size-9 shrink-0 place-items-center rounded-xl ${toneClass}`}><Icon size={18} aria-hidden="true" /></span><p className="min-h-8 min-w-0 flex-1 text-xs font-semibold leading-4 text-gray-500 dark:text-gray-400">{label}</p></div><p className="kpi-value mt-2 max-w-full break-words whitespace-normal text-lg font-extrabold leading-tight sm:text-xl" title={formatVnd(value)} aria-label={`${label}: ${formatVnd(value)}`}>{formatCompactVnd(value)}</p></div><p className="kpi-meta mt-3 flex min-w-0 items-center gap-1 truncate text-xs leading-4">{meta}</p></Link>;
 }

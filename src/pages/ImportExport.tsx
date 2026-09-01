@@ -421,7 +421,7 @@ export function ImportExport() {
       <section aria-labelledby="data-tools-title">
         <div className="section-header mb-3 items-end">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#137050]">{en ? 'Data tools' : 'Công cụ dữ liệu'}</p>
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#137050] dark:text-[#bd93f9]">{en ? 'Data tools' : 'Công cụ dữ liệu'}</p>
             <h3 id="data-tools-title" className="mt-1 text-lg font-extrabold">{en ? 'Import, export and share' : 'Nhập, xuất và chia sẻ'}</h3>
           </div>
           <span className="hidden text-xs text-gray-500 sm:inline">{en ? 'Family data' : 'Dữ liệu của gia đình'}</span>
@@ -497,13 +497,13 @@ export function ImportExport() {
 
       <section className="data-import-card card overflow-hidden">
         <div className="data-import-header flex items-start gap-3 border-b border-black/10 bg-[#fbfdfb] p-4 dark:border-white/10 dark:bg-white/[0.02] sm:p-5">
-          <span className="data-card-icon rounded-xl bg-[#e3f2e9] p-3 text-[#145c43] dark:bg-emerald-950/50 dark:text-emerald-300">
+          <span className="data-card-icon rounded-xl bg-[#e3f2e9] p-3 text-[#145c43] dark:bg-[#50fa7b1f] dark:text-[#50fa7b]">
             <Upload size={24} />
           </span>
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="font-bold">{en ? 'Import transactions' : 'Import giao dịch'}</h3>
-              <span className="rounded-full bg-[#e3f2e9] px-2 py-0.5 text-[11px] font-bold text-[#145c43] dark:bg-emerald-950/60 dark:text-emerald-200">{en ? 'Safe · confirmation required' : 'An toàn · cần xác nhận'}</span>
+              <span className="rounded-full bg-[#e3f2e9] px-2 py-0.5 text-[11px] font-bold text-[#145c43] dark:bg-[#50fa7b1f] dark:text-[#50fa7b]">{en ? 'Safe · confirmation required' : 'An toàn · cần xác nhận'}</span>
             </div>
             <p className="mt-1 text-sm text-gray-500">
               {en ? 'Choose an .xlsx file downloaded from the app. Data is saved only after you review and confirm it.' : 'Chọn file .xlsx được tải từ ứng dụng. Dữ liệu chỉ được ghi sau khi bạn kiểm tra và xác nhận.'}
@@ -512,7 +512,7 @@ export function ImportExport() {
         </div>
         <div className="space-y-4 p-4 sm:p-5">
           <div
-            className="data-upload-zone flex min-h-56 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#b8c9bf] bg-[#f7faf7] px-5 py-7 text-center transition hover:border-[#145c43] hover:bg-[#eef5f0] dark:bg-white/5"
+            className="data-upload-zone flex min-h-56 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#b8c9bf] bg-[#f7faf7] px-5 py-7 text-center transition hover:border-[#145c43] hover:bg-[#eef5f0] dark:border-[#6272a4] dark:bg-[#303241] dark:hover:border-[#50fa7b] dark:hover:bg-[#50fa7b0d]"
             onDragOver={(event) => {
               event.preventDefault();
               event.dataTransfer.dropEffect = 'copy';
@@ -523,7 +523,7 @@ export function ImportExport() {
               if (file) void processImportFile(file);
             }}
           >
-            <FileCheck2 className="text-[#145c43]" size={30} />
+            <FileCheck2 className="text-[#145c43] dark:text-[#50fa7b]" size={30} />
             <span className="font-semibold">{en ? 'Choose an Excel file to validate' : 'Chọn file Excel để kiểm tra'}</span>
             <span className="text-xs text-gray-500">
               {en ? 'Only .xlsx files using the Family Expense template are accepted; you can drag a file here.' : 'Chỉ nhận file .xlsx đúng template Family Expense; có thể kéo file từ Finder và thả vào đây'}
@@ -552,7 +552,7 @@ export function ImportExport() {
               className={`data-file-status min-h-14 rounded-xl border p-4 text-sm ${
                 fileError
                   ? 'border-red-200 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200'
-                  : 'border-[#cfe0d4] bg-[#f5faf6] text-[#245743] dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200'
+                  : 'border-[#cfe0d4] bg-[#f5faf6] text-[#245743] dark:border-[#50fa7b66] dark:bg-[#50fa7b0d] dark:text-[#50fa7b]'
               }`}
               role={fileError ? 'alert' : 'status'}
               aria-live="polite"
@@ -672,8 +672,8 @@ function DataCard({
 }) {
   const iconClass =
     tone === 'green'
-      ? 'bg-[#e3f2e9] text-[#145c43] dark:bg-emerald-950/50 dark:text-emerald-300'
-      : 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300';
+      ? 'bg-[#e3f2e9] text-[#145c43] dark:bg-[#50fa7b1f] dark:text-[#50fa7b]'
+      : 'bg-blue-50 text-blue-700 dark:bg-[#8be9fd1f] dark:text-[#8be9fd]';
   return (
     <section className="data-card card p-4 sm:p-5">
       <div className="flex items-start gap-3">
