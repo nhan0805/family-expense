@@ -19,7 +19,7 @@ const isoDate = (value) => {
   const matched = String(value ?? '').match(/(\d{4})-(\d{2})-(\d{2})/);
   return matched ? `${matched[1]}-${matched[2]}-${matched[3]}` : null;
 };
-const netValue = (row) => Number.isFinite(Number(row['Giá trị ròng'])) ? Number(row['Giá trị ròng']) : row['Loại giao dịch'] === 'Hoàn tiền' ? -Number(row['Số tiền'] || 0) : row['Loại giao dịch'] === 'Chi tiêu' ? Number(row['Số tiền'] || 0) : 0;
+const netValue = (row) => Number.isFinite(Number(row['Giá trị ròng'])) ? Number(row['Giá trị ròng']) : row['Loại giao dịch'] === 'Chi tiêu' ? Number(row['Số tiền'] || 0) : 0;
 const sourceBuffer = await fs.readFile(inputPath);
 const workbook = XLSX.read(sourceBuffer, { cellDates: true });
 const sheet = workbook.Sheets['Giao dịch chuẩn hóa'];

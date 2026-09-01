@@ -9,6 +9,7 @@ import { useOptionalLanguage } from '../context/LanguageContext';
 import {
   canDeleteTransaction,
   findDuplicates,
+  getCatalogDisplayName,
   statusForTransactionDate,
   transactionSchema,
   type TransactionInput,
@@ -608,7 +609,7 @@ export function TransactionForm() {
               <option value="">{en ? 'Select payment method' : 'Chọn phương thức'}</option>
               {paymentMethods.map((x) => (
                 <option key={x.id} value={x.id}>
-                  {x.name}
+                  {getCatalogDisplayName(x, language)}
                 </option>
               ))}
             </select>
@@ -623,7 +624,7 @@ export function TransactionForm() {
               <option value="">{en ? 'Select purpose' : 'Chọn mục đích'}</option>
               {purposes.map((x) => (
                 <option key={x.id} value={x.id}>
-                  {x.name}
+                  {getCatalogDisplayName(x, language)}
                 </option>
               ))}
             </select>
@@ -638,7 +639,7 @@ export function TransactionForm() {
               <option value="">{en ? 'Select expense type' : 'Chọn loại chi phí'}</option>
               {expenseTypes.map((x) => (
                 <option key={x.id} value={x.id}>
-                  {x.name}
+                  {getCatalogDisplayName(x, language)}
                 </option>
               ))}
             </select>

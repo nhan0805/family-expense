@@ -45,7 +45,7 @@ describe('Quản lý danh mục', () => {
     fireEvent.change(screen.getByLabelText('Tên mục đích'), { target: { value: '  Giáo dục  ' } });
     fireEvent.click(screen.getByRole('button', { name: 'Lưu danh mục' }));
 
-    await waitFor(() => expect(addCatalogItem).toHaveBeenCalledWith('purpose', '  Giáo dục  '));
+    await waitFor(() => expect(addCatalogItem).toHaveBeenCalledWith('purpose', '  Giáo dục  ', ''));
   });
 
   it('cho owner đổi tên và xóa danh mục', async () => {
@@ -56,7 +56,7 @@ describe('Quản lý danh mục', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Sửa Sinh hoạt' }));
     fireEvent.change(screen.getByLabelText('Đổi tên mục đích'), { target: { value: 'Gia đình' } });
     fireEvent.click(screen.getByRole('button', { name: 'Lưu tên mới' }));
-    await waitFor(() => expect(updateCatalogItem).toHaveBeenCalledWith('purpose', 'p1', 'Gia đình'));
+    await waitFor(() => expect(updateCatalogItem).toHaveBeenCalledWith('purpose', 'p1', 'Gia đình', ''));
 
     fireEvent.click(screen.getByRole('button', { name: 'Xóa Sinh hoạt' }));
     await waitFor(() => expect(deleteCatalogItem).toHaveBeenCalledWith('purpose', 'p1'));

@@ -1,10 +1,9 @@
 import { z } from 'zod';
 export const transactionTypes = [
   'Chi tiêu',
-  'Hoàn tiền',
   'Thu nhập',
-  'Tạm ứng',
 ] as const;
+export type TransactionType = (typeof transactionTypes)[number];
 export const transactionTypeLabel = (type: string) => type === 'Chi tiêu' ? 'Tiền ra' : type === 'Thu nhập' ? 'Tiền vào' : type;
 export const statuses = ['Thực tế', 'Dự kiến'] as const;
 export const statusForTransactionDate = (
@@ -54,9 +53,11 @@ export const canDeleteTransaction = (
 export type CatalogItem = {
   id: string;
   name: string;
+  nameEn?: string;
   color?: string;
   active?: boolean;
 };
+export type CatalogLanguage = 'vi' | 'en';
 export const purposeNames = [
   'Sinh hoạt gia đình',
   'Con cái',
@@ -105,12 +106,83 @@ export const paymentMethodNames = [
   'Urbox',
   'Tiền mặt',
 ];
-export const makeItems = (names: string[]): CatalogItem[] =>
-  names.map((name, i) => ({ id: `local-${i}-${name}`, name, active: true }));
-export const getNetExpense = (amount: number, type: string) =>
-  type === 'Hoàn tiền' ? -amount : type === 'Chi tiêu' ? amount : 0;
-export const getTransactionTotalImpact = (amount: number, type: string) =>
-  type === 'Thu nhập' || type === 'Hoàn tiền' ? -amount : amount;
+export const purposeNameEn = [
+  'Family living',
+  'Children',
+  'Travel',
+  'Family occasions & relationships',
+  'Home & household',
+  'Vehicles',
+  'Family health',
+  'Maternity',
+  'Investments',
+  'Other',
+];
+export const expenseTypeNameEn = [
+  'Dining',
+  'Groceries',
+  'Electricity',
+  'Water',
+  'Internet',
+  'Transport',
+  'Fuel',
+  'ETC',
+  'Hotels',
+  'Flights',
+  'Clothing',
+  'Shoes',
+  'Household goods',
+  'Education',
+  'Healthcare',
+  'Cosmetics',
+  'Entertainment',
+  'Toys',
+  'Shopping',
+  'Pets',
+  'Weddings',
+  'Birthdays',
+  'Lucky money',
+  'Gifts',
+  'Stock investments',
+  'Gold investments',
+  'Other',
+];
+export const paymentMethodNameEn = [
+  'Bank transfer',
+  'Credit card',
+  'Installments',
+  'Urbox',
+  'Cash',
+];
+export const makeItems = (names: string[], namesEn: string[] = []): CatalogItem[] =>
+  names.map((name, i) => ({
+    id: `local-${i}-${name}`,
+    name,
+    nameEn: namesEn[i],
+    active: true,
+  }));
+export type CatalogItemRow = {
+  id: string;
+  name: string;
+  name_en?: string | null;
+  color?: string | null;
+  active?: boolean | null;
+};
+export const mapCatalogItem = (row: CatalogItemRow): CatalogItem => ({
+  id: row.id,
+  name: row.name,
+  nameEn: row.name_en || undefined,
+  ...(row.color ? { color: row.color } : {}),
+  ...(row.active === null || row.active === undefined ? {} : { active: row.active }),
+});
+export const getCatalogDisplayName = (
+  item: Pick<CatalogItem, 'name' | 'nameEn'> | undefined,
+  language: CatalogLanguage,
+) => language === 'en' ? item?.nameEn?.trim() || item?.name || '' : item?.name || '';
+export const getNetExpense = (amount: number, type: TransactionType) =>
+  type === 'Chi tiêu' ? amount : 0;
+export const getTransactionTotalImpact = (amount: number, type: TransactionType) =>
+  type === 'Thu nhập' ? -amount : amount;
 export const formatVnd = (value: number) =>
   new Intl.NumberFormat('vi-VN', {
     style: 'currency',

@@ -3,7 +3,10 @@ import * as XLSX from 'xlsx';
 import {
   statuses,
   transactionTypes,
+  getCatalogDisplayName,
+  normalizeText,
   type CatalogItem,
+  type CatalogLanguage,
   type Transaction,
 } from './domain';
 const templateTransactionTypes = ['Tiền ra', 'Tiền vào'] as const;
@@ -68,6 +71,7 @@ export async function createTemplate(
   purposes: CatalogItem[],
   expenseTypes: CatalogItem[],
   paymentMethods: CatalogItem[],
+  language: CatalogLanguage = 'vi',
 ) {
   const { default: ExcelJS } = await import('exceljs');
   const wb = new ExcelJS.Workbook();
@@ -103,9 +107,9 @@ export async function createTemplate(
     lists.addRow([
       templateTransactionTypes[i] || '',
       statuses[i] || '',
-      paymentMethods[i]?.name || '',
-      purposes[i]?.name || '',
-      expenseTypes[i]?.name || '',
+      getCatalogDisplayName(paymentMethods[i], language),
+      getCatalogDisplayName(purposes[i], language),
+      getCatalogDisplayName(expenseTypes[i], language),
     ]);
   lists.state = 'veryHidden';
   guide.addRows([
@@ -196,9 +200,7 @@ export async function parseTemplate(
   const errors: TemplateError[] = [];
   const lookup = (items: CatalogItem[], name: string) =>
     items.find(
-      (x) =>
-        x.name.trim().toLocaleLowerCase('vi-VN') ===
-        name.toLocaleLowerCase('vi-VN'),
+      (x) => [x.name, x.nameEn].some((candidate) => candidate ? normalizeText(candidate) === normalizeText(name) : false),
     )?.id;
   rows.slice(1).forEach((values, index) => {
     const n = index + 2;

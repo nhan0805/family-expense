@@ -105,7 +105,7 @@ describe('Dashboard', () => {
     );
     const netKpi = screen.getByRole('link', { name: 'Mở giao dịch theo Giá trị ròng' });
     expect(netKpi).toHaveClass('block', 'h-full', 'kpi-card');
-    expect(netKpi.querySelector('span')).toHaveClass('bg-rose-100');
+    expect(netKpi.querySelector('span')).toHaveClass('bg-rose-100', 'dark:bg-[#ff79c61f]', 'dark:text-[#ff79c6]');
     expect(screen.queryByText('Giao dịch thực tế trong tháng')).not.toBeInTheDocument();
     expect(screen.queryByText('Chi tháng 2')).not.toBeInTheDocument();
     expect(screen.queryByText('Chi tháng 1')).not.toBeInTheDocument();
@@ -179,12 +179,11 @@ describe('Dashboard', () => {
     );
   });
 
-  it('tính đúng Tạm ứng, Hoàn tiền và các preset kỳ xem', () => {
+  it('tính đúng hai loại giao dịch và các preset kỳ xem', () => {
     vi.mocked(useApp).mockReturnValue({
       transactions: [
         transaction('Chi tháng 1', '2026-01-10', 100_000),
-        transaction('Tạm ứng tháng 2', '2026-02-10', 200_000, 'Thực tế', 'Tạm ứng'),
-        transaction('Hoàn tiền tháng 2', '2026-02-12', 50_000, 'Thực tế', 'Hoàn tiền'),
+        transaction('Chi tháng 2', '2026-02-10', 200_000),
         transaction('Thu tháng 2', '2026-02-20', 500_000, 'Thực tế', 'Thu nhập'),
       ],
       purposes: [{ id: 'p1', name: 'Sinh hoạt' }],
@@ -202,6 +201,7 @@ describe('Dashboard', () => {
     fireEvent.change(screen.getByLabelText('Tháng'), { target: { value: '02' } });
     fireEvent.click(screen.getByRole('button', { name: '6 tháng' }));
 
+    expect(screen.getByRole('button', { name: '6 tháng' })).toHaveClass('dark:bg-[#bd93f9]', 'dark:text-[#282a36]');
     expect(screen.getByText('6 tháng đến T02/2026')).toBeInTheDocument();
     expect(screen.getByText('Trung bình / tháng')).toBeInTheDocument();
     expect(screen.getByText('Tháng cao nhất')).toBeInTheDocument();
@@ -211,7 +211,7 @@ describe('Dashboard', () => {
       'h-full',
     );
     expect(screen.getByRole('link', { name: 'Mở giao dịch theo Tổng chi' })).toHaveTextContent('300K');
-    expect(screen.getByRole('link', { name: 'Mở giao dịch theo Tổng thu' })).toHaveTextContent('550K');
+    expect(screen.getByRole('link', { name: 'Mở giao dịch theo Tổng thu' })).toHaveTextContent('500K');
     expect(screen.getByRole('link', { name: 'Mở giao dịch theo Tổng chi' })).toHaveAttribute(
       'href',
       expect.stringContaining('dateFrom=2025-09-01'),

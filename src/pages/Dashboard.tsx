@@ -32,7 +32,7 @@ import { EmptyState, PageSkeleton } from '../components/AsyncStates';
 import { useApp } from '../context/AppContext';
 import { useOptionalLanguage } from '../context/LanguageContext';
 import { dashboardSummaryResponseSchema } from '../lib/ai';
-import { formatCompactVnd, formatVnd, type CatalogItem, type Transaction } from '../lib/domain';
+import { formatCompactVnd, formatVnd, getCatalogDisplayName, type CatalogItem, type CatalogLanguage, type Transaction } from '../lib/domain';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import {
   fetchDashboardDueTransactions,
@@ -164,16 +164,15 @@ const changePercent = (current: number, previous: number) =>
   previous === 0 ? (current === 0 ? 0 : null) : ((current - previous) / previous) * 100;
 
 const isIncome = (type: Transaction['transactionType']) =>
-  type === 'Thu nhập' || type === 'Hoàn tiền';
+  type === 'Thu nhập';
 
 const isExpense = (type: Transaction['transactionType']) =>
-  type === 'Chi tiêu' || type === 'Tạm ứng';
+  type === 'Chi tiêu';
 
 const incomeValue = (transaction: Transaction) => (isIncome(transaction.transactionType) ? transaction.amount : 0);
 
 const expenseValue = (transaction: Transaction) => {
   if (isExpense(transaction.transactionType)) return transaction.amount;
-  if (transaction.transactionType === 'Hoàn tiền') return -transaction.amount;
   return 0;
 };
 
@@ -188,6 +187,7 @@ function groupTransactions(
   items: CatalogItem[],
   key: 'purposeId' | 'expenseTypeId',
   valueFor: (transaction: Transaction) => number,
+  language: CatalogLanguage,
 ) {
   const grouped = new Map<string, { id: string; name: string; value: number }>();
   transactions.forEach((transaction) => {
@@ -196,7 +196,7 @@ function groupTransactions(
     const id = transaction[key];
     const catalog = items.find((item) => item.id === id);
     const itemId = id || 'uncategorized';
-    const current = grouped.get(itemId) || { id: itemId, name: catalog?.name || 'Chưa phân loại', value: 0 };
+    const current = grouped.get(itemId) || { id: itemId, name: getCatalogDisplayName(catalog, language) || (language === 'en' ? 'Uncategorized' : 'Chưa phân loại'), value: 0 };
     current.value += value;
     grouped.set(itemId, current);
   });
@@ -214,14 +214,14 @@ const pieMaxSlices = 6;
 
 export const formatPieLabel = ({ percent, value }: Pick<PieLabelRenderProps, 'percent' | 'value'>) => Number(percent) >= pieLabelMinPercent ? formatCompactVnd(Number(value)).replace(' ₫', '') : null;
 
-export const summarizePieData = (data: ExpenseChartItem[]): PieChartItem[] => {
+export const summarizePieData = (data: ExpenseChartItem[], language: CatalogLanguage = 'vi'): PieChartItem[] => {
   const sorted = data.filter((item) => item.value > 0).sort((a, b) => b.value - a.value);
   if (sorted.length <= pieMaxSlices) return sorted;
   const visible = sorted.slice(0, pieMaxSlices - 1);
   const hiddenItems = sorted.slice(pieMaxSlices - 1);
   return [...visible, {
     id: 'other',
-    name: 'Khác',
+    name: language === 'en' ? 'Other' : 'Khác',
     value: hiddenItems.reduce((total, item) => total + item.value, 0),
     fill: '#94a3b8',
     isOther: true,
@@ -291,10 +291,10 @@ export function Dashboard() {
   const comparisonIncome = sumIncome(comparisonTransactions);
   const expenseChange = changePercent(selectedExpense, comparisonExpense);
   const incomeChange = changePercent(selectedIncome, comparisonIncome);
-  const byPurpose = groupTransactions(selectedTransactions, purposes, 'purposeId', expenseValue);
-  const byExpenseType = groupTransactions(selectedTransactions, expenseTypes, 'expenseTypeId', expenseValue);
-  const incomeByPurpose = groupTransactions(selectedTransactions, purposes, 'purposeId', incomeValue);
-  const incomeByExpenseType = groupTransactions(selectedTransactions, expenseTypes, 'expenseTypeId', incomeValue);
+  const byPurpose = groupTransactions(selectedTransactions, purposes, 'purposeId', expenseValue, language);
+  const byExpenseType = groupTransactions(selectedTransactions, expenseTypes, 'expenseTypeId', expenseValue, language);
+  const incomeByPurpose = groupTransactions(selectedTransactions, purposes, 'purposeId', incomeValue, language);
+  const incomeByExpenseType = groupTransactions(selectedTransactions, expenseTypes, 'expenseTypeId', incomeValue, language);
   const trend = chartPeriods.map((period) => {
     const periodRange = rangeForPeriod(period, mode, customFrom, customTo);
     const periodTransactions = sourceTransactions.filter((transaction) => transactionInRange(transaction, periodRange));
@@ -410,7 +410,7 @@ export function Dashboard() {
       <section className="card dashboard-controls space-y-4 p-4 sm:p-5" aria-label={en ? 'Dashboard period controls' : 'Bộ lọc kỳ Dashboard'}>
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <div className="period-switcher flex min-w-0 max-w-full flex-nowrap gap-1 overflow-x-auto overscroll-x-contain rounded-xl p-1" role="group" aria-label={en ? 'View periods' : 'Kỳ xem'}>
-            {(Object.keys(modeLabels) as DashboardMode[]).map((item) => <button key={item} type="button" aria-pressed={mode === item} className={`shrink-0 whitespace-nowrap rounded-lg px-2.5 py-2 text-sm font-semibold transition sm:px-3 ${mode === item ? 'bg-[#155e46] text-white shadow-sm hover:bg-[#0f4b38]' : 'text-gray-600 hover:text-[#155e46] dark:text-gray-300 dark:hover:text-white'}`} onClick={() => chooseMode(item)}>{modeLabels[item][en ? 'en' : 'vi']}</button>)}
+            {(Object.keys(modeLabels) as DashboardMode[]).map((item) => <button key={item} type="button" aria-pressed={mode === item} className={`shrink-0 whitespace-nowrap rounded-lg px-2.5 py-2 text-sm font-semibold transition sm:px-3 ${mode === item ? 'bg-[#155e46] text-white shadow-sm hover:bg-[#0f4b38] dark:bg-[#bd93f9] dark:text-[#282a36] dark:hover:bg-[#a779ed]' : 'text-gray-600 hover:text-[#155e46] dark:text-gray-300 dark:hover:text-[#bd93f9]'}`} onClick={() => chooseMode(item)}>{modeLabels[item][en ? 'en' : 'vi']}</button>)}
           </div>
           <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
             <label className="min-w-0"><span className="label">{en ? 'Month' : 'Tháng'}</span><select id="dashboard-month" aria-label={en ? 'Month' : 'Tháng'} className="field px-2 sm:min-w-32" value={selectedMonth} onChange={changeMonth}>{monthOptions.map((option) => <option key={option.value} value={option.value}>{en ? englishMonthNames[Number(option.value) - 1] : option.label}</option>)}</select></label>
@@ -516,7 +516,7 @@ function MiniTrend({ values, label }: { values: number[]; label: string }) {
 
 function ExpensePieChart({ title, data, to, filterKey, en, income = false }: { title: string; data: ExpenseChartItem[]; to: string; filterKey: 'purposeId' | 'expenseTypeId'; en: boolean; income?: boolean }) {
   const navigate = useNavigate();
-  const pieData = summarizePieData(data);
+  const pieData = summarizePieData(data, en ? 'en' : 'vi');
   const otherItem = pieData.find((item) => item.isOther);
   const openItem = (item: PieChartItem) => { if (item.id && item.id !== 'uncategorized' && !item.isOther) navigate(`${to}&${filterKey}=${encodeURIComponent(item.id)}`); };
   return <><h3 className="font-bold">{title}</h3><div className="min-h-72 min-w-0 max-w-full pt-3">{pieData.length ? <><div className="h-56 sm:h-64"><ResponsiveContainer><PieChart margin={{ top: 18, right: 18, left: 18, bottom: 0 }}><Pie data={pieData} dataKey="value" nameKey="name" innerRadius={45} outerRadius={75} labelLine={false} label={formatPieLabel}>{pieData.map((item) => <Cell key={item.id || item.name} fill={item.fill} cursor={item.id !== 'uncategorized' && !item.isOther ? 'pointer' : undefined} role={item.id !== 'uncategorized' ? 'button' : undefined} tabIndex={item.id !== 'uncategorized' && !item.isOther ? 0 : undefined} aria-label={item.isOther ? `${item.name}: ${formatVnd(item.value)} (${item.hiddenItems?.length || 0} danh mục)` : `${item.name}: ${formatVnd(item.value)}`} onClick={() => openItem(item)} onKeyDown={(event) => { if (item.id !== 'uncategorized' && !item.isOther && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); openItem(item); } }} />)}</Pie><Tooltip content={<PieTooltip />} /></PieChart></ResponsiveContainer></div><ul className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs sm:grid-cols-3" aria-label={`${title} legend`}>{pieData.map((item) => <li key={item.id || item.name} className="flex min-w-0 items-center gap-1.5"><span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: item.fill }} aria-hidden="true" /><span className="truncate" title={`${item.name}: ${formatVnd(item.value)}`}>{item.name}</span></li>)}</ul>{otherItem && <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{en ? `${otherItem.hiddenItems?.length || 0} smaller categories grouped into “Other”; tap or click “Other” to see details.` : `${otherItem.hiddenItems?.length || 0} danh mục nhỏ được gộp vào “Khác”; nhấn hoặc bấm “Khác” để xem chi tiết.`}</p>}</> : <EmptyState title={en ? 'No chart data' : 'Chưa có dữ liệu biểu đồ'} description={en ? `No actual ${income ? 'income' : 'expense'} transactions in this period.` : `Chưa có giao dịch thực tế ${income ? 'thu nhập' : 'chi tiêu'} trong kỳ này.`} />}</div></>;
@@ -530,6 +530,6 @@ function PieTooltip({ active, payload }: { active?: boolean; payload?: Array<{ p
 }
 
 function Kpi({ label, value, icon: Icon, tone, meta, to }: { label: string; value: number; icon: LucideIcon; tone: Tone; meta: ReactNode; to: string }) {
-  const toneClass = tone === 'emerald' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300' : tone === 'rose' ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300' : tone === 'violet' ? 'bg-violet-100 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300' : 'bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300';
-  return <Link to={to} className="card card-interactive kpi-card group block h-full min-w-0 p-3 transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137050] sm:p-4" aria-label={`Mở giao dịch theo ${label}`}><div className="min-w-0"><div className="flex items-center gap-2"><span className={`kpi-icon grid size-9 shrink-0 place-items-center rounded-xl ${toneClass}`}><Icon size={18} aria-hidden="true" /></span><p className="min-h-8 min-w-0 flex-1 text-xs font-semibold leading-4 text-gray-500 dark:text-gray-400">{label}</p></div><p className="kpi-value mt-2 max-w-full break-words whitespace-normal text-lg font-extrabold leading-tight sm:text-xl" title={formatVnd(value)} aria-label={`${label}: ${formatVnd(value)}`}>{formatCompactVnd(value)}</p></div><p className="kpi-meta mt-3 flex min-w-0 items-center gap-1 truncate text-xs leading-4">{meta}</p></Link>;
+  const toneClass = tone === 'emerald' ? 'bg-emerald-100 text-emerald-700 dark:bg-[#50fa7b1f] dark:text-[#50fa7b]' : tone === 'rose' ? 'bg-rose-100 text-rose-700 dark:bg-[#ff79c61f] dark:text-[#ff79c6]' : tone === 'violet' ? 'bg-violet-100 text-violet-700 dark:bg-[#bd93f91f] dark:text-[#bd93f9]' : 'bg-sky-100 text-sky-700 dark:bg-[#8be9fd1f] dark:text-[#8be9fd]';
+  return <Link to={to} className="card card-interactive kpi-card group block h-full min-w-0 p-3 transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137050] dark:focus-visible:ring-[#bd93f9] sm:p-4" aria-label={`Mở giao dịch theo ${label}`}><div className="min-w-0"><div className="flex items-center gap-2"><span className={`kpi-icon grid size-9 shrink-0 place-items-center rounded-xl ${toneClass}`}><Icon size={18} aria-hidden="true" /></span><p className="min-h-8 min-w-0 flex-1 text-xs font-semibold leading-4 text-gray-500 dark:text-gray-400">{label}</p></div><p className="kpi-value mt-2 max-w-full break-words whitespace-normal text-lg font-extrabold leading-tight sm:text-xl" title={formatVnd(value)} aria-label={`${label}: ${formatVnd(value)}`}>{formatCompactVnd(value)}</p></div><p className="kpi-meta mt-3 flex min-w-0 items-center gap-1 truncate text-xs leading-4">{meta}</p></Link>;
 }

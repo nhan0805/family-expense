@@ -44,12 +44,12 @@ describe('sắp xếp giao dịch theo ngày', () => {
     ).toEqual({ month: '11', year: '2024' });
   });
 
-  it('dùng màu riêng cho cả bốn loại giao dịch trong danh sách', () => {
+  it('dùng màu riêng cho hai loại giao dịch trong danh sách', () => {
     expect(getTransactionListTone('Thu nhập').amountClass).toContain('emerald');
-    expect(getTransactionListTone('Hoàn tiền').amountClass).toContain('sky');
-    expect(getTransactionListTone('Tạm ứng').amountClass).toContain('amber');
+    expect(getTransactionListTone('Thu nhập').amountClass).toContain('dark:text-[#50fa7b]');
     expect(getTransactionListTone('Chi tiêu').amountClass).toContain('rose');
-    for (const type of ['Thu nhập', 'Hoàn tiền', 'Tạm ứng', 'Chi tiêu'] as const) {
+    expect(getTransactionListTone('Chi tiêu').amountClass).toContain('dark:text-[#ff79c6]');
+    for (const type of ['Thu nhập', 'Chi tiêu'] as const) {
       const tone = getTransactionListTone(type);
       expect(tone.rowClass).toContain('bg-gradient-to-r');
       expect(tone.rowClass).not.toContain('border-l-');

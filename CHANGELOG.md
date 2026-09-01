@@ -1,6 +1,49 @@
 # Nhật ký thay đổi Family Expense
 
+## 2026-09-02
+
+### Loại bỏ Hoàn tiền và Tạm ứng khỏi hệ thống giao dịch
+
+- Trước thay đổi: Database enum và một số logic legacy vẫn chấp nhận/đọc hai loại `Hoàn tiền` và `Tạm ứng`, dù form mới đã chỉ hiển thị Tiền ra/Tiền vào.
+- Sau thay đổi: Chỉ còn `Chi tiêu` và `Thu nhập` trong schema, validation, Dashboard, danh sách, import/export và Edge Function; dữ liệu legacy còn sót trong quá trình reset được chuẩn hóa thành `Thu nhập`/`Chi tiêu` tương ứng. Dark mode đồng bộ Pink `#FF79C6`, Green `#50FA7B`, Purple `#BD93F9` và Cyan `#8BE9FD` cho dòng giao dịch, KPI, icon/title và nút chọn kỳ.
+- Kỹ thuật: Thêm migration `supabase/migrations/202609010004_remove_legacy_transaction_kinds.sql`; cập nhật domain, tone giao dịch, Dashboard, Data tools, test, Edge Function và tài liệu hướng dẫn. Không sửa migration đã áp dụng.
+- Sau kiểm tra CI preview: loại bỏ các nhánh so sánh legacy còn sót trong Dashboard và danh sách giao dịch để TypeScript/build remote đồng nhất với enum mới.
+- Kiểm thử: `pnpm test` đạt 19/19 file, 83/83 test; `pnpm lint`, `pnpm typecheck`, `pnpm build`, Prettier cho Edge Function và `git diff --check` pass. E2E local bị chặn vì thiếu Playwright browser binaries; Supabase local chưa chạy vì thiếu container `supabase_db_family-expense`.
+- Triển khai dự kiến: Commit/push branch, tạo PR vào `main`, bật auto-merge; migration sẽ chạy qua Supabase Production Deploy và frontend qua Cloudflare Pages Git integration sau khi PR merge.
+
 ## 2026-09-01
+
+### Đồng bộ accent Dracula cho giao dịch, KPI và công cụ dữ liệu
+
+- Trước thay đổi: Một số nền/icon/title trên Dashboard và Data chưa theo đúng accent Dracula, nổi bật là xanh lá/xanh dương cũ trên nền tối.
+- Sau thay đổi: Chi tiêu dùng Dracula Pink `#FF79C6`, Thu nhập dùng Dracula Green `#50FA7B`; kicker dùng Purple `#BD93F9`, icon dùng Green/Cyan, KPI dùng đúng accent theo ngữ nghĩa và nút chọn kỳ dùng Purple trong dark mode.
+- Kỹ thuật: Cập nhật `src/components/TransactionRow.tsx`, `src/pages/Dashboard.tsx`, `src/pages/ImportExport.tsx`; bổ sung assertion trong `src/pages/Transactions.test.ts`, `src/pages/Dashboard.test.tsx`, `src/pages/ImportExport.test.tsx`. Hoàn tiền và Tạm ứng không thay đổi.
+- Kiểm thử: Đang chạy quality suite sau thay đổi.
+- Triển khai dự kiến: Chưa deploy production; sẽ đi qua PR vào `main`, Supabase Production Deploy nếu migration đi kèm và Cloudflare Pages Git integration.
+
+### Loại bỏ Hoàn tiền và Tạm ứng khỏi hệ thống giao dịch
+
+- Trước thay đổi: Database enum và một số logic legacy vẫn chấp nhận/đọc hai loại `Hoàn tiền` và `Tạm ứng`, dù form mới đã chỉ hiển thị Tiền ra/Tiền vào.
+- Sau thay đổi: Chỉ còn `Chi tiêu` và `Thu nhập` trong schema, validation, Dashboard, danh sách, import/export và Edge Function; dữ liệu legacy còn sót trong quá trình reset sẽ được chuẩn hóa lần cuối thành `Thu nhập`/`Chi tiêu` tương ứng.
+- Kỹ thuật: Thêm migration `supabase/migrations/202609010004_remove_legacy_transaction_kinds.sql`; cập nhật `src/lib/domain.ts`, `src/pages/Dashboard.tsx`, `src/pages/Transactions.tsx`, `src/components/TransactionRow.tsx`, `src/lib/importExcel.ts`, `src/lib/templateImport.ts`, `supabase/functions/summarize-dashboard/index.ts` và script tài liệu/import. Không sửa migration đã áp dụng.
+- Kiểm thử: `pnpm test` đạt 19/19 file, 83/83 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. E2E local bị chặn vì thiếu Playwright browser binaries; Supabase local không chạy vì không có container `supabase_db_family-expense`.
+- Triển khai dự kiến: Commit/push branch, tạo PR vào `main`, bật auto-merge; migration sẽ chạy qua Supabase Production Deploy và frontend qua Cloudflare Pages Git integration sau khi PR merge.
+
+### Hỗ trợ tên danh mục tiếng Anh theo ngôn ngữ giao diện
+
+- Trước thay đổi: Khi chuyển giao diện sang English, tên danh mục/mục đích/phương thức thanh toán vẫn chỉ có tiếng Việt; danh mục tự tạo không có nơi nhập tên tiếng Anh.
+- Sau thay đổi: Lưu thêm tên tiếng Anh tùy chọn cho từng danh mục; danh mục mặc định được backfill bản dịch, English ưu tiên tên tiếng Anh và fallback về tiếng Việt khi chưa có bản dịch. ID danh mục và giao dịch hiện có không đổi.
+- Kỹ thuật: Thêm `name_en` cho `purposes`, `expense_types`, `payment_methods` trong migration `supabase/migrations/202609010003_bilingual_catalog_names.sql`; cập nhật seed mặc định và Dashboard RPC; cập nhật `src/lib/domain.ts`, `src/context/AppContext.tsx`, `src/pages/Catalogs.tsx`, `src/pages/TransactionForm.tsx`, `src/pages/Transactions.tsx`, `src/pages/Dashboard.tsx`, `src/pages/ImportExport.tsx`, `src/lib/templateImport.ts`, `src/lib/transactionsApi.ts`.
+- Kiểm thử: `pnpm test` đạt 19/19 file và 82/82 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build vẫn có cảnh báo chunk lớn/dynamic import ExcelJS đã có từ trước.
+- Triển khai dự kiến: Commit và push branch, tạo PR vào `main`, bật auto-merge; Supabase migration sẽ được áp dụng qua workflow production và frontend sẽ được Cloudflare Pages Git integration deploy sau khi PR merge.
+
+### Giảm độ gắt màu giao dịch trong Dracula dark mode
+
+- Trước thay đổi: Nền dòng Chi tiêu/Thu nhập dùng gradient đỏ/xanh có độ bão hòa cao, phủ nhiều diện tích và lệch với bảng màu Dracula.
+- Sau thay đổi: Chi tiêu dùng Dracula Pink `#FF79C6`, Thu nhập dùng Dracula Green `#50FA7B`; nền dòng chỉ dùng tint nhẹ, còn số tiền và badge giữ accent rõ. Hoàn tiền và Tạm ứng không thay đổi.
+- Kỹ thuật: Cập nhật tone hiển thị trong `src/components/TransactionRow.tsx` và `src/pages/Transactions.tsx`; bổ sung assertion màu trong `src/pages/Transactions.test.ts`. Không thay đổi API, schema, database hoặc quy tắc nghiệp vụ.
+- Kiểm thử: Đang chạy quality suite sau thay đổi.
+- Triển khai: Chưa deploy production.
 
 ### Thử nghiệm bảng màu Dracula Official cho dark mode
 
@@ -8,7 +51,7 @@
 - Sau thay đổi: Dark mode dùng nền `#282A36`, surface `#343746`/`#44475A`, chữ `#F8F8F2`, cùng điểm nhấn tím `#BD93F9`, hồng `#FF79C6`, cyan `#8BE9FD`; giữ màu đỏ/vàng cho trạng thái cảnh báo và lỗi.
 - Kỹ thuật: Cập nhật `src/index.css`, `src/context/ThemeContext.tsx`, `src/components/ThemeSelect.tsx`, `src/components/AsyncStates.tsx`, `src/components/Feedback.tsx`, `src/components/TransactionRow.tsx`, `src/pages/Dashboard.tsx`, `src/pages/Transactions.tsx`, `src/pages/ImportExport.tsx`, `src/pages/Login.tsx`, `src/pages/ResetPassword.tsx`, `src/pages/CreateFamily.tsx`; không thay đổi API, schema, database hoặc quy tắc nghiệp vụ.
 - Kiểm thử: `pnpm test` đạt 19/19 file và 80/80 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` đều pass. Build vẫn có cảnh báo chunk lớn/dynamic import ExcelJS đã có từ trước.
-- Triển khai: Chưa deploy production.
+- Triển khai: Đã merge PR #96 vào `main` với merge commit `4c9ae945a12d2d33c0796a45a5854d6a08fe9116`; CI main [33531570638](https://github.com/nhan0805/family-expense/actions/runs/33531570638), quality/db-security và Cloudflare Preview đều pass. Cloudflare Pages production đang phục vụ đúng asset CSS của build Dracula (`assets/index-CkRfJRC_.css`); production smoke test `https://family-expense-8fo.pages.dev/` trả HTTP 200 lúc `01/09/2026 23:26` (`Asia/Ho_Chi_Minh`). Không tạo deploy lần hai chỉ để cập nhật tài liệu.
 
 ### Tăng tương phản avatar chữ cái trong danh sách thành viên
 

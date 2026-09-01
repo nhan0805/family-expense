@@ -316,7 +316,7 @@ def build():
         "Mỗi request dữ liệu được gắn family_id và người dùng đã xác thực.",
         "VND là tiền tệ mặc định; amount lưu số nguyên dương, không có phần thập phân.",
         "Múi giờ nghiệp vụ là Asia/Ho_Chi_Minh; ngày hiển thị dd/MM/yyyy.",
-        "Nhãn UI Tiền ra/Tiền vào ánh xạ tương thích với enum database cũ Chi tiêu/Thu nhập; Hoàn tiền/Tạm ứng cũ vẫn được đọc để bảo toàn lịch sử.",
+        "Nhãn UI Tiền ra/Tiền vào ánh xạ với enum database Chi tiêu/Thu nhập; dữ liệu legacy đã được chuẩn hóa trước khi loại bỏ khỏi schema.",
         "Storage mới chỉ là điểm mở rộng kiến trúc; MVP không lưu chứng từ.",
         "Free Tier phù hợp quy mô gia đình/MVP nhưng không được coi là cam kết SLA production.",
     ])

@@ -183,10 +183,10 @@ export async function fetchDeletedTransactionPage(familyId: string, filters: Ser
 export type DashboardSummary = {
   totalIncome: number;
   totalExpense: number;
-  byPurpose: Array<{ name: string; value: number }>;
-  byExpenseType: Array<{ name: string; value: number }>;
-  incomeByPurpose: Array<{ name: string; value: number }>;
-  incomeByExpenseType: Array<{ name: string; value: number }>;
+  byPurpose: Array<{ name: string; nameEn?: string; value: number }>;
+  byExpenseType: Array<{ name: string; nameEn?: string; value: number }>;
+  incomeByPurpose: Array<{ name: string; nameEn?: string; value: number }>;
+  incomeByExpenseType: Array<{ name: string; nameEn?: string; value: number }>;
   trend: Array<{ m: string; v: number }>;
   recentTransactions: Transaction[];
   dueTransactions: Transaction[];
@@ -238,14 +238,16 @@ export async function fetchDashboardSummary(
     totalExpense: Number(result.totalExpense || 0),
     byPurpose: (result.byPurpose || []).map((item) => ({
       name: item.name,
+      nameEn: item.nameEn,
       value: Number(item.value),
     })),
     byExpenseType: (result.byExpenseType || []).map((item) => ({
       name: item.name,
+      nameEn: item.nameEn,
       value: Number(item.value),
     })),
-    incomeByPurpose: (result.incomeByPurpose || []).map((item) => ({ name: item.name, value: Number(item.value) })),
-    incomeByExpenseType: (result.incomeByExpenseType || []).map((item) => ({ name: item.name, value: Number(item.value) })),
+    incomeByPurpose: (result.incomeByPurpose || []).map((item) => ({ name: item.name, nameEn: item.nameEn, value: Number(item.value) })),
+    incomeByExpenseType: (result.incomeByExpenseType || []).map((item) => ({ name: item.name, nameEn: item.nameEn, value: Number(item.value) })),
     trend: (result.trend || []).map((item) => ({
       m: item.m,
       v: -Number(item.v),

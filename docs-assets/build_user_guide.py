@@ -369,7 +369,7 @@ add_heading(doc, '3. Tổng quan tài chính', 1)
 add_heading(doc, '3.1 Chọn khoảng thời gian', 2)
 add_body(doc, 'Ở đầu màn hình Tổng quan, chọn riêng Tháng và Năm. Dùng “Tháng trước/Tháng này” để chuyển nhanh; trên điện thoại các nút được rút gọn thành “Trước/Nay” và nằm cùng hàng với Tháng, Năm.')
 add_heading(doc, '3.2 Đọc các KPI', 2)
-add_bullet(doc, 'Tổng thu: tổng các giao dịch thu nhập/hoàn tiền thực tế trong kỳ.')
+add_bullet(doc, 'Tổng thu: tổng các giao dịch thu nhập thực tế trong kỳ.')
 add_bullet(doc, 'Tổng chi: tổng các khoản chi thực tế trong kỳ.')
 add_bullet(doc, 'Giá trị ròng: Tổng thu trừ Tổng chi.')
 add_body(doc, 'Số tiền trong KPI được hiển thị đầy đủ. Hai biểu đồ có thể rút gọn nhãn tiền theo K hoặc M để tránh chồng chữ, nhưng giá trị dữ liệu không thay đổi.')
@@ -383,7 +383,7 @@ add_heading(doc, '4. Danh sách giao dịch', 1)
 add_body(doc, 'Màn hình Giao dịch hiển thị ngày, nội dung, mục đích chi, loại chi phí, phương thức thanh toán và số tiền. Trạng thái được ẩn khỏi danh sách và bộ lọc để giao diện gọn hơn; dữ liệu trạng thái vẫn được giữ để Dashboard tính đúng.')
 add_heading(doc, '4.1 Tìm kiếm, lọc và sắp xếp', 2)
 add_body(doc, 'Card “Chi ròng theo bộ lọc” ở đầu màn hình luôn tính trên toàn bộ kết quả phù hợp, kể cả khi danh sách đang chỉ tải một phần để tối ưu tốc độ.')
-add_callout(doc, 'Công thức chi ròng', 'Chi tiêu + Tạm ứng − Thu nhập − Hoàn tiền. Vì vậy Thu nhập và Hoàn tiền làm giảm tổng thay vì được cộng vào tổng chi.')
+add_callout(doc, 'Công thức chi ròng', 'Chi tiêu − Thu nhập. Vì vậy giao dịch thu nhập làm giảm tổng thay vì được cộng vào tổng chi.')
 add_bullet(doc, 'Tìm kiếm theo nội dung hoặc ghi chú; có thể gõ không dấu, ví dụ “dien nuoc” vẫn tìm được “Điện nước”.')
 add_bullet(doc, 'Sắp xếp theo ngày mới/cũ, số tiền cao/thấp hoặc nội dung A-Z.')
 add_bullet(doc, 'Chọn “Bộ lọc chi tiết” để mở/thu gọn các trường loại giao dịch, mục đích chi, loại chi phí và phương thức thanh toán.')
@@ -407,7 +407,7 @@ add_heading(doc, '5.2 Ý nghĩa các trường', 2)
 fields = [
     ('Ngày *', 'Ngày phát sinh hoặc dự kiến phát sinh.'),
     ('Số tiền (VND) *', 'Chỉ nhập số; ứng dụng tự định dạng dấu phân cách hàng nghìn.'),
-    ('Loại giao dịch *', 'Chi tiêu, Hoàn tiền, Thu nhập hoặc Tạm ứng.'),
+    ('Loại giao dịch *', 'Chi tiêu hoặc Thu nhập.'),
     ('Nội dung *', 'Mô tả ngắn để nhập tay/tìm kiếm, hoặc câu tiếng Việt dùng cho nút gợi ý AI.'),
     ('Phương thức thanh toán *', 'Mặc định là Chuyển khoản; có thể chọn phương thức khác.'),
     ('Mục đích chi *', 'Nhóm mục tiêu sử dụng tiền.'),
@@ -529,7 +529,7 @@ rules = [
     ('Trạng thái', 'Chỉ giao dịch Thực tế được dùng cho KPI và phần tổng hợp thực tế.'),
     ('Dự kiến', 'Khi đến hạn cần người dùng xác nhận; hệ thống không tự chuyển im lặng.'),
     ('Phương thức', 'Bắt buộc; mặc định Chuyển khoản khi tạo mới.'),
-    ('Chi ròng', 'Chi tiêu/Tạm ứng mang dấu cộng; Thu nhập/Hoàn tiền mang dấu trừ trên tổng danh sách.'),
+    ('Chi ròng', 'Chi tiêu mang dấu cộng; Thu nhập mang dấu trừ trên tổng danh sách.'),
     ('Xóa', 'Giao dịch đã xóa không xuất hiện trong danh sách/file xuất; member chỉ xóa được dòng do mình tạo.'),
 ]
 table = doc.add_table(rows=1, cols=2)

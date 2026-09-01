@@ -27,6 +27,21 @@ describe('template import', () => {
     expect(result.valid[0]?.purposeId).toBe('p1');
   });
 
+  it('tạo dropdown theo English và vẫn import được tên tiếng Anh', async () => {
+    const englishPurposes = [{ id: 'p1', name: 'Sinh hoạt', nameEn: 'Family living' }];
+    const buffer = await createTemplate(englishPurposes, types, methods, 'en');
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(buffer);
+    expect(wb.getWorksheet('Danh mục')?.getCell('D2').value).toBe('Family living');
+    const ws = wb.getWorksheet('Giao dịch')!;
+    ['2026-08-26', 100000, 'Tiền ra', 'Thực tế', 'Ăn trưa', 'Chuyển khoản', 'Family living', 'Ăn uống', ''].forEach((value, index) => {
+      ws.getCell(2, index + 1).value = value;
+    });
+    const result = await parseTemplate(await wb.xlsx.writeBuffer(), englishPurposes, types, methods, []);
+    expect(result.errors).toHaveLength(0);
+    expect(result.valid[0]?.purposeId).toBe('p1');
+  });
+
   it('đọc ngày serial và file xuất rút gọn theo tên cột', async () => {
     const ws = XLSX.utils.aoa_to_sheet([
       ['Ngày', 'Loại giao dịch', 'Trạng thái', 'Nội dung', 'Số tiền', 'Mục đích', 'Danh mục', 'Phương thức thanh toán', 'Ghi chú', 'Nguồn'],
