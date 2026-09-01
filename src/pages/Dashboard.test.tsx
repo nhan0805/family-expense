@@ -66,6 +66,11 @@ describe('Dashboard', () => {
     } as unknown as ReturnType<typeof useApp>);
     renderDashboard();
 
+    expect(screen.getByRole('heading', { name: 'Tổng quan tài chính' })).toHaveClass('page-title');
+    expect(screen.getByRole('region', { name: 'Bộ lọc kỳ Dashboard' })).toHaveClass(
+      'card',
+      'dashboard-controls',
+    );
     fireEvent.change(screen.getByLabelText('Tháng'), {
       target: { value: '02' },
     });
@@ -99,7 +104,7 @@ describe('Dashboard', () => {
       '/giao-dich?month=02&year=2026',
     );
     const netKpi = screen.getByRole('link', { name: 'Mở giao dịch theo Giá trị ròng' });
-    expect(netKpi).toHaveClass('block', 'h-full');
+    expect(netKpi).toHaveClass('block', 'h-full', 'kpi-card');
     expect(netKpi.querySelector('span')).toHaveClass('bg-rose-100');
     expect(screen.queryByText('Giao dịch thực tế trong tháng')).not.toBeInTheDocument();
     expect(screen.queryByText('Chi tháng 2')).not.toBeInTheDocument();

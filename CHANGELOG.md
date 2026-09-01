@@ -2,6 +2,14 @@
 
 ## 2026-09-01
 
+### Cải thiện UI đợt 1 — visual polish Dashboard, Layout và giao dịch
+
+- Trước thay đổi: Visual system còn rời rạc giữa header/sidebar, Dashboard và danh sách giao dịch; card, button, input, focus state và khoảng cách chưa dùng chung một hệ quy chiếu rõ ràng.
+- Sau thay đổi: Chuẩn hóa token màu/bề mặt/border/shadow/radius, tăng độ rõ typography và trạng thái tương tác; làm mới app shell, mobile menu/bottom navigation/FAB, hierarchy Dashboard và transaction list mà không đổi nghiệp vụ.
+- Kỹ thuật: Cập nhật `src/index.css`, `src/components/Layout.tsx`, `src/components/TransactionRow.tsx`, `src/pages/Dashboard.tsx`, `src/pages/Transactions.tsx`; bổ sung visual regression assertions trong `src/pages/Dashboard.test.tsx` và `src/pages/Transactions.ui.test.tsx`; không đổi API, schema hoặc database.
+- Kiểm thử: `pnpm test` đạt 19/19 file và 78/78 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. `pnpm test:e2e` đã thử nhưng bị chặn vì môi trường chưa có Playwright browser binaries; không tự tải dependency mới. Build chỉ còn cảnh báo chunk lớn/dynamic import ExcelJS đã có từ trước.
+- Triển khai: Chưa deploy production; thay đổi hiện ở working tree để review. Khi deploy sẽ tiếp tục qua GitHub PR + Cloudflare Pages Git integration.
+
 ### Chốt và tự động purge `ai_usage_logs` sau 30 ngày
 
 - Trước thay đổi: Retention của `ai_usage_logs` chưa được chốt; Cron chỉ xử lý giao dịch trong thùng rác.

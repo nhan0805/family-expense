@@ -921,13 +921,17 @@ export function Transactions() {
   };
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-2xl font-extrabold">{en ? 'Transactions' : 'Giao dịch'}</h2>
+    <div className="transactions-page flex flex-col gap-5">
+      <div className="page-header flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="page-kicker"><WalletCards size={16} aria-hidden="true" />{en ? 'Family ledger' : 'Sổ thu chi gia đình'}</p>
+          <h2 className="page-title">{en ? 'Transactions' : 'Giao dịch'}</h2>
+          <p className="page-subtitle">{en ? 'Search, review and organize every family transaction.' : 'Tìm kiếm, rà soát và sắp xếp mọi giao dịch của gia đình.'}</p>
+        </div>
       </div>
       <section
         aria-label={en ? 'Net value for current filters' : 'Giá trị ròng theo bộ lọc'}
-        className={`order-2 flex flex-col gap-3 rounded-2xl border p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between ${netIsPositive ? 'border-rose-200 bg-gradient-to-br from-rose-50 to-white dark:border-rose-900/40 dark:from-rose-950/40 dark:to-white/5' : netIsNegative ? 'border-emerald-200 bg-gradient-to-br from-emerald-50 to-white dark:border-emerald-900/40 dark:from-emerald-950/40 dark:to-white/5' : 'border-slate-200 bg-gradient-to-br from-slate-50 to-white dark:border-slate-700 dark:from-slate-900/40 dark:to-white/5'}`}
+        className={`net-summary-card order-2 flex flex-col gap-3 rounded-2xl border p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-5 ${netIsPositive ? 'border-rose-200 bg-gradient-to-br from-rose-50 to-white dark:border-rose-900/40 dark:from-rose-950/40 dark:to-white/5' : netIsNegative ? 'border-emerald-200 bg-gradient-to-br from-emerald-50 to-white dark:border-emerald-900/40 dark:from-emerald-950/40 dark:to-white/5' : 'border-slate-200 bg-gradient-to-br from-slate-50 to-white dark:border-slate-700 dark:from-slate-900/40 dark:to-white/5'}`}
       >
         <div className="flex min-w-0 items-center gap-3">
           <span className={`grid size-11 shrink-0 place-items-center rounded-xl text-white shadow-sm ${netIsPositive ? 'bg-rose-700' : netIsNegative ? 'bg-emerald-700' : 'bg-slate-600'}`}>
@@ -967,7 +971,7 @@ export function Transactions() {
         </p>
       )}
 
-      <section aria-label={en ? 'Transaction search and filters' : 'Tìm kiếm và bộ lọc giao dịch'} className="order-1 card space-y-3 p-3 shadow-sm">
+      <section aria-label={en ? 'Transaction search and filters' : 'Tìm kiếm và bộ lọc giao dịch'} className="filter-panel order-1 card space-y-3 p-3 sm:p-4">
         <div className="grid gap-3 md:grid-cols-[minmax(240px,1fr)_220px]">
           <label className="col-span-2 md:col-span-1">
             <span className="label">{en ? 'Search' : 'Tìm kiếm'}</span>
@@ -1028,10 +1032,10 @@ export function Transactions() {
         {aiSearchError && <p role="alert" className="rounded-lg bg-red-50 p-2 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">{aiSearchError}</p>}
         {aiSearchMessage && <p role="status" className="rounded-lg bg-emerald-50 p-2 text-sm text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200">{aiSearchMessage}</p>}
 
-        {filterChips.length > 0 && <div className="flex gap-2 overflow-x-auto pb-1 md:flex-wrap" aria-label={en ? 'Active filters' : 'Bộ lọc đang áp dụng'}>{filterChips.map((chip) => <button type="button" key={chip.key} onClick={chip.clear} className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#e3f2e9] px-3 py-1.5 text-xs font-semibold text-[#145c43] transition hover:bg-[#d3eadd] dark:bg-emerald-950/60 dark:text-emerald-200"><span>{chip.label}</span><X size={13} aria-hidden="true"/><span className="sr-only">{en ? 'Remove filter' : 'Bỏ bộ lọc'} {chip.label}</span></button>)}</div>}
+        {filterChips.length > 0 && <div className="flex gap-2 overflow-x-auto pb-1 md:flex-wrap" aria-label={en ? 'Active filters' : 'Bộ lọc đang áp dụng'}>{filterChips.map((chip) => <button type="button" key={chip.key} onClick={chip.clear} className="filter-chip inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold transition"><span>{chip.label}</span><X size={13} aria-hidden="true"/><span className="sr-only">{en ? 'Remove filter' : 'Bỏ bộ lọc'} {chip.label}</span></button>)}</div>}
 
-        <details className="group border-t border-black/10 pt-3 dark:border-white/10">
-          <summary className="btn-secondary flex cursor-pointer list-none items-center justify-between gap-3 [&::-webkit-details-marker]:hidden">
+        <details className="filter-details group border-t border-black/10 pt-3 dark:border-white/10">
+          <summary className="filter-summary btn-secondary flex cursor-pointer list-none items-center justify-between gap-3 [&::-webkit-details-marker]:hidden">
             <span>{en ? 'Detailed filters' : 'Bộ lọc chi tiết'}{activeFilterCount ? ` (${activeFilterCount})` : ''}</span>
             <ChevronDown className="shrink-0 transition-transform group-open:rotate-180" size={18} aria-hidden="true" />
           </summary>
@@ -1181,7 +1185,7 @@ export function Transactions() {
       </section>
 
       {duePlannedTransactions.length > 0 && (
-        <section className="order-2 rounded-2xl border border-amber-200 bg-amber-50/70 p-4 shadow-sm dark:border-amber-900/50 dark:bg-amber-950/20" aria-labelledby="due-planned-title">
+        <section className="attention-card order-2 rounded-2xl border border-amber-200 bg-amber-50/70 p-4 shadow-sm dark:border-amber-900/50 dark:bg-amber-950/20" aria-labelledby="due-planned-title">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-start gap-3"><span className="grid size-10 shrink-0 place-items-center rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300"><CheckCheck size={20} /></span><div><h2 id="due-planned-title" className="font-extrabold">{en ? 'Planned transactions due' : 'Giao dịch dự kiến tới hạn'}</h2><p className="mt-1 text-sm text-amber-900/75 dark:text-amber-100/75">{en ? `${duePlannedTransactions.length} transaction(s) are due for confirmation.` : `${duePlannedTransactions.length} giao dịch cần xác nhận đã thực hiện.`}</p></div></div>
             <button type="button" className="btn-primary shrink-0 text-sm" disabled={bulkEditBusy} onClick={() => void confirmPlannedTransactions(duePlannedTransactions)}>{en ? 'Confirm all' : 'Xác nhận tất cả'}</button>
@@ -1191,7 +1195,7 @@ export function Transactions() {
         </section>
       )}
 
-      <div className="order-3 flex items-center justify-between gap-3 rounded-xl border border-black/5 bg-white/70 px-3 py-2 shadow-sm dark:border-white/10 dark:bg-white/5">
+      <div className="list-toolbar order-3 flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 shadow-sm">
         <p className="text-base font-semibold text-gray-600 dark:text-gray-300">{showTrash ? (en ? 'Trash' : 'Thùng rác') : (en ? 'Transaction list' : 'Danh sách giao dịch')}</p>
         <div className="flex items-center gap-0">
           <button type="button" className={`grid size-10 place-items-center rounded-xl transition-colors focus:outline-none focus:ring-4 focus:ring-emerald-200/50 ${selectMode ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200' : 'text-gray-600 hover:bg-emerald-50 hover:text-emerald-700 dark:text-gray-300 dark:hover:bg-white/10'}`} aria-label={selectMode ? (en ? 'Close multi-select' : 'Đóng chọn nhiều giao dịch') : (en ? 'Select multiple transactions' : 'Chọn nhiều giao dịch')} title={selectMode ? (en ? 'Close multi-select' : 'Đóng chọn nhiều') : (en ? 'Select multiple transactions' : 'Chọn nhiều giao dịch')} aria-pressed={selectMode} onClick={() => selectMode ? closeSelectMode() : setSelectMode(true)}><ListChecks size={21}/></button>
@@ -1206,7 +1210,7 @@ export function Transactions() {
           {showTrash ? <button type="button" className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#155e46] text-white" disabled={selectedIds.size === 0 || bulkEditBusy} onClick={() => void restoreSelected()} aria-label={en ? 'Restore selected transactions' : 'Khôi phục các giao dịch đã chọn'} title={en ? 'Restore selected transactions' : 'Khôi phục các giao dịch đã chọn'}><RotateCcw size={18}/></button> : <><button type="button" className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#155e46] text-white" disabled={selectedIds.size === 0 || bulkEditBusy} onClick={() => { setDeleteError(''); setBulkEditOpen(true); }} aria-label={en ? 'Edit selected transactions' : 'Sửa các giao dịch đã chọn'} title={en ? 'Edit selected transactions' : 'Sửa các giao dịch đã chọn'}><Pencil size={18}/></button><button type="button" className="grid size-10 shrink-0 place-items-center rounded-xl bg-red-600 text-white" disabled={!canBulkDelete || bulkEditBusy} onClick={() => void bulkDelete()} aria-label={canBulkDelete ? (en ? 'Delete selected transactions' : 'Xóa các giao dịch đã chọn') : (en ? 'You can only delete transactions you created' : 'Chỉ có thể xóa giao dịch do bạn tạo')} title={canBulkDelete ? (en ? 'Delete selected transactions' : 'Xóa các giao dịch đã chọn') : (en ? 'You can only delete transactions you created' : 'Chỉ có thể xóa giao dịch do bạn tạo')}><Trash2 size={18}/></button></>}
         </div>
       )}
-      <div key={resultKey} className="order-4 space-y-2 overflow-visible md:space-y-0 md:overflow-x-auto md:rounded-2xl md:border md:border-[#e3e7df] md:bg-white md:shadow-sm dark:md:border-[#33463f] dark:md:bg-[#17251f]">
+      <div key={resultKey} className="transactions-table order-4 space-y-2 overflow-visible md:space-y-0 md:overflow-x-auto md:rounded-2xl md:border">
         <div className={`hidden w-max min-w-[980px] gap-1 rounded-t-2xl bg-[#eef2ed] p-3 text-sm font-bold dark:bg-white/5 md:grid ${selectMode ? 'grid-cols-[32px_80px_minmax(160px,1fr)_130px_120px_145px_110px_70px]' : 'grid-cols-[80px_minmax(160px,1fr)_130px_120px_145px_110px_70px]'}`}>
           {selectMode && <input type="checkbox" className="size-5 accent-[#155e46]" aria-label={en ? 'Select all visible transactions' : 'Chọn tất cả giao dịch đang hiển thị'} checked={rows.length > 0 && rows.slice(0, 100).every((item) => selectedIds.has(item.id))} onChange={(event) => setSelectedIds(event.target.checked ? new Set(rows.slice(0, 100).map((item) => item.id)) : new Set())} />}
           <span>{en ? 'Date' : 'Ngày'}</span>
