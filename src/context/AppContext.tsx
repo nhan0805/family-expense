@@ -8,12 +8,16 @@ import {
   type ReactNode,
 } from 'react';
 import type { AuthChangeEvent } from '@supabase/supabase-js';
-import type { CatalogItem, Transaction } from '../lib/domain';
+import type { CatalogItem, CatalogItemRow, Transaction } from '../lib/domain';
 import {
+  expenseTypeNameEn,
   expenseTypeNames,
+  mapCatalogItem,
   makeItems,
   normalizeText,
+  paymentMethodNameEn,
   paymentMethodNames,
+  purposeNameEn,
   purposeNames,
 } from '../lib/domain';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
@@ -35,11 +39,16 @@ type AppState = {
   authenticated: boolean;
   error: string | null;
   reloadApp: () => void;
-  addCatalogItem: (kind: CatalogKind, name: string) => Promise<string | null>;
+  addCatalogItem: (
+    kind: CatalogKind,
+    name: string,
+    nameEn?: string,
+  ) => Promise<string | null>;
   updateCatalogItem: (
     kind: CatalogKind,
     id: string,
     name: string,
+    nameEn?: string,
   ) => Promise<string | null>;
   deleteCatalogItem: (kind: CatalogKind, id: string) => Promise<string | null>;
   confirmPlannedTransaction: (id: string) => Promise<string | null>;
@@ -50,9 +59,9 @@ type AppState = {
 
 export type CatalogKind = 'purpose' | 'expenseType' | 'paymentMethod';
 const AppContext = createContext<AppState | null>(null);
-const fallbackPurposes = makeItems(purposeNames);
-const fallbackExpenseTypes = makeItems(expenseTypeNames);
-const fallbackPaymentMethods = makeItems(paymentMethodNames);
+const fallbackPurposes = makeItems(purposeNames, purposeNameEn);
+const fallbackExpenseTypes = makeItems(expenseTypeNames, expenseTypeNameEn);
+const fallbackPaymentMethods = makeItems(paymentMethodNames, paymentMethodNameEn);
 
 export function shouldReloadAppForAuthEvent(event: AuthChangeEvent) {
   return event !== 'TOKEN_REFRESHED';
@@ -153,19 +162,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const [purposeResult, typeResult, methodResult] = await Promise.all([
         supabase
           .from('purposes')
-          .select('id,name,color,active')
+          .select('id,name,name_en,color,active')
           .eq('family_id', id)
           .eq('active', true)
           .order('sort_order'),
         supabase
           .from('expense_types')
-          .select('id,name,active')
+          .select('id,name,name_en,active')
           .eq('family_id', id)
           .eq('active', true)
           .order('sort_order'),
         supabase
           .from('payment_methods')
-          .select('id,name,active')
+          .select('id,name,name_en,active')
           .eq('family_id', id)
           .eq('active', true)
           .order('sort_order'),
@@ -186,10 +195,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setFamilyId(id);
       setFamilyName(familyRelation?.name || 'Gia đình của tôi');
       setCurrentUserRole(membership.role as 'owner' | 'member');
-      setPurposes((purposeResult.data || []) as CatalogItem[]);
-      setExpenseTypes((typeResult.data || []) as CatalogItem[]);
-        setPaymentMethods((methodResult.data || []) as CatalogItem[]);
-        setLoading(false);
+      setPurposes((purposeResult.data || []).map((item) => mapCatalogItem(item)));
+      setExpenseTypes((typeResult.data || []).map((item) => mapCatalogItem(item)));
+      setPaymentMethods((methodResult.data || []).map((item) => mapCatalogItem(item)));
+      setLoading(false);
       } catch (loadError) {
         if (!active) return;
         setLoading(false);
@@ -223,8 +232,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const addCatalogItem = useCallback(
-    async (kind: CatalogKind, rawName: string) => {
+    async (kind: CatalogKind, rawName: string, rawNameEn = '') => {
       const name = rawName.trim().replace(/\s+/g, ' ');
+      const nameEn = rawNameEn.trim().replace(/\s+/g, ' ');
       if (!familyId) return 'Không tìm thấy gia đình hiện tại.';
       if (!name) return 'Vui lòng nhập tên danh mục.';
       const currentItems =
@@ -239,10 +249,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         )
       )
         return 'Tên danh mục đã tồn tại.';
+      if (nameEn && currentItems.some((item) => normalizeText(item.nameEn || '') === normalizeText(nameEn)))
+        return 'Tên tiếng Anh của danh mục đã tồn tại.';
 
       const sortOrder = currentItems.length ? currentItems.length + 1 : 1;
       const code = `${normalizeText(name).replace(/\s+/g, '-')}-${crypto.randomUUID().slice(0, 8)}`;
-      let data: CatalogItem | null = null;
+      let data: CatalogItemRow | null = null;
       let insertError: { code?: string; message: string } | null = null;
       if (kind === 'purpose') {
         const result = await supabase
@@ -250,14 +262,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
           .insert({
             family_id: familyId,
             name,
+            name_en: nameEn || null,
             code,
             color: '#6081a8',
             sort_order: sortOrder,
             active: true,
           })
-          .select('id,name,active')
+          .select('id,name,name_en,active')
           .single();
-        data = result.data as CatalogItem | null;
+        data = result.data as CatalogItemRow | null;
         insertError = result.error;
       } else if (kind === 'expenseType') {
         const result = await supabase
@@ -265,13 +278,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
           .insert({
             family_id: familyId,
             name,
+            name_en: nameEn || null,
             code,
             sort_order: sortOrder,
             active: true,
           })
-          .select('id,name,active')
+          .select('id,name,name_en,active')
           .single();
-        data = result.data as CatalogItem | null;
+        data = result.data as CatalogItemRow | null;
         insertError = result.error;
       } else {
         const result = await supabase
@@ -279,12 +293,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
           .insert({
             family_id: familyId,
             name,
+            name_en: nameEn || null,
             sort_order: sortOrder,
             active: true,
           })
-          .select('id,name,active')
+          .select('id,name,name_en,active')
           .single();
-        data = result.data as CatalogItem | null;
+        data = result.data as CatalogItemRow | null;
         insertError = result.error;
       }
       if (insertError)
@@ -292,7 +307,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           ? 'Chỉ owner mới có quyền thêm danh mục.'
           : insertError.message;
       if (!data) return 'Không thể tạo danh mục.';
-      const item = data;
+      const item = mapCatalogItem(data);
       if (kind === 'purpose') setPurposes((items) => [...items, item]);
       else if (kind === 'expenseType')
         setExpenseTypes((items) => [...items, item]);
@@ -303,8 +318,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   );
 
   const updateCatalogItem = useCallback(
-    async (kind: CatalogKind, id: string, rawName: string) => {
+    async (kind: CatalogKind, id: string, rawName: string, rawNameEn = '') => {
       const name = rawName.trim().replace(/\s+/g, ' ');
+      const nameEn = rawNameEn.trim().replace(/\s+/g, ' ');
       if (!familyId) return 'Không tìm thấy gia đình hiện tại.';
       if (!name) return 'Vui lòng nhập tên danh mục.';
       const currentItems =
@@ -320,6 +336,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         )
       )
         return 'Tên danh mục đã tồn tại.';
+      if (nameEn && currentItems.some((item) => item.id !== id && normalizeText(item.nameEn || '') === normalizeText(nameEn)))
+        return 'Tên tiếng Anh của danh mục đã tồn tại.';
       const table =
         kind === 'purpose'
           ? 'purposes'
@@ -328,17 +346,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
             : 'payment_methods';
       const result = await supabase
         .from(table)
-        .update({ name })
+        .update({ name, name_en: nameEn || null })
         .eq('id', id)
         .eq('family_id', familyId)
-        .select('id,name,active')
+        .select('id,name,name_en,active')
         .single();
       if (result.error)
         return result.error.code === '42501'
           ? 'Chỉ owner mới có quyền sửa danh mục.'
           : result.error.message;
       const replace = (items: CatalogItem[]) =>
-        items.map((item) => (item.id === id ? { ...item, name } : item));
+        items.map((item) => (item.id === id ? { ...item, name, nameEn: nameEn || undefined } : item));
       if (kind === 'purpose') setPurposes(replace);
       else if (kind === 'expenseType') setExpenseTypes(replace);
       else setPaymentMethods(replace);

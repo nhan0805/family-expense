@@ -2,13 +2,29 @@
 
 ## 2026-09-01
 
+### Hỗ trợ tên danh mục tiếng Anh theo ngôn ngữ giao diện
+
+- Trước thay đổi: Khi chuyển giao diện sang English, tên danh mục/mục đích/phương thức thanh toán vẫn chỉ có tiếng Việt; danh mục tự tạo không có nơi nhập tên tiếng Anh.
+- Sau thay đổi: Lưu thêm tên tiếng Anh tùy chọn cho từng danh mục; danh mục mặc định được backfill bản dịch, English ưu tiên tên tiếng Anh và fallback về tiếng Việt khi chưa có bản dịch. ID danh mục và giao dịch hiện có không đổi.
+- Kỹ thuật: Thêm `name_en` cho `purposes`, `expense_types`, `payment_methods` trong migration `supabase/migrations/202609010003_bilingual_catalog_names.sql`; cập nhật seed mặc định và Dashboard RPC; cập nhật `src/lib/domain.ts`, `src/context/AppContext.tsx`, `src/pages/Catalogs.tsx`, `src/pages/TransactionForm.tsx`, `src/pages/Transactions.tsx`, `src/pages/Dashboard.tsx`, `src/pages/ImportExport.tsx`, `src/lib/templateImport.ts`, `src/lib/transactionsApi.ts`.
+- Kiểm thử: `pnpm test` đạt 19/19 file và 82/82 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build vẫn có cảnh báo chunk lớn/dynamic import ExcelJS đã có từ trước.
+- Triển khai dự kiến: Commit và push branch, tạo PR vào `main`, bật auto-merge; Supabase migration sẽ được áp dụng qua workflow production và frontend sẽ được Cloudflare Pages Git integration deploy sau khi PR merge.
+
+### Giảm độ gắt màu giao dịch trong Dracula dark mode
+
+- Trước thay đổi: Nền dòng Chi tiêu/Thu nhập dùng gradient đỏ/xanh có độ bão hòa cao, phủ nhiều diện tích và lệch với bảng màu Dracula.
+- Sau thay đổi: Chi tiêu dùng Dracula Pink `#FF79C6`, Thu nhập dùng Dracula Green `#50FA7B`; nền dòng chỉ dùng tint nhẹ, còn số tiền và badge giữ accent rõ. Hoàn tiền và Tạm ứng không thay đổi.
+- Kỹ thuật: Cập nhật tone hiển thị trong `src/components/TransactionRow.tsx` và `src/pages/Transactions.tsx`; bổ sung assertion màu trong `src/pages/Transactions.test.ts`. Không thay đổi API, schema, database hoặc quy tắc nghiệp vụ.
+- Kiểm thử: Đang chạy quality suite sau thay đổi.
+- Triển khai: Chưa deploy production.
+
 ### Thử nghiệm bảng màu Dracula Official cho dark mode
 
 - Trước thay đổi: Dark mode dùng nền xanh đậm và các điểm nhấn xanh lá.
 - Sau thay đổi: Dark mode dùng nền `#282A36`, surface `#343746`/`#44475A`, chữ `#F8F8F2`, cùng điểm nhấn tím `#BD93F9`, hồng `#FF79C6`, cyan `#8BE9FD`; giữ màu đỏ/vàng cho trạng thái cảnh báo và lỗi.
 - Kỹ thuật: Cập nhật `src/index.css`, `src/context/ThemeContext.tsx`, `src/components/ThemeSelect.tsx`, `src/components/AsyncStates.tsx`, `src/components/Feedback.tsx`, `src/components/TransactionRow.tsx`, `src/pages/Dashboard.tsx`, `src/pages/Transactions.tsx`, `src/pages/ImportExport.tsx`, `src/pages/Login.tsx`, `src/pages/ResetPassword.tsx`, `src/pages/CreateFamily.tsx`; không thay đổi API, schema, database hoặc quy tắc nghiệp vụ.
 - Kiểm thử: `pnpm test` đạt 19/19 file và 80/80 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` đều pass. Build vẫn có cảnh báo chunk lớn/dynamic import ExcelJS đã có từ trước.
-- Triển khai: Chưa deploy production.
+- Triển khai: Đã merge PR #96 vào `main` với merge commit `4c9ae945a12d2d33c0796a45a5854d6a08fe9116`; CI main [33531570638](https://github.com/nhan0805/family-expense/actions/runs/33531570638), quality/db-security và Cloudflare Preview đều pass. Cloudflare Pages production đang phục vụ đúng asset CSS của build Dracula (`assets/index-CkRfJRC_.css`); production smoke test `https://family-expense-8fo.pages.dev/` trả HTTP 200 lúc `01/09/2026 23:26` (`Asia/Ho_Chi_Minh`). Không tạo deploy lần hai chỉ để cập nhật tài liệu.
 
 ### Tăng tương phản avatar chữ cái trong danh sách thành viên
 

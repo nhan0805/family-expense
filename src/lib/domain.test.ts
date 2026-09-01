@@ -4,6 +4,7 @@ import {
   findDuplicates,
   formatCompactVnd,
   formatVnd,
+  getCatalogDisplayName,
   getNetExpense,
   getTransactionTotalImpact,
   normalizeText,
@@ -12,6 +13,12 @@ import {
   type Transaction,
 } from './domain';
 describe('định dạng và quy tắc giao dịch', () => {
+  it('ưu tiên tên tiếng Anh và fallback về tiếng Việt', () => {
+    const item = { id: 'p1', name: 'Du lịch', nameEn: 'Travel' };
+    expect(getCatalogDisplayName(item, 'en')).toBe('Travel');
+    expect(getCatalogDisplayName({ ...item, nameEn: '' }, 'en')).toBe('Du lịch');
+    expect(getCatalogDisplayName(item, 'vi')).toBe('Du lịch');
+  });
   it('định dạng VND không có số thập phân', () =>
     expect(formatVnd(1200000)).toMatch(/1[.\s]200[.\s]000\s₫/));
   it('viết gọn số tiền KPI theo K và M', () => {
@@ -21,14 +28,11 @@ describe('định dạng và quy tắc giao dịch', () => {
   });
   it('tính ròng', () => {
     expect(getNetExpense(100, 'Chi tiêu')).toBe(100);
-    expect(getNetExpense(100, 'Hoàn tiền')).toBe(-100);
     expect(getNetExpense(100, 'Thu nhập')).toBe(0);
   });
-  it('tính tổng giao dịch với thu nhập và hoàn tiền là số trừ', () => {
+  it('tính tổng giao dịch với thu nhập là số trừ', () => {
     expect(getTransactionTotalImpact(100, 'Chi tiêu')).toBe(100);
-    expect(getTransactionTotalImpact(100, 'Tạm ứng')).toBe(100);
     expect(getTransactionTotalImpact(100, 'Thu nhập')).toBe(-100);
-    expect(getTransactionTotalImpact(100, 'Hoàn tiền')).toBe(-100);
   });
   it('tự chọn trạng thái theo ngày giao dịch', () => {
     expect(statusForTransactionDate('2026-08-27', '2026-08-26')).toBe(

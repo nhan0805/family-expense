@@ -32,6 +32,7 @@ import { transactionSearchResponseSchema } from '../lib/ai';
 import {
   canDeleteTransaction,
   formatVnd,
+  getCatalogDisplayName,
   getTransactionTotalImpact,
   normalizeText,
   type Transaction,
@@ -168,33 +169,17 @@ export const getTransactionListTone = (
   if (transactionType === 'Thu nhập')
     return {
       rowClass:
-        'bg-gradient-to-r from-emerald-100/90 via-emerald-50/55 to-transparent dark:from-emerald-950/65 dark:via-emerald-950/25 dark:to-transparent',
-      amountClass: 'text-emerald-700 dark:text-emerald-300',
+        'bg-gradient-to-r from-emerald-100/90 via-emerald-50/55 to-transparent dark:from-[#50fa7b1f] dark:via-[#50fa7b08] dark:to-transparent',
+      amountClass: 'text-emerald-700 dark:text-[#50fa7b]',
       badgeClass:
-        'border border-emerald-300 bg-emerald-200 text-emerald-950 shadow-sm dark:border-emerald-700 dark:bg-emerald-900 dark:text-emerald-100',
-    };
-  if (transactionType === 'Hoàn tiền')
-    return {
-      rowClass:
-        'bg-gradient-to-r from-sky-100/90 via-sky-50/55 to-transparent dark:from-sky-950/65 dark:via-sky-950/25 dark:to-transparent',
-      amountClass: 'text-sky-700 dark:text-sky-300',
-      badgeClass:
-        'border border-sky-300 bg-sky-200 text-sky-950 shadow-sm dark:border-sky-700 dark:bg-sky-900 dark:text-sky-100',
-    };
-  if (transactionType === 'Tạm ứng')
-    return {
-      rowClass:
-        'bg-gradient-to-r from-amber-100/90 via-amber-50/55 to-transparent dark:from-amber-950/65 dark:via-amber-950/25 dark:to-transparent',
-      amountClass: 'text-amber-700 dark:text-amber-300',
-      badgeClass:
-        'border border-amber-300 bg-amber-200 text-amber-950 shadow-sm dark:border-amber-700 dark:bg-amber-900 dark:text-amber-100',
+        'border border-emerald-300 bg-emerald-200 text-emerald-950 shadow-sm dark:border-[#50fa7b99] dark:bg-[#50fa7b1f] dark:text-[#50fa7b]',
     };
   return {
     rowClass:
-      'bg-gradient-to-r from-rose-100/90 via-rose-50/55 to-transparent dark:from-rose-950/65 dark:via-rose-950/25 dark:to-transparent',
-    amountClass: 'text-rose-700 dark:text-rose-300',
+      'bg-gradient-to-r from-rose-100/90 via-rose-50/55 to-transparent dark:from-[#ff79c61f] dark:via-[#ff79c608] dark:to-transparent',
+    amountClass: 'text-rose-700 dark:text-[#ff79c6]',
     badgeClass:
-      'border border-rose-300 bg-rose-200 text-rose-950 shadow-sm dark:border-rose-700 dark:bg-rose-900 dark:text-rose-100',
+      'border border-rose-300 bg-rose-200 text-rose-950 shadow-sm dark:border-[#ff79c699] dark:bg-[#ff79c61f] dark:text-[#ff79c6]',
   };
 };
 
@@ -498,9 +483,9 @@ export function Transactions() {
   const filterChips = [
     transactionType && { key: 'transactionType', label: transactionType, clear: () => setTransactionType('') },
     status && { key: 'status', label: status, clear: () => setStatus('') },
-    purposeId && { key: 'purposeId', label: purposes.find((item) => item.id === purposeId)?.name || 'Mục đích', clear: () => setPurposeId('') },
-    expenseTypeId && { key: 'expenseTypeId', label: expenseTypes.find((item) => item.id === expenseTypeId)?.name || 'Danh mục', clear: () => setExpenseTypeId('') },
-    paymentMethodId && { key: 'paymentMethodId', label: paymentMethods.find((item) => item.id === paymentMethodId)?.name || 'Thanh toán', clear: () => setPaymentMethodId('') },
+    purposeId && { key: 'purposeId', label: getCatalogDisplayName(purposes.find((item) => item.id === purposeId), language) || (en ? 'Purpose' : 'Mục đích'), clear: () => setPurposeId('') },
+    expenseTypeId && { key: 'expenseTypeId', label: getCatalogDisplayName(expenseTypes.find((item) => item.id === expenseTypeId), language) || (en ? 'Category' : 'Danh mục'), clear: () => setExpenseTypeId('') },
+    paymentMethodId && { key: 'paymentMethodId', label: getCatalogDisplayName(paymentMethods.find((item) => item.id === paymentMethodId), language) || (en ? 'Payment method' : 'Thanh toán'), clear: () => setPaymentMethodId('') },
     amountMin && { key: 'amountMin', label: `${en ? 'From' : 'Từ'} ${formatVnd(Number(amountMin))}`, clear: () => setAmountMin('') },
     amountMax && { key: 'amountMax', label: `${en ? 'Up to' : 'Đến'} ${formatVnd(Number(amountMax))}`, clear: () => setAmountMax('') },
     month && { key: 'month', label: en ? (englishMonthNames[Number(month) - 1] || `Month ${Number(month)}`) : `Tháng ${Number(month)}`, clear: () => setMonth('') },
@@ -1062,7 +1047,7 @@ export function Transactions() {
               <option value="">{en ? 'All purposes' : 'Tất cả mục đích'}</option>
               {purposes.map((item) => (
                 <option key={item.id} value={item.id}>
-                  {item.name}
+                  {getCatalogDisplayName(item, language)}
                 </option>
               ))}
             </select>
@@ -1077,7 +1062,7 @@ export function Transactions() {
               <option value="">{en ? 'All categories' : 'Tất cả danh mục'}</option>
               {expenseTypes.map((item) => (
                 <option key={item.id} value={item.id}>
-                  {item.name}
+                  {getCatalogDisplayName(item, language)}
                 </option>
               ))}
             </select>
@@ -1092,7 +1077,7 @@ export function Transactions() {
               <option value="">{en ? 'All payment methods' : 'Tất cả phương thức'}</option>
               {paymentMethods.map((item) => (
                 <option key={item.id} value={item.id}>
-                  {item.name}
+                  {getCatalogDisplayName(item, language)}
                 </option>
               ))}
             </select>
@@ -1222,15 +1207,14 @@ export function Transactions() {
         </div>
         {rows.map((transaction) => {
           const purposeName =
-            purposes.find((item) => item.id === transaction.purposeId)?.name ||
+            getCatalogDisplayName(purposes.find((item) => item.id === transaction.purposeId), language) ||
             '—';
           const expenseTypeName =
-            expenseTypes.find((item) => item.id === transaction.expenseTypeId)
-              ?.name || '—';
+            getCatalogDisplayName(expenseTypes.find((item) => item.id === transaction.expenseTypeId), language) ||
+            '—';
           const paymentMethodName =
-            paymentMethods.find(
-              (item) => item.id === transaction.paymentMethodId,
-            )?.name || '—';
+            getCatalogDisplayName(paymentMethods.find((item) => item.id === transaction.paymentMethodId), language) ||
+            '—';
           return <TransactionRow key={transaction.id} transaction={transaction} purposeName={purposeName} expenseTypeName={expenseTypeName} paymentMethodName={paymentMethodName} showTrash={showTrash} selectMode={selectMode} selected={selectedIds.has(transaction.id)} openMenu={openMenuId === transaction.id} deleting={deletingId === transaction.id} copying={copyingId === transaction.id} currentUserRole={currentUserRole} currentUserId={currentUserId} onToggleSelected={toggleSelected} onSetSelected={setSelectedIds} onToggleMenu={(id) => setOpenMenuId((value) => value === id ? null : id)} onRestore={() => void restoreSelected()} onPermanentlyDelete={() => void permanentlyDeleteSelected()} onCopy={(item) => void copyTransaction(item)} onRemove={(id) => void remove(id)} />;
         })}
         {((showTrash ? trashQuery.isPending : transactionQuery.isPending) && isSupabaseConfigured) && <TransactionListSkeleton/>}
@@ -1256,9 +1240,9 @@ export function Transactions() {
           <section role="dialog" aria-modal="true" aria-labelledby="bulk-edit-title" className="mt-32 max-h-[calc(100vh-8rem)] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl dark:bg-[#343746] sm:mt-20 sm:max-h-[78vh] sm:translate-x-32 sm:rounded-3xl sm:p-5">
             <div className="flex items-start justify-between gap-3"><div><h2 id="bulk-edit-title" className="text-xl font-extrabold">Sửa {selectedIds.size} giao dịch</h2><p className="mt-1 text-sm text-gray-500">Chỉ các trường có giá trị mới sẽ được cập nhật.</p></div><button type="button" className="rounded-lg p-2 hover:bg-black/5 dark:hover:bg-white/10" aria-label="Đóng sửa hàng loạt" onClick={() => setBulkEditOpen(false)}><X size={20}/></button></div>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <BulkSelect label="Mục đích" value={bulkEditValues.purposeId} onChange={(value) => setBulkEditValues((current) => ({ ...current, purposeId: value }))} options={purposes} />
-              <BulkSelect label="Danh mục" value={bulkEditValues.expenseTypeId} onChange={(value) => setBulkEditValues((current) => ({ ...current, expenseTypeId: value }))} options={expenseTypes} />
-              <BulkSelect label="Phương thức thanh toán" value={bulkEditValues.paymentMethodId} onChange={(value) => setBulkEditValues((current) => ({ ...current, paymentMethodId: value }))} options={paymentMethods} />
+              <BulkSelect label="Mục đích" value={bulkEditValues.purposeId} onChange={(value) => setBulkEditValues((current) => ({ ...current, purposeId: value }))} options={purposes} language={language} />
+              <BulkSelect label="Danh mục" value={bulkEditValues.expenseTypeId} onChange={(value) => setBulkEditValues((current) => ({ ...current, expenseTypeId: value }))} options={expenseTypes} language={language} />
+              <BulkSelect label="Phương thức thanh toán" value={bulkEditValues.paymentMethodId} onChange={(value) => setBulkEditValues((current) => ({ ...current, paymentMethodId: value }))} options={paymentMethods} language={language} />
               <BulkSelect label="Trạng thái" value={bulkEditValues.status} onChange={(value) => setBulkEditValues((current) => ({ ...current, status: value }))} options={[{ id: 'Thực tế', name: 'Thực tế' }, { id: 'Dự kiến', name: 'Dự kiến' }]} />
             </div>
             <div className="mt-4 rounded-xl bg-amber-50 p-2.5 text-sm text-amber-900 dark:bg-amber-950/30 dark:text-amber-100"><strong>Xem trước:</strong> {Object.values(bulkEditValues).filter(Boolean).length ? `${selectedIds.size} giao dịch · ${Object.values(bulkEditValues).filter(Boolean).length} trường sẽ cập nhật.` : 'Chưa chọn trường nào để thay đổi.'}</div>
@@ -1276,18 +1260,20 @@ function BulkSelect({
   value,
   onChange,
   options,
+  language = 'vi',
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
-  options: Array<{ id: string; name: string }>;
+  options: Array<{ id: string; name: string; nameEn?: string }>;
+  language?: 'vi' | 'en';
 }) {
   return (
     <label className="min-w-0">
       <span className="label">{label}</span>
       <select className="field" value={value} onChange={(event) => onChange(event.target.value)}>
         <option value="">Không thay đổi</option>
-        {options.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}
+        {options.map((option) => <option key={option.id} value={option.id}>{getCatalogDisplayName(option, language)}</option>)}
       </select>
     </label>
   );

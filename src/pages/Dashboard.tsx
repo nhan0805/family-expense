@@ -32,7 +32,7 @@ import { EmptyState, PageSkeleton } from '../components/AsyncStates';
 import { useApp } from '../context/AppContext';
 import { useOptionalLanguage } from '../context/LanguageContext';
 import { dashboardSummaryResponseSchema } from '../lib/ai';
-import { formatCompactVnd, formatVnd, type CatalogItem, type Transaction } from '../lib/domain';
+import { formatCompactVnd, formatVnd, getCatalogDisplayName, type CatalogItem, type CatalogLanguage, type Transaction } from '../lib/domain';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import {
   fetchDashboardDueTransactions,
@@ -164,18 +164,15 @@ const changePercent = (current: number, previous: number) =>
   previous === 0 ? (current === 0 ? 0 : null) : ((current - previous) / previous) * 100;
 
 const isIncome = (type: Transaction['transactionType']) =>
-  type === 'Thu nhập' || type === 'Hoàn tiền';
+  type === 'Thu nhập';
 
 const isExpense = (type: Transaction['transactionType']) =>
-  type === 'Chi tiêu' || type === 'Tạm ứng';
+  type === 'Chi tiêu';
 
 const incomeValue = (transaction: Transaction) => (isIncome(transaction.transactionType) ? transaction.amount : 0);
 
-const expenseValue = (transaction: Transaction) => {
-  if (isExpense(transaction.transactionType)) return transaction.amount;
-  if (transaction.transactionType === 'Hoàn tiền') return -transaction.amount;
-  return 0;
-};
+const expenseValue = (transaction: Transaction) =>
+  isExpense(transaction.transactionType) ? transaction.amount : 0;
 
 const sumIncome = (transactions: Transaction[]) => transactions.reduce((total, item) => total + incomeValue(item), 0);
 const sumExpense = (transactions: Transaction[]) => transactions.reduce((total, item) => total + (isExpense(item.transactionType) ? item.amount : 0), 0);
@@ -188,6 +185,7 @@ function groupTransactions(
   items: CatalogItem[],
   key: 'purposeId' | 'expenseTypeId',
   valueFor: (transaction: Transaction) => number,
+  language: CatalogLanguage,
 ) {
   const grouped = new Map<string, { id: string; name: string; value: number }>();
   transactions.forEach((transaction) => {
@@ -196,7 +194,7 @@ function groupTransactions(
     const id = transaction[key];
     const catalog = items.find((item) => item.id === id);
     const itemId = id || 'uncategorized';
-    const current = grouped.get(itemId) || { id: itemId, name: catalog?.name || 'Chưa phân loại', value: 0 };
+    const current = grouped.get(itemId) || { id: itemId, name: getCatalogDisplayName(catalog, language) || (language === 'en' ? 'Uncategorized' : 'Chưa phân loại'), value: 0 };
     current.value += value;
     grouped.set(itemId, current);
   });
@@ -214,14 +212,14 @@ const pieMaxSlices = 6;
 
 export const formatPieLabel = ({ percent, value }: Pick<PieLabelRenderProps, 'percent' | 'value'>) => Number(percent) >= pieLabelMinPercent ? formatCompactVnd(Number(value)).replace(' ₫', '') : null;
 
-export const summarizePieData = (data: ExpenseChartItem[]): PieChartItem[] => {
+export const summarizePieData = (data: ExpenseChartItem[], language: CatalogLanguage = 'vi'): PieChartItem[] => {
   const sorted = data.filter((item) => item.value > 0).sort((a, b) => b.value - a.value);
   if (sorted.length <= pieMaxSlices) return sorted;
   const visible = sorted.slice(0, pieMaxSlices - 1);
   const hiddenItems = sorted.slice(pieMaxSlices - 1);
   return [...visible, {
     id: 'other',
-    name: 'Khác',
+    name: language === 'en' ? 'Other' : 'Khác',
     value: hiddenItems.reduce((total, item) => total + item.value, 0),
     fill: '#94a3b8',
     isOther: true,
@@ -291,10 +289,10 @@ export function Dashboard() {
   const comparisonIncome = sumIncome(comparisonTransactions);
   const expenseChange = changePercent(selectedExpense, comparisonExpense);
   const incomeChange = changePercent(selectedIncome, comparisonIncome);
-  const byPurpose = groupTransactions(selectedTransactions, purposes, 'purposeId', expenseValue);
-  const byExpenseType = groupTransactions(selectedTransactions, expenseTypes, 'expenseTypeId', expenseValue);
-  const incomeByPurpose = groupTransactions(selectedTransactions, purposes, 'purposeId', incomeValue);
-  const incomeByExpenseType = groupTransactions(selectedTransactions, expenseTypes, 'expenseTypeId', incomeValue);
+  const byPurpose = groupTransactions(selectedTransactions, purposes, 'purposeId', expenseValue, language);
+  const byExpenseType = groupTransactions(selectedTransactions, expenseTypes, 'expenseTypeId', expenseValue, language);
+  const incomeByPurpose = groupTransactions(selectedTransactions, purposes, 'purposeId', incomeValue, language);
+  const incomeByExpenseType = groupTransactions(selectedTransactions, expenseTypes, 'expenseTypeId', incomeValue, language);
   const trend = chartPeriods.map((period) => {
     const periodRange = rangeForPeriod(period, mode, customFrom, customTo);
     const periodTransactions = sourceTransactions.filter((transaction) => transactionInRange(transaction, periodRange));
@@ -516,7 +514,7 @@ function MiniTrend({ values, label }: { values: number[]; label: string }) {
 
 function ExpensePieChart({ title, data, to, filterKey, en, income = false }: { title: string; data: ExpenseChartItem[]; to: string; filterKey: 'purposeId' | 'expenseTypeId'; en: boolean; income?: boolean }) {
   const navigate = useNavigate();
-  const pieData = summarizePieData(data);
+  const pieData = summarizePieData(data, en ? 'en' : 'vi');
   const otherItem = pieData.find((item) => item.isOther);
   const openItem = (item: PieChartItem) => { if (item.id && item.id !== 'uncategorized' && !item.isOther) navigate(`${to}&${filterKey}=${encodeURIComponent(item.id)}`); };
   return <><h3 className="font-bold">{title}</h3><div className="min-h-72 min-w-0 max-w-full pt-3">{pieData.length ? <><div className="h-56 sm:h-64"><ResponsiveContainer><PieChart margin={{ top: 18, right: 18, left: 18, bottom: 0 }}><Pie data={pieData} dataKey="value" nameKey="name" innerRadius={45} outerRadius={75} labelLine={false} label={formatPieLabel}>{pieData.map((item) => <Cell key={item.id || item.name} fill={item.fill} cursor={item.id !== 'uncategorized' && !item.isOther ? 'pointer' : undefined} role={item.id !== 'uncategorized' ? 'button' : undefined} tabIndex={item.id !== 'uncategorized' && !item.isOther ? 0 : undefined} aria-label={item.isOther ? `${item.name}: ${formatVnd(item.value)} (${item.hiddenItems?.length || 0} danh mục)` : `${item.name}: ${formatVnd(item.value)}`} onClick={() => openItem(item)} onKeyDown={(event) => { if (item.id !== 'uncategorized' && !item.isOther && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); openItem(item); } }} />)}</Pie><Tooltip content={<PieTooltip />} /></PieChart></ResponsiveContainer></div><ul className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs sm:grid-cols-3" aria-label={`${title} legend`}>{pieData.map((item) => <li key={item.id || item.name} className="flex min-w-0 items-center gap-1.5"><span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: item.fill }} aria-hidden="true" /><span className="truncate" title={`${item.name}: ${formatVnd(item.value)}`}>{item.name}</span></li>)}</ul>{otherItem && <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{en ? `${otherItem.hiddenItems?.length || 0} smaller categories grouped into “Other”; tap or click “Other” to see details.` : `${otherItem.hiddenItems?.length || 0} danh mục nhỏ được gộp vào “Khác”; nhấn hoặc bấm “Khác” để xem chi tiết.`}</p>}</> : <EmptyState title={en ? 'No chart data' : 'Chưa có dữ liệu biểu đồ'} description={en ? `No actual ${income ? 'income' : 'expense'} transactions in this period.` : `Chưa có giao dịch thực tế ${income ? 'thu nhập' : 'chi tiêu'} trong kỳ này.`} />}</div></>;

@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useOptionalLanguage } from '../context/LanguageContext';
-import { transactionTypeLabel, type Transaction } from '../lib/domain';
+import { getCatalogDisplayName, transactionTypeLabel, type CatalogLanguage, type Transaction } from '../lib/domain';
 import { formatImportCheckSummary } from '../lib/importSummary';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { inferImportMode, type TemplateError, type TemplateRow } from '../lib/templateImport';
@@ -23,11 +23,13 @@ type FilePickerWindow = Window & {
     multiple?: boolean;
   }) => Promise<Array<{ getFile: () => Promise<File> }>>;
 };
-const relationName = (value: unknown) => {
+const relationName = (value: unknown, language: CatalogLanguage) => {
   const relation = Array.isArray(value) ? value[0] : value;
-  return relation && typeof relation === 'object' && 'name' in relation
-    ? String(relation.name || '')
-    : '';
+  if (!relation || typeof relation !== 'object') return '';
+  const item = relation as { name?: unknown; name_en?: unknown };
+  return language === 'en'
+    ? String(item.name_en || item.name || '')
+    : String(item.name || '');
 };
 
 export function ImportExport() {
@@ -62,7 +64,7 @@ export function ImportExport() {
     setMessage(en ? 'Creating template…' : 'Đang tạo template…');
     try {
       const { createTemplate } = await import('../lib/templateImport');
-      const data = await createTemplate(purposes, expenseTypes, paymentMethods);
+      const data = await createTemplate(purposes, expenseTypes, paymentMethods, language);
       const blob = new Blob([data as BlobPart], {
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       });
@@ -255,7 +257,7 @@ export function ImportExport() {
       const { data, error } = await supabase
         .from('transactions')
         .select(
-          '*, purpose:purposes!transactions_purpose_same_family_fkey(name), expense_type:expense_types!transactions_expense_type_same_family_fkey(name), event:events!transactions_event_same_family_fkey(name), beneficiary:beneficiaries!transactions_beneficiary_same_family_fkey(name), payment_method:payment_methods!transactions_payment_method_same_family_fkey(name), account:accounts!transactions_account_same_family_fkey(name)',
+          '*, purpose:purposes!transactions_purpose_same_family_fkey(name,name_en), expense_type:expense_types!transactions_expense_type_same_family_fkey(name,name_en), event:events!transactions_event_same_family_fkey(name), beneficiary:beneficiaries!transactions_beneficiary_same_family_fkey(name), payment_method:payment_methods!transactions_payment_method_same_family_fkey(name,name_en), account:accounts!transactions_account_same_family_fkey(name)',
         )
         .eq('family_id', familyId)
         .is('deleted_at', null)
@@ -292,9 +294,9 @@ export function ImportExport() {
             'Trạng thái': row.status,
             'Nội dung': row.description,
             'Số tiền': Number(row.amount),
-            'Mục đích': relationName(row.purpose),
-            'Danh mục': relationName(row.expense_type),
-            'Phương thức thanh toán': relationName(row.payment_method),
+            'Mục đích': relationName(row.purpose, language),
+            'Danh mục': relationName(row.expense_type, language),
+            'Phương thức thanh toán': relationName(row.payment_method, language),
             'Ghi chú': row.note,
             Nguồn: row.source,
           }))
@@ -308,16 +310,11 @@ export function ImportExport() {
               'Nội dung': transaction.description,
               'Số tiền': transaction.amount,
             'Mục đích':
-                purposes.find((item) => item.id === transaction.purposeId)
-                  ?.name || '',
+                getCatalogDisplayName(purposes.find((item) => item.id === transaction.purposeId), language),
               'Danh mục':
-                expenseTypes.find(
-                  (item) => item.id === transaction.expenseTypeId,
-                )?.name || '',
+                getCatalogDisplayName(expenseTypes.find((item) => item.id === transaction.expenseTypeId), language),
               'Phương thức thanh toán':
-                paymentMethods.find(
-                  (item) => item.id === transaction.paymentMethodId,
-                )?.name || '',
+                getCatalogDisplayName(paymentMethods.find((item) => item.id === transaction.paymentMethodId), language),
               'Ghi chú': transaction.note || '',
               Nguồn: transaction.source,
             }));
