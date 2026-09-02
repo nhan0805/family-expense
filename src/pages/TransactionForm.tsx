@@ -16,6 +16,7 @@ import {
   type TransactionFormInput,
 } from '../lib/domain';
 import { aiResponseSchema } from '../lib/ai';
+import { aiErrorMessage, invokeAiFunction, isAiRateLimited } from '../lib/aiClient';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { fetchTransaction } from '../lib/transactionsApi';
 import { PageSkeleton } from '../components/AsyncStates';
@@ -107,6 +108,7 @@ export function TransactionForm() {
   });
   const existing = isSupabaseConfigured ? existingQuery.data : localExisting;
   const [aiBusy, setAiBusy] = useState(false);
+  const [aiError, setAiError] = useState('');
   const [aiResult, setAiResult] = useState<AiResult | null>(null);
   const [aiResultVisible, setAiResultVisible] = useState(true);
   const [aiCompleted, setAiCompleted] = useState(false);
@@ -352,22 +354,24 @@ export function TransactionForm() {
     nav('/giao-dich');
   };
   const parseAi = async () => {
-    if (!description.trim()) return;
+    if (!description.trim() || aiBusy) return;
     if (!online) {
       notify(en ? 'You are offline. Reconnect before using AI.' : 'Đang mất kết nối mạng. Hãy kết nối lại trước khi dùng AI.', 'error');
       return;
     }
     setAiBusy(true);
+    setAiError('');
     setAiCompleted(false);
     setAiResult(null);
     setAiResultVisible(true);
     try {
       if (!isSupabaseConfigured)
         throw new Error(en ? 'Configure Supabase before using Gemini.' : 'Hãy cấu hình Supabase để sử dụng Gemini.');
-      const { data, error } = await supabase.functions.invoke('parse-expense', {
-        body: { text: description, familyId, timezone: 'Asia/Ho_Chi_Minh' },
+      const data = await invokeAiFunction<unknown>('parse-expense', {
+        text: description,
+        familyId,
+        timezone: 'Asia/Ho_Chi_Minh',
       });
-      if (error) throw error;
       const s = aiResponseSchema.parse(data).suggestion;
       const filledFields: AiFieldKey[] = [
         'transactionDate',
@@ -408,10 +412,9 @@ export function TransactionForm() {
         missingAmount || s.warnings.length ? 'info' : 'success',
       );
     } catch (e) {
-      const message = e instanceof Error ? e.message : '';
-      const rateLimited = /429|rate limit|too many requests/i.test(message);
+      setAiError(aiErrorMessage(e, en, 'parse'));
       notify(
-        rateLimited
+        isAiRateLimited(e)
           ? (en ? 'AI usage is currently limited. Please try again later.' : 'AI đang đạt giới hạn sử dụng. Vui lòng thử lại sau.')
           : (en ? 'Could not analyze this now. Your description was kept unchanged.' : 'Không thể phân tích lúc này. Nội dung của bạn vẫn được giữ nguyên.'),
         'error',
@@ -542,6 +545,7 @@ export function TransactionForm() {
             </div>
             {errors.description?.message && <span className="mt-1 block text-xs text-red-600">{errors.description.message}</span>}
             <p className="mt-1 text-xs text-gray-500">{en ? 'Type or use the microphone to convert speech to text, then select AI if needed. AI can use your family’s confirmed history to suggest categories. The app does not store audio and suggestions are never saved automatically.' : 'Nhập tay hoặc dùng micro để chuyển giọng nói thành chữ, sau đó nhấn AI nếu cần. AI có thể tham khảo lịch sử đã xác nhận của gia đình để gợi ý danh mục. App không lưu audio và gợi ý không được tự động lưu.'}</p>
+            {aiError && <div role="alert" className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-red-50 p-2 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300"><span>{aiError}</span><button type="button" className="btn-secondary px-3 py-1.5 text-xs" onClick={() => void parseAi()}>{en ? 'Retry' : 'Thử lại'}</button></div>}
           </div>
           {aiResult && aiResultVisible && (
             <section className={`form-ai-summary ui-enter rounded-xl border p-4 md:col-span-3 ${aiTone === 'warning' ? 'border-amber-300 bg-amber-50 text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100' : 'border-violet-200 bg-gradient-to-r from-violet-50 to-sky-50 text-violet-950 dark:border-violet-800 dark:from-violet-950/35 dark:to-sky-950/25 dark:text-violet-100'}`} aria-label={en ? 'AI suggestion summary' : 'Tóm tắt gợi ý AI'}>

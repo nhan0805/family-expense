@@ -1,6 +1,6 @@
 # Family Expense — Project Handoff
 
-> Cập nhật: **02/09/2026** (`Asia/Ho_Chi_Minh`)
+> Cập nhật: **03/09/2026** (`Asia/Ho_Chi_Minh`)
 > Trạng thái: **Production đang hoạt động; tài liệu này là ngữ cảnh kỹ thuật cho các phiên làm việc tiếp theo**  
 > Production: <https://family-expense-8fo.pages.dev>
 
@@ -14,6 +14,15 @@
 - [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
 
+### Handoff — tối ưu hiệu năng AI: aggregate facts, cache và timeout (03/09/2026)
+
+- Đã gom facts Dashboard vào `get_ai_dashboard_facts(family_id, date_from, date_to)`, một `security definer` RPC kiểm tra membership/rate limit và aggregate trực tiếp trong PostgreSQL; `summarize-dashboard` không còn tải từng transaction để tự tính facts.
+- Summary dùng cache ngắn hạn 5 phút theo `family_id`, khoảng ngày, `period_label` và `language`; context catalog dùng cache 60 giây. Trigger xóa cache liên quan khi catalog hoặc transaction thay đổi để không giữ dữ liệu cũ sau mutation.
+- Client dùng `src/lib/aiClient.ts` với timeout 25 giây; parse/search/summary hiển thị lỗi timeout/rate-limit và nút `Thử lại`. AI search cập nhật `debouncedQuery` ngay sau khi áp dụng filters để request list không chờ thêm 300ms.
+- Files chính: `src/lib/aiClient.ts`, `src/pages/Dashboard.tsx`, `src/pages/Transactions.tsx`, `src/pages/TransactionForm.tsx`, ba `supabase/functions/*`, migration `supabase/migrations/202609030001_ai_performance.sql`, test `src/lib/aiClient.test.ts` và `supabase/tests/ai_performance.sql`.
+- Validation local: đang chạy full suite; required `db-security` phải được theo dõi trên PR vì local Supabase phụ thuộc Docker.
+- Trạng thái triển khai: Chưa deploy release này; sẽ commit/push, tạo PR vào `main`, bật auto-merge và chỉ kết luận hoàn tất sau khi migration/Edge Functions, required checks và Cloudflare Pages production deployment của merge commit thành công.
+
 ### Handoff — quản lý ngân sách V1, Phase 0–6 (02/09/2026)
 
 - Phạm vi đã triển khai: ngân sách theo mục đích/tháng, VND, timezone `Asia/Ho_Chi_Minh`; chỉ giao dịch `Chi tiêu` + `Thực tế` + chưa xóa được tính vào chi tiêu.
@@ -22,7 +31,7 @@
 - Frontend: `src/pages/Budgets.tsx`, `src/lib/budget.ts`, `src/lib/budgetsApi.ts`; route `/ngan-sach`; Dashboard snapshot; navigation desktop/mobile có mục Ngân sách và menu Thêm để không làm chật bottom nav.
 - UX: VI/EN cho nhãn, trạng thái và form; Dracula dark mode dùng tint/accent Purple, Green, Yellow, Red; responsive từ mobile, có empty/loading/error state và link sang giao dịch đã lọc.
 - Validation local: `pnpm test` 22/22 file, 90/90 test; `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` pass. `supabase test db --local` bị chặn do Docker daemon chưa chạy; required `db-security` phải được theo dõi trên PR.
-- Trạng thái triển khai: Chưa merge/deploy production; dự kiến qua PR vào `main`, Supabase Production Deploy workflow cho migration và Cloudflare Pages Git integration cho frontend. Không dùng Wrangler deploy trực tiếp.
+- Trạng thái triển khai: Đã merge PR [#102](https://github.com/nhan0805/family-expense/pull/102) vào `main` với merge commit `decbea25178e7aaca8a9ddbc8e1cb6c9ca1a9384`. Required `quality`, `db-security`, Preview và Cloudflare Pages đều pass; Supabase Production Deploy [run 33658603552](https://github.com/nhan0805/family-expense/actions/runs/33658603552) đã áp migration. Production smoke test `https://family-expense-8fo.pages.dev/` và lazy asset `Budgets-BsvYXatX.js` đều HTTP 200 lúc `03/09/2026 00:05` (`Asia/Ho_Chi_Minh`). Không dùng Wrangler deploy trực tiếp và không tạo deploy lần hai chỉ để cập nhật tài liệu.
 
 ### Handoff — chuẩn hóa nội dung giao dịch AI (02/09/2026)
 
