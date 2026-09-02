@@ -22,14 +22,22 @@
 - Validation local: Vitest (`vitest run`, tương đương script `pnpm test`) 23/23 file, 96/96 test; lint, typecheck, build và `git diff --check` pass. Local DB security chưa chạy vì PostgreSQL tại `127.0.0.1:54322` chưa hoạt động; required `db-security` sẽ xác nhận migration/RLS trên PR.
 - Trạng thái triển khai dự kiến: chờ PR vào `main`, required checks, Supabase Production Deploy và Cloudflare Pages production deployment của merge commit.
 
+### Handoff — căn đều tiêu đề và khung trường trong form giao dịch (03/09/2026)
+
+- Trước thay đổi: Rule `.label` chung ghi đè `display: flex`, khiến badge `AI đề xuất` của `Phương thức thanh toán` bị xuống dòng và làm lệch chiều cao các khung trong hàng phân loại.
+- Sau thay đổi: `.label.flex` được khôi phục đúng cơ chế flex; badge AI không co/không xuống dòng, nên các tiêu đề và khung trường trong cùng hàng căn đều trên desktop và mobile.
+- Files chính: `src/index.css`, `src/pages/TransactionForm.tsx`, `src/pages/TransactionForm.test.tsx`. Không thay đổi API, schema, database, RLS/RPC hoặc quy tắc nghiệp vụ.
+- Validation: `pnpm test` đạt 23/23 file, 93/93 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build vẫn chỉ cảnh báo chunk ExcelJS lớn đã có từ trước.
+- Trạng thái triển khai: Đã commit và push branch; đang tạo PR vào `main`, bật auto-merge và theo dõi required checks. Frontend deploy qua Cloudflare Pages Git integration sau khi PR merge.
+
 ### Handoff — tối ưu hiệu năng AI: aggregate facts, cache và timeout (03/09/2026)
 
 - Đã gom facts Dashboard vào `get_ai_dashboard_facts(family_id, date_from, date_to)`, một `security definer` RPC kiểm tra membership/rate limit và aggregate trực tiếp trong PostgreSQL; `summarize-dashboard` không còn tải từng transaction để tự tính facts.
 - Summary dùng cache ngắn hạn 5 phút theo `family_id`, khoảng ngày, `period_label` và `language`; context catalog dùng cache 60 giây. Trigger xóa cache liên quan khi catalog hoặc transaction thay đổi để không giữ dữ liệu cũ sau mutation.
 - Client dùng `src/lib/aiClient.ts` với timeout 25 giây; parse/search/summary hiển thị lỗi timeout/rate-limit và nút `Thử lại`. AI search cập nhật `debouncedQuery` ngay sau khi áp dụng filters để request list không chờ thêm 300ms.
 - Files chính: `src/lib/aiClient.ts`, `src/pages/Dashboard.tsx`, `src/pages/Transactions.tsx`, `src/pages/TransactionForm.tsx`, ba `supabase/functions/*`, migration `supabase/migrations/202609030001_ai_performance.sql`, test `src/lib/aiClient.test.ts` và `supabase/tests/ai_performance.sql`.
-- Validation local: đang chạy full suite; required `db-security` phải được theo dõi trên PR vì local Supabase phụ thuộc Docker.
-- Trạng thái triển khai: Chưa deploy release này; sẽ commit/push, tạo PR vào `main`, bật auto-merge và chỉ kết luận hoàn tất sau khi migration/Edge Functions, required checks và Cloudflare Pages production deployment của merge commit thành công.
+- Validation local: `pnpm test` 23/23 file, 93/93 test; `pnpm lint`, `pnpm typecheck`, `pnpm build`, Prettier và `git diff --check` pass. `supabase test db --local` không chạy được vì Docker daemon chưa hoạt động; required `db-security` trên PR đã pass sau khi rerun do GitHub API rate limit.
+- Trạng thái triển khai: Đã merge PR [#103](https://github.com/nhan0805/family-expense/pull/103) vào `main` với merge commit `7ceac2a9f10af32c2dec887db7f04c08556e2967`. CI main [33660556965](https://github.com/nhan0805/family-expense/actions/runs/33660556965) và Supabase Production Deploy [33660556944](https://github.com/nhan0805/family-expense/actions/runs/33660556944) pass; Cloudflare Pages production smoke test HTTP 200 và các lazy asset AI mới đều HTTP 200 lúc `03/09/2026 00:24` (`Asia/Ho_Chi_Minh`). Không dùng Wrangler deploy trực tiếp và không tạo deploy lần hai chỉ để cập nhật handoff.
 
 ### Handoff — quản lý ngân sách V1, Phase 0–6 (02/09/2026)
 
