@@ -2,13 +2,21 @@
 
 ## 2026-09-03
 
+### Căn đều tiêu đề và khung trường trong form giao dịch
+
+- Trước thay đổi: Rule `.label` chung ghi đè `display: flex`, khiến badge `AI đề xuất` của `Phương thức thanh toán` bị xuống dòng và các khung trong hàng phân loại không thẳng hàng.
+- Sau thay đổi: Các tiêu đề có badge AI luôn căn cùng một hàng, badge giữ nguyên kích thước và không xuống dòng; chiều cao các trường trong cùng hàng nhất quán trên màn hình form giao dịch.
+- Kỹ thuật: Cập nhật `.label.flex` trong `src/index.css`, badge trong `src/pages/TransactionForm.tsx` và regression assertion trong `src/pages/TransactionForm.test.tsx`. Không thay đổi API, schema, database, RLS/RPC hoặc quy tắc nghiệp vụ.
+- Kiểm thử: `pnpm test` đạt 23/23 file, 93/93 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build vẫn chỉ cảnh báo chunk ExcelJS lớn đã có từ trước.
+- Trạng thái triển khai: Quality checks, commit và push branch đã hoàn tất; đang tạo PR vào `main`, bật auto-merge và chờ required checks trước khi Cloudflare Pages Git integration deploy production.
+
 ### Tối ưu hiệu năng AI: aggregate facts, cache và timeout
 
 - Trước thay đổi: Dashboard summary tải và tự tính nhiều dòng giao dịch ở Edge Function; mỗi lần gọi AI đều đọc lại catalog/facts và không có cache summary hoặc trạng thái retry nhất quán.
 - Sau thay đổi: Dashboard dùng RPC `get_ai_dashboard_facts` để aggregate một lần; summary cache 5 phút theo `familyId + dateFrom + dateTo + periodLabel + language`; catalog/context cache 60 giây và tự invalidates khi catalog/giao dịch đổi; client/server Gemini có timeout 25 giây; AI search cập nhật `debouncedQuery` ngay sau khi nhận kết quả và các luồng AI có nút thử lại rõ ràng.
 - Kỹ thuật: thêm `src/lib/aiClient.ts`, test timeout; cập nhật Dashboard, Transactions, TransactionForm và ba Edge Function AI; thêm migration `supabase/migrations/202609030001_ai_performance.sql` với `ai_request_context_cache`, `ai_summary_cache`, aggregate RPC và trigger invalidation; thêm `supabase/tests/ai_performance.sql`.
-- Kiểm thử: đang chạy lại full test, lint, typecheck, build và kiểm tra migration/security trên CI; không sửa migration đã áp dụng.
-- Trạng thái triển khai dự kiến: commit/push branch, tạo PR vào `main`, bật auto-merge; Supabase migration/Edge Functions và frontend sẽ triển khai qua workflow Git/Cloudflare Pages Git integration sau khi PR merge.
+- Kiểm thử: local `pnpm test` đạt 23/23 file, 93/93 test; `pnpm lint`, `pnpm typecheck`, `pnpm build`, Prettier và `git diff --check` pass. Required `db-security` trên CI cũng pass sau một lần rerun do GitHub API rate limit; local Supabase không chạy được vì Docker daemon chưa hoạt động.
+- Triển khai: PR [#103](https://github.com/nhan0805/family-expense/pull/103) đã merge vào `main` với merge commit `7ceac2a9f10af32c2dec887db7f04c08556e2967`; CI main [run 33660556965](https://github.com/nhan0805/family-expense/actions/runs/33660556965) và Supabase Production Deploy [run 33660556944](https://github.com/nhan0805/family-expense/actions/runs/33660556944) đều pass. Cloudflare Pages production `https://family-expense-8fo.pages.dev/` trả HTTP 200; lazy assets Dashboard/Transactions/TransactionForm của build mới đều HTTP 200 lúc `03/09/2026 00:24` (`Asia/Ho_Chi_Minh`). Không dùng `wrangler pages deploy` trực tiếp và không tạo deploy lần hai chỉ để cập nhật tài liệu.
 
 ## 2026-09-02
 
