@@ -29,6 +29,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { useOptionalLanguage } from '../context/LanguageContext';
 import { transactionSearchResponseSchema } from '../lib/ai';
+import { aiErrorMessage, invokeAiFunction } from '../lib/aiClient';
 import {
   canDeleteTransaction,
   formatVnd,
@@ -873,19 +874,17 @@ export function Transactions() {
     setAiSearchError('');
     setAiSearchMessage('');
     try {
-      const { data, error } = await supabase.functions.invoke('search-transactions', {
-        body: {
-          familyId,
-          text: searchText,
-          language: en ? 'en' : 'vi',
-          timezone: 'Asia/Ho_Chi_Minh',
-        },
+      const data = await invokeAiFunction<unknown>('search-transactions', {
+        familyId,
+        text: searchText,
+        language: en ? 'en' : 'vi',
+        timezone: 'Asia/Ho_Chi_Minh',
       });
-      if (error) throw new Error('AI_REQUEST_FAILED');
       const response = transactionSearchResponseSchema.safeParse(data);
       if (!response.success) throw new Error('AI_RESPONSE_INVALID');
       const { filters } = response.data;
       setQuery(filters.query);
+      setDebouncedQuery(filters.query);
       setTransactionType(filters.transactionType || '');
       setStatus(filters.status || '');
       setPurposeId(filters.purposeId || '');
@@ -908,8 +907,8 @@ export function Transactions() {
       setAiSearchCompleted(true);
       window.setTimeout(() => setAiSearchCompleted(false), 1800);
       setAiSearchMessage(sanitizeAiSearchExplanation(response.data.explanation) || (en ? 'AI filters applied.' : 'Đã áp dụng bộ lọc AI.'));
-    } catch {
-      setAiSearchError(en ? 'AI search is temporarily unavailable. Please try again.' : 'Chưa thể phân tích tìm kiếm bằng AI. Vui lòng thử lại sau.');
+    } catch (error) {
+      setAiSearchError(aiErrorMessage(error, en, 'search'));
     } finally {
       setAiSearchBusy(false);
     }
@@ -1024,7 +1023,7 @@ export function Transactions() {
             </select>
           </label>
         </div>
-        {aiSearchError && <p role="alert" className="rounded-lg bg-red-50 p-2 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">{aiSearchError}</p>}
+        {aiSearchError && <div role="alert" className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-red-50 p-2 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300"><span>{aiSearchError}</span><button type="button" className="btn-secondary px-3 py-1.5 text-xs" onClick={() => void runAiSearch()}>{en ? 'Retry' : 'Thử lại'}</button></div>}
         {aiSearchMessage && <p role="status" className="rounded-lg bg-emerald-50 p-2 text-sm text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200">{aiSearchMessage}</p>}
 
         {filterChips.length > 0 && <div className="flex gap-2 overflow-x-auto pb-1 md:flex-wrap" aria-label={en ? 'Active filters' : 'Bộ lọc đang áp dụng'}>{filterChips.map((chip) => <button type="button" key={chip.key} onClick={chip.clear} className="filter-chip inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold transition"><span>{chip.label}</span><X size={13} aria-hidden="true"/><span className="sr-only">{en ? 'Remove filter' : 'Bỏ bộ lọc'} {chip.label}</span></button>)}</div>}

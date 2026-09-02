@@ -1,5 +1,15 @@
 # Nhật ký thay đổi Family Expense
 
+## 2026-09-03
+
+### Tối ưu hiệu năng AI: aggregate facts, cache và timeout
+
+- Trước thay đổi: Dashboard summary tải và tự tính nhiều dòng giao dịch ở Edge Function; mỗi lần gọi AI đều đọc lại catalog/facts và không có cache summary hoặc trạng thái retry nhất quán.
+- Sau thay đổi: Dashboard dùng RPC `get_ai_dashboard_facts` để aggregate một lần; summary cache 5 phút theo `familyId + dateFrom + dateTo + periodLabel + language`; catalog/context cache 60 giây và tự invalidates khi catalog/giao dịch đổi; client/server Gemini có timeout 25 giây; AI search cập nhật `debouncedQuery` ngay sau khi nhận kết quả và các luồng AI có nút thử lại rõ ràng.
+- Kỹ thuật: thêm `src/lib/aiClient.ts`, test timeout; cập nhật Dashboard, Transactions, TransactionForm và ba Edge Function AI; thêm migration `supabase/migrations/202609030001_ai_performance.sql` với `ai_request_context_cache`, `ai_summary_cache`, aggregate RPC và trigger invalidation; thêm `supabase/tests/ai_performance.sql`.
+- Kiểm thử: đang chạy lại full test, lint, typecheck, build và kiểm tra migration/security trên CI; không sửa migration đã áp dụng.
+- Trạng thái triển khai dự kiến: commit/push branch, tạo PR vào `main`, bật auto-merge; Supabase migration/Edge Functions và frontend sẽ triển khai qua workflow Git/Cloudflare Pages Git integration sau khi PR merge.
+
 ## 2026-09-02
 
 ### Triển khai quản lý ngân sách V1 — Phase 0 đến Phase 6
@@ -9,7 +19,7 @@
 - Phạm vi Phase 0–6: chốt nghiệp vụ VND + `Asia/Ho_Chi_Minh` và quyền owner/member; thêm schema validation/local fallback; thêm RPC có kiểm tra membership/owner, RLS và index tổng hợp; xây route `/ngan-sach` responsive mobile-first; tích hợp Dashboard/navigation; đồng bộ VI/EN và Dracula dark mode; bổ sung unit/UI/security assertions và quality gates. Recurring transaction và ngân sách theo sự kiện vẫn ngoài V1.
 - Kỹ thuật: thêm `supabase/migrations/202609020001_budget_management.sql` với `get_budget_summary`, `upsert_budget`, `delete_budget`, `copy_budgets_from_month`; thêm `src/lib/budget.ts`, `src/lib/budgetsApi.ts`, `src/pages/Budgets.tsx`, test tương ứng; cập nhật `src/App.tsx`, `src/components/Layout.tsx`, `src/pages/Dashboard.tsx`, `src/context/LanguageContext.tsx`, `supabase/tests/tenant_security.sql`.
 - Kiểm thử local: `pnpm test` đạt 22/22 file, 90/90 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Supabase security test local chưa chạy được vì Docker daemon chưa hoạt động; migration sẽ được kiểm tra lại bởi required `db-security` trước merge.
-- Triển khai: Chờ commit/push branch, PR vào `main`, bật auto-merge; migration chạy qua Supabase Production Deploy workflow và frontend chạy qua Cloudflare Pages Git integration sau khi PR merge. Không dùng `wrangler pages deploy` trực tiếp.
+- Triển khai: PR [#102](https://github.com/nhan0805/family-expense/pull/102) đã merge vào `main` với merge commit `decbea25178e7aaca8a9ddbc8e1cb6c9ca1a9384`; required checks `quality`, `db-security`, Preview và Cloudflare Pages đều pass. Supabase Production Deploy [run 33658603552](https://github.com/nhan0805/family-expense/actions/runs/33658603552) đã áp migration; CI main [run 33658603477](https://github.com/nhan0805/family-expense/actions/runs/33658603477) pass. Cloudflare Pages production smoke test `https://family-expense-8fo.pages.dev/` trả HTTP 200 và lazy asset `Budgets-BsvYXatX.js` trả HTTP 200 lúc `03/09/2026 00:05` (`Asia/Ho_Chi_Minh`). Không dùng `wrangler pages deploy` trực tiếp và không tạo deploy lần hai chỉ để cập nhật tài liệu.
 
 ### Chuẩn hóa nội dung giao dịch do AI đề xuất
 
