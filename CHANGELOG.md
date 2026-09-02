@@ -8,7 +8,7 @@
 - Sau thay đổi: Các tiêu đề có badge AI luôn căn cùng một hàng, badge giữ nguyên kích thước và không xuống dòng; chiều cao các trường trong cùng hàng nhất quán trên màn hình form giao dịch.
 - Kỹ thuật: Cập nhật `.label.flex` trong `src/index.css`, badge trong `src/pages/TransactionForm.tsx` và regression assertion trong `src/pages/TransactionForm.test.tsx`. Không thay đổi API, schema, database, RLS/RPC hoặc quy tắc nghiệp vụ.
 - Kiểm thử: `pnpm test` đạt 23/23 file, 93/93 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build vẫn chỉ cảnh báo chunk ExcelJS lớn đã có từ trước.
-- Trạng thái triển khai: Quality checks, commit và push branch đã hoàn tất; đang tạo PR vào `main`, bật auto-merge và chờ required checks trước khi Cloudflare Pages Git integration deploy production.
+- Triển khai: PR [#104](https://github.com/nhan0805/family-expense/pull/104) đã merge vào `main` với merge commit `3fb16e36fa1b1c64de0f6906bdedaa6a968e90f8`; CI main [run 33661370044](https://github.com/nhan0805/family-expense/actions/runs/33661370044) pass với `quality` và `db-security`, Preview và Cloudflare Pages Preview pass. Production `https://family-expense-8fo.pages.dev/` trả HTTP 200 lúc `03/09/2026 00:31` (`Asia/Ho_Chi_Minh`); CSS production chứa `.label.flex` và lazy chunk TransactionForm chứa `shrink-0`/`whitespace-nowrap`. Không có migration nên không chạy Supabase Production Deploy; không dùng Wrangler deploy trực tiếp và không tạo deploy lần hai chỉ để cập nhật tài liệu.
 
 ### Tối ưu hiệu năng AI: aggregate facts, cache và timeout
 

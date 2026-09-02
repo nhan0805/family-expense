@@ -20,7 +20,7 @@
 - Sau thay đổi: `.label.flex` được khôi phục đúng cơ chế flex; badge AI không co/không xuống dòng, nên các tiêu đề và khung trường trong cùng hàng căn đều trên desktop và mobile.
 - Files chính: `src/index.css`, `src/pages/TransactionForm.tsx`, `src/pages/TransactionForm.test.tsx`. Không thay đổi API, schema, database, RLS/RPC hoặc quy tắc nghiệp vụ.
 - Validation: `pnpm test` đạt 23/23 file, 93/93 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build vẫn chỉ cảnh báo chunk ExcelJS lớn đã có từ trước.
-- Trạng thái triển khai: Đã commit và push branch; đang tạo PR vào `main`, bật auto-merge và theo dõi required checks. Frontend deploy qua Cloudflare Pages Git integration sau khi PR merge.
+- Trạng thái triển khai: Đã merge PR [#104](https://github.com/nhan0805/family-expense/pull/104) vào `main` với merge commit `3fb16e36fa1b1c64de0f6906bdedaa6a968e90f8`. CI main [33661370044](https://github.com/nhan0805/family-expense/actions/runs/33661370044) pass với `quality` và `db-security`; Preview/Cloudflare Pages Preview pass. Cloudflare Pages production `https://family-expense-8fo.pages.dev/` trả HTTP 200 lúc `03/09/2026 00:31` (`Asia/Ho_Chi_Minh`); CSS production có `.label.flex`, lazy chunk TransactionForm có `shrink-0` và `whitespace-nowrap`. Không có migration nên không cần Supabase Production Deploy; không tạo deploy lần hai chỉ để cập nhật handoff.
 
 ### Handoff — tối ưu hiệu năng AI: aggregate facts, cache và timeout (03/09/2026)
 
