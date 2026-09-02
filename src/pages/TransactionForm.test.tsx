@@ -64,6 +64,7 @@ describe('Form giao dịch hợp nhất', () => {
     expect(screen.getByText('AI đã đề xuất 8 trường. Hãy kiểm tra trước khi lưu.')).toBeInTheDocument();
     expect(screen.getByText(/Ngày, Nội dung, Loại giao dịch, Trạng thái, Số tiền/)).toBeInTheDocument();
     expect(screen.getAllByText('AI đề xuất')).toHaveLength(7);
+    expect(screen.getByLabelText(/Nội dung/)).toHaveValue('Mua sữa cho Haku');
     expect(screen.getByLabelText(/Số tiền/)).toHaveValue('450.000');
     fireEvent.click(screen.getByRole('button', { name: 'Ẩn tóm tắt và đánh dấu AI' }));
     await waitFor(() => expect(screen.queryByText('AI đã đề xuất 8 trường')).not.toBeInTheDocument());

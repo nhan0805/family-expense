@@ -2,13 +2,21 @@
 
 ## 2026-09-02
 
+### Chuẩn hóa nội dung giao dịch do AI đề xuất
+
+- Trước thay đổi: Khi phân tích câu như `ăn tiệm 190k bằng thẻ`, AI có thể giữ nguyên cả số tiền và phương thức thanh toán trong trường `Nội dung`.
+- Sau thay đổi: Prompt yêu cầu AI viết tiêu đề ngắn chỉ giữ hoạt động/đối tượng cốt lõi, ví dụ `ăn tiệm 190k bằng thẻ` → `Ăn tiệm`; Edge Function chuẩn hóa thêm số tiền và cụm phương thức thanh toán phổ biến trước khi trả gợi ý.
+- Kỹ thuật: Cập nhật `supabase/functions/parse-expense/index.ts`; thêm helper `supabase/functions/parse-expense/description.ts` và test; bổ sung assertion trong `src/pages/TransactionForm.test.tsx`. Không thay đổi schema, migration, API lưu giao dịch, RLS/RPC hoặc quy tắc AI chỉ đề xuất.
+- Kiểm thử: `pnpm test` đạt 20/20 file, 86/86 test; `pnpm typecheck`, `pnpm build` và `git diff --check` pass. `pnpm lint` còn bị chặn bởi warning có sẵn tại `src/pages/Budgets.tsx:120` trong thay đổi ngân sách hiện hữu của working tree.
+- Triển khai: Chưa deploy production; chờ lint sạch rồi commit/push branch, tạo PR vào `main` và deploy Edge Function/frontend qua Git integration theo quy trình.
+
 ### Bổ sung micro-interactions cho UI
 
 - Trước thay đổi: Menu mobile, modal sửa hàng loạt và backdrop dialog mở/đóng tức thời; toast biến mất ngay; Dashboard chưa có nhịp xuất hiện nhẹ cho KPI và nhóm biểu đồ.
 - Sau thay đổi: Thêm drawer slide-in/out và scrim fade cho menu mobile; dialog/modal slide-up + scale với backdrop fade; toast fade-out; stagger tối đa 6 phần tử cho KPI và pie chart Dashboard. Tất cả chỉ dùng `opacity`/`transform` trong 180–220ms và tôn trọng `prefers-reduced-motion`.
 - Kỹ thuật: Cập nhật `src/index.css`, `src/components/Layout.tsx`, `src/components/Feedback.tsx`, `src/pages/Transactions.tsx`, `src/pages/Dashboard.tsx`. Không thay đổi API, schema, database, RLS/RPC hoặc quy tắc nghiệp vụ.
 - Kiểm thử: `pnpm test` đạt 19/19 file và 83/83 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass.
-- Triển khai dự kiến: Commit/push branch, tạo PR vào `main`, bật auto-merge; frontend sẽ deploy qua Cloudflare Pages Git integration sau khi PR merge. Không dùng deploy thủ công.
+- Triển khai: PR [#100](https://github.com/nhan0805/family-expense/pull/100) đã merge vào `main` với merge commit `36629daffb9cc7de9cd2f85ad2cb39fb87d907a9`; required checks quality/db-security/preview và Cloudflare Preview pass, [CI main](https://github.com/nhan0805/family-expense/actions/runs/33648961650) thành công. Cloudflare Pages production đang phục vụ artifact mới: smoke test `https://family-expense-8fo.pages.dev/` trả HTTP 200 lúc `02/09/2026 22:32` (`Asia/Ho_Chi_Minh`), HTML trỏ tới `assets/index-BDxheO8t.js` và `assets/index-C098Wj4E.css`; CSS production có các animation drawer/dialog/overlay/toast/stagger. Không có migration nên không cần Supabase Production Deploy; không dùng deploy thủ công và không tạo deploy lần hai chỉ để cập nhật tài liệu.
 
 ### Tối ưu bundle PWA và cache static assets
 

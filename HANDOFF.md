@@ -14,13 +14,21 @@
 - [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
 
+### Handoff — chuẩn hóa nội dung giao dịch AI (02/09/2026)
+
+- Trước thay đổi: Với câu `ăn tiệm 190k bằng thẻ`, AI có thể trả `description` nguyên văn, khiến ô `Nội dung` chứa cả số tiền và phương thức thanh toán.
+- Sau thay đổi: Prompt yêu cầu `description` là tiêu đề ngắn chỉ giữ hoạt động/đối tượng cốt lõi (`Ăn tiệm`); Edge Function dùng helper chuẩn hóa khoảng trắng, số tiền và cụm phương thức thanh toán ở cuối nội dung trước khi trả suggestion. Frontend tiếp tục đưa suggestion vào cùng ô Nội dung và không tự lưu giao dịch.
+- Files chính: `supabase/functions/parse-expense/index.ts`, `supabase/functions/parse-expense/description.ts`, `supabase/functions/parse-expense/description.test.ts`, `src/pages/TransactionForm.test.tsx`. Không thay đổi schema/migration, API lưu giao dịch, RLS/RPC hoặc quy tắc AI chỉ đề xuất.
+- Validation local: `pnpm test` 20/20 file, 86/86 test; `pnpm typecheck`, `pnpm build` và `git diff --check` pass. `pnpm lint` còn warning tại `src/pages/Budgets.tsx:120` thuộc thay đổi ngân sách đã có trong working tree, không thuộc luồng AI.
+- Trạng thái triển khai: Chưa deploy production; cần xử lý warning lint của working tree trước khi commit/push branch, tạo PR vào `main`, deploy Edge Function qua Supabase workflow và frontend qua Cloudflare Pages Git integration.
+
 ### Handoff — micro-interactions cho UI (02/09/2026)
 
 - Trước thay đổi: Menu mobile, modal sửa hàng loạt và backdrop dialog xuất hiện/biến mất đột ngột; toast đóng ngay; Dashboard chưa có nhịp xuất hiện nhẹ cho KPI và biểu đồ tổng hợp.
 - Sau thay đổi: Menu mobile trượt vào/ra kèm scrim fade; modal/dialog slide-up + scale và backdrop fade cả lúc mở/đóng; toast có fade-out; KPI và hai nhóm biểu đồ Dashboard xuất hiện stagger tối đa 6 nhịp. Animation chỉ dùng `opacity`/`transform`, thời lượng 180–220ms và tắt khi `prefers-reduced-motion: reduce`.
 - Files chính: `src/index.css`, `src/components/Layout.tsx`, `src/components/Feedback.tsx`, `src/pages/Transactions.tsx`, `src/pages/Dashboard.tsx`. Không thay đổi API, schema, database, RLS/RPC hoặc quy tắc nghiệp vụ.
 - Validation local: `pnpm test` 19/19 file, 83/83 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass.
-- Trạng thái triển khai: Chờ commit/push branch, PR vào `main`, required checks và Cloudflare Pages Git integration; không deploy thủ công bằng Wrangler.
+- Trạng thái triển khai: Đã merge PR [#100](https://github.com/nhan0805/family-expense/pull/100) vào `main` với merge commit `36629daffb9cc7de9cd2f85ad2cb39fb87d907a9`. Required checks quality/db-security/preview và Cloudflare Preview pass; [CI main](https://github.com/nhan0805/family-expense/actions/runs/33648961650) thành công. Cloudflare Pages production đang phục vụ đúng artifact mới: smoke test `https://family-expense-8fo.pages.dev/` trả HTTP 200 lúc `02/09/2026 22:32` (`Asia/Ho_Chi_Minh`), HTML trỏ tới `assets/index-BDxheO8t.js` và `assets/index-C098Wj4E.css`; CSS production có drawer/dialog/overlay/toast/stagger animation. Không có migration nên không cần Supabase Production Deploy; không dùng deploy thủ công bằng Wrangler và không tạo deploy lần hai chỉ để cập nhật tài liệu.
 
 ### Handoff — tối ưu bundle PWA và cache static assets (02/09/2026)
 
