@@ -316,6 +316,7 @@ export function Transactions() {
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkEditOpen, setBulkEditOpen] = useState(false);
+  const [bulkEditMounted, setBulkEditMounted] = useState(false);
   const [bulkEditBusy, setBulkEditBusy] = useState(false);
   const [bulkEditValues, setBulkEditValues] = useState<BulkEditValues>(emptyBulkEditValues);
   const [showTrash, setShowTrash] = useState(false);
@@ -331,6 +332,15 @@ export function Transactions() {
     const timeout = window.setTimeout(() => setDebouncedQuery(query), 300);
     return () => window.clearTimeout(timeout);
   }, [query]);
+  useEffect(() => {
+    if (bulkEditOpen) {
+      setBulkEditMounted(true);
+      return;
+    }
+    if (!bulkEditMounted) return;
+    const timeout = window.setTimeout(() => setBulkEditMounted(false), 180);
+    return () => window.clearTimeout(timeout);
+  }, [bulkEditMounted, bulkEditOpen]);
   const localAvailableYears = Array.from(
     new Set(
       transactions
@@ -1235,9 +1245,9 @@ export function Transactions() {
             : (en ? 'Load more transactions' : 'Tải thêm giao dịch')}
         </button>
       )}
-      {bulkEditOpen && (
-        <div className="fixed inset-0 z-[70] grid place-items-start bg-black/35 p-3 sm:p-4" role="presentation">
-          <section role="dialog" aria-modal="true" aria-labelledby="bulk-edit-title" className="mt-32 max-h-[calc(100vh-8rem)] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl dark:bg-[#343746] sm:mt-20 sm:max-h-[78vh] sm:translate-x-32 sm:rounded-3xl sm:p-5">
+      {bulkEditMounted && (
+        <div className={`fixed inset-0 z-[70] grid place-items-start bg-black/35 p-3 sm:p-4 ${bulkEditOpen ? 'ui-overlay-enter' : 'ui-overlay-exit'}`} role="presentation">
+          <section role="dialog" aria-modal="true" aria-labelledby="bulk-edit-title" className={`mt-32 max-h-[calc(100vh-8rem)] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl dark:bg-[#343746] sm:mt-20 sm:max-h-[78vh] sm:translate-x-32 sm:rounded-3xl sm:p-5 ${bulkEditOpen ? 'ui-dialog-enter' : 'ui-dialog-exit'}`}>
             <div className="flex items-start justify-between gap-3"><div><h2 id="bulk-edit-title" className="text-xl font-extrabold">Sửa {selectedIds.size} giao dịch</h2><p className="mt-1 text-sm text-gray-500">Chỉ các trường có giá trị mới sẽ được cập nhật.</p></div><button type="button" className="rounded-lg p-2 hover:bg-black/5 dark:hover:bg-white/10" aria-label="Đóng sửa hàng loạt" onClick={() => setBulkEditOpen(false)}><X size={20}/></button></div>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <BulkSelect label="Mục đích" value={bulkEditValues.purposeId} onChange={(value) => setBulkEditValues((current) => ({ ...current, purposeId: value }))} options={purposes} language={language} />

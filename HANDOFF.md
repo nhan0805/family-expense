@@ -14,6 +14,14 @@
 - [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
 
+### Handoff — micro-interactions cho UI (02/09/2026)
+
+- Trước thay đổi: Menu mobile, modal sửa hàng loạt và backdrop dialog xuất hiện/biến mất đột ngột; toast đóng ngay; Dashboard chưa có nhịp xuất hiện nhẹ cho KPI và biểu đồ tổng hợp.
+- Sau thay đổi: Menu mobile trượt vào/ra kèm scrim fade; modal/dialog slide-up + scale và backdrop fade cả lúc mở/đóng; toast có fade-out; KPI và hai nhóm biểu đồ Dashboard xuất hiện stagger tối đa 6 nhịp. Animation chỉ dùng `opacity`/`transform`, thời lượng 180–220ms và tắt khi `prefers-reduced-motion: reduce`.
+- Files chính: `src/index.css`, `src/components/Layout.tsx`, `src/components/Feedback.tsx`, `src/pages/Transactions.tsx`, `src/pages/Dashboard.tsx`. Không thay đổi API, schema, database, RLS/RPC hoặc quy tắc nghiệp vụ.
+- Validation local: `pnpm test` 19/19 file, 83/83 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass.
+- Trạng thái triển khai: Chờ commit/push branch, PR vào `main`, required checks và Cloudflare Pages Git integration; không deploy thủ công bằng Wrangler.
+
 ### Handoff — tối ưu bundle PWA và cache static assets (02/09/2026)
 
 - Trước thay đổi: `registerSW.js` render-blocking; pattern PWA không loại được file thực tế `exceljs.min-*.js` khỏi precache; `ImportExport` kéo `xlsx` vào chunk route; static assets hash bị cache với `max-age=0`.
@@ -21,7 +29,7 @@
 - Files chính: `vite.config.ts`, `public/_headers`, `src/pages/ImportExport.tsx`, `src/lib/templateImport.ts`, `src/lib/templateTypes.ts`. Không thay đổi API, schema, database, RLS/RPC hoặc quy tắc nghiệp vụ.
 - Kết quả build: chunk `ImportExport` giảm từ khoảng `455.52 kB` xuống `21.42 kB`; `xlsx` tách thành chunk riêng `429.19 kB`; precache giảm từ `2593.83 KiB` xuống `1260.00 KiB`; `exceljs.min-*.js` không còn trong precache; HTML sinh ra `registerSW.js` với `defer`.
 - Validation local: `pnpm test` 19/19 file, 83/83 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass.
-- Trạng thái triển khai: Chờ commit/push branch, PR vào `main`, required checks và Cloudflare Pages Git integration; không deploy thủ công bằng Wrangler.
+- Trạng thái triển khai: Đã merge PR [#99](https://github.com/nhan0805/family-expense/pull/99) vào `main` với merge commit `6ad791e93e8009de83ff2d91dc8049cc847cd99b`. Required checks quality/db-security/preview và Cloudflare Preview pass; [CI main](https://github.com/nhan0805/family-expense/actions/runs/33633488044) thành công. Cloudflare Pages production đang phục vụ đúng artifact mới: HTML trỏ tới `assets/index-gl7fZAQh.js` và `assets/index-C6TDvkQo.css`; smoke test `https://family-expense-8fo.pages.dev/` trả HTTP 200 lúc `02/09/2026 20:06` (`Asia/Ho_Chi_Minh`). Asset JS/chunk production trả `max-age=31536000, immutable`, còn `registerSW.js` trả `no-cache`; không có migration nên không cần Supabase Production Deploy. Không dùng deploy thủ công bằng Wrangler và không tạo deploy lần hai chỉ để cập nhật tài liệu.
 
 ### Handoff — đồng bộ khu vực xóa với Dracula dark mode (02/09/2026)
 

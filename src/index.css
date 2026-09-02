@@ -564,6 +564,58 @@ summary:focus-visible {
   animation: ui-enter .18s ease-out both;
 }
 
+.ui-overlay-enter {
+  animation: ui-fade-in .18s ease-out both;
+}
+
+.ui-overlay-exit {
+  animation: ui-fade-out .18s ease-in both;
+}
+
+.ui-drawer-enter {
+  animation: ui-drawer-in .22s cubic-bezier(.22, .8, .25, 1) both;
+}
+
+.ui-drawer-exit {
+  animation: ui-drawer-out .18s ease-in both;
+}
+
+.ui-dialog-enter {
+  animation: ui-dialog-in .2s cubic-bezier(.22, .8, .25, 1) both;
+}
+
+.ui-dialog-exit {
+  animation: ui-dialog-out .18s ease-in both;
+}
+
+.ui-toast-exit {
+  animation: ui-toast-out .18s ease-in both;
+}
+
+.ui-stagger > * {
+  animation: ui-enter .2s ease-out both;
+}
+
+.ui-stagger > :nth-child(2) {
+  animation-delay: .035s;
+}
+
+.ui-stagger > :nth-child(3) {
+  animation-delay: .07s;
+}
+
+.ui-stagger > :nth-child(4) {
+  animation-delay: .105s;
+}
+
+.ui-stagger > :nth-child(5) {
+  animation-delay: .14s;
+}
+
+.ui-stagger > :nth-child(6) {
+  animation-delay: .175s;
+}
+
 @keyframes ui-enter {
   from {
     opacity: 0;
@@ -573,6 +625,62 @@ summary:focus-visible {
   to {
     opacity: 1;
     transform: none;
+  }
+}
+
+@keyframes ui-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes ui-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes ui-drawer-in {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes ui-drawer-out {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
+}
+
+@keyframes ui-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes ui-dialog-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(10px) scale(.985);
+  }
+}
+
+@keyframes ui-toast-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(-6px) scale(.985);
   }
 }
 
@@ -899,6 +1007,17 @@ a:active {
   }
 
   .ui-enter {
+    animation: none;
+  }
+
+  .ui-overlay-enter,
+  .ui-overlay-exit,
+  .ui-drawer-enter,
+  .ui-drawer-exit,
+  .ui-dialog-enter,
+  .ui-dialog-exit,
+  .ui-toast-exit,
+  .ui-stagger > * {
     animation: none;
   }
 

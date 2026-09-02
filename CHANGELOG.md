@@ -2,13 +2,21 @@
 
 ## 2026-09-02
 
+### Bổ sung micro-interactions cho UI
+
+- Trước thay đổi: Menu mobile, modal sửa hàng loạt và backdrop dialog mở/đóng tức thời; toast biến mất ngay; Dashboard chưa có nhịp xuất hiện nhẹ cho KPI và nhóm biểu đồ.
+- Sau thay đổi: Thêm drawer slide-in/out và scrim fade cho menu mobile; dialog/modal slide-up + scale với backdrop fade; toast fade-out; stagger tối đa 6 phần tử cho KPI và pie chart Dashboard. Tất cả chỉ dùng `opacity`/`transform` trong 180–220ms và tôn trọng `prefers-reduced-motion`.
+- Kỹ thuật: Cập nhật `src/index.css`, `src/components/Layout.tsx`, `src/components/Feedback.tsx`, `src/pages/Transactions.tsx`, `src/pages/Dashboard.tsx`. Không thay đổi API, schema, database, RLS/RPC hoặc quy tắc nghiệp vụ.
+- Kiểm thử: `pnpm test` đạt 19/19 file và 83/83 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass.
+- Triển khai dự kiến: Commit/push branch, tạo PR vào `main`, bật auto-merge; frontend sẽ deploy qua Cloudflare Pages Git integration sau khi PR merge. Không dùng deploy thủ công.
+
 ### Tối ưu bundle PWA và cache static assets
 
 - Trước thay đổi: `registerSW.js` render-blocking; pattern PWA không khớp file sinh thực tế `exceljs.min-*.js` nên ExcelJS gần `937 kB` vẫn nằm trong precache; `ImportExport` kéo parser Excel vào chunk route; asset hash trên Cloudflare Pages phải revalidate do `Cache-Control: max-age=0`.
 - Sau thay đổi: Dùng `script-defer` cho Service Worker registration; loại `exceljs*.js`/`xlsx*.js` khỏi precache; tách `inferImportMode` cùng type Excel sang `src/lib/templateTypes.ts` để `templateImport` và parser chỉ tải khi thao tác import/template; thêm cache dài hạn immutable cho `/assets/*`, giữ HTML/manifest/Service Worker không cache dài hạn.
 - Kỹ thuật: Cập nhật `vite.config.ts`, `src/pages/ImportExport.tsx`, `src/lib/templateImport.ts`; thêm `src/lib/templateTypes.ts` và `public/_headers`. Không thay đổi API, schema, database, RLS/RPC hoặc quy tắc nghiệp vụ.
 - Kiểm thử: `pnpm test` đạt 19/19 file và 83/83 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build xác nhận `ImportExport` giảm còn `21.42 kB`, `xlsx` thành chunk riêng `429.19 kB`, precache giảm còn `1260.00 KiB`, `exceljs` không còn trong precache và script registration có `defer`.
-- Triển khai dự kiến: Commit/push branch, tạo PR vào `main`, bật auto-merge; frontend sẽ deploy qua Cloudflare Pages Git integration sau khi PR merge. Không dùng deploy thủ công và chưa cập nhật trạng thái production trước khi merge.
+- Triển khai: PR [#99](https://github.com/nhan0805/family-expense/pull/99) đã merge vào `main` với merge commit `6ad791e93e8009de83ff2d91dc8049cc847cd99b`; [CI main](https://github.com/nhan0805/family-expense/actions/runs/33633488044) thành công, required checks quality/db-security/preview và Cloudflare Preview pass. Cloudflare Pages production đang phục vụ artifact mới: smoke test `https://family-expense-8fo.pages.dev/` trả HTTP 200 lúc `02/09/2026 20:06` (`Asia/Ho_Chi_Minh`), HTML trỏ tới `assets/index-gl7fZAQh.js` và `assets/index-C6TDvkQo.css`; asset hash cache `max-age=31536000, immutable`, Service Worker registration `defer`, `registerSW.js` `no-cache`, và `exceljs/xlsx` không nằm trong precache. Không có migration nên không cần Supabase Production Deploy; không dùng deploy thủ công và không tạo deploy lần hai chỉ để cập nhật tài liệu.
 
 ### Đồng bộ khu vực xóa với Dracula dark mode
 
