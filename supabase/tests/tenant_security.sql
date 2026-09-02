@@ -1,7 +1,7 @@
 -- Structural tenant-security tests chạy trong Supabase local/staging có pgTAP.
 -- Fixture-level cross-family negative tests nên dùng dữ liệu test riêng của môi trường.
 begin;
-select plan(20);
+select plan(24);
 select ok(exists (select 1 from pg_constraint where connamespace = 'public'::regnamespace and conrelid = 'public.transactions'::regclass and conname = 'transactions_purpose_same_family_fkey' and contype = 'f'),'transactions có purpose FK cùng family');
 select ok(exists (select 1 from pg_constraint where connamespace = 'public'::regnamespace and conrelid = 'public.transactions'::regclass and conname = 'transactions_expense_type_same_family_fkey' and contype = 'f'),'transactions có expense type FK cùng family');
 select ok(exists (select 1 from pg_constraint where connamespace = 'public'::regnamespace and conrelid = 'public.transactions'::regclass and conname = 'transactions_payment_method_same_family_fkey' and contype = 'f'),'transactions có payment method FK cùng family');
@@ -56,5 +56,9 @@ select ok(exists(select 1 from pg_policies where schemaname = 'public' and table
 select ok(exists(select 1 from pg_policies where schemaname = 'public' and tablename = 'ai_usage_logs' and policyname = 'ai_logs_select'), 'ai_usage_logs có policy select');
 select ok(exists(select 1 from pg_policies where schemaname = 'public' and tablename = 'import_batches' and policyname = 'import_batches_select'), 'import_batches có policy select');
 select ok(exists(select 1 from pg_policies where schemaname = 'public' and tablename = 'import_issues' and policyname = 'import_issues_select'), 'import_issues có policy select');
+select ok(exists (select 1 from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public' and c.relname = 'budgets' and c.relrowsecurity), 'budgets bật RLS');
+select has_function('public','get_budget_summary',ARRAY['uuid','integer','integer'],'budget summary RPC có authorization');
+select has_function('public','upsert_budget',ARRAY['uuid','integer','integer','uuid','numeric','numeric'],'upsert budget RPC có authorization');
+select has_function('public','copy_budgets_from_month',ARRAY['uuid','integer','integer','integer','integer'],'copy budgets RPC có authorization');
 select * from finish();
 rollback;

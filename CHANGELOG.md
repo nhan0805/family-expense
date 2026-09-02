@@ -2,6 +2,15 @@
 
 ## 2026-09-02
 
+### Triển khai quản lý ngân sách V1 — Phase 0 đến Phase 6
+
+- Trước thay đổi: `budgets` đã có trong schema nền nhưng chưa có luồng quản lý hoàn chỉnh trên UI; Dashboard chưa hiển thị tiến độ ngân sách và menu mobile chưa có điểm vào riêng.
+- Sau thay đổi: V1 quản lý ngân sách theo `mục đích/tháng`, chỉ tính giao dịch `Chi tiêu` trạng thái `Thực tế`, hiển thị đã chi/còn lại/cảnh báo/vượt hạn mức và phần chi chưa có ngân sách. Owner được thêm/sửa/xóa/sao chép ngân sách tháng trước; member chỉ xem. Dashboard có snapshot và link lọc giao dịch theo mục đích.
+- Phạm vi Phase 0–6: chốt nghiệp vụ VND + `Asia/Ho_Chi_Minh` và quyền owner/member; thêm schema validation/local fallback; thêm RPC có kiểm tra membership/owner, RLS và index tổng hợp; xây route `/ngan-sach` responsive mobile-first; tích hợp Dashboard/navigation; đồng bộ VI/EN và Dracula dark mode; bổ sung unit/UI/security assertions và quality gates. Recurring transaction và ngân sách theo sự kiện vẫn ngoài V1.
+- Kỹ thuật: thêm `supabase/migrations/202609020001_budget_management.sql` với `get_budget_summary`, `upsert_budget`, `delete_budget`, `copy_budgets_from_month`; thêm `src/lib/budget.ts`, `src/lib/budgetsApi.ts`, `src/pages/Budgets.tsx`, test tương ứng; cập nhật `src/App.tsx`, `src/components/Layout.tsx`, `src/pages/Dashboard.tsx`, `src/context/LanguageContext.tsx`, `supabase/tests/tenant_security.sql`.
+- Kiểm thử local: `pnpm test` đạt 22/22 file, 90/90 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Supabase security test local chưa chạy được vì Docker daemon chưa hoạt động; migration sẽ được kiểm tra lại bởi required `db-security` trước merge.
+- Triển khai: Chờ commit/push branch, PR vào `main`, bật auto-merge; migration chạy qua Supabase Production Deploy workflow và frontend chạy qua Cloudflare Pages Git integration sau khi PR merge. Không dùng `wrangler pages deploy` trực tiếp.
+
 ### Chuẩn hóa nội dung giao dịch do AI đề xuất
 
 - Trước thay đổi: Khi phân tích câu như `ăn tiệm 190k bằng thẻ`, AI có thể giữ nguyên cả số tiền và phương thức thanh toán trong trường `Nội dung`.

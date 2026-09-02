@@ -14,6 +14,16 @@
 - [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
 
+### Handoff — quản lý ngân sách V1, Phase 0–6 (02/09/2026)
+
+- Phạm vi đã triển khai: ngân sách theo mục đích/tháng, VND, timezone `Asia/Ho_Chi_Minh`; chỉ giao dịch `Chi tiêu` + `Thực tế` + chưa xóa được tính vào chi tiêu.
+- Owner có thể đặt/sửa/xóa và sao chép từ tháng trước; member chỉ xem. Summary phân biệt tổng ngân sách, đã chi trong mục đã đặt, còn lại, cảnh báo 80% (có thể chỉnh) và chi ở mục chưa đặt ngân sách.
+- Backend: migration `supabase/migrations/202609020001_budget_management.sql` thêm summary/upsert/delete/copy RPC với `security definer`, kiểm tra family membership/owner, RLS budgets kế thừa schema, và index cho truy vấn chi tiêu theo kỳ. Không sửa migration đã áp dụng.
+- Frontend: `src/pages/Budgets.tsx`, `src/lib/budget.ts`, `src/lib/budgetsApi.ts`; route `/ngan-sach`; Dashboard snapshot; navigation desktop/mobile có mục Ngân sách và menu Thêm để không làm chật bottom nav.
+- UX: VI/EN cho nhãn, trạng thái và form; Dracula dark mode dùng tint/accent Purple, Green, Yellow, Red; responsive từ mobile, có empty/loading/error state và link sang giao dịch đã lọc.
+- Validation local: `pnpm test` 22/22 file, 90/90 test; `pnpm lint`, `pnpm typecheck`, `pnpm build`, `git diff --check` pass. `supabase test db --local` bị chặn do Docker daemon chưa chạy; required `db-security` phải được theo dõi trên PR.
+- Trạng thái triển khai: Chưa merge/deploy production; dự kiến qua PR vào `main`, Supabase Production Deploy workflow cho migration và Cloudflare Pages Git integration cho frontend. Không dùng Wrangler deploy trực tiếp.
+
 ### Handoff — chuẩn hóa nội dung giao dịch AI (02/09/2026)
 
 - Trước thay đổi: Với câu `ăn tiệm 190k bằng thẻ`, AI có thể trả `description` nguyên văn, khiến ô `Nội dung` chứa cả số tiền và phương thức thanh toán.

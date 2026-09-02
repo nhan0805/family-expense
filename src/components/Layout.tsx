@@ -1,4 +1,4 @@
-import { BookOpen, House, LogOut, Menu, Plus, Tags, UserRound, UsersRound, WalletCards, WifiOff, X } from 'lucide-react';
+import { BookOpen, House, LogOut, Menu, MoreHorizontal, PiggyBank, Plus, Tags, UserRound, UsersRound, WalletCards, WifiOff, X } from 'lucide-react';
 import { Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
@@ -7,7 +7,8 @@ import { PageSkeleton } from './AsyncStates';
 import { ThemeSelect } from './ThemeSelect';
 import { useLanguage } from '../context/LanguageContext';
 
-const links = [['/', 'overview', House], ['/giao-dich', 'transactions', WalletCards], ['/danh-muc', 'catalogs', Tags], ['/thanh-vien', 'members', UsersRound], ['/du-lieu', 'data', BookOpen]] as const;
+const links = [['/', 'overview', House], ['/giao-dich', 'transactions', WalletCards], ['/ngan-sach', 'budgets', PiggyBank], ['/danh-muc', 'catalogs', Tags], ['/thanh-vien', 'members', UsersRound], ['/du-lieu', 'data', BookOpen]] as const;
+const mobilePrimaryLinks = [links[0], links[1], links[2], links[4]] as const;
 
 export function Layout() {
   const [open, setOpen] = useState(false);
@@ -75,6 +76,6 @@ export function Layout() {
       <main className="app-main min-w-0 flex-1 p-4 pb-28 sm:p-5 md:p-8 lg:p-9">{loading ? <PageSkeleton label={t('familyLoading')}/> : error ? <div className="rounded-xl bg-red-50 p-4 text-red-700 dark:bg-red-950/30 dark:text-red-300" role="alert"><p>{error}</p><button type="button" className="btn-secondary mt-3" onClick={reloadApp}>{t('reload')}</button></div> : <div key={pathname} className="ui-enter"><Outlet /></div>}</main>
     </div>
     {!isTransactionForm && <NavLink to="/giao-dich/moi" className="fab fixed bottom-[calc(4.5rem+max(1rem,env(safe-area-inset-bottom)))] right-5 z-20 flex h-14 w-14 items-center justify-center rounded-full text-white md:bottom-7" aria-label={en ? 'Add transaction' : 'Thêm giao dịch'}><Plus /></NavLink>}
-    <nav className="app-bottom-nav safe-bottom fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t px-1 pt-1.5 text-[10px] md:hidden">{links.map(([to, label, Icon]) => <NavLink key={to} to={to} end={to === '/'} className={({ isActive }) => `app-bottom-nav-link mx-0.5 flex min-w-0 flex-col items-center gap-1 rounded-xl px-1 py-1.5 font-semibold ${isActive ? 'app-bottom-nav-link-active' : ''}`}><Icon size={20} /><span className="max-w-full truncate">{t(label)}</span></NavLink>)}</nav>
+    <nav className="app-bottom-nav safe-bottom fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t px-1 pt-1.5 text-[10px] md:hidden">{mobilePrimaryLinks.map(([to, label, Icon]) => <NavLink key={to} to={to} end={to === '/'} className={({ isActive }) => `app-bottom-nav-link mx-0.5 flex min-w-0 flex-col items-center gap-1 rounded-xl px-1 py-1.5 font-semibold ${isActive ? 'app-bottom-nav-link-active' : ''}`}><Icon size={20} /><span className="max-w-full truncate">{t(label)}</span></NavLink>)}<button type="button" className={`app-bottom-nav-link mx-0.5 flex min-w-0 flex-col items-center gap-1 rounded-xl px-1 py-1.5 font-semibold ${open ? 'app-bottom-nav-link-active' : ''}`} aria-label={en ? 'More' : 'Thêm'} aria-pressed={open} onClick={() => setOpen(true)}><MoreHorizontal size={20} /><span className="max-w-full truncate">{t('more')}</span></button></nav>
   </div>;
 }
