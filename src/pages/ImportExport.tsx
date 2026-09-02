@@ -14,7 +14,7 @@ import { useOptionalLanguage } from '../context/LanguageContext';
 import { getCatalogDisplayName, transactionTypeLabel, type CatalogLanguage, type Transaction } from '../lib/domain';
 import { formatImportCheckSummary } from '../lib/importSummary';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
-import { inferImportMode, type TemplateError, type TemplateRow } from '../lib/templateImport';
+import { inferImportMode, type TemplateError, type TemplateRow } from '../lib/templateTypes';
 
 type ExportRow = Record<string, unknown>;
 type FilePickerWindow = Window & {

@@ -2,13 +2,18 @@ import { z } from 'zod';
 import * as XLSX from 'xlsx';
 import {
   statuses,
-  transactionTypes,
   getCatalogDisplayName,
   normalizeText,
   type CatalogItem,
   type CatalogLanguage,
   type Transaction,
 } from './domain';
+import type {
+  TemplateError,
+  TemplateRow,
+} from './templateTypes';
+export { inferImportMode } from './templateTypes';
+export type { ImportMode, TemplateError, TemplateRow } from './templateTypes';
 const templateTransactionTypes = ['Tiền ra', 'Tiền vào'] as const;
 
 export const templateHeaders = [
@@ -23,29 +28,6 @@ export const templateHeaders = [
   'Ghi chú',
   'ID giao dịch',
 ] as const;
-export type TemplateRow = {
-  id: string;
-  rowNumber: number;
-  transactionDate: string;
-  amount: number;
-  transactionType: (typeof transactionTypes)[number];
-  status: (typeof statuses)[number];
-  description: string;
-  paymentMethodId: string;
-  purposeId: string;
-  expenseTypeId: string;
-  note: string;
-  duplicate: boolean;
-};
-export type TemplateError = { rowNumber: number; messages: string[] };
-export type ImportMode = 'insert' | 'update';
-
-export function inferImportMode(rows: Array<Pick<TemplateRow, 'id'>>): ImportMode {
-  return rows.length > 0 && rows.every((row) => Boolean(row.id))
-    ? 'update'
-    : 'insert';
-}
-
 const schema = z.object({
   id: z.string().uuid().or(z.literal('')),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),

@@ -2,13 +2,21 @@
 
 ## 2026-09-02
 
+### Tối ưu bundle PWA và cache static assets
+
+- Trước thay đổi: `registerSW.js` render-blocking; pattern PWA không khớp file sinh thực tế `exceljs.min-*.js` nên ExcelJS gần `937 kB` vẫn nằm trong precache; `ImportExport` kéo parser Excel vào chunk route; asset hash trên Cloudflare Pages phải revalidate do `Cache-Control: max-age=0`.
+- Sau thay đổi: Dùng `script-defer` cho Service Worker registration; loại `exceljs*.js`/`xlsx*.js` khỏi precache; tách `inferImportMode` cùng type Excel sang `src/lib/templateTypes.ts` để `templateImport` và parser chỉ tải khi thao tác import/template; thêm cache dài hạn immutable cho `/assets/*`, giữ HTML/manifest/Service Worker không cache dài hạn.
+- Kỹ thuật: Cập nhật `vite.config.ts`, `src/pages/ImportExport.tsx`, `src/lib/templateImport.ts`; thêm `src/lib/templateTypes.ts` và `public/_headers`. Không thay đổi API, schema, database, RLS/RPC hoặc quy tắc nghiệp vụ.
+- Kiểm thử: `pnpm test` đạt 19/19 file và 83/83 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build xác nhận `ImportExport` giảm còn `21.42 kB`, `xlsx` thành chunk riêng `429.19 kB`, precache giảm còn `1260.00 KiB`, `exceljs` không còn trong precache và script registration có `defer`.
+- Triển khai dự kiến: Commit/push branch, tạo PR vào `main`, bật auto-merge; frontend sẽ deploy qua Cloudflare Pages Git integration sau khi PR merge. Không dùng deploy thủ công và chưa cập nhật trạng thái production trước khi merge.
+
 ### Đồng bộ khu vực xóa với Dracula dark mode
 
 - Trước thay đổi: Nút xóa thành viên/giao dịch và khối `Xóa gia đình` dùng nền đỏ tím tùy biến, màu chữ chưa khớp accent Dracula và thiếu focus state rõ ràng.
 - Sau thay đổi: Dùng Dracula Red `#FF5555` cho thao tác destructive; nền dark mode chỉ còn tint đỏ nhẹ `#FF55550D`, hover dùng `#FF55551F`, border giữ độ tương phản vừa đủ và focus ring dùng Purple `#BD93F9`.
 - Kỹ thuật: Cập nhật style dùng chung `.danger-button`, `.danger-zone` trong `src/index.css`; cập nhật title trong `src/pages/Members.tsx`; thêm regression assertion trong `src/pages/Members.test.tsx`. Không thay đổi API, schema, database, quyền hoặc quy tắc nghiệp vụ.
 - Kiểm thử: `pnpm test` đạt 19/19 file, 83/83 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build chỉ còn các cảnh báo chunk lớn/dynamic import ExcelJS đã có từ trước.
-- Triển khai dự kiến: Commit/push branch, tạo PR vào `main`, bật auto-merge; frontend sẽ deploy qua Cloudflare Pages Git integration sau khi merge. Không dùng deploy thủ công.
+- Triển khai: PR [#98](https://github.com/nhan0805/family-expense/pull/98) đã merge vào `main` với merge commit `072d4f5cbbfb8afd8e4f8a6945aaa68ba3ea307a`. Required checks quality/db-security/preview và Cloudflare Preview pass; [CI main](https://github.com/nhan0805/family-expense/actions/runs/33538050283) thành công. Cloudflare Pages production đang phục vụ bundle mới `assets/index-BCErojJQ.js` và `assets/index-C6TDvkQo.css`; smoke test GET HTML/CSS đều HTTP 200 lúc `02/09/2026 00:31` (`Asia/Ho_Chi_Minh`). Không có migration nên không cần Supabase Production Deploy; không dùng deploy thủ công và không tạo deploy lần hai chỉ để cập nhật tài liệu.
 
 ### Loại bỏ Hoàn tiền và Tạm ứng khỏi hệ thống giao dịch
 
