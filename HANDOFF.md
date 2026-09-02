@@ -28,8 +28,8 @@
 - Summary dùng cache ngắn hạn 5 phút theo `family_id`, khoảng ngày, `period_label` và `language`; context catalog dùng cache 60 giây. Trigger xóa cache liên quan khi catalog hoặc transaction thay đổi để không giữ dữ liệu cũ sau mutation.
 - Client dùng `src/lib/aiClient.ts` với timeout 25 giây; parse/search/summary hiển thị lỗi timeout/rate-limit và nút `Thử lại`. AI search cập nhật `debouncedQuery` ngay sau khi áp dụng filters để request list không chờ thêm 300ms.
 - Files chính: `src/lib/aiClient.ts`, `src/pages/Dashboard.tsx`, `src/pages/Transactions.tsx`, `src/pages/TransactionForm.tsx`, ba `supabase/functions/*`, migration `supabase/migrations/202609030001_ai_performance.sql`, test `src/lib/aiClient.test.ts` và `supabase/tests/ai_performance.sql`.
-- Validation local: đang chạy full suite; required `db-security` phải được theo dõi trên PR vì local Supabase phụ thuộc Docker.
-- Trạng thái triển khai: Chưa deploy release này; sẽ commit/push, tạo PR vào `main`, bật auto-merge và chỉ kết luận hoàn tất sau khi migration/Edge Functions, required checks và Cloudflare Pages production deployment của merge commit thành công.
+- Validation local: `pnpm test` 23/23 file, 93/93 test; `pnpm lint`, `pnpm typecheck`, `pnpm build`, Prettier và `git diff --check` pass. `supabase test db --local` không chạy được vì Docker daemon chưa hoạt động; required `db-security` trên PR đã pass sau khi rerun do GitHub API rate limit.
+- Trạng thái triển khai: Đã merge PR [#103](https://github.com/nhan0805/family-expense/pull/103) vào `main` với merge commit `7ceac2a9f10af32c2dec887db7f04c08556e2967`. CI main [33660556965](https://github.com/nhan0805/family-expense/actions/runs/33660556965) và Supabase Production Deploy [33660556944](https://github.com/nhan0805/family-expense/actions/runs/33660556944) pass; Cloudflare Pages production smoke test HTTP 200 và các lazy asset AI mới đều HTTP 200 lúc `03/09/2026 00:24` (`Asia/Ho_Chi_Minh`). Không dùng Wrangler deploy trực tiếp và không tạo deploy lần hai chỉ để cập nhật handoff.
 
 ### Handoff — quản lý ngân sách V1, Phase 0–6 (02/09/2026)
 
