@@ -1,6 +1,6 @@
 import { BookOpen, House, LogOut, Menu, Plus, Tags, UserRound, UsersRound, WalletCards, WifiOff, X } from 'lucide-react';
 import { Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { supabase } from '../lib/supabase';
 import { PageSkeleton } from './AsyncStates';
@@ -11,6 +11,7 @@ const links = [['/', 'overview', House], ['/giao-dich', 'transactions', WalletCa
 
 export function Layout() {
   const [open, setOpen] = useState(false);
+  const [menuMounted, setMenuMounted] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const { familyId, familyName, currentUserEmail, loading, authenticated, error, online, reloadApp } = useApp();
   const { t, language } = useLanguage();
@@ -18,6 +19,16 @@ export function Layout() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const isTransactionForm = pathname === '/giao-dich/moi' || /^\/giao-dich\/[^/]+$/.test(pathname);
+
+  useEffect(() => {
+    if (open) {
+      setMenuMounted(true);
+      return;
+    }
+    if (!menuMounted) return;
+    const timeout = window.setTimeout(() => setMenuMounted(false), 180);
+    return () => window.clearTimeout(timeout);
+  }, [menuMounted, open]);
 
   if (!loading && !authenticated) return <Navigate to="/dang-nhap" replace state={{ from: pathname }} />;
   if (!loading && authenticated && !familyId && !error) return <Navigate to="/tao-gia-dinh" replace />;
@@ -49,8 +60,8 @@ export function Layout() {
     </header>
     {!online && <div role="status" aria-live="polite" className="flex items-center justify-center gap-2 bg-amber-100 px-3 py-2 text-sm text-amber-900 dark:bg-amber-950/50 dark:text-amber-100"><WifiOff size={16} />{t('offline')}</div>}
     <div className="mx-auto flex max-w-7xl">
-      {open && <button type="button" className="app-scrim md:hidden" aria-label={en ? 'Close menu overlay' : 'Đóng lớp trình đơn'} onClick={() => setOpen(false)} />}
-      <aside className={`app-sidebar ${open ? 'app-sidebar-open fixed inset-y-0 left-0 z-50 flex' : 'hidden'} w-72 flex-col border-r p-4 md:sticky md:top-[68px] md:flex md:h-[calc(100vh-68px)] md:w-64`}>
+      {menuMounted && <button type="button" className={`app-scrim md:hidden ${open ? 'ui-overlay-enter' : 'ui-overlay-exit'}`} aria-label={en ? 'Close menu overlay' : 'Đóng lớp trình đơn'} onClick={() => setOpen(false)} />}
+      <aside className={`app-sidebar ${open ? 'app-sidebar-open ui-drawer-enter fixed inset-y-0 left-0 z-50 flex' : menuMounted ? 'ui-drawer-exit fixed inset-y-0 left-0 z-50 flex' : 'hidden'} w-72 flex-col border-r p-4 md:sticky md:top-[68px] md:flex md:h-[calc(100vh-68px)] md:w-64`}>
         <div className="mb-3 flex items-center justify-between md:hidden">
           <p className="text-xs font-bold uppercase tracking-[.12em] text-gray-500 dark:text-gray-400">{en ? 'Menu' : 'Trình đơn'}</p>
           <button className="icon-button" aria-label={en ? 'Close menu' : 'Đóng trình đơn'} onClick={() => setOpen(false)}><X /></button>
