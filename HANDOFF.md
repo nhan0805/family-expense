@@ -20,7 +20,7 @@
 - Sau thay đổi: `.label.flex` được khôi phục đúng cơ chế flex; badge AI không co/không xuống dòng, nên các tiêu đề và khung trường trong cùng hàng căn đều trên desktop và mobile.
 - Files chính: `src/index.css`, `src/pages/TransactionForm.tsx`, `src/pages/TransactionForm.test.tsx`. Không thay đổi API, schema, database, RLS/RPC hoặc quy tắc nghiệp vụ.
 - Validation: `pnpm test` đạt 23/23 file, 93/93 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build vẫn chỉ cảnh báo chunk ExcelJS lớn đã có từ trước.
-- Trạng thái triển khai: Đã commit local; push branch đang chờ quyền xác nhận remote. Sau khi được phép sẽ tạo PR vào `main`, bật auto-merge và theo dõi required checks; frontend deploy qua Cloudflare Pages Git integration sau khi PR merge.
+- Trạng thái triển khai: Đã commit và push branch; đang tạo PR vào `main`, bật auto-merge và theo dõi required checks. Frontend deploy qua Cloudflare Pages Git integration sau khi PR merge.
 
 ### Handoff — tối ưu hiệu năng AI: aggregate facts, cache và timeout (03/09/2026)
 
