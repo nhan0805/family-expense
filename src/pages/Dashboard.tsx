@@ -22,6 +22,7 @@ import {
   ArrowUpFromLine,
   BarChart3,
   CalendarDays,
+  PiggyBank,
   Scale,
   Sparkles,
   TrendingDown,
@@ -32,6 +33,8 @@ import { EmptyState, PageSkeleton } from '../components/AsyncStates';
 import { useApp } from '../context/AppContext';
 import { useOptionalLanguage } from '../context/LanguageContext';
 import { dashboardSummaryResponseSchema } from '../lib/ai';
+import { buildLocalBudgetSummary, formatBudgetInput, type BudgetSummary } from '../lib/budget';
+import { fetchBudgetSummary } from '../lib/budgetsApi';
 import { formatCompactVnd, formatVnd, getCatalogDisplayName, type CatalogItem, type CatalogLanguage, type Transaction } from '../lib/domain';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import {
@@ -277,6 +280,13 @@ export function Dashboard() {
     queryFn: () => fetchDashboardDueTransactions(familyId, todayKey()),
     enabled: isSupabaseConfigured && Boolean(familyId),
   });
+  const budgetQuery = useQuery({
+    queryKey: ['budgets', familyId, Number(selectedYear), Number(selectedMonth)],
+    queryFn: () => fetchBudgetSummary(familyId, Number(selectedYear), Number(selectedMonth)),
+    enabled: isSupabaseConfigured && Boolean(familyId),
+    retry: false,
+    staleTime: 60_000,
+  });
   const availableYears = isSupabaseConfigured
     ? Array.from(new Set([currentYear, ...(yearsQuery.data || [])])).sort((a, b) => Number(b) - Number(a))
     : localAvailableYears;
@@ -327,6 +337,9 @@ export function Dashboard() {
   const dueTransactions = isSupabaseConfigured ? dueQuery.data || [] : transactions
     .filter((transaction) => !transaction.deletedAt && transaction.status === 'Dự kiến' && transaction.transactionDate <= todayKey())
     .sort((a, b) => a.transactionDate.localeCompare(b.transactionDate));
+  const budgetSummary = isSupabaseConfigured
+    ? budgetQuery.data
+    : buildLocalBudgetSummary(purposes, transactions, Number(selectedYear), Number(selectedMonth));
   const topCategories = byExpenseType.slice(0, 5).map((item) => ({
     ...item,
     trend: chartPeriods.map((period) => {
@@ -423,6 +436,8 @@ export function Dashboard() {
 
       {(!validRange || error) && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300">{!validRange ? (en ? 'Choose a valid date range.' : 'Vui lòng chọn khoảng ngày hợp lệ.') : (en ? 'Could not load part of the dashboard. Please try again.' : 'Không thể tải một phần Dashboard. Vui lòng thử lại.')}</p>}
 
+      {!budgetQuery.isError && <BudgetSnapshot summary={budgetSummary} en={en} month={selectedMonth} year={selectedYear} />}
+
       <section className={`ui-stagger dashboard-kpi-grid grid grid-cols-2 gap-3 sm:gap-4 ${hasMultiMonthView ? 'xl:grid-cols-6' : 'xl:grid-cols-3'}`} aria-label={en ? 'Financial summary' : 'Tóm tắt tài chính'}>
         <Kpi label={en ? 'Total income' : 'Tổng thu'} value={selectedIncome} icon={ArrowDownToLine} tone="emerald" meta={renderChange(incomeChange, en, 'vs previous period')} to={periodFilterLink('Thu nhập')} />
         <Kpi label={en ? 'Total expenses' : 'Tổng chi'} value={selectedExpense} icon={ArrowUpFromLine} tone="rose" meta={renderChange(expenseChange, en, 'vs previous period')} to={periodFilterLink('Chi tiêu')} />
@@ -467,6 +482,17 @@ function renderChange(value: number | null, en: boolean, suffix: string) {
   const Icon = value > 0 ? TrendingUp : TrendingDown;
   const fullText = `${direction} ${formatPercent(value)}% · ${en ? suffix : 'so với kỳ trước'}`;
   return <span className="inline-flex min-w-0 items-center gap-1" aria-label={fullText}><Icon size={13} aria-hidden="true" /><span>{formatPercent(value)}%</span><span className="sr-only"> · {en ? suffix : 'so với kỳ trước'}</span></span>;
+}
+
+function BudgetSnapshot({ summary, en, month, year }: { summary?: BudgetSummary; en: boolean; month: string; year: string }) {
+  if (!summary) return null;
+  const hasBudgets = summary.budgetCount > 0;
+  const statusText = summary.overCount > 0
+    ? (en ? `${summary.overCount} over budget` : `${summary.overCount} mục đã vượt`)
+    : summary.warningCount > 0
+      ? (en ? `${summary.warningCount} near the limit` : `${summary.warningCount} mục sắp vượt`)
+      : (en ? 'All set budgets are within limits' : 'Các mục đã đặt đều trong hạn mức');
+  return <section className="card budget-snapshot border-[#bd93f966] bg-[#bd93f90d] p-4 dark:bg-[#bd93f90d] sm:p-5" aria-labelledby="dashboard-budget-title"><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div className="flex min-w-0 items-start gap-3"><span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-violet-100 text-violet-700 dark:bg-[#bd93f91f] dark:text-[#bd93f9]"><PiggyBank size={20} aria-hidden="true" /></span><div className="min-w-0"><h3 id="dashboard-budget-title" className="font-extrabold">{en ? 'Monthly budget' : 'Ngân sách tháng'}</h3><p className="mt-1 text-sm text-gray-600 dark:text-gray-300">{hasBudgets ? `${formatBudgetInput(summary.budgetedSpent)} ₫ / ${formatBudgetInput(summary.totalBudget)} ₫` : (en ? 'No budget set for this month.' : 'Tháng này chưa đặt ngân sách.')}</p></div></div><Link className="btn-secondary inline-flex items-center justify-center text-sm" to="/ngan-sach">{en ? 'View budgets' : 'Xem ngân sách'}</Link></div>{hasBudgets && <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-600 dark:text-gray-300"><span>{statusText}</span>{summary.unbudgetedSpent > 0 && <span>{en ? `${formatBudgetInput(summary.unbudgetedSpent)} ₫ without a budget` : `${formatBudgetInput(summary.unbudgetedSpent)} ₫ chưa có ngân sách`}</span>}<span>{en ? `for ${month}/${year}` : `tháng ${month}/${year}`}</span></div>}</section>;
 }
 
 function buildInsights({
