@@ -7,7 +7,7 @@
 - Trước thay đổi: Menu mobile, modal sửa hàng loạt và backdrop dialog mở/đóng tức thời; toast biến mất ngay; Dashboard chưa có nhịp xuất hiện nhẹ cho KPI và nhóm biểu đồ.
 - Sau thay đổi: Thêm drawer slide-in/out và scrim fade cho menu mobile; dialog/modal slide-up + scale với backdrop fade; toast fade-out; stagger tối đa 6 phần tử cho KPI và pie chart Dashboard. Tất cả chỉ dùng `opacity`/`transform` trong 180–220ms và tôn trọng `prefers-reduced-motion`.
 - Kỹ thuật: Cập nhật `src/index.css`, `src/components/Layout.tsx`, `src/components/Feedback.tsx`, `src/pages/Transactions.tsx`, `src/pages/Dashboard.tsx`. Không thay đổi API, schema, database, RLS/RPC hoặc quy tắc nghiệp vụ.
-- Kiểm thử: Đang chạy `pnpm test`, `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check`.
+- Kiểm thử: `pnpm test` đạt 19/19 file và 83/83 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass.
 - Triển khai dự kiến: Commit/push branch, tạo PR vào `main`, bật auto-merge; frontend sẽ deploy qua Cloudflare Pages Git integration sau khi PR merge. Không dùng deploy thủ công.
 
 ### Tối ưu bundle PWA và cache static assets
