@@ -2,6 +2,14 @@
 
 ## 2026-09-02
 
+### Tối ưu bundle PWA và cache static assets
+
+- Trước thay đổi: `registerSW.js` render-blocking; pattern PWA không khớp file sinh thực tế `exceljs.min-*.js` nên ExcelJS gần `937 kB` vẫn nằm trong precache; `ImportExport` kéo parser Excel vào chunk route; asset hash trên Cloudflare Pages phải revalidate do `Cache-Control: max-age=0`.
+- Sau thay đổi: Dùng `script-defer` cho Service Worker registration; loại `exceljs*.js`/`xlsx*.js` khỏi precache; tách `inferImportMode` cùng type Excel sang `src/lib/templateTypes.ts` để `templateImport` và parser chỉ tải khi thao tác import/template; thêm cache dài hạn immutable cho `/assets/*`, giữ HTML/manifest/Service Worker không cache dài hạn.
+- Kỹ thuật: Cập nhật `vite.config.ts`, `src/pages/ImportExport.tsx`, `src/lib/templateImport.ts`; thêm `src/lib/templateTypes.ts` và `public/_headers`. Không thay đổi API, schema, database, RLS/RPC hoặc quy tắc nghiệp vụ.
+- Kiểm thử: `pnpm test` đạt 19/19 file và 83/83 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build xác nhận `ImportExport` giảm còn `21.42 kB`, `xlsx` thành chunk riêng `429.19 kB`, precache giảm còn `1260.00 KiB`, `exceljs` không còn trong precache và script registration có `defer`.
+- Triển khai dự kiến: Commit/push branch, tạo PR vào `main`, bật auto-merge; frontend sẽ deploy qua Cloudflare Pages Git integration sau khi PR merge. Không dùng deploy thủ công và chưa cập nhật trạng thái production trước khi merge.
+
 ### Đồng bộ khu vực xóa với Dracula dark mode
 
 - Trước thay đổi: Nút xóa thành viên/giao dịch và khối `Xóa gia đình` dùng nền đỏ tím tùy biến, màu chữ chưa khớp accent Dracula và thiếu focus state rõ ràng.

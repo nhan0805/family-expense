@@ -14,6 +14,15 @@
 - [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
 
+### Handoff — tối ưu bundle PWA và cache static assets (02/09/2026)
+
+- Trước thay đổi: `registerSW.js` render-blocking; pattern PWA không loại được file thực tế `exceljs.min-*.js` khỏi precache; `ImportExport` kéo `xlsx` vào chunk route; static assets hash bị cache với `max-age=0`.
+- Sau thay đổi: Service Worker registration dùng `defer`; `exceljs` được loại khỏi precache; helper/type import Excel được tách khỏi module nặng để `ImportExport` không tải Excel parser khi mở route; Cloudflare Pages cache asset hash một năm với `immutable`, còn HTML/manifest/Service Worker luôn revalidate.
+- Files chính: `vite.config.ts`, `public/_headers`, `src/pages/ImportExport.tsx`, `src/lib/templateImport.ts`, `src/lib/templateTypes.ts`. Không thay đổi API, schema, database, RLS/RPC hoặc quy tắc nghiệp vụ.
+- Kết quả build: chunk `ImportExport` giảm từ khoảng `455.52 kB` xuống `21.42 kB`; `xlsx` tách thành chunk riêng `429.19 kB`; precache giảm từ `2593.83 KiB` xuống `1260.00 KiB`; `exceljs.min-*.js` không còn trong precache; HTML sinh ra `registerSW.js` với `defer`.
+- Validation local: `pnpm test` 19/19 file, 83/83 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass.
+- Trạng thái triển khai: Chờ commit/push branch, PR vào `main`, required checks và Cloudflare Pages Git integration; không deploy thủ công bằng Wrangler.
+
 ### Handoff — đồng bộ khu vực xóa với Dracula dark mode (02/09/2026)
 
 - Nút xóa thành viên/giao dịch và khối `Xóa gia đình` dùng Dracula Red `#FF5555`, nền tint dark nhẹ hơn, hover rõ vừa đủ và focus ring Purple `#BD93F9`; không còn nền đỏ tím tùy biến nặng trên màn hình Members.
