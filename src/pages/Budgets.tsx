@@ -83,6 +83,8 @@ function errorMessage(error: unknown, en: boolean, fallback: string) {
     return en ? 'The budget amount is invalid.' : 'Số tiền ngân sách không hợp lệ.';
   if (raw.includes('invalid_warning_threshold'))
     return en ? 'The warning threshold is invalid.' : 'Ngưỡng cảnh báo không hợp lệ.';
+  if (raw.includes('purpose_not_budgetable'))
+    return en ? 'This purpose is hidden from budget tracking.' : 'Mục đích này đang được ẩn khỏi theo dõi ngân sách.';
   if (raw.includes('purpose_not_found'))
     return en ? 'This purpose is no longer available.' : 'Mục đích này không còn khả dụng.';
   return en ? fallback : userFacingError(error, fallback);

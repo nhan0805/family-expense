@@ -88,4 +88,41 @@ describe('budget helpers', () => {
       expect.objectContaining({ purposeId: 'p2', status: 'unconfigured', spent: 500_000 }),
     ]));
   });
+
+  it('loại mục đích tắt theo dõi khỏi toàn bộ tổng hợp ngân sách', () => {
+    const hiddenPurpose: CatalogItem = { id: 'p3', name: 'Thu nhập', budgetEnabled: false };
+    upsertLocalBudget({
+      year: 2026,
+      month: 9,
+      purposeId: 'p3',
+      amount: 1_000_000,
+      warningThreshold: 0.8,
+    });
+    const summary = buildLocalBudgetSummary(
+      [...purposes, hiddenPurpose],
+      [
+        transaction('hidden-purpose', 'p3', 900_000),
+        transaction('visible-purpose', 'p2', 500_000),
+      ],
+      2026,
+      9,
+    );
+
+    expect(summary.totalSpent).toBe(500_000);
+    expect(summary.unbudgetedSpent).toBe(500_000);
+    expect(summary.items).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({ purposeId: 'p3' }),
+    ]));
+
+    const restored = buildLocalBudgetSummary(
+      [...purposes, { ...hiddenPurpose, budgetEnabled: true }],
+      [transaction('restored-purpose', 'p3', 900_000)],
+      2026,
+      9,
+    );
+    expect(restored).toMatchObject({ totalBudget: 1_000_000, totalSpent: 900_000 });
+    expect(restored.items).toEqual(expect.arrayContaining([
+      expect.objectContaining({ purposeId: 'p3', budget: 1_000_000, spent: 900_000 }),
+    ]));
+  });
 });

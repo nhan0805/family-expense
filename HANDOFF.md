@@ -14,6 +14,14 @@
 - [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
 
+### Handoff — ẩn mục đích khỏi quản lý ngân sách, Phase 7 (03/09/2026)
+
+- Owner có thể bật/tắt `Theo dõi trong ngân sách` khi thêm hoặc sửa mục đích tại `Danh mục`. Mục bị tắt vẫn xuất hiện trong form giao dịch, nhưng không xuất hiện trên `/ngan-sach` và không ảnh hưởng tổng ngân sách, cảnh báo hay số tiền chưa phân bổ.
+- Cài đặt dùng `purposes.budget_enabled`, mặc định `true`. Khi tắt, các ngân sách theo tháng hiện có không bị xóa; bật lại sẽ khôi phục chúng. RPC không cho tạo ngân sách mới cho mục đã ẩn và không sao chép ngân sách ẩn.
+- Migration mới: `supabase/migrations/202609030002_budget_visibility.sql`; cập nhật `get_budget_summary`, `upsert_budget` và `copy_budgets_from_month`. Frontend chính: `src/pages/Catalogs.tsx`, `src/context/AppContext.tsx`, `src/lib/budget.ts`, `src/lib/domain.ts` và tests tương ứng.
+- Validation local: Vitest (`vitest run`, tương đương script `pnpm test`) 23/23 file, 96/96 test; lint, typecheck, build và `git diff --check` pass. Local DB security chưa chạy vì PostgreSQL tại `127.0.0.1:54322` chưa hoạt động; required `db-security` sẽ xác nhận migration/RLS trên PR.
+- Trạng thái triển khai dự kiến: chờ PR vào `main`, required checks, Supabase Production Deploy và Cloudflare Pages production deployment của merge commit.
+
 ### Handoff — căn đều tiêu đề và khung trường trong form giao dịch (03/09/2026)
 
 - Trước thay đổi: Rule `.label` chung ghi đè `display: flex`, khiến badge `AI đề xuất` của `Phương thức thanh toán` bị xuống dòng và làm lệch chiều cao các khung trong hàng phân loại.

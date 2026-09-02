@@ -5,7 +5,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { FeedbackProvider } from '../components/Feedback';
 import { LanguageProvider } from '../context/LanguageContext';
 import { useApp } from '../context/AppContext';
-import type { Transaction } from '../lib/domain';
+import type { CatalogItem, Transaction } from '../lib/domain';
 import { Budgets } from './Budgets';
 
 vi.mock('../context/AppContext', () => ({ useApp: vi.fn() }));
@@ -36,11 +36,11 @@ const transaction = (month: string): Transaction => ({
   aiGenerated: false,
 });
 
-function appState(role: 'owner' | 'member') {
+function appState(role: 'owner' | 'member', purposeItems: CatalogItem[] = [{ id: 'p1', name: 'Sinh hoạt', nameEn: 'Family living' }]) {
   return {
     familyId: '',
     currentUserRole: role,
-    purposes: [{ id: 'p1', name: 'Sinh hoạt', nameEn: 'Family living' }],
+    purposes: purposeItems,
     transactions: [transaction(monthKey())],
     online: true,
   } as unknown as ReturnType<typeof useApp>;
@@ -99,5 +99,16 @@ describe('Quản lý ngân sách V1', () => {
     expect(screen.getByText('Actual expenses only')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Set budget' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Copy previous month' })).toBeDisabled();
+  });
+
+  it('không hiển thị mục đích đã tắt theo dõi ngân sách', () => {
+    mockedUseApp.mockReturnValue(appState('owner', [
+      { id: 'p1', name: 'Sinh hoạt', nameEn: 'Family living' },
+      { id: 'p2', name: 'Thu nhập', budgetEnabled: false },
+    ]));
+    renderBudgets();
+
+    expect(screen.queryByText('Thu nhập')).not.toBeInTheDocument();
+    expect(screen.getByText('0/1 mục đích đã được đặt ngân sách.')).toBeInTheDocument();
   });
 });
