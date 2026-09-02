@@ -2,6 +2,14 @@
 
 ## 2026-09-03
 
+### Căn đều tiêu đề và khung trường trong form giao dịch
+
+- Trước thay đổi: Rule `.label` chung ghi đè `display: flex`, khiến badge `AI đề xuất` của `Phương thức thanh toán` bị xuống dòng và các khung trong hàng phân loại không thẳng hàng.
+- Sau thay đổi: Các tiêu đề có badge AI luôn căn cùng một hàng, badge giữ nguyên kích thước và không xuống dòng; chiều cao các trường trong cùng hàng nhất quán trên màn hình form giao dịch.
+- Kỹ thuật: Cập nhật `.label.flex` trong `src/index.css`, badge trong `src/pages/TransactionForm.tsx` và regression assertion trong `src/pages/TransactionForm.test.tsx`. Không thay đổi API, schema, database, RLS/RPC hoặc quy tắc nghiệp vụ.
+- Kiểm thử: `pnpm test` đạt 23/23 file, 93/93 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build vẫn chỉ cảnh báo chunk ExcelJS lớn đã có từ trước.
+- Trạng thái triển khai: Quality checks và commit local đã hoàn tất; đang chờ quyền push branch để tạo PR vào `main`, chạy required checks và deploy qua Cloudflare Pages Git integration.
+
 ### Tối ưu hiệu năng AI: aggregate facts, cache và timeout
 
 - Trước thay đổi: Dashboard summary tải và tự tính nhiều dòng giao dịch ở Edge Function; mỗi lần gọi AI đều đọc lại catalog/facts và không có cache summary hoặc trạng thái retry nhất quán.
