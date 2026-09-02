@@ -13,7 +13,7 @@ const deleteCatalogItem = vi.fn();
 function appState(role: 'owner' | 'member') {
   return {
     currentUserRole: role,
-    purposes: [{ id: 'p1', name: 'Sinh hoạt' }],
+    purposes: [{ id: 'p1', name: 'Sinh hoạt', budgetEnabled: true }],
     expenseTypes: [{ id: 'e1', name: 'Thực phẩm' }],
     paymentMethods: [{ id: 'm1', name: 'Tiền mặt' }],
     addCatalogItem,
@@ -45,7 +45,7 @@ describe('Quản lý danh mục', () => {
     fireEvent.change(screen.getByLabelText('Tên mục đích'), { target: { value: '  Giáo dục  ' } });
     fireEvent.click(screen.getByRole('button', { name: 'Lưu danh mục' }));
 
-    await waitFor(() => expect(addCatalogItem).toHaveBeenCalledWith('purpose', '  Giáo dục  ', ''));
+    await waitFor(() => expect(addCatalogItem).toHaveBeenCalledWith('purpose', '  Giáo dục  ', '', true));
   });
 
   it('cho owner đổi tên và xóa danh mục', async () => {
@@ -56,7 +56,7 @@ describe('Quản lý danh mục', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Sửa Sinh hoạt' }));
     fireEvent.change(screen.getByLabelText('Đổi tên mục đích'), { target: { value: 'Gia đình' } });
     fireEvent.click(screen.getByRole('button', { name: 'Lưu tên mới' }));
-    await waitFor(() => expect(updateCatalogItem).toHaveBeenCalledWith('purpose', 'p1', 'Gia đình', ''));
+    await waitFor(() => expect(updateCatalogItem).toHaveBeenCalledWith('purpose', 'p1', 'Gia đình', '', true));
 
     fireEvent.click(screen.getByRole('button', { name: 'Xóa Sinh hoạt' }));
     await waitFor(() => expect(deleteCatalogItem).toHaveBeenCalledWith('purpose', 'p1'));
@@ -70,6 +70,19 @@ describe('Quản lý danh mục', () => {
     expect(screen.queryByRole('button', { name: 'Thêm' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Sửa Sinh hoạt' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Xóa Sinh hoạt' })).not.toBeInTheDocument();
+  });
+
+  it('cho owner ẩn mục đích khỏi ngân sách nhưng vẫn giữ mục đích', async () => {
+    mockedUseApp.mockReturnValue(appState('owner'));
+    render(<Catalogs />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sửa Sinh hoạt' }));
+    const budgetToggle = screen.getByRole('checkbox', { name: 'Theo dõi trong ngân sách' });
+    expect(budgetToggle).toBeChecked();
+    fireEvent.click(budgetToggle);
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu tên mới' }));
+
+    await waitFor(() => expect(updateCatalogItem).toHaveBeenCalledWith('purpose', 'p1', 'Sinh hoạt', '', false));
   });
 
   it('hiển thị lỗi nghiệp vụ từ database', async () => {

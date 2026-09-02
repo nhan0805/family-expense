@@ -2,6 +2,14 @@
 
 ## 2026-09-03
 
+### Ẩn mục đích khỏi quản lý ngân sách — Phase 7
+
+- Trước thay đổi: Trang Ngân sách hiển thị mọi mục đích đang hoạt động, kể cả các mục như `Thu nhập` không cần theo dõi ngân sách.
+- Sau thay đổi: Owner có thể bật/tắt `Theo dõi trong ngân sách` tại Danh mục. Mục bị tắt vẫn dùng được cho giao dịch nhưng không xuất hiện trong ngân sách, tổng hợp, cảnh báo hoặc số tiền chưa có ngân sách; ngân sách cũ được giữ để có thể bật lại.
+- Kỹ thuật: thêm `purposes.budget_enabled` với mặc định `true` trong `supabase/migrations/202609030002_budget_visibility.sql`; cập nhật `get_budget_summary`, `upsert_budget`, `copy_budgets_from_month`, local fallback và mapping catalog. UI toggle, trạng thái `Ẩn ngân sách`, VI/EN, Dracula dark mode và owner/member được giữ nhất quán.
+- Kiểm thử: Vitest (`vitest run`, tương đương script `pnpm test`) đạt 23/23 file, 96/96 test; typecheck, lint, build và `git diff --check` pass. `supabase test db --local` chưa chạy được vì PostgreSQL local tại `127.0.0.1:54322` chưa hoạt động; required `db-security` sẽ kiểm tra migration/RLS trên PR.
+- Trạng thái triển khai dự kiến: commit/push branch, tạo PR vào `main`, bật auto-merge; Supabase migration và Cloudflare Pages frontend sẽ deploy qua workflow Git sau khi PR merge.
+
 ### Tối ưu hiệu năng AI: aggregate facts, cache và timeout
 
 - Trước thay đổi: Dashboard summary tải và tự tính nhiều dòng giao dịch ở Edge Function; mỗi lần gọi AI đều đọc lại catalog/facts và không có cache summary hoặc trạng thái retry nhất quán.
