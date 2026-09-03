@@ -48,6 +48,7 @@ type AppState = {
     name: string,
     nameEn?: string,
     icon?: string,
+    budgetEnabled?: boolean,
   ) => Promise<string | null>;
   updateCatalogItem: (
     kind: CatalogKind,
@@ -55,6 +56,7 @@ type AppState = {
     name: string,
     nameEn?: string,
     icon?: string,
+    budgetEnabled?: boolean,
   ) => Promise<string | null>;
   deleteCatalogItem: (kind: CatalogKind, id: string) => Promise<string | null>;
   confirmPlannedTransaction: (id: string) => Promise<string | null>;
@@ -170,7 +172,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const [purposeResult, typeResult, methodResult] = await Promise.all([
         supabase
           .from('purposes')
-          .select('id,name,name_en,color,icon,active')
+          .select('id,name,name_en,color,icon,active,budget_enabled')
           .eq('family_id', id)
           .eq('active', true)
           .order('sort_order'),
@@ -240,7 +242,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const addCatalogItem = useCallback(
-    async (kind: CatalogKind, rawName: string, rawNameEn = '', rawIcon = '') => {
+    async (kind: CatalogKind, rawName: string, rawNameEn = '', rawIcon = '', budgetEnabled = true) => {
       const name = rawName.trim().replace(/\s+/g, ' ');
       const nameEn = rawNameEn.trim().replace(/\s+/g, ' ');
       const icon = normalizeCatalogIconKey(rawIcon);
@@ -277,8 +279,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
             icon,
             sort_order: sortOrder,
             active: true,
+            budget_enabled: budgetEnabled,
           })
-          .select('id,name,name_en,color,icon,active')
+          .select('id,name,name_en,color,icon,active,budget_enabled')
           .single();
         data = result.data as CatalogItemRow | null;
         insertError = result.error;
@@ -330,7 +333,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   );
 
   const updateCatalogItem = useCallback(
-    async (kind: CatalogKind, id: string, rawName: string, rawNameEn = '', rawIcon = '') => {
+    async (kind: CatalogKind, id: string, rawName: string, rawNameEn = '', rawIcon = '', budgetEnabled?: boolean) => {
       const name = rawName.trim().replace(/\s+/g, ' ');
       const nameEn = rawNameEn.trim().replace(/\s+/g, ' ');
       const icon = normalizeCatalogIconKey(rawIcon);
@@ -351,22 +354,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return 'Tên danh mục đã tồn tại.';
       if (nameEn && currentItems.some((item) => item.id !== id && normalizeText(item.nameEn || '') === normalizeText(nameEn)))
         return 'Tên tiếng Anh của danh mục đã tồn tại.';
+      const existingItem = currentItems.find((item) => item.id === id);
+      const nextBudgetEnabled = budgetEnabled ?? existingItem?.budgetEnabled ?? true;
       const table =
         kind === 'purpose'
           ? 'purposes'
           : kind === 'expenseType'
             ? 'expense_types'
             : 'payment_methods';
-      const selectColumns =
-        kind === 'purpose'
-          ? 'id,name,name_en,color,icon,active'
-          : 'id,name,name_en,icon,active';
+      if (kind === 'purpose') {
+        const result = await supabase
+          .from(table)
+          .update({ name, name_en: nameEn || null, icon, budget_enabled: nextBudgetEnabled })
+          .eq('id', id)
+          .eq('family_id', familyId)
+          .select('id,name,name_en,color,icon,active,budget_enabled')
+          .single();
+        if (result.error)
+          return result.error.code === '42501'
+            ? 'Chỉ owner mới có quyền sửa danh mục.'
+            : result.error.message;
+        const replace = (items: CatalogItem[]) =>
+          items.map((item) => (item.id === id ? { ...item, name, nameEn: nameEn || undefined, icon, budgetEnabled: nextBudgetEnabled } : item));
+        setPurposes(replace);
+        return null;
+      }
       const result = await supabase
         .from(table)
         .update({ name, name_en: nameEn || null, icon })
         .eq('id', id)
         .eq('family_id', familyId)
-        .select(selectColumns)
+        .select('id,name,name_en,icon,active')
         .single();
       if (result.error)
         return result.error.code === '42501'
@@ -374,8 +392,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           : result.error.message;
       const replace = (items: CatalogItem[]) =>
         items.map((item) => (item.id === id ? { ...item, name, nameEn: nameEn || undefined, icon } : item));
-      if (kind === 'purpose') setPurposes(replace);
-      else if (kind === 'expenseType') setExpenseTypes(replace);
+      if (kind === 'expenseType') setExpenseTypes(replace);
       else setPaymentMethods(replace);
       return null;
     },

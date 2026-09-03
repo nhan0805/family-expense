@@ -57,6 +57,7 @@ export type CatalogItem = {
   icon?: string;
   color?: string;
   active?: boolean;
+  budgetEnabled?: boolean;
 };
 export type CatalogLanguage = 'vi' | 'en';
 export const purposeNames = [
@@ -169,6 +170,7 @@ export type CatalogItemRow = {
   icon?: string | null;
   color?: string | null;
   active?: boolean | null;
+  budget_enabled?: boolean | null;
 };
 export const mapCatalogItem = (row: CatalogItemRow): CatalogItem => ({
   id: row.id,
@@ -177,6 +179,7 @@ export const mapCatalogItem = (row: CatalogItemRow): CatalogItem => ({
   ...(row.icon ? { icon: row.icon } : {}),
   ...(row.color ? { color: row.color } : {}),
   ...(row.active === null || row.active === undefined ? {} : { active: row.active }),
+  ...(row.budget_enabled === null || row.budget_enabled === undefined ? {} : { budgetEnabled: row.budget_enabled }),
 });
 export const getCatalogDisplayName = (
   item: Pick<CatalogItem, 'name' | 'nameEn'> | undefined,

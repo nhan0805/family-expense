@@ -179,12 +179,15 @@ export function buildLocalBudgetSummary(
   month: number,
 ): BudgetSummary {
   const monthKey = `${year}-${String(month).padStart(2, '0')}`;
+  const budgetablePurposes = purposes.filter((purpose) => purpose.budgetEnabled !== false);
+  const budgetablePurposeIds = new Set(budgetablePurposes.map((purpose) => purpose.id));
   const spentByPurpose = new Map<string, number>();
   transactions.forEach((transaction) => {
     if (
       transaction.deletedAt ||
       transaction.status !== 'Thực tế' ||
       transaction.transactionType !== 'Chi tiêu' ||
+      !budgetablePurposeIds.has(transaction.purposeId) ||
       !transaction.transactionDate.startsWith(monthKey)
     )
       return;
@@ -199,7 +202,7 @@ export function buildLocalBudgetSummary(
       .filter((item) => item.year === year && item.month === month)
       .map((item) => [item.purposeId, item]),
   );
-  const items = purposes.map((purpose) => {
+  const items = budgetablePurposes.map((purpose) => {
     const budgetRow = budgetMap.get(purpose.id);
     const budget = budgetRow?.amount ?? null;
     const spent = spentByPurpose.get(purpose.id) || 0;
