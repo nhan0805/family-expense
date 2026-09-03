@@ -54,6 +54,7 @@ export type CatalogItem = {
   id: string;
   name: string;
   nameEn?: string;
+  icon?: string;
   color?: string;
   active?: boolean;
 };
@@ -165,6 +166,7 @@ export type CatalogItemRow = {
   id: string;
   name: string;
   name_en?: string | null;
+  icon?: string | null;
   color?: string | null;
   active?: boolean | null;
 };
@@ -172,6 +174,7 @@ export const mapCatalogItem = (row: CatalogItemRow): CatalogItem => ({
   id: row.id,
   name: row.name,
   nameEn: row.name_en || undefined,
+  ...(row.icon ? { icon: row.icon } : {}),
   ...(row.color ? { color: row.color } : {}),
   ...(row.active === null || row.active === undefined ? {} : { active: row.active }),
 });

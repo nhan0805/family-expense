@@ -2,6 +2,14 @@
 
 ## 2026-09-03
 
+### Thêm icon cho danh mục và danh sách giao dịch
+
+- Trước thay đổi: Danh mục chỉ hiển thị tên; dữ liệu chỉ có nền tảng icon cũ ở `purposes`, còn danh mục chi phí/phương thức thanh toán và dòng giao dịch chưa có icon.
+- Sau thay đổi: Owner có thể tìm kiếm và chọn icon trực quan trong form Danh mục; toàn bộ danh mục mặc định hiện có được map sẵn; icon hiển thị ở danh sách danh mục và dòng giao dịch mobile/desktop. Icon chỉ lưu dưới dạng key Lucide được allow-list; key lạ hoặc thiếu fallback về `Tag`.
+- Kỹ thuật: Thêm `src/lib/catalogIcons.ts`, test mapping/search; mở rộng `CatalogItem`/AppContext; cập nhật `src/pages/Catalogs.tsx`, `src/components/TransactionRow.tsx`, `src/pages/Transactions.tsx`; thêm migration `supabase/migrations/202609030002_catalog_icons.sql` cho ba bảng catalog và seed mặc định. Không thay đổi ID giao dịch, format import/export, AI hoặc quy tắc nghiệp vụ.
+- Kiểm thử: `pnpm test` đạt 24/24 file, 97/97 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build vẫn cảnh báo chunk ExcelJS lớn đã có từ trước.
+- Triển khai: Đang chuẩn bị PR vào `main`; migration Supabase sẽ được áp dụng qua workflow production sau khi PR merge và frontend sẽ deploy qua Cloudflare Pages Git integration. Chưa dùng Wrangler deploy trực tiếp.
+
 ### Căn đều tiêu đề và khung trường trong form giao dịch
 
 - Trước thay đổi: Rule `.label` chung ghi đè `display: flex`, khiến badge `AI đề xuất` của `Phương thức thanh toán` bị xuống dòng và các khung trong hàng phân loại không thẳng hàng.
