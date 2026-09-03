@@ -14,14 +14,21 @@
 - [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
 
+### Handoff — đưa Thành viên vào mục Thêm trên taskbar mobile (03/09/2026)
+
+- Taskbar mobile giữ lại bốn khu vực chính: `Tổng quan`, `Giao dịch`, `Ngân sách`, `Danh mục`; mục `Thành viên` được truy cập từ menu `Thêm`. Sidebar desktop và route không thay đổi.
+- Files chính: `src/components/Layout.tsx`, `src/components/Layout.test.tsx`. Không thay đổi API, schema, database, RLS/RPC hoặc quy tắc nghiệp vụ.
+- Validation: `pnpm test` đạt 25/25 file, 103/103 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build vẫn cảnh báo chunk ExcelJS lớn đã có từ trước.
+- Trạng thái triển khai dự kiến: Chờ quality checks, commit/push branch, PR vào `main` và Cloudflare Pages production deployment sau khi merge.
+
 ### Handoff — icon cho danh mục và danh sách giao dịch (03/09/2026)
 
 - Trước thay đổi: Danh mục chỉ hiển thị tên; chỉ bảng `purposes` có sẵn cột `icon` nhưng frontend chưa đọc/ghi; danh sách giao dịch nhận và render tên phân loại thuần text.
 - Sau thay đổi: Owner có bộ chọn icon dạng lưới có tìm kiếm theo tên/từ khóa; toàn bộ danh mục mặc định hiện có đã map icon Lucide; icon hiển thị trong danh sách Danh mục và dòng giao dịch ở cả mobile card lẫn desktop table. Native dropdown giao dịch giữ nguyên dạng chữ để bảo đảm tương thích trình duyệt.
 - Backend/domain: migration `supabase/migrations/202609030003_catalog_icons.sql` thêm `icon` cho `expense_types`/`payment_methods`, backfill danh mục hiện có và cập nhật `seed_family_defaults`; `CatalogItem`/mapper/AppContext đọc ghi icon. Icon được lưu là key allow-list, key không hợp lệ fallback `Tag`.
 - Files chính: `src/lib/catalogIcons.ts`, `src/lib/catalogIcons.test.ts`, `src/lib/domain.ts`, `src/context/AppContext.tsx`, `src/pages/Catalogs.tsx`, `src/pages/Catalogs.test.tsx`, `src/components/TransactionRow.tsx`, `src/components/TransactionRow.test.tsx`, `src/pages/Transactions.tsx`.
-- Validation local: `pnpm test` 24/24 file, 97/97 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build còn cảnh báo chunk ExcelJS lớn hiện hữu. Chưa chạy Supabase local vì Docker daemon chưa hoạt động.
-- Trạng thái triển khai: Chưa deploy production; đang chuẩn bị commit/push branch, PR vào `main`, theo dõi required checks, Supabase Production Deploy và Cloudflare Pages Git deployment.
+- Validation local: `pnpm test` 24/24 file, 102/102 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build còn cảnh báo chunk ExcelJS lớn hiện hữu. Chưa chạy Supabase local vì Docker daemon chưa hoạt động.
+- Trạng thái triển khai: PR [#106](https://github.com/nhan0805/family-expense/pull/106) đã merge; do phát hiện trùng version migration, PR sửa [#108](https://github.com/nhan0805/family-expense/pull/108) đã merge với commit `c4f829d2fa07817418772510aa3d82c985a7e2f6`. Supabase Production Deploy [run 33715285787](https://github.com/nhan0805/family-expense/actions/runs/33715285787) pass với migration `202609030003_catalog_icons.sql`. Cloudflare Pages production trả HTTP 200; lazy chunk `Catalogs-BMEwS6ZG.js` trả HTTP 200 và chứa nội dung picker icon ngày `03/09/2026 11:44` (`Asia/Ho_Chi_Minh`).
 
 ### Handoff — ẩn mục đích khỏi quản lý ngân sách, Phase 7 (03/09/2026)
 
@@ -37,7 +44,7 @@
 - Người dùng vẫn có thể chọn trạng thái `Dự kiến`, khoảng thời gian hoặc xóa bộ lọc; tham số URL hợp lệ được giữ nguyên.
 - Files chính: `src/pages/Transactions.tsx`, `src/pages/Transactions.test.ts`, `src/pages/Transactions.ui.test.tsx`. Không thay đổi API, schema, migration, RLS/RPC, dữ liệu hoặc quy tắc nghiệp vụ.
 - Validation local: `pnpm test` đạt 24/24 file, 102/102 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build vẫn cảnh báo chunk ExcelJS lớn đã có từ trước.
-- Trạng thái triển khai dự kiến: quality checks local đã pass; tiếp theo commit/push branch, PR vào `main`, required checks và Cloudflare Pages production deployment sau khi merge.
+- Trạng thái triển khai: Đã merge PR [#106](https://github.com/nhan0805/family-expense/pull/106) và PR sửa migration [#108](https://github.com/nhan0805/family-expense/pull/108) vào `main`; frontend production đã deploy qua Cloudflare Pages Git integration trên merge commit `c4f829d2fa07817418772510aa3d82c985a7e2f6`. CI [run 33715285833](https://github.com/nhan0805/family-expense/actions/runs/33715285833), Supabase Production Deploy [run 33715285787](https://github.com/nhan0805/family-expense/actions/runs/33715285787) pass; production smoke test HTTP 200 lúc `03/09/2026 11:44` (`Asia/Ho_Chi_Minh`).
 
 ### Handoff — căn đều tiêu đề và khung trường trong form giao dịch (03/09/2026)
 
