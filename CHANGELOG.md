@@ -2,6 +2,14 @@
 
 ## 2026-09-03
 
+### Đặt bộ lọc mặc định giao dịch theo tháng hiện tại và giao dịch thực tế
+
+- Trước thay đổi: Màn hình Giao dịch đã mặc định theo tháng/năm hiện tại nhưng trạng thái để trống nên vẫn hiển thị cả giao dịch dự kiến; tháng hiện tại còn phụ thuộc múi giờ của thiết bị.
+- Sau thay đổi: Khi mở màn hình không có kỳ hoặc trạng thái trên URL, danh sách lọc theo tháng hiện tại của `Asia/Ho_Chi_Minh` và chỉ hiển thị giao dịch `Thực tế`. Người dùng vẫn có thể chọn `Dự kiến` hoặc xóa bộ lọc.
+- Kỹ thuật: Cập nhật `getInitialTransactionPeriod` và thêm `getInitialTransactionStatus` trong `src/pages/Transactions.tsx`; bổ sung regression test trong `src/pages/Transactions.test.ts` và `src/pages/Transactions.ui.test.tsx`. Không thay đổi API, schema, database, RLS/RPC hoặc quy tắc nghiệp vụ.
+- Kiểm thử: `pnpm test` đạt 24/24 file, 102/102 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build vẫn cảnh báo chunk ExcelJS lớn đã có từ trước.
+- Trạng thái triển khai dự kiến: commit/push branch, tạo PR vào `main`, bật auto-merge; frontend deploy qua Cloudflare Pages Git integration sau khi PR merge.
+
 ### Thêm icon cho danh mục và danh sách giao dịch
 
 - Trước thay đổi: Danh mục chỉ hiển thị tên; dữ liệu chỉ có nền tảng icon cũ ở `purposes`, còn danh mục chi phí/phương thức thanh toán và dòng giao dịch chưa có icon.

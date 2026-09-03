@@ -5,6 +5,7 @@ import {
   formatAmountFilterInput,
   filterAndSortTransactions,
   getInitialTransactionPeriod,
+  getInitialTransactionStatus,
   getInitialTransactionType,
   getTransactionListTone,
   normalizeAmountFilterInput,
@@ -29,10 +30,19 @@ describe('sắp xếp giao dịch theo ngày', () => {
     expect(getInitialTransactionType('Thu nhập')).toBe('Thu nhập');
     expect(getInitialTransactionType('không hợp lệ')).toBe('');
   });
+  it('mặc định chỉ lọc giao dịch thực tế và vẫn nhận trạng thái từ URL', () => {
+    expect(getInitialTransactionStatus(null)).toBe('Thực tế');
+    expect(getInitialTransactionStatus('Thực tế')).toBe('Thực tế');
+    expect(getInitialTransactionStatus('Dự kiến')).toBe('Dự kiến');
+    expect(getInitialTransactionStatus('không hợp lệ')).toBe('Thực tế');
+  });
   it('mặc định lọc theo tháng và năm hiện tại khi URL không truyền kỳ', () => {
     expect(
-      getInitialTransactionPeriod(null, null, new Date(2026, 7, 26)),
+      getInitialTransactionPeriod(null, null, new Date('2026-08-26T00:00:00Z')),
     ).toEqual({ month: '08', year: '2026' });
+    expect(
+      getInitialTransactionPeriod(null, null, new Date('2026-08-31T17:00:00Z')),
+    ).toEqual({ month: '09', year: '2026' });
   });
 
   it('ưu tiên kỳ hợp lệ được truyền từ URL', () => {

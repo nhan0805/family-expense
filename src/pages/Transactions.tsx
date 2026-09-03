@@ -136,14 +136,24 @@ export const getInitialTransactionPeriod = (
   if (legacyMonth)
     return { month: legacyMonth[2] || '', year: legacyMonth[1] || '' };
   if (validMonth || validYear) return { month: validMonth, year: validYear };
+  const currentPeriod = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Ho_Chi_Minh',
+    year: 'numeric',
+    month: '2-digit',
+  }).formatToParts(now);
+  const currentMonth = currentPeriod.find((part) => part.type === 'month')?.value || '';
+  const currentYear = currentPeriod.find((part) => part.type === 'year')?.value || '';
   return {
-    month: String(now.getMonth() + 1).padStart(2, '0'),
-    year: String(now.getFullYear()),
+    month: currentMonth,
+    year: currentYear,
   };
 };
 
 export const getInitialTransactionType = (value: string | null) =>
   value === 'Chi tiêu' || value === 'Thu nhập' ? value : '';
+
+export const getInitialTransactionStatus = (value: string | null) =>
+  value === 'Thực tế' || value === 'Dự kiến' ? value : 'Thực tế';
 
 const isIsoDateParam = (value: string | null) =>
   /^\d{4}-\d{2}-\d{2}$/.test(value || '');
@@ -299,7 +309,9 @@ export function Transactions() {
   const [transactionType, setTransactionType] = useState(() =>
     getInitialTransactionType(searchParams.get('transactionType')),
   );
-  const [status, setStatus] = useState(() => searchParams.get('status') || '');
+  const [status, setStatus] = useState(() =>
+    getInitialTransactionStatus(searchParams.get('status')),
+  );
   const [purposeId, setPurposeId] = useState(() => searchParams.get('purposeId') || '');
   const [expenseTypeId, setExpenseTypeId] = useState(() => searchParams.get('expenseTypeId') || '');
   const [paymentMethodId, setPaymentMethodId] = useState('');

@@ -57,6 +57,21 @@ describe('Giao dịch mobile', () => {
     expect(screen.getAllByText((content) => content.includes('250.000')).length).toBeGreaterThan(0);
   });
 
+  it('mặc định chỉ hiển thị giao dịch thực tế', () => {
+    vi.mocked(useApp).mockReturnValue({
+      transactions: [
+        { id: 'actual-1', transactionDate: '2026-09-01', transactionType: 'Chi tiêu', status: 'Thực tế', description: 'Đi chợ', amount: 250000, purposeId: 'p1', expenseTypeId: 'e1', paymentMethodId: 'm1', source: 'manual', aiGenerated: false, createdBy: 'u1' },
+        { id: 'planned-1', transactionDate: '2026-09-02', transactionType: 'Chi tiêu', status: 'Dự kiến', description: 'Tiền điện', amount: 300000, purposeId: 'p1', expenseTypeId: 'e1', paymentMethodId: 'm1', source: 'manual', aiGenerated: false, createdBy: 'u1' },
+      ],
+      setTransactions: vi.fn(), purposes: [{ id: 'p1', name: 'Sinh hoạt' }], expenseTypes: [{ id: 'e1', name: 'Hóa đơn' }], paymentMethods: [{ id: 'm1', name: 'Chuyển khoản' }], familyId: 'f1', currentUserId: 'u1', currentUserRole: 'owner',
+    } as unknown as ReturnType<typeof useApp>);
+    render(<FeedbackProvider><QueryClientProvider client={new QueryClient()}><MemoryRouter initialEntries={['/giao-dich?month=09&year=2026']}><Transactions/></MemoryRouter></QueryClientProvider></FeedbackProvider>);
+
+    expect(screen.getByLabelText('Trạng thái')).toHaveValue('Thực tế');
+    expect(screen.getByRole('article', { name: 'Giao dịch Đi chợ' })).toBeInTheDocument();
+    expect(screen.queryByRole('article', { name: 'Giao dịch Tiền điện' })).not.toBeInTheDocument();
+  });
+
   it('chuyển giọng nói thành từ khóa tìm kiếm', async () => {
     class SpeechRecognitionMock {
       static latest: SpeechRecognitionMock | null = null;
@@ -123,7 +138,7 @@ describe('Giao dịch mobile', () => {
       transactions: [{ id: 'planned-1', transactionDate: '2026-09-01', transactionType: 'Chi tiêu', status: 'Dự kiến', description: 'Tiền điện', amount: 300000, purposeId: 'p1', expenseTypeId: 'e1', paymentMethodId: 'm1', source: 'manual', aiGenerated: false, createdBy: 'u1' }],
       setTransactions, purposes: [{ id: 'p1', name: 'Sinh hoạt' }], expenseTypes: [{ id: 'e1', name: 'Hóa đơn' }], paymentMethods: [{ id: 'm1', name: 'Chuyển khoản' }], familyId: 'f1', currentUserId: 'u1', currentUserRole: 'owner',
     } as unknown as ReturnType<typeof useApp>);
-    render(<FeedbackProvider><QueryClientProvider client={new QueryClient()}><MemoryRouter initialEntries={['/giao-dich?month=09&year=2026']}><Transactions/></MemoryRouter></QueryClientProvider></FeedbackProvider>);
+    render(<FeedbackProvider><QueryClientProvider client={new QueryClient()}><MemoryRouter initialEntries={['/giao-dich?month=09&year=2026&status=D%E1%BB%B1%20ki%E1%BA%BFn']}><Transactions/></MemoryRouter></QueryClientProvider></FeedbackProvider>);
     expect(screen.getByRole('heading', { name: 'Giao dịch dự kiến tới hạn' })).toBeInTheDocument();
     fireEvent.click(screen.getAllByRole('button', { name: 'Xác nhận' })[0]!);
     fireEvent.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Xác nhận' }));

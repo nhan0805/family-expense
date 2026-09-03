@@ -31,6 +31,14 @@
 - Validation local: Vitest (`vitest run`, tương đương script `pnpm test`) 23/23 file, 96/96 test; lint, typecheck, build và `git diff --check` pass. Local DB security chưa chạy vì PostgreSQL tại `127.0.0.1:54322` chưa hoạt động; required `db-security` sẽ xác nhận migration/RLS trên PR.
 - Trạng thái triển khai dự kiến: chờ PR vào `main`, required checks, Supabase Production Deploy và Cloudflare Pages production deployment của merge commit.
 
+### Handoff — bộ lọc mặc định màn hình giao dịch (03/09/2026)
+
+- Khi mở `/giao-dich` không có kỳ hoặc trạng thái trên URL, bộ lọc chọn tháng/năm hiện tại theo `Asia/Ho_Chi_Minh` và trạng thái `Thực tế`; giao dịch `Dự kiến` không xuất hiện trong danh sách mặc định.
+- Người dùng vẫn có thể chọn trạng thái `Dự kiến`, khoảng thời gian hoặc xóa bộ lọc; tham số URL hợp lệ được giữ nguyên.
+- Files chính: `src/pages/Transactions.tsx`, `src/pages/Transactions.test.ts`, `src/pages/Transactions.ui.test.tsx`. Không thay đổi API, schema, migration, RLS/RPC, dữ liệu hoặc quy tắc nghiệp vụ.
+- Validation local: `pnpm test` đạt 24/24 file, 102/102 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build vẫn cảnh báo chunk ExcelJS lớn đã có từ trước.
+- Trạng thái triển khai dự kiến: quality checks local đã pass; tiếp theo commit/push branch, PR vào `main`, required checks và Cloudflare Pages production deployment sau khi merge.
+
 ### Handoff — căn đều tiêu đề và khung trường trong form giao dịch (03/09/2026)
 
 - Trước thay đổi: Rule `.label` chung ghi đè `display: flex`, khiến badge `AI đề xuất` của `Phương thức thanh toán` bị xuống dòng và làm lệch chiều cao các khung trong hàng phân loại.
