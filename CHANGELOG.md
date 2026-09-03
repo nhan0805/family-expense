@@ -5,7 +5,7 @@
 ### Mở rộng icon danh mục và căn chỉnh giao diện desktop
 
 - Trước thay đổi: Picker icon chỉ có khoảng 39 lựa chọn; chưa có `Venus` (kết quả tìm `women` trên Lucide), `CircleDollarSign` và `BanknoteArrowDown`. Trên desktop, tên Mục đích/Danh mục bị co quá mức và cụm nút Sao chép/Xóa không nằm trong vùng cột cố định.
-- Sau thay đổi: Picker có thêm 61 icon phổ biến từ Lucide, đạt tổng cộng 100 lựa chọn và tìm được theo tên hoặc từ khóa tiếng Việt; bảng giao dịch desktop có cột phân loại rộng hơn, tên dài truncate đúng và cụm thao tác được cố định thành hai ô đều nhau. Lỗi badge `Ẩn ngân sách` che tên ở màn hình Danh mục vẫn được giữ bản sửa `flex-1`/`overflow-hidden`.
+- Sau thay đổi: Picker có thêm 61 icon phổ biến từ Lucide, đạt tổng cộng 100 lựa chọn và tìm được theo tên hoặc từ khóa tiếng Việt; bảng giao dịch desktop có cột phân loại rộng hơn, tên dài truncate đúng và cụm thao tác được cố định thành hai ô đều nhau. Lỗi badge `Ẩn ngân sách` che tên ở màn hình Danh mục vẫn được giữ bản sửa `flex-1`/`overflow-hidden`; icon và tên phân loại trên card giao dịch mobile có khoảng cách 6px dễ đọc hơn.
 - Kỹ thuật: nâng `lucide-react` từ `0.468.0` lên `0.485.0`; cập nhật `src/lib/catalogIcons.ts`, `src/components/TransactionRow.tsx`, `src/pages/Transactions.tsx` và regression tests tương ứng. Không thay đổi API, schema, migration, dữ liệu hoặc quy tắc nghiệp vụ.
 - Kiểm thử: `pnpm test` đạt 25/25 file, 104/104 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build vẫn cảnh báo chunk ExcelJS lớn đã có từ trước.
 - Trạng thái triển khai dự kiến: Commit/push branch, tạo PR vào `main`, bật auto-merge và chờ required checks cùng Cloudflare Pages production deployment qua Git integration.
