@@ -8,7 +8,7 @@ import { ThemeSelect } from './ThemeSelect';
 import { useLanguage } from '../context/LanguageContext';
 
 const links = [['/', 'overview', House], ['/giao-dich', 'transactions', WalletCards], ['/ngan-sach', 'budgets', PiggyBank], ['/danh-muc', 'catalogs', Tags], ['/thanh-vien', 'members', UsersRound], ['/du-lieu', 'data', BookOpen]] as const;
-const mobilePrimaryLinks = [links[0], links[1], links[2], links[4]] as const;
+const mobilePrimaryLinks = [links[0], links[1], links[2], links[3]] as const;
 
 export function Layout() {
   const [open, setOpen] = useState(false);

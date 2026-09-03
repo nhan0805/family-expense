@@ -2,21 +2,29 @@
 
 ## 2026-09-03
 
+### Đưa Thành viên vào mục Thêm trên taskbar mobile
+
+- Trước thay đổi: Taskbar mobile hiển thị trực tiếp `Thành viên`, làm giảm không gian cho các khu vực chính.
+- Sau thay đổi: Taskbar mobile hiển thị `Tổng quan`, `Giao dịch`, `Ngân sách`, `Danh mục` và `Thêm`; `Thành viên` vẫn truy cập được trong menu `Thêm`. Điều hướng desktop không thay đổi.
+- Kỹ thuật: cập nhật danh sách `mobilePrimaryLinks` trong `src/components/Layout.tsx`; bổ sung regression test `src/components/Layout.test.tsx`.
+- Kiểm thử: `pnpm test` đạt 25/25 file, 103/103 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build vẫn cảnh báo chunk ExcelJS lớn đã có từ trước.
+- Trạng thái triển khai dự kiến: Chờ quality checks, commit/push branch, PR vào `main` và Cloudflare Pages Git deployment sau khi merge.
+
 ### Đặt bộ lọc mặc định giao dịch theo tháng hiện tại và giao dịch thực tế
 
 - Trước thay đổi: Màn hình Giao dịch đã mặc định theo tháng/năm hiện tại nhưng trạng thái để trống nên vẫn hiển thị cả giao dịch dự kiến; tháng hiện tại còn phụ thuộc múi giờ của thiết bị.
 - Sau thay đổi: Khi mở màn hình không có kỳ hoặc trạng thái trên URL, danh sách lọc theo tháng hiện tại của `Asia/Ho_Chi_Minh` và chỉ hiển thị giao dịch `Thực tế`. Người dùng vẫn có thể chọn `Dự kiến` hoặc xóa bộ lọc.
 - Kỹ thuật: Cập nhật `getInitialTransactionPeriod` và thêm `getInitialTransactionStatus` trong `src/pages/Transactions.tsx`; bổ sung regression test trong `src/pages/Transactions.test.ts` và `src/pages/Transactions.ui.test.tsx`. Không thay đổi API, schema, database, RLS/RPC hoặc quy tắc nghiệp vụ.
 - Kiểm thử: `pnpm test` đạt 24/24 file, 102/102 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build vẫn cảnh báo chunk ExcelJS lớn đã có từ trước.
-- Trạng thái triển khai dự kiến: commit/push branch, tạo PR vào `main`, bật auto-merge; frontend deploy qua Cloudflare Pages Git integration sau khi PR merge.
+- Triển khai: PR [#106](https://github.com/nhan0805/family-expense/pull/106) đã merge vào `main`; bản sửa version migration được merge qua PR [#108](https://github.com/nhan0805/family-expense/pull/108) với merge commit `c4f829d2fa07817418772510aa3d82c985a7e2f6`. Supabase Production Deploy [run 33715285787](https://github.com/nhan0805/family-expense/actions/runs/33715285787) pass; Cloudflare Pages production trả HTTP 200 và lazy chunk Catalogs trả HTTP 200 ngày `03/09/2026 11:44` (`Asia/Ho_Chi_Minh`). Không dùng Wrangler deploy trực tiếp và không tạo deploy lần hai chỉ để cập nhật tài liệu.
 
 ### Thêm icon cho danh mục và danh sách giao dịch
 
 - Trước thay đổi: Danh mục chỉ hiển thị tên; dữ liệu chỉ có nền tảng icon cũ ở `purposes`, còn danh mục chi phí/phương thức thanh toán và dòng giao dịch chưa có icon.
 - Sau thay đổi: Owner có thể tìm kiếm và chọn icon trực quan trong form Danh mục; toàn bộ danh mục mặc định hiện có được map sẵn; icon hiển thị ở danh sách danh mục và dòng giao dịch mobile/desktop. Icon chỉ lưu dưới dạng key Lucide được allow-list; key lạ hoặc thiếu fallback về `Tag`.
 - Kỹ thuật: Thêm `src/lib/catalogIcons.ts`, test mapping/search; mở rộng `CatalogItem`/AppContext; cập nhật `src/pages/Catalogs.tsx`, `src/components/TransactionRow.tsx`, `src/pages/Transactions.tsx`; thêm migration `supabase/migrations/202609030003_catalog_icons.sql` cho ba bảng catalog và seed mặc định. Không thay đổi ID giao dịch, format import/export, AI hoặc quy tắc nghiệp vụ.
-- Kiểm thử: `pnpm test` đạt 24/24 file, 97/97 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build vẫn cảnh báo chunk ExcelJS lớn đã có từ trước.
-- Triển khai: Đang chuẩn bị PR vào `main`; migration Supabase sẽ được áp dụng qua workflow production sau khi PR merge và frontend sẽ deploy qua Cloudflare Pages Git integration. Chưa dùng Wrangler deploy trực tiếp.
+- Kiểm thử: `pnpm test` đạt 24/24 file, 102/102 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build vẫn cảnh báo chunk ExcelJS lớn đã có từ trước.
+- Triển khai: PR [#106](https://github.com/nhan0805/family-expense/pull/106) và PR sửa migration [#108](https://github.com/nhan0805/family-expense/pull/108) đã merge; Supabase Production Deploy [run 33715285787](https://github.com/nhan0805/family-expense/actions/runs/33715285787) pass với migration `202609030003_catalog_icons.sql`. Cloudflare Pages production trả HTTP 200, lazy chunk Catalogs trả HTTP 200 ngày `03/09/2026 11:44` (`Asia/Ho_Chi_Minh`). Không dùng Wrangler deploy trực tiếp và không tạo deploy lần hai chỉ để cập nhật tài liệu.
 
 ### Ẩn mục đích khỏi quản lý ngân sách — Phase 7
 
