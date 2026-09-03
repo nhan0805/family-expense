@@ -1217,7 +1217,7 @@ export function Transactions() {
         </div>
       )}
       <div key={resultKey} className="transactions-table order-4 space-y-2 overflow-visible md:space-y-0 md:overflow-x-auto md:rounded-2xl md:border">
-        <div className={`hidden w-full min-w-[940px] gap-1 rounded-t-2xl bg-[#eef2ed] p-3 text-sm font-bold dark:bg-white/5 md:grid ${selectMode ? 'grid-cols-[32px_80px_minmax(160px,1fr)_130px_120px_145px_210px]' : 'grid-cols-[80px_minmax(160px,1fr)_130px_120px_145px_210px]'}`}>
+        <div className={`hidden w-full min-w-[1080px] gap-1 rounded-t-2xl bg-[#eef2ed] p-3 text-sm font-bold dark:bg-white/5 md:grid ${selectMode ? 'grid-cols-[32px_80px_minmax(180px,1fr)_190px_160px_190px_220px]' : 'grid-cols-[80px_minmax(180px,1fr)_190px_160px_190px_220px]'}`}>
           {selectMode && <input type="checkbox" className="size-5 accent-[#155e46]" aria-label={en ? 'Select all visible transactions' : 'Chọn tất cả giao dịch đang hiển thị'} checked={rows.length > 0 && rows.slice(0, 100).every((item) => selectedIds.has(item.id))} onChange={(event) => setSelectedIds(event.target.checked ? new Set(rows.slice(0, 100).map((item) => item.id)) : new Set())} />}
           <span>{en ? 'Date' : 'Ngày'}</span>
           <span>{en ? 'Description' : 'Nội dung'}</span>

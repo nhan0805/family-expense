@@ -14,12 +14,20 @@
 - [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
 
+### Handoff — mở rộng icon và sửa layout desktop (03/09/2026)
+
+- Picker Danh mục đã thêm 61 icon phổ biến từ Lucide, gồm `Venus` (kết quả tìm `women`), `CircleDollarSign` và `BanknoteArrowDown`; tổng cộng đúng 100 lựa chọn, tìm được theo tên icon hoặc từ khóa tiếng Việt.
+- Bảng giao dịch desktop đã mở rộng cột Mục đích/Danh mục/Phương thức, bổ sung vùng truncate đúng cho tên và khóa cụm Sao chép/Xóa vào hai ô thao tác đều nhau. Bản sửa text danh mục bị badge `Ẩn ngân sách` che cũng nằm trong cùng thay đổi.
+- Files chính: `package.json`, `pnpm-lock.yaml`, `src/lib/catalogIcons.ts`, `src/components/TransactionRow.tsx`, `src/pages/Transactions.tsx` và tests tương ứng. Không thay đổi API, schema, migration, dữ liệu hoặc quy tắc nghiệp vụ.
+- Validation: `pnpm test` đạt 25/25 file, 104/104 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build vẫn cảnh báo chunk ExcelJS lớn đã có từ trước.
+- Trạng thái triển khai dự kiến: Chờ quality checks, commit/push branch, PR vào `main`, auto-merge và Cloudflare Pages production deployment qua Git integration.
+
 ### Handoff — đưa Thành viên vào mục Thêm trên taskbar mobile (03/09/2026)
 
 - Taskbar mobile giữ lại bốn khu vực chính: `Tổng quan`, `Giao dịch`, `Ngân sách`, `Danh mục`; mục `Thành viên` được truy cập từ menu `Thêm`. Sidebar desktop và route không thay đổi.
 - Files chính: `src/components/Layout.tsx`, `src/components/Layout.test.tsx`. Không thay đổi API, schema, database, RLS/RPC hoặc quy tắc nghiệp vụ.
 - Validation: `pnpm test` đạt 25/25 file, 103/103 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build vẫn cảnh báo chunk ExcelJS lớn đã có từ trước.
-- Trạng thái triển khai dự kiến: Chờ quality checks, commit/push branch, PR vào `main` và Cloudflare Pages production deployment sau khi merge.
+- Trạng thái triển khai: PR [#109](https://github.com/nhan0805/family-expense/pull/109) đã merge vào `main` với merge commit `b86cf67e4da5508123a21206315aaf0fa9b90196`. CI [run 33717890896](https://github.com/nhan0805/family-expense/actions/runs/33717890896) và Cloudflare Pages production đều pass; production `https://family-expense-8fo.pages.dev/` trả HTTP 200 lúc `03/09/2026 12:14` (`Asia/Ho_Chi_Minh`). Không có migration nên không cần Supabase Production Deploy.
 
 ### Handoff — icon cho danh mục và danh sách giao dịch (03/09/2026)
 

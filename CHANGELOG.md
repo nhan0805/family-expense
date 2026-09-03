@@ -2,13 +2,21 @@
 
 ## 2026-09-03
 
+### Mở rộng icon danh mục và căn chỉnh giao diện desktop
+
+- Trước thay đổi: Picker icon chỉ có khoảng 39 lựa chọn; chưa có `Venus` (kết quả tìm `women` trên Lucide), `CircleDollarSign` và `BanknoteArrowDown`. Trên desktop, tên Mục đích/Danh mục bị co quá mức và cụm nút Sao chép/Xóa không nằm trong vùng cột cố định.
+- Sau thay đổi: Picker có thêm 61 icon phổ biến từ Lucide, đạt tổng cộng 100 lựa chọn và tìm được theo tên hoặc từ khóa tiếng Việt; bảng giao dịch desktop có cột phân loại rộng hơn, tên dài truncate đúng và cụm thao tác được cố định thành hai ô đều nhau. Lỗi badge `Ẩn ngân sách` che tên ở màn hình Danh mục vẫn được giữ bản sửa `flex-1`/`overflow-hidden`.
+- Kỹ thuật: nâng `lucide-react` từ `0.468.0` lên `0.485.0`; cập nhật `src/lib/catalogIcons.ts`, `src/components/TransactionRow.tsx`, `src/pages/Transactions.tsx` và regression tests tương ứng. Không thay đổi API, schema, migration, dữ liệu hoặc quy tắc nghiệp vụ.
+- Kiểm thử: `pnpm test` đạt 25/25 file, 104/104 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build vẫn cảnh báo chunk ExcelJS lớn đã có từ trước.
+- Trạng thái triển khai dự kiến: Commit/push branch, tạo PR vào `main`, bật auto-merge và chờ required checks cùng Cloudflare Pages production deployment qua Git integration.
+
 ### Đưa Thành viên vào mục Thêm trên taskbar mobile
 
 - Trước thay đổi: Taskbar mobile hiển thị trực tiếp `Thành viên`, làm giảm không gian cho các khu vực chính.
 - Sau thay đổi: Taskbar mobile hiển thị `Tổng quan`, `Giao dịch`, `Ngân sách`, `Danh mục` và `Thêm`; `Thành viên` vẫn truy cập được trong menu `Thêm`. Điều hướng desktop không thay đổi.
 - Kỹ thuật: cập nhật danh sách `mobilePrimaryLinks` trong `src/components/Layout.tsx`; bổ sung regression test `src/components/Layout.test.tsx`.
 - Kiểm thử: `pnpm test` đạt 25/25 file, 103/103 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build vẫn cảnh báo chunk ExcelJS lớn đã có từ trước.
-- Trạng thái triển khai dự kiến: Chờ quality checks, commit/push branch, PR vào `main` và Cloudflare Pages Git deployment sau khi merge.
+- Triển khai: PR [#109](https://github.com/nhan0805/family-expense/pull/109) đã merge vào `main` với merge commit `b86cf67e4da5508123a21206315aaf0fa9b90196`. CI main [run 33717890896](https://github.com/nhan0805/family-expense/actions/runs/33717890896) và Cloudflare Pages production đều pass; production `https://family-expense-8fo.pages.dev/` trả HTTP 200 lúc `03/09/2026 12:14` (`Asia/Ho_Chi_Minh`). Không có migration nên không chạy Supabase Production Deploy; không dùng Wrangler deploy trực tiếp và không tạo deploy lần hai chỉ để cập nhật tài liệu.
 
 ### Đặt bộ lọc mặc định giao dịch theo tháng hiện tại và giao dịch thực tế
 

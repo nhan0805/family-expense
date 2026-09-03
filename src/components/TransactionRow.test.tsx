@@ -76,11 +76,20 @@ describe('TransactionRow', () => {
   it('đặt nút thao tác desktop cạnh số tiền để giảm cuộn ngang', () => {
     renderRow();
     const desktopRow = document.querySelector<HTMLElement>('.transaction-table-row');
-    expect(desktopRow).toHaveClass('w-full', 'md:min-w-[940px]');
-    expect(desktopRow?.className).toContain('md:grid-cols-[80px_minmax(160px,1fr)_130px_120px_145px_210px]');
+    expect(desktopRow).toHaveClass('w-full', 'md:min-w-[1080px]');
+    expect(desktopRow?.className).toContain('md:grid-cols-[80px_minmax(180px,1fr)_190px_160px_190px_220px]');
 
     const amount = desktopRow?.querySelector('.transaction-row-amount');
     const actions = desktopRow?.querySelector('.transaction-row-actions');
     expect(amount?.parentElement).toBe(actions?.parentElement);
+    expect(actions).toHaveClass('w-[72px]', 'grid-cols-2');
+  });
+
+  it('giữ tên mục đích và các nút desktop trong vùng cột riêng', () => {
+    renderRow({ purposeName: 'Sinh hoạt gia đình' });
+    const desktopRow = document.querySelector<HTMLElement>('.transaction-table-row');
+    const purpose = desktopRow?.querySelector('.catalog-value-icon')?.parentElement;
+    expect(purpose).toHaveClass('overflow-hidden');
+    expect(purpose?.querySelector('span:last-child')).toHaveClass('flex-1', 'truncate');
   });
 });
