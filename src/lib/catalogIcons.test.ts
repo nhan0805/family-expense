@@ -18,11 +18,14 @@ describe('catalog icons', () => {
   it('searches by Vietnamese keyword and icon name', () => {
     expect(searchCatalogIcons('xe đạp').map((option) => option.key)).toContain('bike');
     expect(searchCatalogIcons('credit-card').map((option) => option.key)).toContain('credit-card');
+    expect(searchCatalogIcons('women').map((option) => option.key)).toContain('venus');
+    expect(searchCatalogIcons('circle-dollar-sign').map((option) => option.key)).toContain('circle-dollar-sign');
+    expect(searchCatalogIcons('banknote-arrow-down').map((option) => option.key)).toContain('banknote-arrow-down');
   });
 
   it('falls back safely for an unknown key', () => {
     expect(normalizeCatalogIconKey('not-in-the-picker')).toBe('tag');
     expect(getCatalogIconLabel('not-in-the-picker')).toBe('Tag');
-    expect(catalogIconOptions.length).toBeGreaterThan(30);
+    expect(catalogIconOptions.length).toBe(100);
   });
 });

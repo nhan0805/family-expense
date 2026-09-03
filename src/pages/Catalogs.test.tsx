@@ -13,7 +13,10 @@ const deleteCatalogItem = vi.fn();
 function appState(role: 'owner' | 'member') {
   return {
     currentUserRole: role,
-    purposes: [{ id: 'p1', name: 'Sinh hoạt', icon: 'house', budgetEnabled: true }],
+    purposes: [
+      { id: 'p1', name: 'Sinh hoạt', icon: 'house', budgetEnabled: true },
+      { id: 'p2', name: 'Nhà cửa & gia dụng', icon: 'house', budgetEnabled: false },
+    ],
     expenseTypes: [{ id: 'e1', name: 'Thực phẩm', icon: 'shopping-basket' }],
     paymentMethods: [{ id: 'm1', name: 'Tiền mặt', icon: 'banknote' }],
     addCatalogItem,
@@ -41,6 +44,8 @@ describe('Quản lý danh mục', () => {
 
     expect(screen.getByRole('heading', { name: 'Danh mục', level: 2 })).toHaveClass('page-title');
     expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(3);
+    expect(screen.getByText('Nhà cửa & gia dụng')).toHaveClass('flex-1', 'truncate');
+    expect(screen.getByText('Ẩn ngân sách')).toHaveClass('whitespace-nowrap');
     fireEvent.click(screen.getAllByRole('button', { name: 'Thêm' })[0]!);
     fireEvent.change(screen.getByLabelText('Tên mục đích'), { target: { value: '  Giáo dục  ' } });
     fireEvent.change(screen.getByLabelText('Tìm biểu tượng cho Mục đích'), { target: { value: 'xe đạp' } });
