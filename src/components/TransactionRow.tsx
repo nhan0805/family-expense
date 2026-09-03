@@ -100,7 +100,7 @@ export function TransactionRow({
 
 function CatalogTag({ name, icon }: { name: string; icon?: string }) {
   const Icon = getCatalogIcon(icon);
-  return <span className="transaction-card-tag"><Icon className="catalog-tag-icon shrink-0" size={13} aria-hidden="true" /><span className="min-w-0 truncate">{name}</span></span>;
+  return <span className="transaction-card-tag gap-1.5"><Icon className="catalog-tag-icon shrink-0" size={13} aria-hidden="true" /><span className="min-w-0 truncate">{name}</span></span>;
 }
 
 function CatalogValue({ name, icon }: { name: string; icon?: string }) {

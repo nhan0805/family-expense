@@ -57,6 +57,7 @@ describe('TransactionRow', () => {
     renderRow({ purposeIcon: 'house', expenseTypeIcon: 'utensils', paymentMethodIcon: 'banknote' });
     expect(document.querySelectorAll('.catalog-tag-icon')).toHaveLength(3);
     expect(document.querySelectorAll('.catalog-value-icon')).toHaveLength(3);
+    expect(document.querySelector('.transaction-card-tag')).toHaveClass('gap-1.5');
   });
 
   it('mở menu thao tác khi người dùng bấm nút trên mobile', () => {

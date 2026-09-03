@@ -18,6 +18,7 @@
 
 - Picker Danh mục đã thêm 61 icon phổ biến từ Lucide, gồm `Venus` (kết quả tìm `women`), `CircleDollarSign` và `BanknoteArrowDown`; tổng cộng đúng 100 lựa chọn, tìm được theo tên icon hoặc từ khóa tiếng Việt.
 - Bảng giao dịch desktop đã mở rộng cột Mục đích/Danh mục/Phương thức, bổ sung vùng truncate đúng cho tên và khóa cụm Sao chép/Xóa vào hai ô thao tác đều nhau. Bản sửa text danh mục bị badge `Ẩn ngân sách` che cũng nằm trong cùng thay đổi.
+- Card giao dịch mobile có thêm khoảng cách 6px giữa icon và tên phân loại để tránh cảm giác dính chữ.
 - Files chính: `package.json`, `pnpm-lock.yaml`, `src/lib/catalogIcons.ts`, `src/components/TransactionRow.tsx`, `src/pages/Transactions.tsx` và tests tương ứng. Không thay đổi API, schema, migration, dữ liệu hoặc quy tắc nghiệp vụ.
 - Validation: `pnpm test` đạt 25/25 file, 104/104 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build vẫn cảnh báo chunk ExcelJS lớn đã có từ trước.
 - Trạng thái triển khai dự kiến: Chờ quality checks, commit/push branch, PR vào `main`, auto-merge và Cloudflare Pages production deployment qua Git integration.
