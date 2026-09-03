@@ -2,6 +2,22 @@
 
 ## 2026-09-03
 
+### Đặt bộ lọc mặc định giao dịch theo tháng hiện tại và giao dịch thực tế
+
+- Trước thay đổi: Màn hình Giao dịch đã mặc định theo tháng/năm hiện tại nhưng trạng thái để trống nên vẫn hiển thị cả giao dịch dự kiến; tháng hiện tại còn phụ thuộc múi giờ của thiết bị.
+- Sau thay đổi: Khi mở màn hình không có kỳ hoặc trạng thái trên URL, danh sách lọc theo tháng hiện tại của `Asia/Ho_Chi_Minh` và chỉ hiển thị giao dịch `Thực tế`. Người dùng vẫn có thể chọn `Dự kiến` hoặc xóa bộ lọc.
+- Kỹ thuật: Cập nhật `getInitialTransactionPeriod` và thêm `getInitialTransactionStatus` trong `src/pages/Transactions.tsx`; bổ sung regression test trong `src/pages/Transactions.test.ts` và `src/pages/Transactions.ui.test.tsx`. Không thay đổi API, schema, database, RLS/RPC hoặc quy tắc nghiệp vụ.
+- Kiểm thử: `pnpm test` đạt 24/24 file, 102/102 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build vẫn cảnh báo chunk ExcelJS lớn đã có từ trước.
+- Trạng thái triển khai dự kiến: commit/push branch, tạo PR vào `main`, bật auto-merge; frontend deploy qua Cloudflare Pages Git integration sau khi PR merge.
+
+### Thêm icon cho danh mục và danh sách giao dịch
+
+- Trước thay đổi: Danh mục chỉ hiển thị tên; dữ liệu chỉ có nền tảng icon cũ ở `purposes`, còn danh mục chi phí/phương thức thanh toán và dòng giao dịch chưa có icon.
+- Sau thay đổi: Owner có thể tìm kiếm và chọn icon trực quan trong form Danh mục; toàn bộ danh mục mặc định hiện có được map sẵn; icon hiển thị ở danh sách danh mục và dòng giao dịch mobile/desktop. Icon chỉ lưu dưới dạng key Lucide được allow-list; key lạ hoặc thiếu fallback về `Tag`.
+- Kỹ thuật: Thêm `src/lib/catalogIcons.ts`, test mapping/search; mở rộng `CatalogItem`/AppContext; cập nhật `src/pages/Catalogs.tsx`, `src/components/TransactionRow.tsx`, `src/pages/Transactions.tsx`; thêm migration `supabase/migrations/202609030002_catalog_icons.sql` cho ba bảng catalog và seed mặc định. Không thay đổi ID giao dịch, format import/export, AI hoặc quy tắc nghiệp vụ.
+- Kiểm thử: `pnpm test` đạt 24/24 file, 97/97 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build vẫn cảnh báo chunk ExcelJS lớn đã có từ trước.
+- Triển khai: Đang chuẩn bị PR vào `main`; migration Supabase sẽ được áp dụng qua workflow production sau khi PR merge và frontend sẽ deploy qua Cloudflare Pages Git integration. Chưa dùng Wrangler deploy trực tiếp.
+
 ### Ẩn mục đích khỏi quản lý ngân sách — Phase 7
 
 - Trước thay đổi: Trang Ngân sách hiển thị mọi mục đích đang hoạt động, kể cả các mục như `Thu nhập` không cần theo dõi ngân sách.
@@ -16,7 +32,7 @@
 - Sau thay đổi: Các tiêu đề có badge AI luôn căn cùng một hàng, badge giữ nguyên kích thước và không xuống dòng; chiều cao các trường trong cùng hàng nhất quán trên màn hình form giao dịch.
 - Kỹ thuật: Cập nhật `.label.flex` trong `src/index.css`, badge trong `src/pages/TransactionForm.tsx` và regression assertion trong `src/pages/TransactionForm.test.tsx`. Không thay đổi API, schema, database, RLS/RPC hoặc quy tắc nghiệp vụ.
 - Kiểm thử: `pnpm test` đạt 23/23 file, 93/93 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build vẫn chỉ cảnh báo chunk ExcelJS lớn đã có từ trước.
-- Trạng thái triển khai: Quality checks, commit và push branch đã hoàn tất; đang tạo PR vào `main`, bật auto-merge và chờ required checks trước khi Cloudflare Pages Git integration deploy production.
+- Triển khai: PR [#104](https://github.com/nhan0805/family-expense/pull/104) đã merge vào `main` với merge commit `3fb16e36fa1b1c64de0f6906bdedaa6a968e90f8`; CI main [run 33661370044](https://github.com/nhan0805/family-expense/actions/runs/33661370044) pass với `quality` và `db-security`, Preview và Cloudflare Pages Preview pass. Production `https://family-expense-8fo.pages.dev/` trả HTTP 200 lúc `03/09/2026 00:31` (`Asia/Ho_Chi_Minh`); CSS production chứa `.label.flex` và lazy chunk TransactionForm chứa `shrink-0`/`whitespace-nowrap`. Không có migration nên không chạy Supabase Production Deploy; không dùng Wrangler deploy trực tiếp và không tạo deploy lần hai chỉ để cập nhật tài liệu.
 
 ### Tối ưu hiệu năng AI: aggregate facts, cache và timeout
 

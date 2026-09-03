@@ -20,6 +20,10 @@ import {
   purposeNameEn,
   purposeNames,
 } from '../lib/domain';
+import {
+  getDefaultCatalogIcon,
+  normalizeCatalogIconKey,
+} from '../lib/catalogIcons';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { userFacingError } from '../lib/errorRecovery';
 
@@ -43,6 +47,7 @@ type AppState = {
     kind: CatalogKind,
     name: string,
     nameEn?: string,
+    icon?: string,
     budgetEnabled?: boolean,
   ) => Promise<string | null>;
   updateCatalogItem: (
@@ -50,6 +55,7 @@ type AppState = {
     id: string,
     name: string,
     nameEn?: string,
+    icon?: string,
     budgetEnabled?: boolean,
   ) => Promise<string | null>;
   deleteCatalogItem: (kind: CatalogKind, id: string) => Promise<string | null>;
@@ -61,9 +67,11 @@ type AppState = {
 
 export type CatalogKind = 'purpose' | 'expenseType' | 'paymentMethod';
 const AppContext = createContext<AppState | null>(null);
-const fallbackPurposes = makeItems(purposeNames, purposeNameEn);
-const fallbackExpenseTypes = makeItems(expenseTypeNames, expenseTypeNameEn);
-const fallbackPaymentMethods = makeItems(paymentMethodNames, paymentMethodNameEn);
+const withDefaultIcons = (items: CatalogItem[]) =>
+  items.map((item) => ({ ...item, icon: getDefaultCatalogIcon(item.name) }));
+const fallbackPurposes = withDefaultIcons(makeItems(purposeNames, purposeNameEn));
+const fallbackExpenseTypes = withDefaultIcons(makeItems(expenseTypeNames, expenseTypeNameEn));
+const fallbackPaymentMethods = withDefaultIcons(makeItems(paymentMethodNames, paymentMethodNameEn));
 
 export function shouldReloadAppForAuthEvent(event: AuthChangeEvent) {
   return event !== 'TOKEN_REFRESHED';
@@ -164,19 +172,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const [purposeResult, typeResult, methodResult] = await Promise.all([
         supabase
           .from('purposes')
-          .select('id,name,name_en,color,active,budget_enabled')
+          .select('id,name,name_en,color,icon,active,budget_enabled')
           .eq('family_id', id)
           .eq('active', true)
           .order('sort_order'),
         supabase
           .from('expense_types')
-          .select('id,name,name_en,active')
+          .select('id,name,name_en,icon,active')
           .eq('family_id', id)
           .eq('active', true)
           .order('sort_order'),
         supabase
           .from('payment_methods')
-          .select('id,name,name_en,active')
+          .select('id,name,name_en,icon,active')
           .eq('family_id', id)
           .eq('active', true)
           .order('sort_order'),
@@ -234,9 +242,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const addCatalogItem = useCallback(
-    async (kind: CatalogKind, rawName: string, rawNameEn = '', budgetEnabled = true) => {
+    async (kind: CatalogKind, rawName: string, rawNameEn = '', rawIcon = '', budgetEnabled = true) => {
       const name = rawName.trim().replace(/\s+/g, ' ');
       const nameEn = rawNameEn.trim().replace(/\s+/g, ' ');
+      const icon = normalizeCatalogIconKey(rawIcon);
       if (!familyId) return 'Không tìm thấy gia đình hiện tại.';
       if (!name) return 'Vui lòng nhập tên danh mục.';
       const currentItems =
@@ -267,11 +276,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
             name_en: nameEn || null,
             code,
             color: '#6081a8',
+            icon,
             sort_order: sortOrder,
             active: true,
             budget_enabled: budgetEnabled,
           })
-          .select('id,name,name_en,active,budget_enabled')
+          .select('id,name,name_en,color,icon,active,budget_enabled')
           .single();
         data = result.data as CatalogItemRow | null;
         insertError = result.error;
@@ -283,10 +293,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
             name,
             name_en: nameEn || null,
             code,
+            icon,
             sort_order: sortOrder,
             active: true,
           })
-          .select('id,name,name_en,active')
+          .select('id,name,name_en,icon,active')
           .single();
         data = result.data as CatalogItemRow | null;
         insertError = result.error;
@@ -297,10 +308,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
             family_id: familyId,
             name,
             name_en: nameEn || null,
+            icon,
             sort_order: sortOrder,
             active: true,
           })
-          .select('id,name,name_en,active')
+          .select('id,name,name_en,icon,active')
           .single();
         data = result.data as CatalogItemRow | null;
         insertError = result.error;
@@ -321,9 +333,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   );
 
   const updateCatalogItem = useCallback(
-    async (kind: CatalogKind, id: string, rawName: string, rawNameEn = '', budgetEnabled?: boolean) => {
+    async (kind: CatalogKind, id: string, rawName: string, rawNameEn = '', rawIcon = '', budgetEnabled?: boolean) => {
       const name = rawName.trim().replace(/\s+/g, ' ');
       const nameEn = rawNameEn.trim().replace(/\s+/g, ' ');
+      const icon = normalizeCatalogIconKey(rawIcon);
       if (!familyId) return 'Không tìm thấy gia đình hiện tại.';
       if (!name) return 'Vui lòng nhập tên danh mục.';
       const currentItems =
@@ -352,33 +365,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (kind === 'purpose') {
         const result = await supabase
           .from(table)
-          .update({ name, name_en: nameEn || null, budget_enabled: nextBudgetEnabled })
+          .update({ name, name_en: nameEn || null, icon, budget_enabled: nextBudgetEnabled })
           .eq('id', id)
           .eq('family_id', familyId)
-          .select('id,name,name_en,active,budget_enabled')
+          .select('id,name,name_en,color,icon,active,budget_enabled')
           .single();
         if (result.error)
           return result.error.code === '42501'
             ? 'Chỉ owner mới có quyền sửa danh mục.'
             : result.error.message;
         const replace = (items: CatalogItem[]) =>
-          items.map((item) => (item.id === id ? { ...item, name, nameEn: nameEn || undefined, budgetEnabled: nextBudgetEnabled } : item));
+          items.map((item) => (item.id === id ? { ...item, name, nameEn: nameEn || undefined, icon, budgetEnabled: nextBudgetEnabled } : item));
         setPurposes(replace);
         return null;
       }
       const result = await supabase
         .from(table)
-        .update({ name, name_en: nameEn || null })
+        .update({ name, name_en: nameEn || null, icon })
         .eq('id', id)
         .eq('family_id', familyId)
-        .select('id,name,name_en,active')
+        .select('id,name,name_en,icon,active')
         .single();
       if (result.error)
         return result.error.code === '42501'
           ? 'Chỉ owner mới có quyền sửa danh mục.'
           : result.error.message;
       const replace = (items: CatalogItem[]) =>
-        items.map((item) => (item.id === id ? { ...item, name, nameEn: nameEn || undefined } : item));
+        items.map((item) => (item.id === id ? { ...item, name, nameEn: nameEn || undefined, icon } : item));
       if (kind === 'expenseType') setExpenseTypes(replace);
       else setPaymentMethods(replace);
       return null;

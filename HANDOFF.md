@@ -14,6 +14,15 @@
 - [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
 
+### Handoff — icon cho danh mục và danh sách giao dịch (03/09/2026)
+
+- Trước thay đổi: Danh mục chỉ hiển thị tên; chỉ bảng `purposes` có sẵn cột `icon` nhưng frontend chưa đọc/ghi; danh sách giao dịch nhận và render tên phân loại thuần text.
+- Sau thay đổi: Owner có bộ chọn icon dạng lưới có tìm kiếm theo tên/từ khóa; toàn bộ danh mục mặc định hiện có đã map icon Lucide; icon hiển thị trong danh sách Danh mục và dòng giao dịch ở cả mobile card lẫn desktop table. Native dropdown giao dịch giữ nguyên dạng chữ để bảo đảm tương thích trình duyệt.
+- Backend/domain: migration `supabase/migrations/202609030002_catalog_icons.sql` thêm `icon` cho `expense_types`/`payment_methods`, backfill danh mục hiện có và cập nhật `seed_family_defaults`; `CatalogItem`/mapper/AppContext đọc ghi icon. Icon được lưu là key allow-list, key không hợp lệ fallback `Tag`.
+- Files chính: `src/lib/catalogIcons.ts`, `src/lib/catalogIcons.test.ts`, `src/lib/domain.ts`, `src/context/AppContext.tsx`, `src/pages/Catalogs.tsx`, `src/pages/Catalogs.test.tsx`, `src/components/TransactionRow.tsx`, `src/components/TransactionRow.test.tsx`, `src/pages/Transactions.tsx`.
+- Validation local: `pnpm test` 24/24 file, 97/97 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build còn cảnh báo chunk ExcelJS lớn hiện hữu. Chưa chạy Supabase local vì Docker daemon chưa hoạt động.
+- Trạng thái triển khai: Chưa deploy production; đang chuẩn bị commit/push branch, PR vào `main`, theo dõi required checks, Supabase Production Deploy và Cloudflare Pages Git deployment.
+
 ### Handoff — ẩn mục đích khỏi quản lý ngân sách, Phase 7 (03/09/2026)
 
 - Owner có thể bật/tắt `Theo dõi trong ngân sách` khi thêm hoặc sửa mục đích tại `Danh mục`. Mục bị tắt vẫn xuất hiện trong form giao dịch, nhưng không xuất hiện trên `/ngan-sach` và không ảnh hưởng tổng ngân sách, cảnh báo hay số tiền chưa phân bổ.
@@ -22,13 +31,21 @@
 - Validation local: Vitest (`vitest run`, tương đương script `pnpm test`) 23/23 file, 96/96 test; lint, typecheck, build và `git diff --check` pass. Local DB security chưa chạy vì PostgreSQL tại `127.0.0.1:54322` chưa hoạt động; required `db-security` sẽ xác nhận migration/RLS trên PR.
 - Trạng thái triển khai dự kiến: chờ PR vào `main`, required checks, Supabase Production Deploy và Cloudflare Pages production deployment của merge commit.
 
+### Handoff — bộ lọc mặc định màn hình giao dịch (03/09/2026)
+
+- Khi mở `/giao-dich` không có kỳ hoặc trạng thái trên URL, bộ lọc chọn tháng/năm hiện tại theo `Asia/Ho_Chi_Minh` và trạng thái `Thực tế`; giao dịch `Dự kiến` không xuất hiện trong danh sách mặc định.
+- Người dùng vẫn có thể chọn trạng thái `Dự kiến`, khoảng thời gian hoặc xóa bộ lọc; tham số URL hợp lệ được giữ nguyên.
+- Files chính: `src/pages/Transactions.tsx`, `src/pages/Transactions.test.ts`, `src/pages/Transactions.ui.test.tsx`. Không thay đổi API, schema, migration, RLS/RPC, dữ liệu hoặc quy tắc nghiệp vụ.
+- Validation local: `pnpm test` đạt 24/24 file, 102/102 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build vẫn cảnh báo chunk ExcelJS lớn đã có từ trước.
+- Trạng thái triển khai dự kiến: quality checks local đã pass; tiếp theo commit/push branch, PR vào `main`, required checks và Cloudflare Pages production deployment sau khi merge.
+
 ### Handoff — căn đều tiêu đề và khung trường trong form giao dịch (03/09/2026)
 
 - Trước thay đổi: Rule `.label` chung ghi đè `display: flex`, khiến badge `AI đề xuất` của `Phương thức thanh toán` bị xuống dòng và làm lệch chiều cao các khung trong hàng phân loại.
 - Sau thay đổi: `.label.flex` được khôi phục đúng cơ chế flex; badge AI không co/không xuống dòng, nên các tiêu đề và khung trường trong cùng hàng căn đều trên desktop và mobile.
 - Files chính: `src/index.css`, `src/pages/TransactionForm.tsx`, `src/pages/TransactionForm.test.tsx`. Không thay đổi API, schema, database, RLS/RPC hoặc quy tắc nghiệp vụ.
 - Validation: `pnpm test` đạt 23/23 file, 93/93 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build vẫn chỉ cảnh báo chunk ExcelJS lớn đã có từ trước.
-- Trạng thái triển khai: Đã commit và push branch; đang tạo PR vào `main`, bật auto-merge và theo dõi required checks. Frontend deploy qua Cloudflare Pages Git integration sau khi PR merge.
+- Trạng thái triển khai: Đã merge PR [#104](https://github.com/nhan0805/family-expense/pull/104) vào `main` với merge commit `3fb16e36fa1b1c64de0f6906bdedaa6a968e90f8`. CI main [33661370044](https://github.com/nhan0805/family-expense/actions/runs/33661370044) pass với `quality` và `db-security`; Preview/Cloudflare Pages Preview pass. Cloudflare Pages production `https://family-expense-8fo.pages.dev/` trả HTTP 200 lúc `03/09/2026 00:31` (`Asia/Ho_Chi_Minh`); CSS production có `.label.flex`, lazy chunk TransactionForm có `shrink-0` và `whitespace-nowrap`. Không có migration nên không cần Supabase Production Deploy; không tạo deploy lần hai chỉ để cập nhật handoff.
 
 ### Handoff — tối ưu hiệu năng AI: aggregate facts, cache và timeout (03/09/2026)
 

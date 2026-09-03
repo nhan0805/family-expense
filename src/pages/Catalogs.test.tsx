@@ -13,9 +13,9 @@ const deleteCatalogItem = vi.fn();
 function appState(role: 'owner' | 'member') {
   return {
     currentUserRole: role,
-    purposes: [{ id: 'p1', name: 'Sinh hoạt', budgetEnabled: true }],
-    expenseTypes: [{ id: 'e1', name: 'Thực phẩm' }],
-    paymentMethods: [{ id: 'm1', name: 'Tiền mặt' }],
+    purposes: [{ id: 'p1', name: 'Sinh hoạt', icon: 'house', budgetEnabled: true }],
+    expenseTypes: [{ id: 'e1', name: 'Thực phẩm', icon: 'shopping-basket' }],
+    paymentMethods: [{ id: 'm1', name: 'Tiền mặt', icon: 'banknote' }],
     addCatalogItem,
     updateCatalogItem,
     deleteCatalogItem,
@@ -43,9 +43,11 @@ describe('Quản lý danh mục', () => {
     expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(3);
     fireEvent.click(screen.getAllByRole('button', { name: 'Thêm' })[0]!);
     fireEvent.change(screen.getByLabelText('Tên mục đích'), { target: { value: '  Giáo dục  ' } });
+    fireEvent.change(screen.getByLabelText('Tìm biểu tượng cho Mục đích'), { target: { value: 'xe đạp' } });
+    fireEvent.click(screen.getByRole('option', { name: 'Bike' }));
     fireEvent.click(screen.getByRole('button', { name: 'Lưu danh mục' }));
 
-    await waitFor(() => expect(addCatalogItem).toHaveBeenCalledWith('purpose', '  Giáo dục  ', '', true));
+    await waitFor(() => expect(addCatalogItem).toHaveBeenCalledWith('purpose', '  Giáo dục  ', '', 'bike', true));
   });
 
   it('cho owner đổi tên và xóa danh mục', async () => {
@@ -56,7 +58,7 @@ describe('Quản lý danh mục', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Sửa Sinh hoạt' }));
     fireEvent.change(screen.getByLabelText('Đổi tên mục đích'), { target: { value: 'Gia đình' } });
     fireEvent.click(screen.getByRole('button', { name: 'Lưu tên mới' }));
-    await waitFor(() => expect(updateCatalogItem).toHaveBeenCalledWith('purpose', 'p1', 'Gia đình', '', true));
+    await waitFor(() => expect(updateCatalogItem).toHaveBeenCalledWith('purpose', 'p1', 'Gia đình', '', 'house', true));
 
     fireEvent.click(screen.getByRole('button', { name: 'Xóa Sinh hoạt' }));
     await waitFor(() => expect(deleteCatalogItem).toHaveBeenCalledWith('purpose', 'p1'));
@@ -82,7 +84,7 @@ describe('Quản lý danh mục', () => {
     fireEvent.click(budgetToggle);
     fireEvent.click(screen.getByRole('button', { name: 'Lưu tên mới' }));
 
-    await waitFor(() => expect(updateCatalogItem).toHaveBeenCalledWith('purpose', 'p1', 'Sinh hoạt', '', false));
+    await waitFor(() => expect(updateCatalogItem).toHaveBeenCalledWith('purpose', 'p1', 'Sinh hoạt', '', 'house', false));
   });
 
   it('hiển thị lỗi nghiệp vụ từ database', async () => {
