@@ -487,7 +487,7 @@ export function TransactionForm() {
     return <PageSkeleton label={en ? 'Loading transaction…' : 'Đang tải thông tin giao dịch…'}/>;
   if (id && isSupabaseConfigured && (existingQuery.isError || !existing))
     return (
-      <p role="alert" className="rounded-xl bg-red-50 p-4 text-red-700">
+      <p role="alert" className="rounded-xl bg-red-50 p-4 text-red-700 dark:bg-red-950/30 dark:text-red-300">
         {en ? 'Transaction not found or you do not have access.' : 'Không tìm thấy giao dịch hoặc bạn không có quyền truy cập.'}
       </p>
     );
@@ -510,7 +510,7 @@ export function TransactionForm() {
           <p className="form-hint text-xs md:col-span-3">
             {en ? 'Fields marked with ' : 'Các trường có '}<span className="font-bold text-red-600">*</span>{en ? ' are required.' : ' là bắt buộc.'}
           </p>
-          <div className="form-section-heading form-section-heading-primary md:col-span-3"><h3 className="font-bold">{en ? 'Basic information' : 'Thông tin chính'}</h3><p className="text-xs text-gray-500">{en ? 'Enter the information needed to record this transaction.' : 'Nhập các thông tin cần thiết để ghi nhận giao dịch.'}</p></div>
+          <div className="form-section-heading form-section-heading-primary md:col-span-3"><h3 className="font-bold">{en ? 'Basic information' : 'Thông tin chính'}</h3><p className="text-xs text-gray-500 dark:text-gray-400">{en ? 'Enter the information needed to record this transaction.' : 'Nhập các thông tin cần thiết để ghi nhận giao dịch.'}</p></div>
           <div className="md:col-span-3">
             <label className="label flex items-center gap-2" htmlFor="transaction-description">
               <span>{en ? 'Description' : 'Nội dung'} <span className="text-red-600" aria-hidden="true">*</span></span>
@@ -549,8 +549,8 @@ export function TransactionForm() {
                 <span className="hidden sm:inline">{aiBusy ? (en ? 'Analyzing…' : 'Đang phân tích…') : aiCompleted ? (en ? 'Filled' : 'Đã điền') : (en ? 'AI suggest' : 'Gợi ý AI')}</span>
               </button>
             </div>
-            {errors.description?.message && <span className="mt-1 block text-xs text-red-600">{errors.description.message}</span>}
-            <p className="mt-1 text-xs text-gray-500">{en ? 'Type or use the microphone to convert speech to text, then select AI if needed. AI can use your family’s confirmed history to suggest categories. The app does not store audio and suggestions are never saved automatically.' : 'Nhập tay hoặc dùng micro để chuyển giọng nói thành chữ, sau đó nhấn AI nếu cần. AI có thể tham khảo lịch sử đã xác nhận của gia đình để gợi ý danh mục. App không lưu audio và gợi ý không được tự động lưu.'}</p>
+            {errors.description?.message && <span className="mt-1 block text-xs text-red-600 dark:text-red-300">{errors.description.message}</span>}
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{en ? 'Type or use the microphone to convert speech to text, then select AI if needed. AI can use your family’s confirmed history to suggest categories. The app does not store audio and suggestions are never saved automatically.' : 'Nhập tay hoặc dùng micro để chuyển giọng nói thành chữ, sau đó nhấn AI nếu cần. AI có thể tham khảo lịch sử đã xác nhận của gia đình để gợi ý danh mục. App không lưu audio và gợi ý không được tự động lưu.'}</p>
             {aiError && <div role="alert" className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-red-50 p-2 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300"><span>{aiError}</span><button type="button" className="btn-secondary px-3 py-1.5 text-xs" onClick={() => void parseAi()}>{en ? 'Retry' : 'Thử lại'}</button></div>}
           </div>
           {aiResult && aiResultVisible && (
@@ -608,7 +608,7 @@ export function TransactionForm() {
               <option value="Thu nhập">{en ? 'Money in' : 'Tiền vào'}</option>
             </select>
           </Field>
-          <div className="form-section-heading md:col-span-3"><h3 className="font-bold">{en ? 'Classification' : 'Phân loại'}</h3><p className="text-xs text-gray-500">{en ? 'Helps keep the dashboard and reports accurate.' : 'Giúp Dashboard và báo cáo tổng hợp chính xác.'}</p></div>
+          <div className="form-section-heading md:col-span-3"><h3 className="font-bold">{en ? 'Classification' : 'Phân loại'}</h3><p className="text-xs text-gray-500 dark:text-gray-400">{en ? 'Helps keep the dashboard and reports accurate.' : 'Giúp Dashboard và báo cáo tổng hợp chính xác.'}</p></div>
           <Field
             label={en ? 'Payment method' : 'Phương thức thanh toán'}
             required
@@ -661,7 +661,7 @@ export function TransactionForm() {
                 <option value="Thực tế">{en ? 'Actual' : 'Thực tế'}</option>
                 <option value="Dự kiến">{en ? 'Planned' : 'Dự kiến'}</option>
               </select>
-              <span className="mt-1 block text-xs text-gray-500">{en ? 'The app selects this from the transaction date. Change it only when the actual status differs from the date.' : 'Ứng dụng tự chọn theo ngày giao dịch. Chỉ thay đổi khi giao dịch chưa hoặc đã thực sự phát sinh khác với ngày.'}</span>
+              <span className="mt-1 block text-xs text-gray-500 dark:text-gray-400">{en ? 'The app selects this from the transaction date. Change it only when the actual status differs from the date.' : 'Ứng dụng tự chọn theo ngày giao dịch. Chỉ thay đổi khi giao dịch chưa hoặc đã thực sự phát sinh khác với ngày.'}</span>
             </Field>
             <Field label={en ? 'Notes' : 'Ghi chú'}>
               <textarea className="field min-h-24" {...register('note')} />
@@ -742,7 +742,7 @@ function Field({
       </span>
       {children}
       {error && (
-        <span className="mt-1 block text-xs text-red-600">{error}</span>
+        <span className="mt-1 block text-xs text-red-600 dark:text-red-300">{error}</span>
       )}
     </label>
   );

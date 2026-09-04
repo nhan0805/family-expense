@@ -452,7 +452,7 @@ export function ImportExport() {
         <p className="page-kicker">{en ? 'Data center' : 'Trung tâm dữ liệu'}</p>
         <h2 className="page-title">{en ? 'Data' : 'Dữ liệu'}</h2>
         <p className="page-subtitle">{en ? 'Excel currently uses Vietnamese templates for compatibility with existing files.' : 'Excel hiện dùng template tiếng Việt để tương thích với các file hiện có.'}</p>
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           {en ? 'Import, export and manage family transaction data.' : 'Nhập, xuất và quản lý dữ liệu giao dịch của gia đình.'}
         </p>
       </div>
@@ -463,7 +463,7 @@ export function ImportExport() {
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#137050] dark:text-[#bd93f9]">{en ? 'Data tools' : 'Công cụ dữ liệu'}</p>
             <h3 id="data-tools-title" className="mt-1 text-lg font-extrabold">{en ? 'Import, export and share' : 'Nhập, xuất và chia sẻ'}</h3>
           </div>
-          <span className="hidden text-xs text-gray-500 sm:inline">{en ? 'Family data' : 'Dữ liệu của gia đình'}</span>
+          <span className="hidden text-xs text-gray-500 dark:text-gray-400 sm:inline">{en ? 'Family data' : 'Dữ liệu của gia đình'}</span>
         </div>
         <div className="data-tools-grid grid gap-4 lg:grid-cols-3">
         <DataCard
@@ -509,7 +509,7 @@ export function ImportExport() {
           description={en ? 'Send all active transactions to the family owner’s account email.' : 'Gửi toàn bộ giao dịch đang hoạt động tới email tài khoản của chủ gia đình.'}
           tone="blue"
         >
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             {en ? 'Recipient: ' : 'Người nhận: '}{currentUserEmail || (en ? 'unknown' : 'chưa xác định')}
           </p>
           <button
@@ -544,7 +544,7 @@ export function ImportExport() {
               <h3 className="font-bold">{en ? 'Import transactions' : 'Import giao dịch'}</h3>
               <span className="rounded-full bg-[#e3f2e9] px-2 py-0.5 text-[11px] font-bold text-[#145c43] dark:bg-[#50fa7b1f] dark:text-[#50fa7b]">{en ? 'Safe · confirmation required' : 'An toàn · cần xác nhận'}</span>
             </div>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               {en ? 'Choose an .xlsx file downloaded from the app. Data is saved only after you review and confirm it.' : 'Chọn file .xlsx được tải từ ứng dụng. Dữ liệu chỉ được ghi sau khi bạn kiểm tra và xác nhận.'}
             </p>
           </div>
@@ -564,12 +564,12 @@ export function ImportExport() {
           >
             <FileCheck2 className="text-[#145c43] dark:text-[#50fa7b]" size={30} />
             <span className="font-semibold">{en ? 'Choose an Excel file to validate' : 'Chọn file Excel để kiểm tra'}</span>
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-gray-500 dark:text-gray-400">
               {en ? 'Only .xlsx files using the Family Expense template are accepted; you can drag a file here.' : 'Chỉ nhận file .xlsx đúng template Family Expense; có thể kéo file từ Finder và thả vào đây'}
             </span>
             <button
               type="button"
-              className="rounded-lg border border-[#b8c9bf] bg-white px-4 py-2 text-sm font-semibold dark:bg-[#343746]"
+              className="rounded-lg border border-[#b8c9bf] bg-white px-4 py-2 text-sm font-semibold dark:border-[#6272a4] dark:bg-[#343746]"
               onClick={() => void chooseImportFile()}
             >
               {en ? 'Choose Excel file' : 'Chọn file Excel'}
@@ -667,7 +667,7 @@ export function ImportExport() {
                       </tr>
                     ))}
                     {importErrors.slice(0, 100).map((r) => (
-                      <tr className="border-t text-red-700" key={r.rowNumber}>
+                      <tr className="border-t border-black/10 text-red-700 dark:border-white/10 dark:text-red-300" key={r.rowNumber}>
                         <td className="p-2">{r.rowNumber}</td>
                         <td colSpan={3}>{r.messages.join('; ')}</td>
                         <td>{en ? 'Error' : 'Lỗi'}</td>
@@ -719,7 +719,7 @@ function DataCard({
         <span className={`data-card-icon rounded-xl p-3 ${iconClass}`}>{icon}</span>
         <div className="data-card-content">
           <h3 className="text-lg font-extrabold">{title}</h3>
-          <p className="data-card-description mt-1 line-clamp-3 text-sm leading-6 text-gray-500">{description}</p>
+          <p className="data-card-description mt-1 line-clamp-3 text-sm leading-6 text-gray-500 dark:text-gray-400">{description}</p>
         </div>
       </div>
       <div className="data-card-actions">{children}</div>
@@ -731,7 +731,7 @@ function Stat({ label, value }: { label: string; value: number }) {
   return (
     <div className="data-stat rounded-xl p-3 text-center">
       <strong className="block text-xl">{value}</strong>
-      <span className="text-xs text-gray-500">{label}</span>
+      <span className="text-xs text-gray-500 dark:text-gray-400">{label}</span>
     </div>
   );
 }

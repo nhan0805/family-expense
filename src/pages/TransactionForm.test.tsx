@@ -34,6 +34,7 @@ describe('Form giao dịch hợp nhất', () => {
     expect(screen.queryByText('Nhập thông thường')).not.toBeInTheDocument();
     expect(screen.queryByText('Nhập bằng AI')).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Thêm giao dịch' })).toHaveClass('page-title');
+    expect(screen.getByText('Nhập các thông tin cần thiết để ghi nhận giao dịch.')).toHaveClass('text-gray-500', 'dark:text-gray-400');
     expect(screen.getByRole('form')).toHaveClass('form-panel');
     expect(screen.getByLabelText(/Nội dung/)).not.toHaveAttribute('placeholder');
     expect(screen.getByLabelText(/Nội dung/)).toHaveClass('field-with-trailing-action');

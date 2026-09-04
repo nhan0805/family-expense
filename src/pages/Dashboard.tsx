@@ -66,7 +66,14 @@ const englishMonthNames = [
   'November',
   'December',
 ] as const;
-const chartColors = ['#155e46', '#e6b85c', '#d97757', '#6081a8', '#7b6aa2', '#2c8a83'];
+const chartColors = [
+  'var(--chart-1)',
+  'var(--chart-2)',
+  'var(--chart-3)',
+  'var(--chart-4)',
+  'var(--chart-5)',
+  'var(--chart-6)',
+];
 const modeLabels: Record<DashboardMode, { vi: string; en: string }> = {
   month: { vi: 'Tháng', en: 'Month' },
   '6m': { vi: '6 tháng', en: '6 months' },
@@ -206,7 +213,7 @@ function groupTransactions(
   return [...grouped.values()]
     .filter((item) => item.value > 0)
     .sort((a, b) => b.value - a.value)
-    .map((item, index) => ({ ...item, fill: chartColors[index % chartColors.length] || '#155e46' }));
+    .map((item, index) => ({ ...item, fill: chartColors[index % chartColors.length] || 'var(--chart-1)' }));
 }
 
 type ExpenseChartItem = { id: string; name: string; value: number; fill: string };
@@ -528,7 +535,7 @@ function MiniTrend({ values, label }: { values: number[]; label: string }) {
   const min = Math.min(...values, 0);
   const span = Math.max(max - min, 1);
   const points = values.map((value, index) => `${(index / Math.max(values.length - 1, 1)) * width},${height - ((value - min) / span) * (height - 6) - 3}`).join(' ');
-  return <svg viewBox={`0 0 ${width} ${height}`} className="h-10 w-full min-w-0 text-[#247df2]" role="img" aria-label={label}><polyline points={points} fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg>;
+  return <svg viewBox={`0 0 ${width} ${height}`} className="h-10 w-full min-w-0 text-[var(--chart-net)]" role="img" aria-label={label}><polyline points={points} fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg>;
 }
 
 function ExpensePieChart({ title, data, to, filterKey, en, income = false }: { title: string; data: ExpenseChartItem[]; to: string; filterKey: 'purposeId' | 'expenseTypeId'; en: boolean; income?: boolean }) {

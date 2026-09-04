@@ -109,7 +109,7 @@ export function MultiSelectField({
               );
             })
           ) : (
-            <p className="px-2.5 py-2 text-sm text-gray-500">
+            <p className="px-2.5 py-2 text-sm text-gray-500 dark:text-gray-400">
               {language === 'en' ? 'No options' : 'Chưa có lựa chọn'}
             </p>
           )}

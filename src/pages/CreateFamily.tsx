@@ -61,7 +61,7 @@ export function CreateFamily() {
             FAMILY EXPENSE
           </p>
           <h1 className="mt-1 text-2xl font-extrabold">{en ? 'Create a new family' : 'Tạo gia đình mới'}</h1>
-          <p className="mt-2 text-sm text-gray-500">
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
             {en ? 'You will become the family owner and can add members after setup.' : 'Bạn sẽ là Chủ gia đình và có thể thêm thành viên sau khi hoàn tất.'}
           </p>
         </div>
@@ -92,12 +92,12 @@ export function CreateFamily() {
         {message && (
           <p
             role="alert"
-            className="rounded-xl bg-red-50 p-3 text-sm text-red-700"
+            className="rounded-xl bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300"
           >
             {message}
           </p>
         )}
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-gray-500 dark:text-gray-400">
           {en ? 'The system will create default purposes, expense types and payment methods.' : 'Hệ thống sẽ tạo sẵn mục đích chi, loại chi phí và phương thức thanh toán mặc định.'}
         </p>
       </form>

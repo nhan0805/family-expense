@@ -33,6 +33,29 @@
 - Kỹ thuật: mở rộng `AppContext` với `currentUserDisplayName`, đọc `family_members.display_name` theo đúng user/family đang hoạt động và cập nhật regression test cho context/layout. Không thêm migration, không đổi API/RLS/RPC hay dữ liệu.
 - Kiểm thử: `pnpm test` đạt 29/29 file, 121/121 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass.
 - Trạng thái triển khai: Đang chuẩn bị deploy production qua PR và Git integration của Cloudflare Pages.
+### Hoàn thiện theme Dracula cho dark mode
+
+- Trước thay đổi: Chữ phụ ở Dữ liệu, Thành viên, Giao dịch, form và auth còn dùng màu `text-gray-500` thiếu dark variant; một số lỗi còn nền `bg-red-50`; nút thao tác hàng loạt và biểu đồ xu hướng chưa đổi đúng theo dark mode.
+- Sau thay đổi: Dùng màu muted/error theo Dracula cho các route và state liên quan; nút thao tác hàng loạt dùng accent dark; biểu đồ có palette, grid, trục, legend và tooltip theo biến light/dark; nút chọn file và dòng lỗi import có viền/màu dark phù hợp.
+- Kỹ thuật: Cập nhật `src/index.css`, các UI page/component liên quan và thêm assertion hồi quy trong `src/pages/ImportExport.test.tsx`, `src/pages/TransactionForm.test.tsx`. Không có migration mới, không đổi API, schema, RLS/RPC hoặc dữ liệu.
+- Kiểm thử: `pnpm test` đạt 29/29 file, 121/121 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build còn cảnh báo chunk ExcelJS lớn đã có từ trước.
+- Trạng thái triển khai dự kiến: Push nhánh `codex/transaction-filter-ui-20260904`, tạo PR vào `main`, bật auto-merge và chờ Cloudflare Pages production deploy qua Git integration.
+
+### Khắc phục AI search không tải được danh sách giao dịch
+
+- Trước thay đổi: Bảng `transaction_embeddings` có thể vẫn trống vì backfill được thiết kế lazy; khi AI đi vào semantic path, payload vector/RPC runtime có thể khiến bước tạo embedding hoặc truy vấn thất bại và UI chỉ hiện lỗi tải danh sách.
+- Sau thay đổi: Vector được gửi tới RPC dưới dạng pgvector literal; hash nội dung backfill dùng `md5` built-in, không phụ thuộc schema cài `pgcrypto`; migration gửi yêu cầu reload schema cho PostgREST. Bảng embedding vẫn chỉ tăng dữ liệu khi có semantic search, không tự sinh hàng loạt ngay lúc migrate.
+- Kỹ thuật: cập nhật `supabase/functions/_shared/transactionEmbedding.ts`, `process-transaction-embeddings`, `search-transactions-semantic` và thêm migration `supabase/migrations/202609040003_fix_transaction_embedding_runtime.sql`. Không đọc hoặc ghi trực tiếp dữ liệu tài chính ngoài luồng tìm kiếm của user.
+- Kiểm thử: `pnpm test` đạt 29/29 file, 121/121 test; typecheck, lint, build và `git diff --check` pass. Playwright đã khởi động được sau khi cài browser nhưng 2 test cloud bị bỏ qua vì chưa có `E2E_EMAIL`/`E2E_PASSWORD`.
+- Trạng thái triển khai: Chưa deploy production; thay đổi đang được kiểm tra cùng PR UI.
+
+### Căn mũi tên cùng hàng cho bộ lọc multi-select
+
+- Trước thay đổi: Trigger Mục đích, Danh mục và Phương thức thanh toán bị áp `display: block` từ class `.field`, khiến mũi tên rơi xuống dòng dưới và ô cao hơn các select còn lại.
+- Sau thay đổi: Trigger multi-select có `display: flex`, căn nội dung và mũi tên cùng hàng, giữ chiều cao đồng nhất với các box lọc khác.
+- Kỹ thuật: thêm class CSS scoped `multi-select-trigger` trong `src/components/MultiSelectField.tsx` và `src/index.css`; bổ sung regression assertion trong `src/pages/Transactions.ui.test.tsx`. Đồng thời chuẩn hóa vector gửi vào RPC semantic thành pgvector literal và dùng `md5` ổn định cho backfill qua migration `supabase/migrations/202609040003_fix_transaction_embedding_runtime.sql`. Không đổi API nghiệp vụ hoặc dữ liệu giao dịch.
+- Kiểm thử: `pnpm test` đạt 29/29 file, 121/121 test; typecheck, lint, build và `git diff --check` pass. Playwright đã khởi động được sau khi cài browser nhưng 2 test cloud bị bỏ qua vì chưa có `E2E_EMAIL`/`E2E_PASSWORD`.
+- Trạng thái triển khai: Chưa deploy production; thay đổi đang ở workspace.
 
 ### Multi-select manual/AI và semantic search cho giao dịch
 
