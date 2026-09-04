@@ -14,30 +14,13 @@
 - [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
 
-### Handoff — highlight user hiện tại trong Thành viên (04/09/2026)
-
-- Danh sách Thành viên hiện nhận diện dòng có `member.user_id === currentUserId` bằng nền/viền accent theo theme và badge theo ngôn ngữ (`Bạn`/`You`).
-- Có accessible label `tài khoản đang đăng nhập` cho đúng dòng; không thay đổi quyền sửa/xóa hoặc luồng dữ liệu.
-- Files: `src/pages/Members.tsx`, `src/index.css`, `src/context/LanguageContext.tsx`, `src/pages/Members.test.tsx`. Không có migration mới, không đổi API/schema/RLS/RPC.
-- Validation: test Members, lint file thay đổi, typecheck, build và `git diff --check` pass.
-- Trạng thái triển khai: Đang chuẩn bị deploy production qua PR và Git integration của Cloudflare Pages.
-
-### Handoff — hiển thị tên người dùng và liên kết Thành viên (04/09/2026)
-
-- Header hiện ưu tiên tên hiển thị (`family_members.display_name`) của user đang đăng nhập; nếu chưa có tên thì fallback về tên trong metadata tài khoản hoặc email.
-- Tên ở header desktop và mobile có thể bấm để mở `/thanh-vien`; route Thành viên, quyền truy cập và dữ liệu thành viên không thay đổi.
-- Files: `src/context/AppContext.tsx`, `src/components/Layout.tsx`, `src/context/AppContext.ui.test.tsx`, `src/components/Layout.test.tsx`. Không có migration mới, không đổi API/schema/RLS/RPC.
-- Validation: test tập trung `Layout` và `AppContext` đạt 2/2; lint các file thay đổi, typecheck và `git diff --check` pass.
-- Trạng thái triển khai: Đang chuẩn bị deploy production qua PR và Git integration của Cloudflare Pages.
-
 ### Handoff — multi-select và semantic search giao dịch (04/09/2026)
 
 - Đã chuyển bộ lọc Mục đích, Danh mục và Phương thức thanh toán sang chọn nhiều; nhiều giá trị trong cùng nhóm là OR, các nhóm khác là AND. Bộ lọc hoạt động cho cả demo local và RPC cloud mới.
 - AI search `search-transactions` đã đổi schema sang `purposeIds`, `expenseTypeIds`, `paymentMethodIds` và thêm `semanticQuery`. UI áp dụng toàn bộ ID hợp lệ từ AI, không tự lưu giao dịch.
 - Semantic search dùng `pgvector` trong Supabase Postgres, model built-in `gte-small` 384 chiều trong Edge Functions; chỉ embedding `description` + `note`. `process-transaction-embeddings` backfill lazy theo batch khi semantic search được gọi, `search-transactions-semantic` lọc cấu trúc bằng SQL rồi xếp hạng cosine similarity. Không gọi Gemini để tạo embedding.
 - Files chính: `src/components/MultiSelectField.tsx`, `src/pages/Transactions.tsx`, `src/lib/transactionsApi.ts`, `src/lib/ai.ts`, `supabase/migrations/202609040002_transaction_search_semantic.sql`, `supabase/functions/_shared/transactionEmbedding.ts`, `supabase/functions/process-transaction-embeddings/index.ts`, `supabase/functions/search-transactions-semantic/index.ts`, `supabase/functions/search-transactions/index.ts`, `supabase/config.toml`, `.github/workflows/supabase-deploy.yml`.
-- Validation: Vitest đạt 29/29 file, 121/121 test; typecheck, lint, coverage, build và `git diff --check` pass ở local. pgTAP local không chạy được vì Docker/database local không hoạt động (`127.0.0.1:54322` từ chối kết nối), nhưng CI đã chạy migration/RLS test pass ở PR và `main`; Playwright local chưa chạy assertion vì thiếu browser binaries.
-- Trạng thái triển khai thực tế: PR [#117](https://github.com/nhan0805/family-expense/pull/117) đã merge vào `main` với merge commit `516eb83aeb5de14f18c32572312ee8d7ca366dab`. CI main [run 33862005988](https://github.com/nhan0805/family-expense/actions/runs/33862005988) pass với `quality` và `db-security`; Supabase Production Deploy [run 33862006229](https://github.com/nhan0805/family-expense/actions/runs/33862006229) pass, đã áp migration và deploy hai Edge Function. Cloudflare Pages production `https://family-expense-8fo.pages.dev/` trả HTTP 200 và bundle live có `process-transaction-embeddings`/`search-transactions-semantic` lúc `04/09/2026 17:18` (`Asia/Ho_Chi_Minh`). Cập nhật tài liệu sau deploy chỉ ở local để tránh tạo deploy lần hai; không dùng Wrangler trực tiếp.
+- Validation hiện tại: Vitest 29/29 file, 121/121 test; typecheck, lint và `git diff --check` pass. pgTAP local chưa chạy được vì Docker/database local không hoạt động (`127.0.0.1:54322` từ chối kết nối). Chưa chạy production migration/deploy.
 
 ### Handoff — chuyển Danh mục sang tab để bỏ thanh cuộn ngang (04/09/2026)
 
