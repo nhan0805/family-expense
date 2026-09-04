@@ -928,6 +928,32 @@ summary:focus-visible {
   background: var(--surface-subtle);
 }
 
+.member-row-current {
+  background: color-mix(in srgb, var(--primary-soft) 58%, transparent);
+  box-shadow: inset .2rem 0 var(--primary);
+}
+
+.member-row-current:hover {
+  background: color-mix(in srgb, var(--primary-soft) 72%, transparent);
+}
+
+.current-user-badge {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid color-mix(in srgb, var(--primary) 48%, var(--border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary-soft) 72%, transparent);
+  color: var(--primary-strong);
+  font-size: .72rem;
+  font-weight: 800;
+  line-height: 1;
+  padding: .3rem .55rem;
+}
+
+.dark .current-user-badge {
+  color: var(--primary);
+}
+
 .member-avatar {
   display: grid;
   place-items: center;
