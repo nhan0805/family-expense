@@ -14,14 +14,6 @@
 - [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
 
-### Handoff — khắc phục Edge Function vượt giới hạn CPU khi AI search (04/09/2026)
-
-- Nguyên nhân đã xác nhận từ log production: `process-transaction-embeddings` bị `546 WORKER_RESOURCE_LIMIT` / `CPU Time exceeded` khi tạo session embedding mới cho từng giao dịch; AI search dừng trước bước semantic search. Đây cũng giải thích vì sao manual search vẫn hoạt động.
-- Bản sửa: tái sử dụng một session `gte-small` trong Edge Function isolate, giữ nguyên batch semantic search và không thay đổi schema, RPC hay dữ liệu production. Backfill dữ liệu cũ vẫn là luồng riêng, không tự chạy hàng loạt.
-- Files: `supabase/functions/_shared/transactionEmbedding.ts`, `src/lib/transactionsApi.test.ts`.
-- Validation: CI `quality` và `db-security` pass; local 30/30 file, 122/122 test, typecheck, lint, build và `git diff --check` pass.
-- Trạng thái triển khai thực tế: PR [#120](https://github.com/nhan0805/family-expense/pull/120) đã merge với merge commit `fbfbee827212980a9c7b99b58c40e56b999c9b5e`; Supabase Production Deploy [run 33877296064](https://github.com/nhan0805/family-expense/actions/runs/33877296064) pass; Cloudflare Pages production check pass trên merge commit; production trả HTTP 200.
-
 ### Handoff — loại bỏ account và event khỏi luồng ứng dụng (04/09/2026)
 
 - Giao diện form giao dịch, template/import hiện hành và export đã không hiển thị hai trường này; bản sửa lần này dọn nốt các tham chiếu frontend còn lại trong schema, draft, payload tạo/sao chép, parser Excel cũ và quan hệ truy vấn export.
@@ -30,13 +22,29 @@
 - Validation: Full suite đạt 29/29 file, 122/122 test; typecheck, lint, build và `git diff --check` pass.
 - Trạng thái triển khai: Đang ở workspace; chưa deploy production.
 
+### Handoff — giữ kết quả AI search khi backfill embedding lỗi (04/09/2026)
+
+- Ảnh người dùng cho thấy `search-transactions` đã phân tích đúng `semanticQuery` và bộ lọc `Quần áo`, nhưng query giao dịch vẫn rơi vào lỗi tải danh sách. Nguyên nhân phù hợp với việc backfill lazy gặp giới hạn CPU trước khi semantic RPC hoàn tất.
+- Bản sửa: giảm batch lazy từ 20 xuống 5, coi lỗi backfill là best-effort để vẫn chạy semantic search; truyền câu semantic vào bộ lọc từ khóa; migration `202609040004_semantic_search_missing_embeddings.sql` đổi RPC semantic sang `left join` và chấm điểm 0 cho dòng chưa có embedding, để bộ lọc cấu trúc/từ khóa vẫn trả kết quả.
+- Files: `src/lib/transactionsApi.ts`, `src/lib/transactionsApi.test.ts`, `supabase/migrations/202609040004_semantic_search_missing_embeddings.sql`. Không đổi model, schema bảng embedding, dữ liệu giao dịch hay quyền RLS ngoài việc thay thế cùng RPC đã có.
+- Validation: `pnpm test` đạt 30/30 file, 123/123 test; typecheck, lint, build và `git diff --check` pass. Build vẫn cảnh báo chunk ExcelJS lớn đã có từ trước.
+- Trạng thái triển khai: Chưa deploy production; đang chờ PR, required checks, Supabase Production Deploy và Cloudflare Pages production deployment.
+
+### Handoff — giảm lỗi CPU khi AI search khởi tạo embedding (04/09/2026)
+
+- Nguyên nhân đã xác nhận từ log production: `process-transaction-embeddings` bị `546 WORKER_RESOURCE_LIMIT` / `CPU Time exceeded` khi xử lý nhiều giao dịch và tạo session embedding mới cho từng dòng; vì vậy AI search chưa bao giờ tới bước semantic search.
+- Bản sửa: tái sử dụng một session `gte-small` trong Edge Function isolate để loại bỏ chi phí khởi tạo model lặp lại cho từng dòng; giữ batch tối đa 20 để semantic search vẫn bao phủ dữ liệu cần thiết. Backfill dữ liệu cũ vẫn là luồng riêng, không tự chạy hàng loạt.
+- Files: `supabase/functions/_shared/transactionEmbedding.ts`, `src/lib/transactionsApi.test.ts`. Không đổi schema, RLS/RPC hay dữ liệu production.
+- Validation: `pnpm test` đạt 30/30 file, 122/122 test; typecheck, lint, build và `git diff --check` pass. Build vẫn cảnh báo chunk ExcelJS lớn đã có từ trước.
+- Trạng thái triển khai: Chờ PR, required checks, Supabase Production Deploy và Cloudflare Pages production deployment của merge commit.
+
 ### Handoff — highlight user hiện tại trong Thành viên (04/09/2026)
 
 - Danh sách Thành viên hiện nhận diện dòng có `member.user_id === currentUserId` bằng nền/viền accent theo theme và badge theo ngôn ngữ (`Bạn`/`You`).
 - Có accessible label `tài khoản đang đăng nhập` cho đúng dòng; không thay đổi quyền sửa/xóa hoặc luồng dữ liệu.
 - Files: `src/pages/Members.tsx`, `src/index.css`, `src/context/LanguageContext.tsx`, `src/pages/Members.test.tsx`. Không có migration mới, không đổi API/schema/RLS/RPC.
 - Validation: `pnpm test` đạt 29/29 file, 121/121 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass.
-- Trạng thái triển khai: Đã deploy production cùng PR [#119](https://github.com/nhan0805/family-expense/pull/119) qua Git integration của Cloudflare Pages; preview và production đều pass.
+- Trạng thái triển khai: Đang chuẩn bị deploy production qua PR và Git integration của Cloudflare Pages.
 
 ### Handoff — hiển thị tên người dùng và liên kết Thành viên (04/09/2026)
 
@@ -51,7 +59,7 @@
 - Sau thay đổi: Bổ sung màu muted, lỗi, viền và hành động theo palette Dracula; palette biểu đồ, trục, grid, legend và tooltip chuyển theo biến theme; giữ nguyên light mode và quy tắc nghiệp vụ.
 - Files: `src/index.css`, `src/pages/Dashboard.tsx`, `src/pages/ImportExport.tsx`, `src/pages/Transactions.tsx`, `src/pages/TransactionForm.tsx`, `src/pages/Members.tsx`, `src/pages/Catalogs.tsx`, `src/pages/Login.tsx`, `src/pages/CreateFamily.tsx`, `src/components/MultiSelectField.tsx`, `src/pages/ImportExport.test.tsx`, `src/pages/TransactionForm.test.tsx`. Không có migration mới, không đổi API/schema/RLS/RPC hoặc dữ liệu.
 - Validation: `pnpm test` đạt 29/29 file, 121/121 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build còn cảnh báo chunk ExcelJS lớn đã có từ trước.
-- Trạng thái triển khai: Đã deploy production cùng PR [#119](https://github.com/nhan0805/family-expense/pull/119) với merge commit `4565ab17286eb13614622ab3ec5c6ae55e4f3d84`; Cloudflare production trả HTTP 200 và bundle live đã xác nhận theme dark mode.
+- Trạng thái triển khai dự kiến: Commit sẽ được push lên nhánh `codex/transaction-filter-ui-20260904`, tạo PR vào `main`, bật auto-merge và deploy production qua Git integration của Cloudflare Pages.
 
 ### Handoff — khắc phục AI search không tải được danh sách giao dịch (04/09/2026)
 
@@ -59,7 +67,7 @@
 - Bản sửa: gửi vector lên RPC dưới dạng pgvector literal; dùng `md5` built-in cho `source_hash` để không phụ thuộc schema `pgcrypto`; gửi `pg_notify('pgrst', 'reload schema')` sau migration để PostgREST nhận function signature mới.
 - Files: `supabase/functions/_shared/transactionEmbedding.ts`, `supabase/functions/process-transaction-embeddings/index.ts`, `supabase/functions/search-transactions-semantic/index.ts`, `supabase/migrations/202609040003_fix_transaction_embedding_runtime.sql`.
 - Validation: `pnpm test` đạt 29/29 file, 121/121 test; typecheck, lint, build và `git diff --check` pass. Playwright đã khởi động được sau khi cài browser nhưng 2 test cloud bị bỏ qua vì chưa có `E2E_EMAIL`/`E2E_PASSWORD`.
-- Trạng thái triển khai: Đã deploy production cùng PR [#119](https://github.com/nhan0805/family-expense/pull/119). Supabase Production Deploy [run 33865979821](https://github.com/nhan0805/family-expense/actions/runs/33865979821) pass, đã áp migration runtime và deploy `process-transaction-embeddings`/`search-transactions-semantic`; Cloudflare production trả HTTP 200.
+- Trạng thái triển khai: Chưa deploy production; thay đổi đang được kiểm tra cùng bản sửa UI dropdown.
 
 ### Handoff — căn mũi tên cùng hàng cho bộ lọc multi-select (04/09/2026)
 
@@ -67,7 +75,7 @@
 - Bản sửa: thêm class scoped `multi-select-trigger { display: flex; }` cho trigger Mục đích, Danh mục và Phương thức thanh toán; nội dung và mũi tên giờ nằm cùng hàng, chiều cao đồng nhất.
 - Files: `src/components/MultiSelectField.tsx`, `src/index.css`, `src/pages/Transactions.ui.test.tsx`, `supabase/functions/_shared/transactionEmbedding.ts`, `supabase/functions/process-transaction-embeddings/index.ts`, `supabase/functions/search-transactions-semantic/index.ts`, `supabase/migrations/202609040003_fix_transaction_embedding_runtime.sql`. Không đổi API nghiệp vụ hoặc dữ liệu giao dịch.
 - Validation: `pnpm test` đạt 29/29 file, 121/121 test; typecheck, lint, build và `git diff --check` pass. Playwright đã khởi động được sau khi cài browser nhưng 2 test cloud bị bỏ qua vì chưa có `E2E_EMAIL`/`E2E_PASSWORD`.
-- Trạng thái triển khai: Đã deploy production cùng PR [#119](https://github.com/nhan0805/family-expense/pull/119); production bundle đã xác nhận class `multi-select-trigger`.
+- Trạng thái triển khai: Chưa deploy production; thay đổi đang ở workspace.
 
 ### Handoff — highlight user hiện tại trong Thành viên (04/09/2026)
 

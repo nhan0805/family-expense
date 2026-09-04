@@ -67,16 +67,22 @@ export async function fetchTransactionPage(
   pageSize = 50,
 ) {
   if (filters.semanticQuery) {
-    const { error: embeddingError } = await supabase.functions.invoke(
-      'process-transaction-embeddings',
-      {
-        body: {
-          familyId,
-          limit: 20,
+    // Backfill is best-effort. A resource-limited embedding batch must not
+    // hide otherwise valid structural/keyword results from the user.
+    try {
+      await supabase.functions.invoke(
+        'process-transaction-embeddings',
+        {
+          body: {
+            familyId,
+            limit: 5,
+          },
         },
-      },
-    );
-    if (embeddingError) throw embeddingError;
+      );
+    } catch {
+      // The semantic query below can still return filtered rows without a
+      // completed lazy backfill.
+    }
     const { data, error } = await supabase.functions.invoke<unknown>(
       'search-transactions-semantic',
       {
@@ -85,7 +91,7 @@ export async function fetchTransactionPage(
           semanticQuery: filters.semanticQuery,
           page,
           pageSize,
-          query: filters.query,
+          query: filters.query || filters.semanticQuery,
           transactionType: filters.transactionType || null,
           status: filters.status || null,
           purposeIds: filters.purposeIds,

@@ -10,13 +10,21 @@
 - Kiểm thử: Full suite đạt 29/29 file, 122/122 test; typecheck, lint, build và `git diff --check` pass.
 - Trạng thái triển khai: Đang ở workspace; chưa deploy production.
 
-### Khắc phục Edge Function vượt giới hạn CPU khi AI search
+### Giữ kết quả AI search khi backfill embedding lỗi
 
-- Trước thay đổi: Manual search vẫn trả kết quả nhưng AI search có thể báo không tải được danh sách; log production xác nhận `process-transaction-embeddings` bị `546 WORKER_RESOURCE_LIMIT` và `CPU Time exceeded` trước khi semantic search được gọi.
-- Sau thay đổi: Tái sử dụng một session `gte-small` trong suốt vòng đời Edge Function isolate, tránh khởi tạo model lặp lại cho từng giao dịch và giữ nguyên batch semantic search.
-- Kỹ thuật: cập nhật `supabase/functions/_shared/transactionEmbedding.ts` và thêm regression test `src/lib/transactionsApi.test.ts`. Không đổi schema, RPC hoặc dữ liệu; không tự động backfill toàn bộ dữ liệu production.
-- Kiểm thử: CI đạt `quality` và `db-security`; local đạt 30/30 file, 122/122 test, typecheck, lint, build và `git diff --check` pass.
-- Trạng thái triển khai thực tế: PR [#120](https://github.com/nhan0805/family-expense/pull/120) đã merge với commit `fbfbee827212980a9c7b99b58c40e56b999c9b5e`. Supabase Production Deploy [run 33877296064](https://github.com/nhan0805/family-expense/actions/runs/33877296064) pass; Cloudflare Pages production check trên merge commit pass; production `https://family-expense-8fo.pages.dev/` trả HTTP 200.
+- Trước thay đổi: AI có thể phân tích đúng câu tìm kiếm nhưng luồng tải kết quả bị dừng nếu batch backfill embedding gặp giới hạn CPU; các giao dịch chưa có vector cũng bị loại khỏi semantic RPC.
+- Sau thay đổi: Backfill embedding là best-effort với batch 5; semantic search vẫn chạy và dùng bộ lọc cấu trúc/từ khóa khi backfill chưa hoàn tất. RPC semantic dùng `left join` để không làm mất giao dịch chưa có embedding và ưu tiên từ khóa gốc của câu hỏi.
+- Files/DB object: `src/lib/transactionsApi.ts`, `src/lib/transactionsApi.test.ts`, `supabase/migrations/202609040004_semantic_search_missing_embeddings.sql`. Không tự động ghi dữ liệu ngoài luồng tìm kiếm của user.
+- Kiểm thử: `pnpm test` đạt 30/30 file, 123/123 test; typecheck, lint, build và `git diff --check` pass. Build vẫn cảnh báo chunk ExcelJS lớn đã có từ trước.
+- Trạng thái triển khai dự kiến: Tạo PR vào `main`, bật auto-merge và chờ Supabase Production Deploy cùng Cloudflare Pages Git deployment.
+
+### Giảm lỗi CPU khi AI search khởi tạo embedding
+
+- Trước thay đổi: Manual search vẫn trả kết quả nhưng AI search có thể báo không tải được danh sách. Log production ghi nhận `process-transaction-embeddings` bị `546 WORKER_RESOURCE_LIMIT` và `CPU Time exceeded` trước khi semantic search được gọi.
+- Sau thay đổi: Dùng lại một session `gte-small` trong suốt vòng đời Edge Function isolate để không khởi tạo model lặp lại cho từng dòng; giữ batch tối đa 20 như thiết kế để semantic search vẫn bao phủ dữ liệu cần thiết.
+- Files: `supabase/functions/_shared/transactionEmbedding.ts`, `src/lib/transactionsApi.test.ts`. Không tự động backfill toàn bộ dữ liệu production.
+- Kiểm thử: `pnpm test` đạt 30/30 file, 122/122 test; typecheck, lint, build và `git diff --check` pass. Build vẫn cảnh báo chunk ExcelJS lớn đã có từ trước.
+- Trạng thái triển khai dự kiến: Tạo PR vào `main`, bật auto-merge và chờ Supabase Production Deploy cùng Cloudflare Pages Git deployment.
 
 ### Khắc phục AI search không tải được danh sách giao dịch
 
@@ -24,7 +32,7 @@
 - Sau thay đổi: Vector được gửi tới RPC dưới dạng pgvector literal; hash nội dung backfill dùng `md5` built-in, không phụ thuộc schema cài `pgcrypto`; migration gửi yêu cầu reload schema cho PostgREST. Bảng embedding vẫn chỉ tăng dữ liệu khi có semantic search, không tự sinh hàng loạt ngay lúc migrate.
 - Kỹ thuật: cập nhật `supabase/functions/_shared/transactionEmbedding.ts`, `process-transaction-embeddings`, `search-transactions-semantic` và thêm migration `supabase/migrations/202609040003_fix_transaction_embedding_runtime.sql`. Không đọc hoặc ghi trực tiếp dữ liệu tài chính ngoài luồng tìm kiếm của user.
 - Kiểm thử: `pnpm test` đạt 29/29 file, 121/121 test; typecheck, lint, build và `git diff --check` pass. Playwright đã khởi động được sau khi cài browser nhưng 2 test cloud bị bỏ qua vì chưa có `E2E_EMAIL`/`E2E_PASSWORD`.
-- Trạng thái triển khai: Đã merge qua PR [#119](https://github.com/nhan0805/family-expense/pull/119) với merge commit `4565ab17286eb13614622ab3ec5c6ae55e4f3d84`. CI main [run 33865979734](https://github.com/nhan0805/family-expense/actions/runs/33865979734) và Supabase Production Deploy [run 33865979821](https://github.com/nhan0805/family-expense/actions/runs/33865979821) pass; migration `202609040003` và hai Edge Functions đã deploy. Cloudflare production `https://family-expense-8fo.pages.dev/` trả HTTP 200; bundle live đã xác nhận semantic functions, `semanticQuery`, multi-select và theme dark mode.
+- Trạng thái triển khai: Chưa deploy production; thay đổi đang được kiểm tra cùng PR UI.
 
 ### Căn mũi tên cùng hàng cho bộ lọc multi-select
 
@@ -32,7 +40,7 @@
 - Sau thay đổi: Trigger multi-select có `display: flex`, căn nội dung và mũi tên cùng hàng, giữ chiều cao đồng nhất với các box lọc khác.
 - Kỹ thuật: thêm class CSS scoped `multi-select-trigger` trong `src/components/MultiSelectField.tsx` và `src/index.css`; bổ sung regression assertion trong `src/pages/Transactions.ui.test.tsx`. Đồng thời chuẩn hóa vector gửi vào RPC semantic thành pgvector literal và dùng `md5` ổn định cho backfill qua migration `supabase/migrations/202609040003_fix_transaction_embedding_runtime.sql`. Không đổi API nghiệp vụ hoặc dữ liệu giao dịch.
 - Kiểm thử: `pnpm test` đạt 29/29 file, 121/121 test; typecheck, lint, build và `git diff --check` pass. Playwright đã khởi động được sau khi cài browser nhưng 2 test cloud bị bỏ qua vì chưa có `E2E_EMAIL`/`E2E_PASSWORD`.
-- Trạng thái triển khai: Đã deploy production cùng PR [#119](https://github.com/nhan0805/family-expense/pull/119) qua Git integration của Cloudflare Pages; preview và production đều pass.
+- Trạng thái triển khai: Chưa deploy production; thay đổi đang ở workspace.
 
 ### Highlight user hiện tại trong Thành viên
 
@@ -55,7 +63,7 @@
 - Sau thay đổi: Dùng màu muted/error theo Dracula cho các route và state liên quan; nút thao tác hàng loạt dùng accent dark; biểu đồ có palette, grid, trục, legend và tooltip theo biến light/dark; nút chọn file và dòng lỗi import có viền/màu dark phù hợp.
 - Kỹ thuật: Cập nhật `src/index.css`, các UI page/component liên quan và thêm assertion hồi quy trong `src/pages/ImportExport.test.tsx`, `src/pages/TransactionForm.test.tsx`. Không có migration mới, không đổi API, schema, RLS/RPC hoặc dữ liệu.
 - Kiểm thử: `pnpm test` đạt 29/29 file, 121/121 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build còn cảnh báo chunk ExcelJS lớn đã có từ trước.
-- Trạng thái triển khai: Đã deploy production cùng PR [#119](https://github.com/nhan0805/family-expense/pull/119) qua Git integration của Cloudflare Pages; bundle live đã xác nhận các biến màu chart dark mode.
+- Trạng thái triển khai dự kiến: Push nhánh `codex/transaction-filter-ui-20260904`, tạo PR vào `main`, bật auto-merge và chờ Cloudflare Pages production deploy qua Git integration.
 
 ### Khắc phục AI search không tải được danh sách giao dịch
 
