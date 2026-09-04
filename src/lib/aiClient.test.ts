@@ -1,8 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   AI_REQUEST_TIMEOUT_MS,
+  AI_SEARCH_CACHE_GC_TIME_MS,
+  AI_SEARCH_CACHE_STALE_TIME_MS,
   AiRequestTimeoutError,
   aiErrorMessage,
+  getAiSearchCacheKey,
   invokeAiFunction,
 } from './aiClient';
 const { invokeMock } = vi.hoisted(() => ({ invokeMock: vi.fn() }));
@@ -20,6 +23,14 @@ describe('aiClient', () => {
   it('keeps AI requests within the user-facing timeout budget', () => {
     expect(AI_REQUEST_TIMEOUT_MS).toBeGreaterThanOrEqual(20_000);
     expect(AI_REQUEST_TIMEOUT_MS).toBeLessThanOrEqual(30_000);
+  });
+
+  it('reuses the same cache key for equivalent AI search text', () => {
+    expect(getAiSearchCacheKey('family-1', 'vi', ' Mua quần áo! ', 'catalog-1')).toEqual(
+      getAiSearchCacheKey('family-1', 'vi', 'mua quan ao', 'catalog-1'),
+    );
+    expect(AI_SEARCH_CACHE_STALE_TIME_MS).toBe(5 * 60_000);
+    expect(AI_SEARCH_CACHE_GC_TIME_MS).toBe(30 * 60_000);
   });
 
   it('converts an aborted request caused by the timeout into a typed error', async () => {

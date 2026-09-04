@@ -14,6 +14,14 @@
 - [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
 
+### Handoff — tăng tốc AI search (04/09/2026)
+
+- Mục tiêu: giảm thời gian chờ khi người dùng dùng **Gợi ý AI** trên trang Giao dịch.
+- Bản sửa: câu tìm kiếm chỉ gồm bộ lọc cấu trúc rõ ràng được xử lý nhanh trên client mà không gọi Gemini; các câu khác được cache theo family/ngôn ngữ/catalog/câu tìm kiếm trong 5 phút, đồng thời React Query chống gọi trùng. `keepPreviousData` giữ danh sách cũ trong khi bộ lọc mới tải.
+- Files: `src/lib/quickTransactionSearch.ts`, `src/lib/quickTransactionSearch.test.ts`, `src/lib/aiClient.ts`, `src/lib/aiClient.test.ts`, `src/pages/Transactions.tsx`. Không đổi schema, RLS hoặc dữ liệu giao dịch.
+- Validation: Chưa chạy; cần chạy full Vitest, typecheck, lint, build và `git diff --check`.
+- Trạng thái triển khai dự kiến: Chưa deploy; chờ PR và Cloudflare Pages production deployment.
+
 ### Handoff — loại bỏ semantic search và dữ liệu embedding (04/09/2026)
 
 - Quyết định sản phẩm: tắt semantic search khỏi giao diện sau khi parser AI vẫn chạy nhưng semantic path tiếp tục không trả kết quả ổn định trên Supabase Free.

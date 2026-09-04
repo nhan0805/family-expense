@@ -2,6 +2,14 @@
 
 ## 2026-09-04
 
+### Tăng tốc AI search
+
+- Trước thay đổi: Mỗi lần bấm **Gợi ý AI** đều gọi Edge Function/Gemini, kể cả khi người dùng lặp lại cùng câu; khi bộ lọc mới tải, danh sách có thể trống tạm thời.
+- Sau thay đổi: Các câu chỉ gồm bộ lọc cấu trúc rõ ràng (ví dụ danh mục, mục đích, phương thức, loại, trạng thái, tháng/năm) được xử lý nhanh ngay trên client; các câu còn lại dùng cache 5 phút, chống gọi trùng và giữ kết quả cũ trong lúc tải bộ lọc mới.
+- Files: `src/lib/quickTransactionSearch.ts`, `src/lib/quickTransactionSearch.test.ts`, `src/lib/aiClient.ts`, `src/lib/aiClient.test.ts`, `src/pages/Transactions.tsx`. Không đổi schema hoặc dữ liệu giao dịch.
+- Kiểm thử: Chạy full test, typecheck, lint, build và `git diff --check` trước khi merge.
+- Trạng thái triển khai dự kiến: Tạo PR vào `main`, bật auto-merge và chờ Cloudflare Pages Git deployment.
+
 ### Loại bỏ semantic search và dữ liệu embedding
 
 - Trước thay đổi: AI search phụ thuộc vào backfill `gte-small` và bảng `transaction_embeddings`, khiến việc phân tích AI thành công nhưng tải danh sách vẫn có thể lỗi trên Supabase Free.

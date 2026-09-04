@@ -21,6 +21,7 @@ import { MultiSelectField } from '../components/MultiSelectField';
 import { TransactionRow } from '../components/TransactionRow';
 import { useFeedback } from '../components/Feedback';
 import {
+  keepPreviousData,
   useInfiniteQuery,
   useQuery,
   useQueryClient,
@@ -30,7 +31,14 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { useOptionalLanguage } from '../context/LanguageContext';
 import { transactionSearchResponseSchema } from '../lib/ai';
-import { aiErrorMessage, invokeAiFunction } from '../lib/aiClient';
+import {
+  AI_SEARCH_CACHE_GC_TIME_MS,
+  AI_SEARCH_CACHE_STALE_TIME_MS,
+  aiErrorMessage,
+  getAiSearchCacheKey,
+  invokeAiFunction,
+} from '../lib/aiClient';
+import { getQuickTransactionSearch } from '../lib/quickTransactionSearch';
 import {
   canDeleteTransaction,
   formatDateOnlyVi,
@@ -448,6 +456,7 @@ export function Transactions() {
     queryFn: ({ pageParam }) =>
       fetchTransactionPage(familyId, serverFilters, pageParam),
     initialPageParam: 0,
+    placeholderData: keepPreviousData,
     getNextPageParam: (lastPage) =>
       lastPage.hasMore ? lastPage.page + 1 : undefined,
     enabled: isSupabaseConfigured && Boolean(familyId) && !showTrash,
@@ -463,6 +472,14 @@ export function Transactions() {
     enabled: isSupabaseConfigured && Boolean(familyId),
     staleTime: 5 * 60_000,
   });
+  const aiCatalogVersion = useMemo(
+    () => JSON.stringify(
+      [purposes, expenseTypes, paymentMethods].map((items) =>
+        items.map(({ id, name, nameEn }) => ({ id, name, nameEn })),
+      ),
+    ),
+    [purposes, expenseTypes, paymentMethods],
+  );
   const trashFilters = { query, transactionType, status, purposeIds, expenseTypeIds, paymentMethodIds, amountMin, amountMax, month, year, dateFrom, dateTo, sort } satisfies TransactionFilters;
   const localTrashRows = useMemo(() => filterAndSortTransactions(transactions.filter((item) => item.deletedAt && (currentUserRole === 'owner' || item.createdBy === currentUserId)), trashFilters, true), [transactions, currentUserRole, currentUserId, trashFilters]);
   const rows = showTrash
@@ -910,12 +927,27 @@ export function Transactions() {
     setAiSearchError('');
     setAiSearchMessage('');
     try {
-      const data = await invokeAiFunction<unknown>('search-transactions', {
-        familyId,
-        text: searchText,
-        language: en ? 'en' : 'vi',
-        timezone: 'Asia/Ho_Chi_Minh',
-      });
+      const language = en ? 'en' : 'vi';
+      const data = getQuickTransactionSearch(searchText, language, {
+        purposes,
+        expenseTypes,
+        paymentMethods,
+      }) || await queryClient.fetchQuery<unknown>({
+          queryKey: getAiSearchCacheKey(
+            familyId,
+            language,
+            searchText,
+            aiCatalogVersion,
+          ),
+          queryFn: () => invokeAiFunction<unknown>('search-transactions', {
+            familyId,
+            text: searchText,
+            language,
+            timezone: 'Asia/Ho_Chi_Minh',
+          }),
+          staleTime: AI_SEARCH_CACHE_STALE_TIME_MS,
+          gcTime: AI_SEARCH_CACHE_GC_TIME_MS,
+        });
       const response = transactionSearchResponseSchema.safeParse(data);
       if (!response.success) throw new Error('AI_RESPONSE_INVALID');
       const { filters } = response.data;
