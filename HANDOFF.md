@@ -14,13 +14,28 @@
 - [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
 
+### Handoff — multi-select và semantic search giao dịch (04/09/2026)
+
+- Đã chuyển bộ lọc Mục đích, Danh mục và Phương thức thanh toán sang chọn nhiều; nhiều giá trị trong cùng nhóm là OR, các nhóm khác là AND. Bộ lọc hoạt động cho cả demo local và RPC cloud mới.
+- AI search `search-transactions` đã đổi schema sang `purposeIds`, `expenseTypeIds`, `paymentMethodIds` và thêm `semanticQuery`. UI áp dụng toàn bộ ID hợp lệ từ AI, không tự lưu giao dịch.
+- Semantic search dùng `pgvector` trong Supabase Postgres, model built-in `gte-small` 384 chiều trong Edge Functions; chỉ embedding `description` + `note`. `process-transaction-embeddings` backfill lazy theo batch khi semantic search được gọi, `search-transactions-semantic` lọc cấu trúc bằng SQL rồi xếp hạng cosine similarity. Không gọi Gemini để tạo embedding.
+- Files chính: `src/components/MultiSelectField.tsx`, `src/pages/Transactions.tsx`, `src/lib/transactionsApi.ts`, `src/lib/ai.ts`, `supabase/migrations/202609040002_transaction_search_semantic.sql`, `supabase/functions/_shared/transactionEmbedding.ts`, `supabase/functions/process-transaction-embeddings/index.ts`, `supabase/functions/search-transactions-semantic/index.ts`, `supabase/functions/search-transactions/index.ts`, `supabase/config.toml`, `.github/workflows/supabase-deploy.yml`.
+- Validation hiện tại: Vitest 29/29 file, 121/121 test; typecheck, lint và `git diff --check` pass. pgTAP local chưa chạy được vì Docker/database local không hoạt động (`127.0.0.1:54322` từ chối kết nối). Chưa chạy production migration/deploy.
+
 ### Handoff — chuyển Danh mục sang tab để bỏ thanh cuộn ngang (04/09/2026)
 
 - Ba card Danh mục trên desktop đã chuyển thành tab `Mục đích`, `Danh mục` và `Phương thức thanh toán`; mỗi lần chỉ render một panel nên không còn cần thanh cuộn ngang, tên dài vẫn hiển thị đầy đủ. Mobile dùng cùng cơ chế tab, không thay đổi route hay dữ liệu.
 - Tab có trạng thái active và cấu trúc truy cập `tablist`/`tab`/`tabpanel`; thao tác thêm, sửa, xóa và badge `Ẩn ngân sách` được giữ nguyên.
 - Files: `src/pages/Catalogs.tsx`, `src/index.css`, `src/pages/Catalogs.test.tsx`. Không có migration mới, không đổi API/schema/RLS/RPC.
 - Validation: `vitest run` đạt 29/29 file, 119/119 test; test Catalogs 6/6; lint, typecheck, build và `git diff --check` pass. Build vẫn cảnh báo chunk ExcelJS lớn hiện hữu.
-- Trạng thái triển khai: Đã kiểm tra local lúc `04/09/2026 16:22` (`Asia/Ho_Chi_Minh`); đang chuẩn bị PR deploy qua Cloudflare Pages Git integration theo yêu cầu deploy.
+- Trạng thái triển khai: Đã merge PR [#116](https://github.com/nhan0805/family-expense/pull/116) vào `main` với merge commit `65b9ca3887cd5829cf8c78167babc544b48040ca`. CI main [run 33859027524](https://github.com/nhan0805/family-expense/actions/runs/33859027524) và Cloudflare Pages Preview [run 33858579028](https://github.com/nhan0805/family-expense/actions/runs/33858579028) pass; production `https://family-expense-8fo.pages.dev/` trả HTTP 200 và chunk Danh mục chứa `catalog-tabs`, `tablist`, `tabpanel` lúc `04/09/2026 16:38` (`Asia/Ho_Chi_Minh`). Không có migration mới nên không cần Supabase Production Deploy.
+
+### Handoff — đóng panel thông báo khi bấm ra ngoài (04/09/2026)
+
+- Panel Thông báo giờ đóng khi bấm ra ngoài vùng chuông/panel; click bên trong panel vẫn thao tác bình thường và phím `Escape` đóng panel.
+- Files: `src/components/BudgetNotifications.tsx`, `src/components/BudgetNotifications.test.tsx`. Không có migration mới, không đổi API/schema/RLS/RPC hoặc dữ liệu.
+- Validation: Test `BudgetNotifications` đạt 5/5, lint component pass và build frontend pass. Full test hiện 27/29 file, 114/120 test pass; 6 test lỗi do thay đổi semantic search chưa được track sẵn đang lệch giữa `purposeId`/`purposeIds` và schema bộ lọc AI. Typecheck cũng gặp cùng lỗi ở `Transactions.test.ts`; không liên quan đến panel thông báo.
+- Trạng thái triển khai: Chưa deploy production; chờ xử lý các thay đổi semantic search đang có trong workspace.
 
 ### Handoff — trung tâm thông báo và xác nhận giao dịch dự kiến (04/09/2026)
 
@@ -383,12 +398,17 @@ flowchart LR
   U --> E[parse-expense Edge Function]
   E --> D
   E --> G[Google Gemini API]
+  U --> ES[Embedding worker]
+  ES --> D
+  U --> SS[Semantic search Edge Function]
+  SS --> D
+  SS --> M[Supabase AI gte-small]
 ```
 
 - Frontend: React 19, TypeScript strict, Vite, React Router, Tailwind CSS, TanStack Query, React Hook Form, Zod, Recharts và vite-plugin-pwa.
 - Backend: Supabase Auth, PostgreSQL, RLS, RPC và Edge Functions.
 - Hosting: Cloudflare Pages.
-- AI: `parse-expense` gọi Gemini bằng secret server-side, validate structured output và chỉ trả đề xuất; người dùng phải xác nhận trước khi lưu.
+- AI: `parse-expense` gọi Gemini bằng secret server-side, validate structured output và chỉ trả đề xuất; người dùng phải xác nhận trước khi lưu. `search-transactions` vẫn dùng Gemini để tách câu tự nhiên thành bộ lọc, còn embedding và semantic ranking dùng `gte-small` built-in trong Supabase Edge Functions, không gửi nội dung giao dịch sang Gemini ở bước đó.
 - Tenant boundary: mọi dữ liệu nghiệp vụ được scope theo `family_id`; RLS là lớp phân quyền bắt buộc.
 - Chi tiết: [Solution Architecture Document](docs/Solution_Architecture_Document_Family_Expense.docx).
 
@@ -402,6 +422,9 @@ flowchart LR
 | `src/lib/` | Domain, Supabase client/API, AI và import/export |
 | `supabase/migrations/` | Schema, RLS, RPC, indexes và migration dữ liệu |
 | `supabase/functions/parse-expense/` | Edge Function tích hợp Gemini |
+| `supabase/functions/process-transaction-embeddings/` | Backfill embedding lazy theo family |
+| `supabase/functions/search-transactions-semantic/` | Tạo query embedding và gọi semantic search RPC |
+| `supabase/functions/_shared/transactionEmbedding.ts` | Model `gte-small`, text `description` + `note` |
 | `scripts/` | Import Excel và các script hỗ trợ vận hành |
 | `docs/` | SAD và runbook deploy/vận hành |
 | `README.md` | Cài đặt, cấu hình và triển khai |
@@ -498,6 +521,7 @@ Plan, billing owner và renewal date: **TBD — xác minh trong tài khoản nh�
 | Tenant/Auth | `families`, `family_members` | Membership active, role owner/member |
 | Phân loại | `purposes`, `expense_types`, `payment_methods`, `accounts`, `events`, `beneficiaries` | Không hard-delete danh mục đã được dùng |
 | Giao dịch | `transactions` | `amount > 0`, soft delete bằng `deleted_at`, lưu nguồn/audit AI |
+| Semantic index | `transaction_embeddings` | Vector 384 chiều, hash nội dung, family-scoped RLS, HNSW cosine index |
 | Kế hoạch | `budgets`, `recurring_transactions` | Schema có sẵn; UI nâng cao ngoài MVP |
 | AI audit | `ai_usage_logs` | Chỉ metadata tối thiểu, không token/API key |
 | Import | `import_batches` và RPC liên quan | Atomic batch, chống trùng và audit |
@@ -596,7 +620,7 @@ Không ghi tài khoản test trong file. Tạo user/family riêng ở staging v�
 | Setup/deploy guide | [`README.md`](README.md) | Có; cập nhật khi pipeline đổi |
 | Change history | [`CHANGELOG.md`](CHANGELOG.md) | Nguồn cập nhật mới nhất |
 | Database contract | `supabase/migrations/*.sql` | Nguồn sự thật kỹ thuật |
-| AI contract | `supabase/functions/parse-expense/index.ts` | Nguồn sự thật kỹ thuật |
+| AI contract | `supabase/functions/parse-expense/index.ts`, `supabase/functions/search-transactions/index.ts` | Nguồn sự thật kỹ thuật |
 
 ## 15. Outstanding Tasks & Roadmap
 

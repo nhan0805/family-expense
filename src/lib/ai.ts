@@ -23,11 +23,12 @@ export type AiSuggestion = z.infer<typeof aiSuggestionSchema>;
 
 export const transactionSearchFiltersSchema = z.object({
   query: z.string().max(240),
+  semanticQuery: z.string().max(240),
   transactionType: z.enum(['Chi tiêu', 'Thu nhập']).nullable(),
   status: z.enum(['Thực tế', 'Dự kiến']).nullable(),
-  purposeId: z.string().uuid().nullable(),
-  expenseTypeId: z.string().uuid().nullable(),
-  paymentMethodId: z.string().uuid().nullable(),
+  purposeIds: z.array(z.string().uuid()).max(20),
+  expenseTypeIds: z.array(z.string().uuid()).max(20),
+  paymentMethodIds: z.array(z.string().uuid()).max(20),
   amountMin: z.number().nonnegative().nullable(),
   amountMax: z.number().nonnegative().nullable(),
   month: z.number().int().min(1).max(12).nullable(),

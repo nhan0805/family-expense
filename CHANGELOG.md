@@ -2,13 +2,29 @@
 
 ## 2026-09-04
 
+### Multi-select manual/AI và semantic search cho giao dịch
+
+- Trước thay đổi: Bộ lọc Mục đích, Danh mục và Phương thức thanh toán chỉ nhận một giá trị; AI search cũng chỉ trả về một ID và tìm kiếm nội dung bằng substring.
+- Sau thay đổi: Ba bộ lọc catalog hỗ trợ chọn nhiều giá trị theo phép OR, các nhóm lọc khác vẫn kết hợp theo AND. AI search trả về đầy đủ các catalog ID được nhắc trong câu và phần nội dung còn lại có thể tìm theo semantic similarity.
+- Kỹ thuật: thêm `src/components/MultiSelectField.tsx`; cập nhật `src/pages/Transactions.tsx`, `src/lib/transactionsApi.ts`, `src/lib/ai.ts`, `supabase/functions/search-transactions/index.ts`; thêm `supabase/migrations/202609040002_transaction_search_semantic.sql`, hai Edge Function embedding/semantic search, shared `gte-small` embedding helper và pgTAP test. Migration bật `pgvector`, bảng `transaction_embeddings`, HNSW cosine index, RLS và các RPC family-scoped; workflow/config deploy thêm hai function. Không gọi Gemini để tạo embedding.
+- Kiểm thử: Vitest hiện đạt 29/29 file, 121/121 test; typecheck, lint và `git diff --check` pass. Kiểm thử pgTAP migration chưa chạy được vì máy hiện không có database local/Docker (`127.0.0.1:54322` từ chối kết nối); sẽ ghi kết quả CI sau khi PR chạy.
+- Trạng thái triển khai: Chưa deploy production; chờ hoàn tất build/E2E, PR checks, migration và Cloudflare Pages deployment qua Git integration.
+
 ### Chuyển Danh mục sang tab để bỏ thanh cuộn ngang
 
 - Trước thay đổi: Ba card Danh mục hiển thị cạnh nhau trên desktop, cần card tối thiểu 440px nên màn hình hẹp phải dùng thanh cuộn ngang.
 - Sau thay đổi: Hiển thị ba tab `Mục đích`, `Danh mục` và `Phương thức thanh toán`; mỗi lần chỉ hiển thị một nhóm, giữ toàn bộ tên dài mà không cần thanh cuộn. Tab có trạng thái đang chọn và hỗ trợ bàn phím qua cấu trúc ARIA `tablist`/`tab`/`tabpanel`.
 - Kỹ thuật: cập nhật `src/pages/Catalogs.tsx` và style tab trong `src/index.css`; bổ sung regression test chuyển tab trong `src/pages/Catalogs.test.tsx`. Không thay đổi API, schema, migration, dữ liệu hoặc quy tắc nghiệp vụ.
 - Kiểm thử: `vitest run` đạt 29/29 file, 119/119 test; test Catalogs 6/6; lint, typecheck, build và `git diff --check` pass. Build vẫn cảnh báo chunk ExcelJS lớn đã có từ trước.
-- Trạng thái triển khai: Đã kiểm tra local lúc `04/09/2026 16:22` (`Asia/Ho_Chi_Minh`); đang chuẩn bị PR deploy qua Cloudflare Pages Git integration theo yêu cầu deploy.
+- Triển khai: PR [#116](https://github.com/nhan0805/family-expense/pull/116) đã merge vào `main` với merge commit `65b9ca3887cd5829cf8c78167babc544b48040ca`. CI main [run 33859027524](https://github.com/nhan0805/family-expense/actions/runs/33859027524) và Cloudflare Pages Preview [run 33858579028](https://github.com/nhan0805/family-expense/actions/runs/33858579028) pass; production `https://family-expense-8fo.pages.dev/` trả HTTP 200 và chunk Danh mục chứa `catalog-tabs`, `tablist`, `tabpanel` lúc `04/09/2026 16:38` (`Asia/Ho_Chi_Minh`). Không có migration mới nên không cần Supabase Production Deploy; không dùng Wrangler deploy trực tiếp và không tạo deploy lần hai chỉ để cập nhật tài liệu.
+
+### Đóng panel thông báo khi bấm ra ngoài
+
+- Trước thay đổi: Panel Thông báo chỉ đóng khi bấm lại icon chuông hoặc chọn một liên kết trong panel.
+- Sau thay đổi: Bấm vào bất kỳ vùng nào bên ngoài vùng chuông/panel sẽ đóng panel; bấm bên trong vẫn không bị ảnh hưởng và phím `Escape` cũng đóng panel.
+- Kỹ thuật: thêm listener `pointerdown` ngoài vùng chứa và listener `Escape` trong `src/components/BudgetNotifications.tsx`; bổ sung regression test trong `src/components/BudgetNotifications.test.tsx`. Không thay đổi API, schema, migration, dữ liệu hoặc quy tắc nghiệp vụ.
+- Kiểm thử: Test `BudgetNotifications` đạt 5/5, lint component pass và build frontend pass. Full test hiện 27/29 file, 114/120 test pass; 6 test lỗi do các thay đổi chưa được track sẵn ở `src/lib/ai.ts`, `src/lib/transactionsApi.ts`, `src/pages/Transactions.tsx` và `src/pages/Transactions.test.ts` đang lệch giữa `purposeId`/`purposeIds` và schema bộ lọc AI, không liên quan đến panel thông báo. Typecheck cũng gặp cùng lỗi ở `Transactions.test.ts`.
+- Trạng thái triển khai: Chưa deploy production; chờ xử lý các thay đổi semantic search đang có trong workspace.
 
 ### Trung tâm thông báo: xác nhận giao dịch dự kiến và xóa cảnh báo đã đọc
 

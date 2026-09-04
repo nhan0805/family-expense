@@ -3,11 +3,12 @@ import { supabase } from './supabase';
 
 export type ServerTransactionFilters = {
   query: string;
+  semanticQuery: string;
   transactionType: string;
   status: string;
-  purposeId: string;
-  expenseTypeId: string;
-  paymentMethodId: string;
+  purposeIds: string[];
+  expenseTypeIds: string[];
+  paymentMethodIds: string[];
   amountMin: string;
   amountMax: string;
   month: string;
@@ -69,6 +70,56 @@ export async function fetchTransactionPage(
   page: number,
   pageSize = 50,
 ) {
+  if (filters.semanticQuery) {
+    const { error: embeddingError } = await supabase.functions.invoke(
+      'process-transaction-embeddings',
+      {
+        body: {
+          familyId,
+          limit: 20,
+        },
+      },
+    );
+    if (embeddingError) throw embeddingError;
+    const { data, error } = await supabase.functions.invoke<unknown>(
+      'search-transactions-semantic',
+      {
+        body: {
+          familyId,
+          semanticQuery: filters.semanticQuery,
+          page,
+          pageSize,
+          query: filters.query,
+          transactionType: filters.transactionType || null,
+          status: filters.status || null,
+          purposeIds: filters.purposeIds,
+          expenseTypeIds: filters.expenseTypeIds,
+          paymentMethodIds: filters.paymentMethodIds,
+          amountMin: filters.amountMin ? Number(filters.amountMin) : null,
+          amountMax: filters.amountMax ? Number(filters.amountMax) : null,
+          month: filters.month ? Number(filters.month) : null,
+          year: filters.year ? Number(filters.year) : null,
+          dateFrom: filters.dateFrom || null,
+          dateTo: filters.dateTo || null,
+          sort: filters.sort,
+        },
+      },
+    );
+    if (error) throw error;
+    const result = data as {
+      rows?: TransactionRow[];
+      hasMore?: boolean;
+      totalAmount?: number | string;
+      totalCount?: number;
+    };
+    return {
+      rows: (result.rows || []).map(mapTransactionRow),
+      hasMore: Boolean(result.hasMore),
+      totalAmount: Number(result.totalAmount || 0),
+      totalCount: Number(result.totalCount || 0),
+      page,
+    };
+  }
   const { data, error } = await supabase.rpc('list_family_transactions', {
     p_family_id: familyId,
     p_limit: pageSize,
@@ -76,9 +127,9 @@ export async function fetchTransactionPage(
     p_query: filters.query,
     p_transaction_type: filters.transactionType,
     p_status: filters.status,
-    p_purpose_id: filters.purposeId || null,
-    p_expense_type_id: filters.expenseTypeId || null,
-    p_payment_method_id: filters.paymentMethodId || null,
+    p_purpose_ids: filters.purposeIds,
+    p_expense_type_ids: filters.expenseTypeIds,
+    p_payment_method_ids: filters.paymentMethodIds,
     p_amount_min: filters.amountMin ? Number(filters.amountMin) : null,
     p_amount_max: filters.amountMax ? Number(filters.amountMax) : null,
     p_month: filters.month ? Number(filters.month) : null,
@@ -174,7 +225,7 @@ export async function fetchDashboardDueTransactions(
 }
 
 export async function fetchDeletedTransactionPage(familyId: string, filters: ServerTransactionFilters, page: number, pageSize = 50) {
-  const { data, error } = await supabase.rpc('list_deleted_transactions', { p_family_id: familyId, p_limit: pageSize, p_offset: page * pageSize, p_query: filters.query, p_transaction_type: filters.transactionType, p_purpose_id: filters.purposeId || null, p_expense_type_id: filters.expenseTypeId || null, p_payment_method_id: filters.paymentMethodId || null, p_amount_min: filters.amountMin ? Number(filters.amountMin) : null, p_amount_max: filters.amountMax ? Number(filters.amountMax) : null, p_month: filters.month ? Number(filters.month) : null, p_year: filters.year ? Number(filters.year) : null, p_date_from: filters.dateFrom || null, p_date_to: filters.dateTo || null });
+  const { data, error } = await supabase.rpc('list_deleted_transactions', { p_family_id: familyId, p_limit: pageSize, p_offset: page * pageSize, p_query: filters.query, p_transaction_type: filters.transactionType, p_purpose_ids: filters.purposeIds, p_expense_type_ids: filters.expenseTypeIds, p_payment_method_ids: filters.paymentMethodIds, p_amount_min: filters.amountMin ? Number(filters.amountMin) : null, p_amount_max: filters.amountMax ? Number(filters.amountMax) : null, p_month: filters.month ? Number(filters.month) : null, p_year: filters.year ? Number(filters.year) : null, p_date_from: filters.dateFrom || null, p_date_to: filters.dateTo || null });
   if (error) throw error;
   const result = data as unknown as { rows?: TransactionRow[]; hasMore?: boolean; totalCount?: number };
   return { rows: (result.rows || []).map(mapTransactionRow), hasMore: Boolean(result.hasMore), totalCount: Number(result.totalCount || 0), page };

@@ -84,3 +84,17 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
         run: supabase functions deploy search-transactions --project-ref "$SUPABASE_PROJECT_REF"
+
+      - name: Deploy process-transaction-embeddings Edge Function
+        if: ${{ inputs.dry_run != true && hashFiles('supabase/functions/process-transaction-embeddings/**') != '' }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+        run: supabase functions deploy process-transaction-embeddings --project-ref "$SUPABASE_PROJECT_REF"
+
+      - name: Deploy search-transactions-semantic Edge Function
+        if: ${{ inputs.dry_run != true && hashFiles('supabase/functions/search-transactions-semantic/**') != '' }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+        run: supabase functions deploy search-transactions-semantic --project-ref "$SUPABASE_PROJECT_REF"

@@ -17,6 +17,7 @@ import {
   MicOff,
 } from 'lucide-react';
 import { EmptyState, TransactionListSkeleton } from '../components/AsyncStates';
+import { MultiSelectField } from '../components/MultiSelectField';
 import { TransactionRow } from '../components/TransactionRow';
 import { useFeedback } from '../components/Feedback';
 import {
@@ -52,9 +53,9 @@ type TransactionFilters = {
   query: string;
   transactionType: string;
   status: string;
-  purposeId: string;
-  expenseTypeId: string;
-  paymentMethodId: string;
+  purposeIds: string[];
+  expenseTypeIds: string[];
+  paymentMethodIds: string[];
   amountMin: string;
   amountMax: string;
   month: string;
@@ -78,6 +79,10 @@ type SpeechRecognitionLike = {
   stop: () => void;
 };
 type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
+
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const getInitialFilterIds = (searchParams: URLSearchParams, key: string) =>
+  Array.from(new Set(searchParams.getAll(key).filter((value) => uuidPattern.test(value))));
 
 export function sanitizeAiSearchExplanation(explanation: string) {
   return explanation
@@ -241,16 +246,19 @@ export const filterAndSortTransactions = (
       )
         return false;
       if (filters.status && transaction.status !== filters.status) return false;
-      if (filters.purposeId && transaction.purposeId !== filters.purposeId)
-        return false;
       if (
-        filters.expenseTypeId &&
-        transaction.expenseTypeId !== filters.expenseTypeId
+        filters.purposeIds.length > 0 &&
+        !filters.purposeIds.includes(transaction.purposeId)
       )
         return false;
       if (
-        filters.paymentMethodId &&
-        transaction.paymentMethodId !== filters.paymentMethodId
+        filters.expenseTypeIds.length > 0 &&
+        !filters.expenseTypeIds.includes(transaction.expenseTypeId)
+      )
+        return false;
+      if (
+        filters.paymentMethodIds.length > 0 &&
+        !filters.paymentMethodIds.includes(transaction.paymentMethodId || '')
       )
         return false;
       const amountMin = filters.amountMin ? Number(filters.amountMin) : null;
@@ -313,9 +321,15 @@ export function Transactions() {
   const [status, setStatus] = useState(() =>
     getInitialTransactionStatus(searchParams.get('status')),
   );
-  const [purposeId, setPurposeId] = useState(() => searchParams.get('purposeId') || '');
-  const [expenseTypeId, setExpenseTypeId] = useState(() => searchParams.get('expenseTypeId') || '');
-  const [paymentMethodId, setPaymentMethodId] = useState('');
+  const [purposeIds, setPurposeIds] = useState(() =>
+    getInitialFilterIds(searchParams, 'purposeId'),
+  );
+  const [expenseTypeIds, setExpenseTypeIds] = useState(() =>
+    getInitialFilterIds(searchParams, 'expenseTypeId'),
+  );
+  const [paymentMethodIds, setPaymentMethodIds] = useState(() =>
+    getInitialFilterIds(searchParams, 'paymentMethodId'),
+  );
   const [amountMin, setAmountMin] = useState('');
   const [amountMax, setAmountMax] = useState('');
   const [month, setMonth] = useState(initialMonth);
@@ -338,6 +352,7 @@ export function Transactions() {
   const [aiSearchCompleted, setAiSearchCompleted] = useState(false);
   const [aiSearchMessage, setAiSearchMessage] = useState('');
   const [aiSearchError, setAiSearchError] = useState('');
+  const [semanticQuery, setSemanticQuery] = useState('');
   const [voiceListening, setVoiceListening] = useState(false);
   const [voiceSupported] = useState(() => Boolean(getSpeechRecognition()));
   const speechRecognitionRef = useRef<SpeechRecognitionLike | null>(null);
@@ -369,9 +384,9 @@ export function Transactions() {
         query,
         transactionType,
         status,
-        purposeId,
-        expenseTypeId,
-        paymentMethodId,
+        purposeIds,
+        expenseTypeIds,
+        paymentMethodIds,
         amountMin,
         amountMax,
         month,
@@ -384,9 +399,9 @@ export function Transactions() {
       transactions,
       query,
       transactionType,
-      purposeId,
-      expenseTypeId,
-      paymentMethodId,
+      purposeIds,
+      expenseTypeIds,
+      paymentMethodIds,
       amountMin,
       amountMax,
       month,
@@ -399,12 +414,13 @@ export function Transactions() {
   );
   const serverFilters = useMemo(
     () => ({
-      query: debouncedQuery,
+      query: semanticQuery ? '' : debouncedQuery,
+      semanticQuery,
       transactionType,
       status,
-      purposeId,
-      expenseTypeId,
-      paymentMethodId,
+      purposeIds,
+      expenseTypeIds,
+      paymentMethodIds,
       amountMin,
       amountMax,
       month,
@@ -415,10 +431,11 @@ export function Transactions() {
     }),
     [
       debouncedQuery,
+      semanticQuery,
       transactionType,
-      purposeId,
-      expenseTypeId,
-      paymentMethodId,
+      purposeIds,
+      expenseTypeIds,
+      paymentMethodIds,
       amountMin,
       amountMax,
       month,
@@ -449,7 +466,7 @@ export function Transactions() {
     enabled: isSupabaseConfigured && Boolean(familyId),
     staleTime: 5 * 60_000,
   });
-  const trashFilters = { query, transactionType, status, purposeId, expenseTypeId, paymentMethodId, amountMin, amountMax, month, year, dateFrom, dateTo, sort } satisfies TransactionFilters;
+  const trashFilters = { query, transactionType, status, purposeIds, expenseTypeIds, paymentMethodIds, amountMin, amountMax, month, year, dateFrom, dateTo, sort } satisfies TransactionFilters;
   const localTrashRows = useMemo(() => filterAndSortTransactions(transactions.filter((item) => item.deletedAt && (currentUserRole === 'owner' || item.createdBy === currentUserId)), trashFilters, true), [transactions, currentUserRole, currentUserId, trashFilters]);
   const rows = showTrash
     ? (isSupabaseConfigured ? trashQuery.data?.rows || [] : localTrashRows)
@@ -463,10 +480,11 @@ export function Transactions() {
   const resultKey = [
     showTrash,
     query,
+    semanticQuery,
     transactionType,
-    purposeId,
-    expenseTypeId,
-    paymentMethodId,
+    purposeIds.join(','),
+    expenseTypeIds.join(','),
+    paymentMethodIds.join(','),
     amountMin,
     amountMax,
     month,
@@ -478,11 +496,12 @@ export function Transactions() {
 
   const hasFilters = Boolean(
     query ||
+    semanticQuery ||
     transactionType ||
     status ||
-    purposeId ||
-    expenseTypeId ||
-    paymentMethodId ||
+    purposeIds.length > 0 ||
+    expenseTypeIds.length > 0 ||
+    paymentMethodIds.length > 0 ||
     amountMin ||
     amountMax ||
     month ||
@@ -494,9 +513,9 @@ export function Transactions() {
   const activeFilterCount = [
     transactionType,
     status,
-    purposeId,
-    expenseTypeId,
-    paymentMethodId,
+    ...purposeIds,
+    ...expenseTypeIds,
+    ...paymentMethodIds,
     amountMin,
     amountMax,
     month,
@@ -507,9 +526,9 @@ export function Transactions() {
   const filterChips = [
     transactionType && { key: 'transactionType', label: transactionType, clear: () => setTransactionType('') },
     status && { key: 'status', label: status, clear: () => setStatus('') },
-    purposeId && { key: 'purposeId', label: getCatalogDisplayName(purposes.find((item) => item.id === purposeId), language) || (en ? 'Purpose' : 'Mục đích'), clear: () => setPurposeId('') },
-    expenseTypeId && { key: 'expenseTypeId', label: getCatalogDisplayName(expenseTypes.find((item) => item.id === expenseTypeId), language) || (en ? 'Category' : 'Danh mục'), clear: () => setExpenseTypeId('') },
-    paymentMethodId && { key: 'paymentMethodId', label: getCatalogDisplayName(paymentMethods.find((item) => item.id === paymentMethodId), language) || (en ? 'Payment method' : 'Thanh toán'), clear: () => setPaymentMethodId('') },
+    ...purposeIds.map((id) => ({ key: `purposeId-${id}`, label: getCatalogDisplayName(purposes.find((item) => item.id === id), language) || (en ? 'Purpose' : 'Mục đích'), clear: () => setPurposeIds((current) => current.filter((item) => item !== id)) })),
+    ...expenseTypeIds.map((id) => ({ key: `expenseTypeId-${id}`, label: getCatalogDisplayName(expenseTypes.find((item) => item.id === id), language) || (en ? 'Category' : 'Danh mục'), clear: () => setExpenseTypeIds((current) => current.filter((item) => item !== id)) })),
+    ...paymentMethodIds.map((id) => ({ key: `paymentMethodId-${id}`, label: getCatalogDisplayName(paymentMethods.find((item) => item.id === id), language) || (en ? 'Payment method' : 'Thanh toán'), clear: () => setPaymentMethodIds((current) => current.filter((item) => item !== id)) })),
     amountMin && { key: 'amountMin', label: `${en ? 'From' : 'Từ'} ${formatVnd(Number(amountMin))}`, clear: () => setAmountMin('') },
     amountMax && { key: 'amountMax', label: `${en ? 'Up to' : 'Đến'} ${formatVnd(Number(amountMax))}`, clear: () => setAmountMax('') },
     month && { key: 'month', label: en ? (englishMonthNames[Number(month) - 1] || `Month ${Number(month)}`) : `Tháng ${Number(month)}`, clear: () => setMonth('') },
@@ -532,11 +551,12 @@ export function Transactions() {
   const netIsNegative = filteredTotal < 0;
   const resetFilters = () => {
     setQuery('');
+    setSemanticQuery('');
     setTransactionType('');
     setStatus('');
-    setPurposeId('');
-    setExpenseTypeId('');
-    setPaymentMethodId('');
+    setPurposeIds([]);
+    setExpenseTypeIds([]);
+    setPaymentMethodIds([]);
     setAmountMin('');
     setAmountMax('');
     setMonth('');
@@ -860,6 +880,7 @@ export function Transactions() {
         .join(' ');
       if (!transcript) return;
       setQuery((currentQuery) => [currentQuery.trim(), transcript].filter(Boolean).join(' '));
+      setSemanticQuery('');
       setAiSearchCompleted(false);
       setAiSearchMessage('');
       setAiSearchError('');
@@ -907,13 +928,14 @@ export function Transactions() {
       const response = transactionSearchResponseSchema.safeParse(data);
       if (!response.success) throw new Error('AI_RESPONSE_INVALID');
       const { filters } = response.data;
-      setQuery(filters.query);
-      setDebouncedQuery(filters.query);
+      setSemanticQuery(filters.semanticQuery);
+      setQuery(filters.semanticQuery || filters.query);
+      setDebouncedQuery(filters.semanticQuery ? '' : filters.query);
       setTransactionType(filters.transactionType || '');
       setStatus(filters.status || '');
-      setPurposeId(filters.purposeId || '');
-      setExpenseTypeId(filters.expenseTypeId || '');
-      setPaymentMethodId(filters.paymentMethodId || '');
+      setPurposeIds(filters.purposeIds);
+      setExpenseTypeIds(filters.expenseTypeIds);
+      setPaymentMethodIds(filters.paymentMethodIds);
       setAmountMin(filters.amountMin === null ? '' : String(filters.amountMin));
       setAmountMax(filters.amountMax === null ? '' : String(filters.amountMax));
       setSort(filters.sort);
@@ -1003,7 +1025,7 @@ export function Transactions() {
                   className="field min-w-0"
                   style={{ paddingLeft: '2.75rem', paddingRight: voiceSupported ? '3rem' : undefined }}
                   value={query}
-                  onChange={(event) => { setQuery(event.target.value); setAiSearchCompleted(false); setAiSearchMessage(''); setAiSearchError(''); }}
+                  onChange={(event) => { setQuery(event.target.value); setSemanticQuery(''); setAiSearchCompleted(false); setAiSearchMessage(''); setAiSearchError(''); }}
                   placeholder={en ? 'Search description or notes…' : 'Tìm nội dung hoặc ghi chú…'}
                 />
                 {voiceSupported && (
@@ -1070,51 +1092,33 @@ export function Transactions() {
               <option value="Dự kiến">{en ? 'Planned' : 'Dự kiến'}</option>
             </select>
           </label>
-          <label>
-            <span className="label">{en ? 'Purpose' : 'Mục đích'}</span>
-            <select
-              className="field"
-              value={purposeId}
-              onChange={(event) => setPurposeId(event.target.value)}
-            >
-              <option value="">{en ? 'All purposes' : 'Tất cả mục đích'}</option>
-              {purposes.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {getCatalogDisplayName(item, language)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            <span className="label">{en ? 'Category' : 'Danh mục'}</span>
-            <select
-              className="field"
-              value={expenseTypeId}
-              onChange={(event) => setExpenseTypeId(event.target.value)}
-            >
-              <option value="">{en ? 'All categories' : 'Tất cả danh mục'}</option>
-              {expenseTypes.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {getCatalogDisplayName(item, language)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            <span className="label">{en ? 'Payment method' : 'Phương thức thanh toán'}</span>
-            <select
-              className="field"
-              value={paymentMethodId}
-              onChange={(event) => setPaymentMethodId(event.target.value)}
-            >
-              <option value="">{en ? 'All payment methods' : 'Tất cả phương thức'}</option>
-              {paymentMethods.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {getCatalogDisplayName(item, language)}
-                </option>
-              ))}
-            </select>
-          </label>
+          <MultiSelectField
+            id="purpose-filter"
+            label={en ? 'Purpose' : 'Mục đích'}
+            values={purposeIds}
+            options={purposes}
+            onChange={setPurposeIds}
+            language={language}
+            placeholder={en ? 'All purposes' : 'Tất cả mục đích'}
+          />
+          <MultiSelectField
+            id="expense-type-filter"
+            label={en ? 'Category' : 'Danh mục'}
+            values={expenseTypeIds}
+            options={expenseTypes}
+            onChange={setExpenseTypeIds}
+            language={language}
+            placeholder={en ? 'All categories' : 'Tất cả danh mục'}
+          />
+          <MultiSelectField
+            id="payment-method-filter"
+            label={en ? 'Payment method' : 'Phương thức thanh toán'}
+            values={paymentMethodIds}
+            options={paymentMethods}
+            onChange={setPaymentMethodIds}
+            language={language}
+            placeholder={en ? 'All payment methods' : 'Tất cả phương thức'}
+          />
           <label className="min-w-0">
             <span className="label">{en ? 'Minimum amount' : 'Từ số tiền'}</span>
             <input
