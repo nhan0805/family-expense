@@ -14,6 +14,14 @@
 - [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
 
+### Handoff — loại bỏ account và event khỏi luồng ứng dụng (04/09/2026)
+
+- Giao diện form giao dịch, template/import hiện hành và export đã không hiển thị hai trường này; bản sửa lần này dọn nốt các tham chiếu frontend còn lại trong schema, draft, payload tạo/sao chép, parser Excel cũ và quan hệ truy vấn export.
+- Không xóa bảng/cột `accounts`, `events`, `transactions.account_id` hoặc `transactions.event_id` trong database vì đây là dữ liệu/schema production có thể chứa dữ liệu cũ; các trường legacy không còn được map hoặc ghi bởi frontend.
+- Files: `src/lib/domain.ts`, `src/lib/transactionDraft.ts`, `src/lib/transactionsApi.ts`, `src/pages/TransactionForm.tsx`, `src/pages/Transactions.tsx`, `src/pages/ImportExport.tsx`, `src/lib/importExcel.ts`, cùng test domain/import Excel.
+- Validation: Full suite đạt 30/30 file, 124/124 test; typecheck, lint, build và `git diff --check` pass. Build vẫn cảnh báo chunk ExcelJS lớn đã có từ trước.
+- Trạng thái triển khai dự kiến: Push branch, tạo/cập nhật PR vào `main`, bật auto-merge và chờ Supabase Production Deploy cùng Cloudflare Pages Git deployment.
+
 ### Handoff — giữ kết quả AI search khi backfill embedding lỗi (04/09/2026)
 
 - Ảnh người dùng cho thấy `search-transactions` đã phân tích đúng `semanticQuery` và bộ lọc `Quần áo`, nhưng query giao dịch vẫn rơi vào lỗi tải danh sách. Nguyên nhân phù hợp với việc backfill lazy gặp giới hạn CPU trước khi semantic RPC hoàn tất.

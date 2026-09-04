@@ -2,6 +2,14 @@
 
 ## 2026-09-04
 
+### Loại bỏ account và event khỏi luồng ứng dụng
+
+- Trước thay đổi: Giao diện đã ẩn các trường Tài khoản/Thẻ và Sự kiện/Kế hoạch, nhưng schema, bản nháp, payload tạo/sao chép giao dịch, parser Excel cũ và truy vấn export vẫn còn giữ các trường legacy.
+- Sau thay đổi: Loại bỏ hai trường khỏi model giao dịch phía frontend, bản nháp, import/parser, payload ghi giao dịch và quan hệ truy vấn export; template Excel hiện hành và dữ liệu giao dịch mới không còn phụ thuộc account/event.
+- Kỹ thuật: Cập nhật `src/lib/domain.ts`, `src/lib/transactionDraft.ts`, `src/lib/transactionsApi.ts`, `src/pages/TransactionForm.tsx`, `src/pages/Transactions.tsx`, `src/pages/ImportExport.tsx`, `src/lib/importExcel.ts` và regression test tương ứng. Không thêm migration, không xóa dữ liệu hoặc bảng/cột legacy trong database để bảo toàn dữ liệu cũ.
+- Kiểm thử: Full suite đạt 30/30 file, 124/124 test; typecheck, lint, build và `git diff --check` pass. Build vẫn cảnh báo chunk ExcelJS lớn đã có từ trước.
+- Trạng thái triển khai dự kiến: Push branch, tạo/cập nhật PR vào `main`, bật auto-merge và chờ Supabase Production Deploy cùng Cloudflare Pages Git deployment.
+
 ### Giữ kết quả AI search khi backfill embedding lỗi
 
 - Trước thay đổi: AI có thể phân tích đúng câu tìm kiếm nhưng luồng tải kết quả bị dừng nếu batch backfill embedding gặp giới hạn CPU; các giao dịch chưa có vector cũng bị loại khỏi semantic RPC.
