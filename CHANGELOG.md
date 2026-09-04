@@ -2,13 +2,30 @@
 
 ## 2026-09-04
 
+### Sửa badge Ẩn ngân sách che tên mục đích
+
+- Trước thay đổi: Trong card Danh mục dạng 3 cột, badge `Ẩn ngân sách` và các nút thao tác chiếm chỗ của tên mục đích; tên dài có thể bị co xuống chỉ còn một vài ký tự và nhìn như bị badge che.
+- Sau thay đổi: Tên mục đích có vùng nội dung riêng; badge `Ẩn ngân sách` nằm ở dòng bên dưới, không còn che hoặc ép tên co quá mức trên desktop hẹp và mobile.
+- Kỹ thuật: cập nhật layout item trong `src/pages/Catalogs.tsx` và regression assertion trong `src/pages/Catalogs.test.tsx`. Không thay đổi API, schema, migration, dữ liệu hoặc quy tắc ngân sách.
+- Kiểm thử: Đã bổ sung assertion bảo đảm tên dùng `truncate`, badge nằm cùng vùng nội dung nhưng ở dòng riêng; `vitest run` đạt 29/29 file, 115/115 test; lint, typecheck, build và `git diff --check` pass. Build vẫn cảnh báo chunk ExcelJS lớn đã có từ trước.
+- Trạng thái triển khai dự kiến: Commit/push branch, tạo hoặc cập nhật PR vào `main`, bật auto-merge và chờ required checks cùng Cloudflare Pages Git integration.
+
+### Cảnh báo ngân sách trong app — Phase 8
+
+- Trước thay đổi: Khi chi tiêu chạm ngưỡng cảnh báo hoặc vượt ngân sách, người dùng chỉ thấy trạng thái trên trang Ngân sách; chưa có toast tức thời và trung tâm thông báo chung.
+- Sau thay đổi: Header có chuông thông báo responsive với số chưa đọc; app hiển thị toast khi đạt ngưỡng cấu hình (mặc định 80%) và khi vượt ngân sách, có danh sách cảnh báo, đánh dấu từng mục/tất cả đã đọc và link về giao dịch đã lọc. Cảnh báo được chống lặp theo `family_id + tháng + mục đích`; chỉ nâng mức từ gần hạn mức lên vượt mới tạo toast mới.
+- UX hỗ trợ đầy đủ Việt/Anh và Dracula dark mode; dữ liệu cảnh báo được suy ra từ `get_budget_summary` cho cloud hoặc local fallback cho demo. Trạng thái đọc/toast lưu trên thiết bị, không thêm dữ liệu tài chính hoặc secret mới; mục đích đã ẩn khỏi ngân sách tiếp tục không tạo cảnh báo.
+- Kỹ thuật: thêm `src/components/BudgetNotifications.tsx`, `src/lib/budgetNotifications.ts` và test; tích hợp vào `src/components/Layout.tsx`, thêm bản dịch trong `src/context/LanguageContext.tsx`; invalidate cache ngân sách sau các mutation giao dịch ở Dashboard/Transactions/TransactionForm. Không thêm migration, bảng DB, API hoặc thay đổi RLS/RPC.
+- Kiểm thử: `vitest run` đạt 29/29 file, 115/115 test; `eslint . --max-warnings=0`, `tsc -b --pretty false`, `vite build` và `git diff --check` pass. Build vẫn cảnh báo chunk ExcelJS lớn đã có từ trước.
+- Trạng thái triển khai: Chưa deploy production; thay đổi đã sẵn sàng để commit/push branch, tạo PR vào `main`, bật auto-merge và chờ required checks/Cloudflare Pages Git integration theo quy trình.
+
 ### Kiểm thử hệ thống và hardening fallback/auth/maintenance
 
 - Trước thay đổi: Khi Supabase chưa cấu hình, AppContext không có `familyId` nên Layout chuyển demo sang trang tạo gia đình; CRUD danh mục, import Excel, thao tác thành viên và đăng xuất vẫn có thể gọi Supabase placeholder. Form xác thực còn lộ nguyên văn lỗi provider và có thể giữ trạng thái bận khi promise bị reject; ngày giao dịch dạng `YYYY-MM-DD` được format qua timezone của thiết bị.
 - Sau thay đổi: Demo fallback có family/user cục bộ và CRUD danh mục/import/thành viên/đăng xuất không gọi backend; lỗi auth được dịch theo VI/EN, có validate biên và `try/catch/finally`; ngày-only hiển thị ổn định theo lịch Việt Nam. Thêm migration harden `search_path` cho ba hàm `SECURITY DEFINER` bảo trì/xóa dữ liệu.
 - Kỹ thuật: cập nhật `src/context/AppContext.tsx`, `src/components/Layout.tsx`, `src/pages/CreateFamily.tsx`, `src/pages/Members.tsx`, `src/pages/ImportExport.tsx`, `src/pages/Login.tsx`, `src/pages/ResetPassword.tsx`, `src/lib/errorRecovery.ts`, `src/lib/domain.ts`, `src/components/TransactionRow.tsx`, `src/pages/Transactions.tsx`; thêm regression tests và `supabase/migrations/202609040001_harden_maintenance_search_paths.sql`. Không chạy migration production, không sửa migration đã áp dụng và không thay đổi dữ liệu production.
 - Kiểm thử: `pnpm test` đạt 27/27 file, 110/110 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Smoke UI cục bộ với cấu hình placeholder xác nhận mở Dashboard → Giao dịch → form, lưu giao dịch và truy cập Ngân sách/Danh mục. Playwright E2E chưa thực thi assertion vì thiếu browser binaries; Supabase/pgTAP local chưa chạy do Docker socket/CLI telemetry bị chặn.
-- Trạng thái triển khai: Chưa deploy; cần commit/push branch, PR vào `main`, required checks và Supabase/Cloudflare Git integration. Migration mới chỉ sẵn sàng chờ quy trình deploy được phê duyệt.
+- Trạng thái triển khai: Đã merge PR [#112](https://github.com/nhan0805/family-expense/pull/112) vào `main` với squash merge commit `e83a96aa3ea44a23852421bf6f7311dde9d8033e`. CI main [run 33829203375](https://github.com/nhan0805/family-expense/actions/runs/33829203375) pass gồm `quality` và `db-security`; Supabase Production Deploy [run 33829203393](https://github.com/nhan0805/family-expense/actions/runs/33829203393) pass và đã áp migration/deploy Edge Functions; Cloudflare Pages production check pass trên merge commit. Production `https://family-expense-8fo.pages.dev/` trả HTTP 200. Không dùng Wrangler deploy trực tiếp và không tạo deploy lần hai chỉ để cập nhật tài liệu.
 
 ## 2026-09-03
 

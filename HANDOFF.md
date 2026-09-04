@@ -14,13 +14,30 @@
 - [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
 
+### Handoff — sửa badge Ẩn ngân sách che tên mục đích (04/09/2026)
+
+- Nguyên nhân: card Danh mục trên desktop 3 cột đặt tên, badge `Ẩn ngân sách` và cụm nút trong cùng một hàng; flex ưu tiên giữ badge/nút nên tên bị co quá mức.
+- Bản sửa: mỗi item có vùng nội dung riêng; tên nằm ở dòng trên với `truncate`, badge nằm dưới bằng `w-fit`, còn icon và nút sửa/xóa giữ vị trí hiện tại. Không thay đổi API, schema, migration hoặc dữ liệu.
+- Files: `src/pages/Catalogs.tsx`, `src/pages/Catalogs.test.tsx`.
+- Validation: `vitest run` đạt 29/29 file, 115/115 test; lint, typecheck, build và `git diff --check` pass. Build còn cảnh báo chunk ExcelJS lớn hiện hữu.
+- Trạng thái triển khai dự kiến: Commit/push branch, tạo hoặc cập nhật PR vào `main`, bật auto-merge và theo dõi required checks cùng Cloudflare Pages Git integration.
+
+### Handoff — cảnh báo ngân sách trong app, Phase 8 (04/09/2026)
+
+- Header có chuông thông báo trên desktop/mobile với badge số chưa đọc. Toast xuất hiện khi mục đích đạt ngưỡng cảnh báo đã cấu hình (mặc định 80%) và khi chi tiêu vượt ngân sách; danh sách có nhãn Việt/Anh, dark mode Dracula, trạng thái đã đọc và link về `/giao-dich` đã lọc theo mục đích/tháng.
+- Chống lặp dùng id ổn định theo `family_id + năm-tháng + purpose_id`, lưu trạng thái trên thiết bị. Cùng cảnh báo trong cùng tháng không tạo lại toast; chỉ chuyển từ `Sắp vượt` sang `Đã vượt` mới phát sinh thông báo tăng mức. Dữ liệu tổng hợp cloud dùng cùng query key `['budgets', familyId, year, month]` với trang Ngân sách; các luồng thêm/sửa/xóa/xác nhận giao dịch invalidate query để chuông cập nhật sau mutation.
+- Local fallback dùng `buildLocalBudgetSummary`; mục đích `budgetEnabled: false` tiếp tục bị loại khỏi cảnh báo. Trạng thái đọc/toast là metadata UI theo thiết bị, không đồng bộ giữa thiết bị trong V1; Web Push vẫn để phase sau.
+- Files chính: `src/components/BudgetNotifications.tsx`, `src/lib/budgetNotifications.ts`, tests tương ứng, `src/components/Layout.tsx`, `src/context/LanguageContext.tsx`, `src/pages/Dashboard.tsx`, `src/pages/TransactionForm.tsx`, `src/pages/Transactions.tsx`. Không có migration mới, không đổi schema/RLS/RPC.
+- Validation local: `vitest run` 29/29 file, 115/115 test; `eslint . --max-warnings=0`, `tsc -b --pretty false`, `vite build` và `git diff --check` pass. Build còn cảnh báo chunk ExcelJS lớn hiện hữu.
+- Trạng thái triển khai: Chưa deploy production; cần commit/push branch, tạo PR vào `main`, bật auto-merge và chờ required checks cùng Cloudflare Pages Git integration. Chưa cần Supabase Production Deploy vì không có migration.
+
 ### Handoff — kiểm thử hệ thống và chuẩn bị deploy (04/09/2026)
 
 - Trước thay đổi: Khi Supabase chưa cấu hình, fallback demo chưa có family/user cục bộ hoàn chỉnh; một số CRUD/import/thành viên/đăng xuất vẫn có thể gọi backend placeholder. Lỗi xác thực có thể lộ nguyên văn từ provider, còn ngày-only phụ thuộc timezone thiết bị.
 - Sau thay đổi: fallback demo có family/user cục bộ; CRUD danh mục, import, thành viên và đăng xuất hoạt động không cần backend. Auth có validate biên, dịch lỗi VI/EN và `try/catch/finally`; ngày `YYYY-MM-DD` hiển thị ổn định theo lịch Việt Nam. Thêm migration `supabase/migrations/202609040001_harden_maintenance_search_paths.sql` harden `search_path` cho ba hàm `SECURITY DEFINER` bảo trì/xóa dữ liệu.
 - Files chính: `src/context/AppContext.tsx`, `src/components/Layout.tsx`, `src/components/TransactionRow.tsx`, `src/lib/domain.ts`, `src/lib/errorRecovery.ts`, `src/pages/{CreateFamily,ImportExport,Login,Members,ResetPassword,Transactions}.tsx`, regression tests và migration mới. Không sửa migration đã áp dụng và không thay đổi dữ liệu production.
 - Validation local: `pnpm test` đạt 27/27 file, 110/110 test; `pnpm lint`, `pnpm typecheck`, `pnpm build`, coverage và `git diff --check` pass. Coverage V8 ghi nhận statements 63.22%, branches 59.63%, functions 54.15%, lines 63.22%; repository không đặt threshold. Playwright chưa chạy assertion vì thiếu browser binaries; Supabase/pgTAP local bị chặn bởi Docker socket/CLI telemetry.
-- Trạng thái triển khai dự kiến: commit/push branch, tạo PR vào `main`, bật auto-merge và theo dõi `quality`, `db-security`, Preview, Supabase Production Deploy và Cloudflare Pages production trên merge commit. Frontend/migration chỉ deploy qua Git integration/workflow; không dùng Wrangler trực tiếp.
+- Trạng thái triển khai thực tế: Đã merge PR [#112](https://github.com/nhan0805/family-expense/pull/112) vào `main` với squash merge commit `e83a96aa3ea44a23852421bf6f7311dde9d8033e`. CI main [run 33829203375](https://github.com/nhan0805/family-expense/actions/runs/33829203375) pass gồm `quality` và `db-security`; Supabase Production Deploy [run 33829203393](https://github.com/nhan0805/family-expense/actions/runs/33829203393) pass và đã áp migration/deploy Edge Functions; Cloudflare Pages production check pass trên merge commit. Production `https://family-expense-8fo.pages.dev/` trả HTTP 200. Cập nhật tài liệu sau deploy chỉ ở local để tránh tạo deploy lần hai; không dùng Wrangler trực tiếp.
 
 ### Handoff — mở rộng icon và sửa layout desktop (03/09/2026)
 
