@@ -44,8 +44,11 @@ describe('Quản lý danh mục', () => {
 
     expect(screen.getByRole('heading', { name: 'Danh mục', level: 2 })).toHaveClass('page-title');
     expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(3);
-    expect(screen.getByText('Nhà cửa & gia dụng')).toHaveClass('flex-1', 'truncate');
-    expect(screen.getByText('Ẩn ngân sách')).toHaveClass('whitespace-nowrap');
+    const hiddenBudgetName = screen.getByText('Nhà cửa & gia dụng');
+    expect(hiddenBudgetName).toHaveClass('block', 'truncate');
+    expect(hiddenBudgetName.parentElement).toHaveClass('min-w-0', 'flex-1');
+    expect(hiddenBudgetName.parentElement).toContainElement(screen.getByText('Ẩn ngân sách'));
+    expect(screen.getByText('Ẩn ngân sách')).toHaveClass('w-fit', 'whitespace-nowrap');
     fireEvent.click(screen.getAllByRole('button', { name: 'Thêm' })[0]!);
     fireEvent.change(screen.getByLabelText('Tên mục đích'), { target: { value: '  Giáo dục  ' } });
     fireEvent.change(screen.getByLabelText('Tìm biểu tượng cho Mục đích'), { target: { value: 'xe đạp' } });

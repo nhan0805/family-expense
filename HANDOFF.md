@@ -14,6 +14,14 @@
 - [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
 
+### Handoff — sửa badge Ẩn ngân sách che tên mục đích (04/09/2026)
+
+- Nguyên nhân: card Danh mục trên desktop 3 cột đặt tên, badge `Ẩn ngân sách` và cụm nút trong cùng một hàng; flex ưu tiên giữ badge/nút nên tên bị co quá mức.
+- Bản sửa: mỗi item có vùng nội dung riêng; tên nằm ở dòng trên với `truncate`, badge nằm dưới bằng `w-fit`, còn icon và nút sửa/xóa giữ vị trí hiện tại. Không thay đổi API, schema, migration hoặc dữ liệu.
+- Files: `src/pages/Catalogs.tsx`, `src/pages/Catalogs.test.tsx`.
+- Validation: `vitest run` đạt 29/29 file, 115/115 test; lint, typecheck, build và `git diff --check` pass. Build còn cảnh báo chunk ExcelJS lớn hiện hữu.
+- Trạng thái triển khai dự kiến: Commit/push branch, tạo hoặc cập nhật PR vào `main`, bật auto-merge và theo dõi required checks cùng Cloudflare Pages Git integration.
+
 ### Handoff — cảnh báo ngân sách trong app, Phase 8 (04/09/2026)
 
 - Header có chuông thông báo trên desktop/mobile với badge số chưa đọc. Toast xuất hiện khi mục đích đạt ngưỡng cảnh báo đã cấu hình (mặc định 80%) và khi chi tiêu vượt ngân sách; danh sách có nhãn Việt/Anh, dark mode Dracula, trạng thái đã đọc và link về `/giao-dich` đã lọc theo mục đích/tháng.

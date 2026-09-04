@@ -2,6 +2,14 @@
 
 ## 2026-09-04
 
+### Sửa badge Ẩn ngân sách che tên mục đích
+
+- Trước thay đổi: Trong card Danh mục dạng 3 cột, badge `Ẩn ngân sách` và các nút thao tác chiếm chỗ của tên mục đích; tên dài có thể bị co xuống chỉ còn một vài ký tự và nhìn như bị badge che.
+- Sau thay đổi: Tên mục đích có vùng nội dung riêng; badge `Ẩn ngân sách` nằm ở dòng bên dưới, không còn che hoặc ép tên co quá mức trên desktop hẹp và mobile.
+- Kỹ thuật: cập nhật layout item trong `src/pages/Catalogs.tsx` và regression assertion trong `src/pages/Catalogs.test.tsx`. Không thay đổi API, schema, migration, dữ liệu hoặc quy tắc ngân sách.
+- Kiểm thử: Đã bổ sung assertion bảo đảm tên dùng `truncate`, badge nằm cùng vùng nội dung nhưng ở dòng riêng; `vitest run` đạt 29/29 file, 115/115 test; lint, typecheck, build và `git diff --check` pass. Build vẫn cảnh báo chunk ExcelJS lớn đã có từ trước.
+- Trạng thái triển khai dự kiến: Commit/push branch, tạo hoặc cập nhật PR vào `main`, bật auto-merge và chờ required checks cùng Cloudflare Pages Git integration.
+
 ### Cảnh báo ngân sách trong app — Phase 8
 
 - Trước thay đổi: Khi chi tiêu chạm ngưỡng cảnh báo hoặc vượt ngân sách, người dùng chỉ thấy trạng thái trên trang Ngân sách; chưa có toast tức thời và trung tâm thông báo chung.
