@@ -14,12 +14,22 @@
 - [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
 
+### Handoff — trung tâm thông báo và xác nhận giao dịch dự kiến (04/09/2026)
+
+- Nút chuông hiện gom cảnh báo ngân sách và các giao dịch `Dự kiến` đã tới hạn. Có thể xác nhận từng giao dịch hoặc tất cả trong panel; thao tác vẫn đi qua `confirmPlannedTransaction` và cập nhật cache liên quan.
+- Khối xác nhận giao dịch dự kiến đã được bỏ khỏi Tổng quan. Trang Giao dịch vẫn giữ luồng xác nhận hiện có để người dùng có thêm điểm truy cập.
+- Bổ sung `deleteReadBudgetNotifications` và nút `Xóa đã đọc`; chỉ xóa metadata cảnh báo đã đọc của family hiện tại, giữ cảnh báo chưa đọc và family khác.
+- Files: `src/components/BudgetNotifications.tsx`, `src/lib/budgetNotifications.ts`, `src/lib/budgetNotifications.test.ts`, `src/components/BudgetNotifications.test.tsx`, `src/pages/Dashboard.tsx`, `src/pages/Dashboard.test.tsx`.
+- Không có migration mới, không đổi schema/RLS/RPC. Trạng thái đọc/xóa cảnh báo vẫn lưu local trên thiết bị trong V1.
+- Validation: test tập trung 14/14 pass; full `pnpm test` đạt 29/29 file, 118/118 test; lint, typecheck và build pass. Build vẫn cảnh báo chunk ExcelJS lớn hiện hữu.
+- Trạng thái triển khai dự kiến: Đã pass quality gates; sẽ commit/push branch, tạo PR vào `main`, bật auto-merge và xác minh Cloudflare Pages Git deployment của merge commit.
+
 ### Handoff — hiển thị đầy đủ tên dài trong Danh mục (04/09/2026)
 
 - Bổ sung sau bản sửa badge: ba card Danh mục trên desktop có chiều rộng tối thiểu 440px và cuộn ngang khi cần; tên dài giữ một dòng, không còn bị `truncate` thành dấu `...`. Mobile vẫn cho phép xuống dòng khi chiều rộng không đủ.
 - Icon, badge `Ẩn ngân sách` và cụm nút sửa/xóa vẫn giữ vị trí; không thay đổi API, schema, migration, dữ liệu hoặc quy tắc ngân sách.
 - Files: `src/index.css`, `src/pages/Catalogs.tsx`, `src/pages/Catalogs.test.tsx`.
-- Trạng thái: Chưa deploy production; cần chạy quality gates, commit/push branch và theo dõi PR qua Git integration khi người dùng yêu cầu deploy.
+- Trạng thái triển khai dự kiến: Sẽ phát hành cùng PR deploy hiện tại qua Cloudflare Pages Git integration.
 
 ### Handoff — sửa badge Ẩn ngân sách che tên mục đích (04/09/2026)
 

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { BudgetSummary } from './budget';
 import {
+  deleteReadBudgetNotifications,
   getBudgetNotifications,
   markAllBudgetNotificationsRead,
   markBudgetNotificationRead,
@@ -71,5 +72,18 @@ describe('budget notification helpers', () => {
     const familyOne = markAllBudgetNotificationsRead('family-1', new Date('2026-09-13T00:00:00.000Z'));
     expect(familyOne[0]!.readAt).toBe('2026-09-13T00:00:00.000Z');
     expect(getBudgetNotifications('family-2')[0]!.readAt).toBeNull();
+  });
+
+  it('xóa các cảnh báo đã đọc của đúng family và giữ cảnh báo chưa đọc', () => {
+    syncBudgetNotifications('family-1', summary());
+    syncBudgetNotifications('family-2', summary());
+    const familyOneId = getBudgetNotifications('family-1')[0]!.id;
+    markBudgetNotificationRead(familyOneId, new Date('2026-09-12T00:00:00.000Z'));
+
+    const remaining = deleteReadBudgetNotifications('family-1');
+
+    expect(remaining).toHaveLength(0);
+    expect(getBudgetNotifications('family-1')).toHaveLength(0);
+    expect(getBudgetNotifications('family-2')).toHaveLength(1);
   });
 });
