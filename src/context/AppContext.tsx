@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import type { AuthChangeEvent } from '@supabase/supabase-js';
+import type { AuthChangeEvent, User } from '@supabase/supabase-js';
 import type { CatalogItem, CatalogItemRow, Transaction } from '../lib/domain';
 import {
   expenseTypeNameEn,
@@ -31,6 +31,7 @@ type AppState = {
   familyId: string;
   familyName: string;
   currentUserEmail: string;
+  currentUserDisplayName: string;
   currentUserId: string;
   currentUserRole: 'owner' | 'member' | null;
   purposes: CatalogItem[];
@@ -74,6 +75,14 @@ const fallbackExpenseTypes = withDefaultIcons(makeItems(expenseTypeNames, expens
 const fallbackPaymentMethods = withDefaultIcons(makeItems(paymentMethodNames, paymentMethodNameEn));
 const localFamilyId = 'local-family';
 const localDemoEmail = 'demo@family.local';
+const localDemoDisplayName = 'Chủ gia đình';
+
+const getAuthDisplayName = (user: User) => {
+  const metadataName = [user.user_metadata?.full_name, user.user_metadata?.name]
+    .find((value): value is string => typeof value === 'string' && value.trim().length > 0)
+    ?.trim();
+  return metadataName || user.email || 'Tài khoản đã đăng nhập';
+};
 
 export function shouldReloadAppForAuthEvent(event: AuthChangeEvent) {
   return event !== 'TOKEN_REFRESHED';
@@ -86,6 +95,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [familyName, setFamilyName] = useState('Gia đình của tôi');
   const [currentUserEmail, setCurrentUserEmail] = useState(
     isSupabaseConfigured ? '' : localDemoEmail,
+  );
+  const [currentUserDisplayName, setCurrentUserDisplayName] = useState(
+    isSupabaseConfigured ? '' : localDemoDisplayName,
   );
   const [currentUserId, setCurrentUserId] = useState(
     isSupabaseConfigured ? '' : 'local-user',
@@ -137,6 +149,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (active) {
           setAuthenticated(false);
           setCurrentUserEmail('');
+          setCurrentUserDisplayName('');
           setCurrentUserId('');
           setCurrentUserRole(null);
           setFamilyId('');
@@ -150,9 +163,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
         return;
       }
+      const authDisplayName = getAuthDisplayName(user);
       if (active) {
         setAuthenticated(true);
         setCurrentUserEmail(user.email || 'Tài khoản đã đăng nhập');
+        setCurrentUserDisplayName(authDisplayName);
         setCurrentUserId(user.id);
       }
       if (!navigator.onLine) {
@@ -162,7 +177,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
       const { data: membership, error: membershipError } = await supabase
         .from('family_members')
-        .select('family_id, role, families(name)')
+        .select('family_id, role, display_name, families(name)')
         .eq('user_id', user.id)
         .eq('status', 'active')
         .limit(1)
@@ -227,6 +242,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       } | null;
       setFamilyId(id);
       setFamilyName(familyRelation?.name || 'Gia đình của tôi');
+      const memberDisplayName =
+        typeof membership.display_name === 'string'
+          ? membership.display_name.trim()
+          : '';
+      setCurrentUserDisplayName(memberDisplayName || authDisplayName);
       setCurrentUserRole(membership.role as 'owner' | 'member');
       setPurposes((purposeResult.data || []).map((item) => mapCatalogItem(item)));
       setExpenseTypes((typeResult.data || []).map((item) => mapCatalogItem(item)));
@@ -567,6 +587,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setFamilyName(name);
       setCurrentUserId('local-user');
       setCurrentUserEmail(localDemoEmail);
+      setCurrentUserDisplayName(localDemoDisplayName);
       setCurrentUserRole('owner');
       setAuthenticated(true);
       setPurposes(fallbackPurposes);
@@ -623,6 +644,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       familyId,
       familyName,
       currentUserEmail,
+      currentUserDisplayName,
       currentUserId,
       currentUserRole,
       purposes,
@@ -647,6 +669,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       familyId,
       familyName,
       currentUserEmail,
+      currentUserDisplayName,
       currentUserId,
       currentUserRole,
       purposes,

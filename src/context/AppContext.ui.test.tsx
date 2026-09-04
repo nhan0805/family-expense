@@ -8,11 +8,12 @@ vi.mock('../lib/supabase', () => ({
 }));
 
 function Probe() {
-  const { familyId, currentUserEmail, purposes, addCatalogItem } = useApp();
+  const { familyId, currentUserEmail, currentUserDisplayName, purposes, addCatalogItem } = useApp();
   return (
     <div>
       <output data-testid="family-id">{familyId}</output>
       <output data-testid="demo-email">{currentUserEmail}</output>
+      <output data-testid="demo-display-name">{currentUserDisplayName}</output>
       <ul>{purposes.map((item) => <li key={item.id}>{item.name} {item.nameEn}</li>)}</ul>
       <button type="button" onClick={() => void addCatalogItem('purpose', 'Mục mới', 'New purpose', 'tag')}>
         Thêm mục demo
@@ -27,6 +28,7 @@ describe('AppProvider demo fallback', () => {
 
     expect(screen.getByTestId('family-id')).toHaveTextContent('local-family');
     expect(screen.getByTestId('demo-email')).toHaveTextContent('demo@family.local');
+    expect(screen.getByTestId('demo-display-name')).toHaveTextContent('Chủ gia đình');
 
     fireEvent.click(screen.getByRole('button', { name: 'Thêm mục demo' }));
 

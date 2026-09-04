@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useApp } from '../context/AppContext';
 import { supabase } from '../lib/supabase';
@@ -89,7 +89,7 @@ describe('Members', () => {
       familyId: 'family-1',
       familyName: 'Gia đình của tôi',
       currentUserEmail: 'owner@example.com',
-      currentUserId: 'owner-1',
+      currentUserId: 'member-user-1',
       currentUserRole: 'owner',
       updateFamilyName: vi.fn(),
       deleteFamily: vi.fn(),
@@ -98,5 +98,8 @@ describe('Members', () => {
 
     const avatar = await screen.findByText('N', { selector: '.member-avatar' });
     expect(avatar).toHaveAttribute('aria-hidden', 'true');
+    const currentUserRow = screen.getByRole('article', { name: 'Nhan, tài khoản đang đăng nhập' });
+    expect(currentUserRow).toHaveClass('member-row-current');
+    expect(within(currentUserRow).getByText('Bạn')).toBeInTheDocument();
   });
 });

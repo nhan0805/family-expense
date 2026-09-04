@@ -28,7 +28,7 @@ const friendlyError = (message: string) => {
 };
 
 export function Members() {
-  const { language } = useOptionalLanguage();
+  const { language, t } = useOptionalLanguage();
   const en = language === 'en';
   const {
     familyId,
@@ -347,8 +347,9 @@ export function Members() {
           <h3 className="font-bold">{en ? 'Member list' : 'Danh sách thành viên'} ({members.length})</h3>
         </div>
         <div className="divide-y divide-black/10 dark:divide-white/10" aria-busy={loadingMembers}>
-          {loadingMembers ? <div className="space-y-4 p-5" role="status" aria-label={en ? 'Loading members' : 'Đang tải thành viên'}><span className="sr-only">{en ? 'Loading members…' : 'Đang tải thành viên…'}</span>{Array.from({ length: 2 }, (_, index) => <div className="flex items-center justify-between gap-4" key={index}><div className="flex-1 space-y-2"><Skeleton className="h-5 w-40"/><Skeleton className="h-4 w-56 max-w-full"/></div><Skeleton className="h-10 w-20"/></div>)}</div> : members.map((member) => (
-            <article className="member-row p-4 sm:p-5" key={member.id}>
+          {loadingMembers ? <div className="space-y-4 p-5" role="status" aria-label={en ? 'Loading members' : 'Đang tải thành viên'}><span className="sr-only">{en ? 'Loading members…' : 'Đang tải thành viên…'}</span>{Array.from({ length: 2 }, (_, index) => <div className="flex items-center justify-between gap-4" key={index}><div className="flex-1 space-y-2"><Skeleton className="h-5 w-40"/><Skeleton className="h-4 w-56 max-w-full"/></div><Skeleton className="h-10 w-20"/></div>)}</div> : members.map((member) => {
+            const isCurrentUser = member.user_id === currentUserId;
+            return <article className={`member-row p-4 sm:p-5 ${isCurrentUser ? 'member-row-current' : ''}`} aria-label={isCurrentUser ? `${member.display_name}, ${t('currentAccount')}` : undefined} key={member.id}>
               {editingId === member.id ? (
                 <form
                   className="member-name-editor flex flex-col gap-2 sm:flex-row"
@@ -382,6 +383,7 @@ export function Members() {
                     <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <strong>{member.display_name}</strong>
+                      {isCurrentUser && <span className="current-user-badge">{t('you')}</span>}
                       <span className="status-badge">
                         {member.role === 'owner'
                           ? (en ? 'Family owner' : 'Chủ gia đình')
@@ -421,7 +423,7 @@ export function Members() {
                 </div>
               )}
             </article>
-          ))}
+          })}
           {!loadingMembers && members.length === 0 && (
             <EmptyState
               title={en ? 'No members yet' : 'Chưa có thành viên'}
