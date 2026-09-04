@@ -5,9 +5,9 @@
 ### Hiển thị đầy đủ tên dài trong Danh mục
 
 - Trước thay đổi: Tên mục đích/danh mục dài vẫn bị `truncate` thành dấu `...`, khiến người dùng không xem được toàn bộ nội dung dù badge `Ẩn ngân sách` đã được tách xuống dòng.
-- Sau thay đổi: Tên dài tự xuống dòng trong vùng nội dung riêng, hiển thị đầy đủ trên desktop hẹp và mobile; icon, badge và nút sửa/xóa vẫn giữ bố cục ổn định.
-- Kỹ thuật: cập nhật layout item trong `src/pages/Catalogs.tsx` và regression assertion trong `src/pages/Catalogs.test.tsx`. Không thay đổi API, schema, migration, dữ liệu hoặc quy tắc ngân sách.
-- Kiểm thử: Bổ sung assertion tên dùng `whitespace-normal`/`break-words` và không còn `truncate`; cần chạy lại `vitest`, lint, typecheck, build và `git diff --check` trước khi commit/deploy.
+- Sau thay đổi: Ba card Danh mục trên desktop có chiều rộng tối thiểu 440px và cuộn ngang khi màn hình hẹp; tên dài giữ một dòng, không còn `...`. Trên mobile, tên vẫn có thể xuống dòng để không làm vỡ màn hình; icon, badge và nút sửa/xóa giữ bố cục ổn định.
+- Kỹ thuật: cập nhật grid Danh mục và layout item trong `src/pages/Catalogs.tsx`, cho danh sách cuộn ngang trong `src/index.css`, và cập nhật regression assertion trong `src/pages/Catalogs.test.tsx`. Không thay đổi API, schema, migration, dữ liệu hoặc quy tắc ngân sách.
+- Kiểm thử: Bổ sung assertion tên dùng `lg:whitespace-nowrap`, không còn `truncate`, card dùng grid tối thiểu 440px; cần chạy lại `vitest`, lint, typecheck, build và `git diff --check` trước khi commit/deploy.
 - Trạng thái triển khai: Chưa deploy production.
 
 ### Sửa badge Ẩn ngân sách che tên mục đích

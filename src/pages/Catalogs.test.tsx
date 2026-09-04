@@ -45,7 +45,7 @@ describe('Quản lý danh mục', () => {
     expect(screen.getByRole('heading', { name: 'Danh mục', level: 2 })).toHaveClass('page-title');
     expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(3);
     const hiddenBudgetName = screen.getByText('Nhà cửa & gia dụng');
-    expect(hiddenBudgetName).toHaveClass('block', 'whitespace-normal', 'break-words');
+    expect(hiddenBudgetName).toHaveClass('block', 'whitespace-normal', 'break-words', 'lg:whitespace-nowrap');
     expect(hiddenBudgetName).not.toHaveClass('truncate');
     expect(hiddenBudgetName.parentElement).toHaveClass('min-w-0', 'flex-1');
     expect(hiddenBudgetName.parentElement).toContainElement(screen.getByText('Ẩn ngân sách'));

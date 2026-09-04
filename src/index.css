@@ -842,7 +842,8 @@ summary:focus-visible {
 }
 
 .catalog-list {
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   border-radius: .75rem;
 }
 

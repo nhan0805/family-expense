@@ -16,9 +16,9 @@
 
 ### Handoff — hiển thị đầy đủ tên dài trong Danh mục (04/09/2026)
 
-- Bổ sung sau bản sửa badge: tên mục đích/danh mục dài không còn bị `truncate` thành dấu `...`, mà tự xuống dòng trong vùng nội dung riêng.
+- Bổ sung sau bản sửa badge: ba card Danh mục trên desktop có chiều rộng tối thiểu 440px và cuộn ngang khi cần; tên dài giữ một dòng, không còn bị `truncate` thành dấu `...`. Mobile vẫn cho phép xuống dòng khi chiều rộng không đủ.
 - Icon, badge `Ẩn ngân sách` và cụm nút sửa/xóa vẫn giữ vị trí; không thay đổi API, schema, migration, dữ liệu hoặc quy tắc ngân sách.
-- Files: `src/pages/Catalogs.tsx`, `src/pages/Catalogs.test.tsx`.
+- Files: `src/index.css`, `src/pages/Catalogs.tsx`, `src/pages/Catalogs.test.tsx`.
 - Trạng thái: Chưa deploy production; cần chạy quality gates, commit/push branch và theo dõi PR qua Git integration khi người dùng yêu cầu deploy.
 
 ### Handoff — sửa badge Ẩn ngân sách che tên mục đích (04/09/2026)
