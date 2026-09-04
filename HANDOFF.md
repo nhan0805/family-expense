@@ -14,6 +14,14 @@
 - [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
 
+### Handoff — giảm lỗi CPU khi AI search khởi tạo embedding (04/09/2026)
+
+- Nguyên nhân đã xác nhận từ log production: `process-transaction-embeddings` bị `546 WORKER_RESOURCE_LIMIT` / `CPU Time exceeded` khi xử lý nhiều giao dịch và tạo session embedding mới cho từng dòng; vì vậy AI search chưa bao giờ tới bước semantic search.
+- Bản sửa: tái sử dụng một session `gte-small` trong Edge Function isolate để loại bỏ chi phí khởi tạo model lặp lại cho từng dòng; giữ batch tối đa 20 để semantic search vẫn bao phủ dữ liệu cần thiết. Backfill dữ liệu cũ vẫn là luồng riêng, không tự chạy hàng loạt.
+- Files: `supabase/functions/_shared/transactionEmbedding.ts`, `src/lib/transactionsApi.test.ts`. Không đổi schema, RLS/RPC hay dữ liệu production.
+- Validation: `pnpm test` đạt 30/30 file, 122/122 test; typecheck, lint, build và `git diff --check` pass. Build vẫn cảnh báo chunk ExcelJS lớn đã có từ trước.
+- Trạng thái triển khai: Chờ PR, required checks, Supabase Production Deploy và Cloudflare Pages production deployment của merge commit.
+
 ### Handoff — highlight user hiện tại trong Thành viên (04/09/2026)
 
 - Danh sách Thành viên hiện nhận diện dòng có `member.user_id === currentUserId` bằng nền/viền accent theo theme và badge theo ngôn ngữ (`Bạn`/`You`).

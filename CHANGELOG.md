@@ -2,6 +2,14 @@
 
 ## 2026-09-04
 
+### Giảm lỗi CPU khi AI search khởi tạo embedding
+
+- Trước thay đổi: Manual search vẫn trả kết quả nhưng AI search có thể báo không tải được danh sách. Log production ghi nhận `process-transaction-embeddings` bị `546 WORKER_RESOURCE_LIMIT` và `CPU Time exceeded` trước khi semantic search được gọi.
+- Sau thay đổi: Dùng lại một session `gte-small` trong suốt vòng đời Edge Function isolate để không khởi tạo model lặp lại cho từng dòng; giữ batch tối đa 20 như thiết kế để semantic search vẫn bao phủ dữ liệu cần thiết.
+- Files: `supabase/functions/_shared/transactionEmbedding.ts`, `src/lib/transactionsApi.test.ts`. Không tự động backfill toàn bộ dữ liệu production.
+- Kiểm thử: `pnpm test` đạt 30/30 file, 122/122 test; typecheck, lint, build và `git diff --check` pass. Build vẫn cảnh báo chunk ExcelJS lớn đã có từ trước.
+- Trạng thái triển khai dự kiến: Tạo PR vào `main`, bật auto-merge và chờ Supabase Production Deploy cùng Cloudflare Pages Git deployment.
+
 ### Khắc phục AI search không tải được danh sách giao dịch
 
 - Trước thay đổi: Bảng `transaction_embeddings` có thể vẫn trống vì backfill được thiết kế lazy; khi AI đi vào semantic path, payload vector/RPC runtime có thể khiến bước tạo embedding hoặc truy vấn thất bại và UI chỉ hiện lỗi tải danh sách.
