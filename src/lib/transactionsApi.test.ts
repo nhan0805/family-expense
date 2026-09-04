@@ -29,7 +29,7 @@ describe('fetchTransactionPage semantic search', () => {
     invokeMock.mockReset();
   });
 
-  it('creates a bounded embedding batch before searching', async () => {
+  it('attempts a bounded embedding batch before searching', async () => {
     invokeMock
       .mockResolvedValueOnce({
         data: { processed: 1, failed: 0, remainingHint: false },
@@ -52,7 +52,7 @@ describe('fetchTransactionPage semantic search', () => {
       {
         body: {
           familyId: '11111111-1111-4111-8111-111111111111',
-          limit: 20,
+          limit: 5,
         },
       },
     );
@@ -62,6 +62,33 @@ describe('fetchTransactionPage semantic search', () => {
       expect.objectContaining({
         body: expect.objectContaining({
           familyId: '11111111-1111-4111-8111-111111111111',
+          semanticQuery: 'mua đồ cho em bé',
+          query: 'mua đồ cho em bé',
+        }),
+      }),
+    );
+  });
+
+  it('still runs semantic search when the optional backfill is resource-limited', async () => {
+    invokeMock
+      .mockRejectedValueOnce(new Error('WORKER_RESOURCE_LIMIT'))
+      .mockResolvedValueOnce({
+        data: { rows: [], hasMore: false, totalAmount: 0, totalCount: 0 },
+        error: null,
+      });
+
+    await fetchTransactionPage(
+      '11111111-1111-4111-8111-111111111111',
+      filters,
+      0,
+    );
+
+    expect(invokeMock).toHaveBeenNthCalledWith(
+      2,
+      'search-transactions-semantic',
+      expect.objectContaining({
+        body: expect.objectContaining({
+          query: 'mua đồ cho em bé',
           semanticQuery: 'mua đồ cho em bé',
         }),
       }),

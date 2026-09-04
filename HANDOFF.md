@@ -14,6 +14,14 @@
 - [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
 
+### Handoff — giữ kết quả AI search khi backfill embedding lỗi (04/09/2026)
+
+- Ảnh người dùng cho thấy `search-transactions` đã phân tích đúng `semanticQuery` và bộ lọc `Quần áo`, nhưng query giao dịch vẫn rơi vào lỗi tải danh sách. Nguyên nhân phù hợp với việc backfill lazy gặp giới hạn CPU trước khi semantic RPC hoàn tất.
+- Bản sửa: giảm batch lazy từ 20 xuống 5, coi lỗi backfill là best-effort để vẫn chạy semantic search; truyền câu semantic vào bộ lọc từ khóa; migration `202609040004_semantic_search_missing_embeddings.sql` đổi RPC semantic sang `left join` và chấm điểm 0 cho dòng chưa có embedding, để bộ lọc cấu trúc/từ khóa vẫn trả kết quả.
+- Files: `src/lib/transactionsApi.ts`, `src/lib/transactionsApi.test.ts`, `supabase/migrations/202609040004_semantic_search_missing_embeddings.sql`. Không đổi model, schema bảng embedding, dữ liệu giao dịch hay quyền RLS ngoài việc thay thế cùng RPC đã có.
+- Validation: `pnpm test` đạt 30/30 file, 123/123 test; typecheck, lint, build và `git diff --check` pass. Build vẫn cảnh báo chunk ExcelJS lớn đã có từ trước.
+- Trạng thái triển khai: Chưa deploy production; đang chờ PR, required checks, Supabase Production Deploy và Cloudflare Pages production deployment.
+
 ### Handoff — giảm lỗi CPU khi AI search khởi tạo embedding (04/09/2026)
 
 - Nguyên nhân đã xác nhận từ log production: `process-transaction-embeddings` bị `546 WORKER_RESOURCE_LIMIT` / `CPU Time exceeded` khi xử lý nhiều giao dịch và tạo session embedding mới cho từng dòng; vì vậy AI search chưa bao giờ tới bước semantic search.

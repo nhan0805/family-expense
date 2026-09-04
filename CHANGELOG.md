@@ -2,6 +2,14 @@
 
 ## 2026-09-04
 
+### Giữ kết quả AI search khi backfill embedding lỗi
+
+- Trước thay đổi: AI có thể phân tích đúng câu tìm kiếm nhưng luồng tải kết quả bị dừng nếu batch backfill embedding gặp giới hạn CPU; các giao dịch chưa có vector cũng bị loại khỏi semantic RPC.
+- Sau thay đổi: Backfill embedding là best-effort với batch 5; semantic search vẫn chạy và dùng bộ lọc cấu trúc/từ khóa khi backfill chưa hoàn tất. RPC semantic dùng `left join` để không làm mất giao dịch chưa có embedding và ưu tiên từ khóa gốc của câu hỏi.
+- Files/DB object: `src/lib/transactionsApi.ts`, `src/lib/transactionsApi.test.ts`, `supabase/migrations/202609040004_semantic_search_missing_embeddings.sql`. Không tự động ghi dữ liệu ngoài luồng tìm kiếm của user.
+- Kiểm thử: `pnpm test` đạt 30/30 file, 123/123 test; typecheck, lint, build và `git diff --check` pass. Build vẫn cảnh báo chunk ExcelJS lớn đã có từ trước.
+- Trạng thái triển khai dự kiến: Tạo PR vào `main`, bật auto-merge và chờ Supabase Production Deploy cùng Cloudflare Pages Git deployment.
+
 ### Giảm lỗi CPU khi AI search khởi tạo embedding
 
 - Trước thay đổi: Manual search vẫn trả kết quả nhưng AI search có thể báo không tải được danh sách. Log production ghi nhận `process-transaction-embeddings` bị `546 WORKER_RESOURCE_LIMIT` và `CPU Time exceeded` trước khi semantic search được gọi.
