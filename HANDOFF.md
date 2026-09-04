@@ -30,6 +30,14 @@
 - Validation: `pnpm test` đạt 29/29 file, 121/121 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass.
 - Trạng thái triển khai: Đang chuẩn bị deploy production qua PR và Git integration của Cloudflare Pages.
 
+### Handoff — căn mũi tên cùng hàng cho bộ lọc multi-select (04/09/2026)
+
+- Nguyên nhân: `.field` đặt `display: block` nên ghi đè `flex` trên `<summary>` của multi-select; icon mũi tên bị xuống dòng và trigger cao hơn `<select>` native.
+- Bản sửa: thêm class scoped `multi-select-trigger { display: flex; }` cho trigger Mục đích, Danh mục và Phương thức thanh toán; nội dung và mũi tên giờ nằm cùng hàng, chiều cao đồng nhất.
+- Files: `src/components/MultiSelectField.tsx`, `src/index.css`, `src/pages/Transactions.ui.test.tsx`. Không đổi API/schema/RLS/RPC hoặc dữ liệu.
+- Validation: `pnpm test` đạt 29/29 file, 121/121 test; typecheck, lint, build và `git diff --check` pass. Playwright đã khởi động được sau khi cài browser nhưng 2 test cloud bị bỏ qua vì chưa có `E2E_EMAIL`/`E2E_PASSWORD`.
+- Trạng thái triển khai: Chưa deploy production; thay đổi đang ở workspace.
+
 ### Handoff — multi-select và semantic search giao dịch (04/09/2026)
 
 - Đã chuyển bộ lọc Mục đích, Danh mục và Phương thức thanh toán sang chọn nhiều; nhiều giá trị trong cùng nhóm là OR, các nhóm khác là AND. Bộ lọc hoạt động cho cả demo local và RPC cloud mới.

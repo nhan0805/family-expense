@@ -283,6 +283,10 @@ body {
   transition: border-color .16s ease, box-shadow .16s ease, background-color .16s ease;
 }
 
+.multi-select-trigger {
+  display: flex;
+}
+
 .field::placeholder {
   color: color-mix(in srgb, var(--muted) 80%, transparent);
 }

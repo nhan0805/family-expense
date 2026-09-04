@@ -36,6 +36,7 @@ describe('Giao dịch mobile', () => {
     expect(screen.getByLabelText('Loại giao dịch')).toBeInTheDocument();
     expect(screen.getByLabelText('Trạng thái')).toBeInTheDocument();
     const purposeDetails = screen.getByText('Tất cả mục đích').closest('details');
+    expect(purposeDetails?.querySelector('summary')).toHaveClass('multi-select-trigger');
     fireEvent.click(screen.getByText('Tất cả mục đích'));
     fireEvent.click(screen.getByRole('checkbox', { name: 'Mục đích: Sinh hoạt' }));
     fireEvent.click(screen.getByRole('checkbox', { name: 'Mục đích: Du lịch' }));

@@ -18,6 +18,14 @@
 - Kiểm thử: `pnpm test` đạt 29/29 file, 121/121 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass.
 - Trạng thái triển khai: Đang chuẩn bị deploy production qua PR và Git integration của Cloudflare Pages.
 
+### Căn mũi tên cùng hàng cho bộ lọc multi-select
+
+- Trước thay đổi: Trigger Mục đích, Danh mục và Phương thức thanh toán bị áp `display: block` từ class `.field`, khiến mũi tên rơi xuống dòng dưới và ô cao hơn các select còn lại.
+- Sau thay đổi: Trigger multi-select có `display: flex`, căn nội dung và mũi tên cùng hàng, giữ chiều cao đồng nhất với các box lọc khác.
+- Kỹ thuật: thêm class CSS scoped `multi-select-trigger` trong `src/components/MultiSelectField.tsx` và `src/index.css`; bổ sung regression assertion trong `src/pages/Transactions.ui.test.tsx`. Không đổi API, schema, RLS/RPC hay dữ liệu.
+- Kiểm thử: `pnpm test` đạt 29/29 file, 121/121 test; typecheck, lint, build và `git diff --check` pass. Playwright đã khởi động được sau khi cài browser nhưng 2 test cloud bị bỏ qua vì chưa có `E2E_EMAIL`/`E2E_PASSWORD`.
+- Trạng thái triển khai: Chưa deploy production; thay đổi đang ở workspace.
+
 ### Multi-select manual/AI và semantic search cho giao dịch
 
 - Trước thay đổi: Bộ lọc Mục đích, Danh mục và Phương thức thanh toán chỉ nhận một giá trị; AI search cũng chỉ trả về một ID và tìm kiếm nội dung bằng substring.
