@@ -20,7 +20,7 @@
 - Không xóa bảng/cột `accounts`, `events`, `transactions.account_id` hoặc `transactions.event_id` trong database vì đây là dữ liệu/schema production có thể chứa dữ liệu cũ; các trường legacy không còn được map hoặc ghi bởi frontend.
 - Files: `src/lib/domain.ts`, `src/lib/transactionDraft.ts`, `src/lib/transactionsApi.ts`, `src/pages/TransactionForm.tsx`, `src/pages/Transactions.tsx`, `src/pages/ImportExport.tsx`, `src/lib/importExcel.ts`, cùng test domain/import Excel.
 - Validation: Full suite đạt 30/30 file, 124/124 test; typecheck, lint, build và `git diff --check` pass. Build vẫn cảnh báo chunk ExcelJS lớn đã có từ trước.
-- Trạng thái triển khai dự kiến: Push branch, tạo/cập nhật PR vào `main`, bật auto-merge và chờ Supabase Production Deploy cùng Cloudflare Pages Git deployment.
+- Trạng thái triển khai thực tế: PR [#122](https://github.com/nhan0805/family-expense/pull/122) đã merge vào `main` với merge commit `10b400b2cffb8bd5e514039fd84dde481df758b8`. CI main [run 33881057378](https://github.com/nhan0805/family-expense/actions/runs/33881057378) pass với `quality` và `db-security`; check [Cloudflare Pages](https://github.com/nhan0805/family-expense/runs/101049819883) báo deploy thành công. Production [family-expense-8fo.pages.dev](https://family-expense-8fo.pages.dev/) smoke test trả HTTP 200 lúc `04/09/2026 21:01` (`Asia/Ho_Chi_Minh`). Không có migration/function thay đổi nên không chạy Supabase Production Deploy; cập nhật tài liệu sau deploy chỉ ở local để tránh tạo deploy lần hai.
 
 ### Handoff — giữ kết quả AI search khi backfill embedding lỗi (04/09/2026)
 
