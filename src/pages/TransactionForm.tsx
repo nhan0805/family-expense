@@ -285,6 +285,9 @@ export function TransactionForm() {
       await queryClient.invalidateQueries({
         queryKey: ['transaction-years', familyId],
       });
+      await queryClient.invalidateQueries({
+        queryKey: ['budgets', familyId],
+      });
     } else {
       setTransactions((items) =>
         id
@@ -339,6 +342,9 @@ export function TransactionForm() {
       });
       await queryClient.invalidateQueries({
         queryKey: ['transaction-years', familyId],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ['budgets', familyId],
       });
       queryClient.removeQueries({
         queryKey: ['transaction', familyId, existing.id],

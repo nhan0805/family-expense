@@ -420,6 +420,7 @@ export function Dashboard() {
     else if (isSupabaseConfigured) {
       await queryClient.invalidateQueries({ queryKey: ['dashboard-due', familyId] });
       await queryClient.invalidateQueries({ queryKey: ['dashboard-data', familyId] });
+      await queryClient.invalidateQueries({ queryKey: ['budgets', familyId] });
     }
   };
 

@@ -1,7 +1,9 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useApp } from '../context/AppContext';
+import { FeedbackProvider } from './Feedback';
 import { Layout } from './Layout';
 
 vi.mock('../context/AppContext', () => ({ useApp: vi.fn() }));
@@ -23,8 +25,20 @@ vi.mock('../context/LanguageContext', () => ({
       familyLoading: 'Đang tải dữ liệu gia đình…',
     }[key] || key),
   }),
+  useOptionalLanguage: () => ({
+    language: 'vi',
+    t: (key: string) => ({
+      budgetNotifications: 'Thông báo ngân sách',
+      unreadBudgetNotifications: 'chưa đọc',
+      unreadBudgetNotification: 'Chưa đọc',
+      allBudgetNotificationsRead: 'Bạn đã xem hết thông báo.',
+      markAllRead: 'Đánh dấu đã đọc',
+      noBudgetNotifications: 'Chưa có cảnh báo ngân sách.',
+      viewTransactions: 'Xem giao dịch',
+    }[key] || key),
+  }),
 }));
-vi.mock('../lib/supabase', () => ({ supabase: { auth: { signOut: vi.fn() } } }));
+vi.mock('../lib/supabase', () => ({ isSupabaseConfigured: false, supabase: { auth: { signOut: vi.fn() } } }));
 vi.mock('./ThemeSelect', () => ({ ThemeSelect: () => null }));
 
 describe('Layout mobile navigation', () => {
@@ -43,13 +57,17 @@ describe('Layout mobile navigation', () => {
 
   it('đưa Thành viên vào menu Thêm thay vì taskbar mobile', () => {
     render(
-      <MemoryRouter initialEntries={['/']}>
-        <Routes>
-          <Route element={<Layout />}>
-            <Route path="*" element={<div>Trang hiện tại</div>} />
-          </Route>
-        </Routes>
-      </MemoryRouter>,
+      <FeedbackProvider>
+        <QueryClientProvider client={new QueryClient()}>
+          <MemoryRouter initialEntries={['/']}>
+            <Routes>
+              <Route element={<Layout />}>
+                <Route path="*" element={<div>Trang hiện tại</div>} />
+              </Route>
+            </Routes>
+          </MemoryRouter>
+        </QueryClientProvider>
+      </FeedbackProvider>,
     );
 
     const bottomNav = document.querySelector('nav.app-bottom-nav') as HTMLElement | null;

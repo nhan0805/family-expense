@@ -564,6 +564,7 @@ export function Transactions() {
         queryClient.invalidateQueries({ queryKey: ['trash', familyId] }),
         queryClient.invalidateQueries({ queryKey: ['transactions', familyId] }),
         queryClient.invalidateQueries({ queryKey: ['dashboard', familyId] }),
+        queryClient.invalidateQueries({ queryKey: ['budgets', familyId] }),
       ]);
     } else {
       setTransactions((items) => items.map((item) => selectedIds.has(item.id) ? { ...item, deletedAt: null } : item));
@@ -590,6 +591,7 @@ export function Transactions() {
         queryClient.invalidateQueries({ queryKey: ['trash', familyId] }),
         queryClient.invalidateQueries({ queryKey: ['transactions', familyId] }),
         queryClient.invalidateQueries({ queryKey: ['dashboard', familyId] }),
+        queryClient.invalidateQueries({ queryKey: ['budgets', familyId] }),
       ]);
     } else {
       setTransactions((items) => items.filter((item) => !selectedIds.has(item.id)));
@@ -641,6 +643,7 @@ export function Transactions() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['transactions', familyId] }),
         queryClient.invalidateQueries({ queryKey: ['dashboard', familyId] }),
+        queryClient.invalidateQueries({ queryKey: ['budgets', familyId] }),
       ]);
     } else {
       setTransactions((items) => items.map((item) => selectedIds.has(item.id) ? { ...item, deletedAt } : item));
@@ -684,6 +687,7 @@ export function Transactions() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['transactions', familyId] }),
         queryClient.invalidateQueries({ queryKey: ['dashboard', familyId] }),
+        queryClient.invalidateQueries({ queryKey: ['budgets', familyId] }),
       ]);
     } else {
       setTransactions((items) => items.map((item) => selectedIds.has(item.id) ? { ...item, ...localChanges } : item));
@@ -709,6 +713,7 @@ export function Transactions() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['transactions', familyId] }),
         queryClient.invalidateQueries({ queryKey: ['dashboard', familyId] }),
+        queryClient.invalidateQueries({ queryKey: ['budgets', familyId] }),
       ]);
     } else {
       setTransactions((current) => current.map((item) => items.some((planned) => planned.id === item.id) ? { ...item, status: 'Thực tế' } : item));
@@ -756,6 +761,9 @@ export function Transactions() {
       });
       await queryClient.invalidateQueries({
         queryKey: ['transaction-years', familyId],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ['budgets', familyId],
       });
     } else
       setTransactions((items) =>
@@ -815,6 +823,9 @@ export function Transactions() {
       });
       await queryClient.invalidateQueries({
         queryKey: ['transaction-years', familyId],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ['budgets', familyId],
       });
     } else {
       setTransactions((items) => [

@@ -6,6 +6,7 @@ import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { PageSkeleton } from './AsyncStates';
 import { ThemeSelect } from './ThemeSelect';
 import { useLanguage } from '../context/LanguageContext';
+import { BudgetNotifications } from './BudgetNotifications';
 
 const links = [['/', 'overview', House], ['/giao-dich', 'transactions', WalletCards], ['/ngan-sach', 'budgets', PiggyBank], ['/danh-muc', 'catalogs', Tags], ['/thanh-vien', 'members', UsersRound], ['/du-lieu', 'data', BookOpen]] as const;
 const mobilePrimaryLinks = [links[0], links[1], links[2], links[3]] as const;
@@ -58,6 +59,7 @@ export function Layout() {
           </div>
         </div>
         <div className="flex items-center gap-1 sm:gap-2">
+          <BudgetNotifications />
           <div className="hidden max-w-64 items-center gap-2 rounded-xl px-3 py-2 text-sm text-gray-600 dark:text-gray-300 md:flex"><UserRound size={17} /><span className="truncate">{currentUserEmail}</span></div>
           <button className="hidden items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold hover:bg-black/5 dark:hover:bg-white/5 md:flex" disabled={signingOut} onClick={signOut}><LogOut size={18}/>{signingOut ? t('loggingOut') : t('logout')}</button>
           <button className="icon-button md:hidden" aria-label={en ? 'Open menu' : 'Mở trình đơn'} onClick={() => setOpen(true)}><Menu /></button>
