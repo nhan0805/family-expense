@@ -12,6 +12,19 @@
   --primary: #155e46;
   --primary-strong: #0f4b38;
   --primary-soft: #e3f2e9;
+  --primary-contrast: #ffffff;
+  --chart-1: #155e46;
+  --chart-2: #e6b85c;
+  --chart-3: #d97757;
+  --chart-4: #6081a8;
+  --chart-5: #7b6aa2;
+  --chart-6: #2c8a83;
+  --chart-expense: #d96f4f;
+  --chart-income: #155e46;
+  --chart-net: #247df2;
+  --chart-grid: #dbe4de;
+  --chart-axis: #647067;
+  --chart-cursor: #eef4ef;
   --radius-card: 1rem;
   --shadow-card: 0 1px 2px #102a2112, 0 8px 24px #102a2108;
   --shadow-card-hover: 0 10px 28px #102a2117;
@@ -29,6 +42,19 @@
   --primary: #bd93f9;
   --primary-strong: #a779ed;
   --primary-soft: #44475a;
+  --primary-contrast: #282a36;
+  --chart-1: #50fa7b;
+  --chart-2: #f1fa8c;
+  --chart-3: #ffb86c;
+  --chart-4: #8be9fd;
+  --chart-5: #bd93f9;
+  --chart-6: #ff79c6;
+  --chart-expense: #ffb86c;
+  --chart-income: #50fa7b;
+  --chart-net: #8be9fd;
+  --chart-grid: #545a76;
+  --chart-axis: #bdc0d0;
+  --chart-cursor: #44475a;
   --shadow-card: 0 1px 2px #191a2140, 0 8px 24px #191a2130;
   --shadow-card-hover: 0 10px 28px #191a2150;
   color-scheme: dark;
@@ -281,6 +307,10 @@ body {
   outline: none;
   font-size: 1rem;
   transition: border-color .16s ease, box-shadow .16s ease, background-color .16s ease;
+}
+
+.multi-select-trigger {
+  display: flex;
 }
 
 .field::placeholder {
@@ -1065,6 +1095,77 @@ summary:focus-visible {
 
 .data-preview tbody tr:hover {
   background: var(--surface-subtle);
+}
+
+.dark .data-page .text-gray-500,
+.dark .members-page .text-gray-500,
+.dark .transactions-page .text-gray-500,
+.dark .transaction-form-page .text-gray-500,
+.dark .dashboard-chart-card .text-gray-500,
+.dark .dashboard-breakdown-card .text-gray-500 {
+  color: var(--muted);
+}
+
+.dark .transaction-form-page .text-red-600 {
+  color: #ff79c6;
+}
+
+.dark .transactions-page button[class*="bg-[#155e46]"] {
+  background: var(--primary);
+  color: var(--primary-contrast);
+}
+
+.dark .transaction-table-row .text-emerald-700 {
+  color: #50fa7b;
+}
+
+.dark .transaction-table-row .text-gray-500 {
+  color: var(--muted);
+}
+
+.dark .transaction-table-row .text-red-600 {
+  color: #ff5555;
+}
+
+.dark .catalogs-page .text-red-600 {
+  color: #ff79c6;
+}
+
+.dark .dashboard-chart-card .recharts-cartesian-axis-tick text {
+  fill: var(--chart-axis);
+}
+
+.dark .dashboard-chart-card .recharts-cartesian-axis-line,
+.dark .dashboard-chart-card .recharts-cartesian-axis-tick-line,
+.dark .dashboard-chart-card .recharts-cartesian-grid line {
+  stroke: var(--chart-grid);
+}
+
+.dark .dashboard-chart-card .recharts-bar-rectangle[fill="#d96f4f"] {
+  fill: var(--chart-expense) !important;
+}
+
+.dark .dashboard-chart-card .recharts-line-curve[stroke="#155e46"] {
+  stroke: var(--chart-income) !important;
+}
+
+.dark .dashboard-chart-card .recharts-line-curve[stroke="#247df2"] {
+  stroke: var(--chart-net) !important;
+}
+
+.dark .dashboard-chart-card .recharts-legend-item-text {
+  color: var(--chart-axis) !important;
+}
+
+.dark .dashboard-chart-card .recharts-default-tooltip {
+  border-color: var(--border-strong) !important;
+  background: var(--surface) !important;
+  color: var(--text);
+}
+
+.dark .dashboard-chart-card .recharts-tooltip-label,
+.dark .dashboard-chart-card .recharts-tooltip-item {
+  color: var(--text) !important;
 }
 
 button,

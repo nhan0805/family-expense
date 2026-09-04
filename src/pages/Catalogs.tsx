@@ -216,7 +216,7 @@ function Catalog({
             <span className="block truncate text-sm font-semibold">{getCatalogIconLabel(icon)}</span>
             <span className="block text-xs text-gray-500 dark:text-gray-400">{isEnglish ? 'Search and select an icon below.' : 'Tìm và chọn biểu tượng bên dưới.'}</span>
           </div>
-          <Search size={17} className="shrink-0 text-gray-500" aria-hidden="true" />
+          <Search size={17} className="shrink-0 text-gray-500 dark:text-gray-400" aria-hidden="true" />
         </div>
         <label className="sr-only" htmlFor={`catalog-icon-search-${kind}`}>{isEnglish ? `Search icon for ${title}` : `Tìm biểu tượng cho ${title}`}</label>
         <input id={`catalog-icon-search-${kind}`} className="field" value={iconQuery} onChange={(event) => onIconQueryChange(event.target.value)} placeholder={isEnglish ? 'Search by icon name or keyword' : 'Tìm theo tên icon hoặc từ khóa'} />
@@ -228,7 +228,7 @@ function Catalog({
         <input className="mt-0.5 size-4 accent-[#137050] dark:accent-[#50fa7b]" type="checkbox" aria-label={isEnglish ? 'Track in budgets' : 'Theo dõi trong ngân sách'} checked={budgetEnabled} onChange={(event) => onBudgetEnabledChange(event.target.checked)} />
         <span><span className="block font-semibold">{isEnglish ? 'Track in budgets' : 'Theo dõi trong ngân sách'}</span><span className="mt-0.5 block text-xs text-gray-500 dark:text-gray-400">{isEnglish ? 'Include this purpose in budget totals, alerts and monthly summaries.' : 'Tính mục đích này vào tổng, cảnh báo và tổng hợp ngân sách theo tháng.'}</span></span>
       </label>}
-      {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
+      {error && <p role="alert" className="text-sm text-red-600 dark:text-red-300">{error}</p>}
       <button className="btn-primary w-full" disabled={saving}>{saving ? (isEnglish ? 'Saving…' : 'Đang lưu…') : editor?.id ? (isEnglish ? 'Save new name' : 'Lưu tên mới') : (isEnglish ? 'Save category' : 'Lưu danh mục')}</button>
     </form>}
     {!isEditingHere && error && <p role="alert" className="mb-3 rounded-lg bg-red-50 p-2 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">{error}</p>}

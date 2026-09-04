@@ -29,6 +29,45 @@
 - Files: `src/context/AppContext.tsx`, `src/components/Layout.tsx`, `src/context/AppContext.ui.test.tsx`, `src/components/Layout.test.tsx`. Không có migration mới, không đổi API/schema/RLS/RPC.
 - Validation: `pnpm test` đạt 29/29 file, 121/121 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass.
 - Trạng thái triển khai: Đang chuẩn bị deploy production qua PR và Git integration của Cloudflare Pages.
+### Handoff — hoàn thiện theme Dracula cho dark mode (04/09/2026)
+
+- Trước thay đổi: Một số chữ phụ vẫn dùng màu light mode, trạng thái lỗi chưa có nền/chữ dark riêng, nút thao tác hàng loạt còn xanh light-theme và biểu đồ xu hướng dùng style mặc định không theo dark mode.
+- Sau thay đổi: Bổ sung màu muted, lỗi, viền và hành động theo palette Dracula; palette biểu đồ, trục, grid, legend và tooltip chuyển theo biến theme; giữ nguyên light mode và quy tắc nghiệp vụ.
+- Files: `src/index.css`, `src/pages/Dashboard.tsx`, `src/pages/ImportExport.tsx`, `src/pages/Transactions.tsx`, `src/pages/TransactionForm.tsx`, `src/pages/Members.tsx`, `src/pages/Catalogs.tsx`, `src/pages/Login.tsx`, `src/pages/CreateFamily.tsx`, `src/components/MultiSelectField.tsx`, `src/pages/ImportExport.test.tsx`, `src/pages/TransactionForm.test.tsx`. Không có migration mới, không đổi API/schema/RLS/RPC hoặc dữ liệu.
+- Validation: `pnpm test` đạt 29/29 file, 121/121 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build còn cảnh báo chunk ExcelJS lớn đã có từ trước.
+- Trạng thái triển khai dự kiến: Commit sẽ được push lên nhánh `codex/transaction-filter-ui-20260904`, tạo PR vào `main`, bật auto-merge và deploy production qua Git integration của Cloudflare Pages.
+
+### Handoff — khắc phục AI search không tải được danh sách giao dịch (04/09/2026)
+
+- Bảng `transaction_embeddings` trống ban đầu là đúng với thiết kế backfill lazy: chỉ khi semantic search được gọi thì Edge Function mới tạo embedding theo batch. Lỗi người dùng gặp xảy ra ở runtime semantic path, trước khi hàng được ghi thành công.
+- Bản sửa: gửi vector lên RPC dưới dạng pgvector literal; dùng `md5` built-in cho `source_hash` để không phụ thuộc schema `pgcrypto`; gửi `pg_notify('pgrst', 'reload schema')` sau migration để PostgREST nhận function signature mới.
+- Files: `supabase/functions/_shared/transactionEmbedding.ts`, `supabase/functions/process-transaction-embeddings/index.ts`, `supabase/functions/search-transactions-semantic/index.ts`, `supabase/migrations/202609040003_fix_transaction_embedding_runtime.sql`.
+- Validation: `pnpm test` đạt 29/29 file, 121/121 test; typecheck, lint, build và `git diff --check` pass. Playwright đã khởi động được sau khi cài browser nhưng 2 test cloud bị bỏ qua vì chưa có `E2E_EMAIL`/`E2E_PASSWORD`.
+- Trạng thái triển khai: Chưa deploy production; thay đổi đang được kiểm tra cùng bản sửa UI dropdown.
+
+### Handoff — căn mũi tên cùng hàng cho bộ lọc multi-select (04/09/2026)
+
+- Nguyên nhân: `.field` đặt `display: block` nên ghi đè `flex` trên `<summary>` của multi-select; icon mũi tên bị xuống dòng và trigger cao hơn `<select>` native.
+- Bản sửa: thêm class scoped `multi-select-trigger { display: flex; }` cho trigger Mục đích, Danh mục và Phương thức thanh toán; nội dung và mũi tên giờ nằm cùng hàng, chiều cao đồng nhất.
+- Files: `src/components/MultiSelectField.tsx`, `src/index.css`, `src/pages/Transactions.ui.test.tsx`, `supabase/functions/_shared/transactionEmbedding.ts`, `supabase/functions/process-transaction-embeddings/index.ts`, `supabase/functions/search-transactions-semantic/index.ts`, `supabase/migrations/202609040003_fix_transaction_embedding_runtime.sql`. Không đổi API nghiệp vụ hoặc dữ liệu giao dịch.
+- Validation: `pnpm test` đạt 29/29 file, 121/121 test; typecheck, lint, build và `git diff --check` pass. Playwright đã khởi động được sau khi cài browser nhưng 2 test cloud bị bỏ qua vì chưa có `E2E_EMAIL`/`E2E_PASSWORD`.
+- Trạng thái triển khai: Chưa deploy production; thay đổi đang ở workspace.
+
+### Handoff — highlight user hiện tại trong Thành viên (04/09/2026)
+
+- Danh sách Thành viên hiện nhận diện dòng có `member.user_id === currentUserId` bằng nền/viền accent theo theme và badge theo ngôn ngữ (`Bạn`/`You`).
+- Có accessible label `tài khoản đang đăng nhập` cho đúng dòng; không thay đổi quyền sửa/xóa hoặc luồng dữ liệu.
+- Files: `src/pages/Members.tsx`, `src/index.css`, `src/context/LanguageContext.tsx`, `src/pages/Members.test.tsx`. Không có migration mới, không đổi API/schema/RLS/RPC.
+- Validation: `pnpm test` đạt 29/29 file, 121/121 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass.
+- Trạng thái triển khai: Đang chuẩn bị deploy production qua PR và Git integration của Cloudflare Pages.
+
+### Handoff — hiển thị tên người dùng và liên kết Thành viên (04/09/2026)
+
+- Header hiện ưu tiên tên hiển thị (`family_members.display_name`) của user đang đăng nhập; nếu chưa có tên thì fallback về tên trong metadata tài khoản hoặc email.
+- Tên ở header desktop và mobile có thể bấm để mở `/thanh-vien`; route Thành viên, quyền truy cập và dữ liệu thành viên không thay đổi.
+- Files: `src/context/AppContext.tsx`, `src/components/Layout.tsx`, `src/context/AppContext.ui.test.tsx`, `src/components/Layout.test.tsx`. Không có migration mới, không đổi API/schema/RLS/RPC.
+- Validation: `pnpm test` đạt 29/29 file, 121/121 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass.
+- Trạng thái triển khai: Đang chuẩn bị deploy production qua PR và Git integration của Cloudflare Pages.
 
 ### Handoff — multi-select và semantic search giao dịch (04/09/2026)
 

@@ -37,6 +37,7 @@ describe('Gửi danh sách giao dịch qua email', () => {
 
     expect(document.querySelectorAll('.data-card')).toHaveLength(3);
     expect(document.querySelectorAll('.data-card-actions')).toHaveLength(3);
+    expect(screen.getByText('Nhập, xuất và quản lý dữ liệu giao dịch của gia đình.')).toHaveClass('text-gray-500', 'dark:text-gray-400');
     expect(screen.getByText('Công cụ dữ liệu')).toHaveClass('dark:text-[#bd93f9]');
     const dataCards = document.querySelectorAll('.data-card');
     expect(dataCards[0]?.querySelector('.data-card-icon')).toHaveClass('dark:bg-[#50fa7b1f]', 'dark:text-[#50fa7b]');

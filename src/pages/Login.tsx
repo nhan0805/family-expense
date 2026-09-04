@@ -87,7 +87,7 @@ export function Login() {
     <form className="card w-full max-w-md space-y-4 p-7" onSubmit={submit}>
       <p className="text-xs font-bold tracking-widest text-[#137050] dark:text-[#bd93f9]">FAMILY EXPENSE</p>
       <h1 className="text-2xl font-extrabold">{title}</h1>
-      {mode === 'forgot' && <p className="text-sm text-gray-500">{en ? 'Enter your account email to receive a password reset link.' : 'Nhập email tài khoản để nhận liên kết đặt lại mật khẩu.'}</p>}
+      {mode === 'forgot' && <p className="text-sm text-gray-500 dark:text-gray-400">{en ? 'Enter your account email to receive a password reset link.' : 'Nhập email tài khoản để nhận liên kết đặt lại mật khẩu.'}</p>}
       <label><span className="label">Email</span><input className="field" type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} /></label>
       {mode !== 'magic' && mode !== 'forgot' && <label><span className="label">{en ? 'Password' : 'Mật khẩu'}</span><input className="field" type="password" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} minLength={6} required value={password} onChange={(event) => setPassword(event.target.value)} /></label>}
       <div className="pt-2">

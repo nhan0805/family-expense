@@ -313,7 +313,7 @@ export function Members() {
               <UserPlus size={20} />
               {en ? 'Add member' : 'Thêm thành viên'}
             </h3>
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               {en ? 'The email must have a Family Expense account before it can be added.' : 'Email phải đăng ký tài khoản Family Expense trước khi được thêm.'}
             </p>
           </div>
@@ -390,7 +390,7 @@ export function Members() {
                           : (en ? 'Member' : 'Thành viên')}
                       </span>
                     </div>
-                    <p className="mt-1 text-sm text-gray-500">{member.email}</p>
+                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{member.email}</p>
                     </div>
                   </div>
                   <div className="flex shrink-0 flex-wrap justify-end gap-2">
@@ -435,7 +435,7 @@ export function Members() {
         </div>
       </div>
       {!isOwner && (
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-gray-500 dark:text-gray-400">
           {en ? 'Only the family owner can add members.' : 'Chỉ chủ gia đình mới có thể thêm thành viên.'}
         </p>
       )}
@@ -444,7 +444,7 @@ export function Members() {
           <h3 className="font-bold text-red-700 dark:text-[#ff5555]">
             {en ? 'Delete family' : 'Xóa gia đình'}
           </h3>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             {canDeleteFamily === false
               ? (en ? 'Delete all transactions before deleting the family.' : 'Hãy xóa hết giao dịch trước khi xóa gia đình.')
               : canDeleteFamily === null

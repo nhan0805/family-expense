@@ -59,7 +59,7 @@ export function MultiSelectField({
         className="group"
       >
         <summary
-          className="field flex cursor-pointer list-none items-center justify-between gap-2 [&::-webkit-details-marker]:hidden"
+          className="field multi-select-trigger flex cursor-pointer list-none items-center justify-between gap-2 [&::-webkit-details-marker]:hidden"
           aria-labelledby={labelId}
         >
           <span className="min-w-0 truncate">{summary}</span>
@@ -109,7 +109,7 @@ export function MultiSelectField({
               );
             })
           ) : (
-            <p className="px-2.5 py-2 text-sm text-gray-500">
+            <p className="px-2.5 py-2 text-sm text-gray-500 dark:text-gray-400">
               {language === 'en' ? 'No options' : 'Chưa có lựa chọn'}
             </p>
           )}
