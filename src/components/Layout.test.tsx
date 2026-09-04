@@ -47,6 +47,7 @@ describe('Layout mobile navigation', () => {
       familyId: 'family-1',
       familyName: 'Gia đình của tôi',
       currentUserEmail: 'owner@example.com',
+      currentUserDisplayName: 'Chủ gia đình',
       loading: false,
       authenticated: true,
       error: null,
@@ -75,6 +76,11 @@ describe('Layout mobile navigation', () => {
     expect(within(bottomNav!).getAllByRole('link')).toHaveLength(4);
     expect(within(bottomNav!).queryByRole('link', { name: 'Thành viên' })).not.toBeInTheDocument();
     expect(within(bottomNav!).getByRole('link', { name: 'Danh mục' })).toHaveAttribute('href', '/danh-muc');
+
+    const memberLinks = screen.getAllByRole('link', { name: 'Mở màn hình thành viên của Chủ gia đình' });
+    expect(memberLinks).toHaveLength(2);
+    expect(memberLinks[0]).toHaveAttribute('href', '/thanh-vien');
+    expect(memberLinks[1]).toHaveAttribute('href', '/thanh-vien');
 
     fireEvent.click(within(bottomNav!).getByRole('button', { name: 'Thêm' }));
     expect(screen.getByRole('link', { name: 'Thành viên' })).toHaveAttribute('href', '/thanh-vien');

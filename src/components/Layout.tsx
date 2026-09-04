@@ -15,9 +15,10 @@ export function Layout() {
   const [open, setOpen] = useState(false);
   const [menuMounted, setMenuMounted] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
-  const { familyId, familyName, currentUserEmail, loading, authenticated, error, online, reloadApp } = useApp();
+  const { familyId, familyName, currentUserEmail, currentUserDisplayName, loading, authenticated, error, online, reloadApp } = useApp();
   const { t, language } = useLanguage();
   const en = language === 'en';
+  const userDisplayName = currentUserDisplayName || currentUserEmail;
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const isTransactionForm = pathname === '/giao-dich/moi' || /^\/giao-dich\/[^/]+$/.test(pathname);
@@ -55,12 +56,12 @@ export function Layout() {
           <div className="min-w-0">
             <p className="brand-wordmark">FAMILY EXPENSE</p>
             <h1 className="truncate font-bold leading-tight">{familyName}</h1>
-            <p className="truncate text-xs text-gray-500 dark:text-gray-400 md:hidden">{currentUserEmail}</p>
+            <NavLink to="/thanh-vien" className="block max-w-full truncate text-xs text-gray-500 hover:underline dark:text-gray-400 md:hidden" aria-label={en ? `Open members for ${userDisplayName}` : `Mở màn hình thành viên của ${userDisplayName}`}>{userDisplayName}</NavLink>
           </div>
         </div>
         <div className="flex items-center gap-1 sm:gap-2">
           <BudgetNotifications />
-          <div className="hidden max-w-64 items-center gap-2 rounded-xl px-3 py-2 text-sm text-gray-600 dark:text-gray-300 md:flex"><UserRound size={17} /><span className="truncate">{currentUserEmail}</span></div>
+          <NavLink to="/thanh-vien" className="hidden max-w-64 items-center gap-2 rounded-xl px-3 py-2 text-sm text-gray-600 hover:bg-black/5 dark:text-gray-300 dark:hover:bg-white/5 md:flex" aria-label={en ? `Open members for ${userDisplayName}` : `Mở màn hình thành viên của ${userDisplayName}`} title={en ? 'Open members' : 'Mở màn hình thành viên'}><UserRound size={17} aria-hidden="true" /><span className="truncate">{userDisplayName}</span></NavLink>
           <button className="hidden items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold hover:bg-black/5 dark:hover:bg-white/5 md:flex" disabled={signingOut} onClick={signOut}><LogOut size={18}/>{signingOut ? t('loggingOut') : t('logout')}</button>
           <button className="icon-button md:hidden" aria-label={en ? 'Open menu' : 'Mở trình đơn'} onClick={() => setOpen(true)}><Menu /></button>
         </div>

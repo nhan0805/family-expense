@@ -2,13 +2,29 @@
 
 ## 2026-09-04
 
+### Highlight user hiện tại trong Thành viên
+
+- Trước thay đổi: Danh sách thành viên chưa có dấu hiệu trực quan để phân biệt tài khoản đang đăng nhập với các thành viên khác.
+- Sau thay đổi: Dòng của user hiện tại được nhấn bằng nền/viền màu accent và badge `Bạn`; nhãn accessible cũng nêu rõ đây là tài khoản đang đăng nhập.
+- Kỹ thuật: cập nhật `src/pages/Members.tsx`, style trong `src/index.css`, thêm key `you`/`currentAccount` cho VI/EN trong `src/context/LanguageContext.tsx` và regression test `src/pages/Members.test.tsx`. Màu dùng biến theme sáng/tối hiện có; không đổi API, schema, RLS/RPC hoặc dữ liệu.
+- Kiểm thử: test Members, lint file thay đổi, typecheck, build và `git diff --check` pass.
+- Trạng thái triển khai: Đang chuẩn bị deploy production qua PR và Git integration của Cloudflare Pages.
+
+### Hiển thị tên người dùng và liên kết Thành viên
+
+- Trước thay đổi: Header hiển thị email của tài khoản đang đăng nhập; tên chưa dẫn trực tiếp tới màn hình Thành viên.
+- Sau thay đổi: Header ưu tiên `display_name` của thành viên hiện tại, fallback lần lượt về tên trong metadata tài khoản hoặc email. Tên người dùng trên desktop và mobile đều là liên kết tới `/thanh-vien`.
+- Kỹ thuật: mở rộng `AppContext` với `currentUserDisplayName`, đọc `family_members.display_name` theo đúng user/family đang hoạt động và cập nhật regression test cho context/layout. Không thêm migration, không đổi API/RLS/RPC hay dữ liệu.
+- Kiểm thử: test tập trung `Layout` và `AppContext` đạt 2/2; lint các file thay đổi và typecheck pass; `git diff --check` pass.
+- Trạng thái triển khai: Đang chuẩn bị deploy production qua PR và Git integration của Cloudflare Pages.
+
 ### Multi-select manual/AI và semantic search cho giao dịch
 
 - Trước thay đổi: Bộ lọc Mục đích, Danh mục và Phương thức thanh toán chỉ nhận một giá trị; AI search cũng chỉ trả về một ID và tìm kiếm nội dung bằng substring.
 - Sau thay đổi: Ba bộ lọc catalog hỗ trợ chọn nhiều giá trị theo phép OR, các nhóm lọc khác vẫn kết hợp theo AND. AI search trả về đầy đủ các catalog ID được nhắc trong câu và phần nội dung còn lại có thể tìm theo semantic similarity.
 - Kỹ thuật: thêm `src/components/MultiSelectField.tsx`; cập nhật `src/pages/Transactions.tsx`, `src/lib/transactionsApi.ts`, `src/lib/ai.ts`, `supabase/functions/search-transactions/index.ts`; thêm `supabase/migrations/202609040002_transaction_search_semantic.sql`, hai Edge Function embedding/semantic search, shared `gte-small` embedding helper và pgTAP test. Migration bật `pgvector`, bảng `transaction_embeddings`, HNSW cosine index, RLS và các RPC family-scoped; workflow/config deploy thêm hai function. Không gọi Gemini để tạo embedding.
-- Kiểm thử: Vitest hiện đạt 29/29 file, 121/121 test; typecheck, lint và `git diff --check` pass. Kiểm thử pgTAP migration chưa chạy được vì máy hiện không có database local/Docker (`127.0.0.1:54322` từ chối kết nối); sẽ ghi kết quả CI sau khi PR chạy.
-- Trạng thái triển khai: Chưa deploy production; chờ hoàn tất build/E2E, PR checks, migration và Cloudflare Pages deployment qua Git integration.
+- Kiểm thử: Vitest đạt 29/29 file, 121/121 test; typecheck, lint, coverage, build và `git diff --check` pass ở local. pgTAP local không chạy được vì máy không có database local/Docker (`127.0.0.1:54322` từ chối kết nối), nhưng CI đã chạy migration/RLS test pass ở PR và CI `main`; Playwright local chưa chạy assertion vì thiếu browser binaries.
+- Trạng thái triển khai: PR [#117](https://github.com/nhan0805/family-expense/pull/117) đã merge vào `main` với merge commit `516eb83aeb5de14f18c32572312ee8d7ca366dab`. CI main [run 33862005988](https://github.com/nhan0805/family-expense/actions/runs/33862005988) pass với `quality` và `db-security`; Supabase Production Deploy [run 33862006229](https://github.com/nhan0805/family-expense/actions/runs/33862006229) pass, đã áp migration và deploy hai Edge Function. Cloudflare Pages production `https://family-expense-8fo.pages.dev/` trả HTTP 200 và bundle live có `process-transaction-embeddings`/`search-transactions-semantic` lúc `04/09/2026 17:18` (`Asia/Ho_Chi_Minh`). Không dùng Wrangler deploy trực tiếp và không tạo deploy lần hai chỉ để cập nhật tài liệu.
 
 ### Chuyển Danh mục sang tab để bỏ thanh cuộn ngang
 
