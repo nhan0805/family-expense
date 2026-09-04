@@ -352,7 +352,6 @@ export function Transactions() {
   const [aiSearchCompleted, setAiSearchCompleted] = useState(false);
   const [aiSearchMessage, setAiSearchMessage] = useState('');
   const [aiSearchError, setAiSearchError] = useState('');
-  const [semanticQuery, setSemanticQuery] = useState('');
   const [voiceListening, setVoiceListening] = useState(false);
   const [voiceSupported] = useState(() => Boolean(getSpeechRecognition()));
   const speechRecognitionRef = useRef<SpeechRecognitionLike | null>(null);
@@ -414,8 +413,7 @@ export function Transactions() {
   );
   const serverFilters = useMemo(
     () => ({
-      query: semanticQuery ? '' : debouncedQuery,
-      semanticQuery,
+      query: debouncedQuery,
       transactionType,
       status,
       purposeIds,
@@ -431,7 +429,6 @@ export function Transactions() {
     }),
     [
       debouncedQuery,
-      semanticQuery,
       transactionType,
       purposeIds,
       expenseTypeIds,
@@ -480,7 +477,6 @@ export function Transactions() {
   const resultKey = [
     showTrash,
     query,
-    semanticQuery,
     transactionType,
     purposeIds.join(','),
     expenseTypeIds.join(','),
@@ -496,7 +492,6 @@ export function Transactions() {
 
   const hasFilters = Boolean(
     query ||
-    semanticQuery ||
     transactionType ||
     status ||
     purposeIds.length > 0 ||
@@ -551,7 +546,6 @@ export function Transactions() {
   const netIsNegative = filteredTotal < 0;
   const resetFilters = () => {
     setQuery('');
-    setSemanticQuery('');
     setTransactionType('');
     setStatus('');
     setPurposeIds([]);
@@ -878,7 +872,6 @@ export function Transactions() {
         .join(' ');
       if (!transcript) return;
       setQuery((currentQuery) => [currentQuery.trim(), transcript].filter(Boolean).join(' '));
-      setSemanticQuery('');
       setAiSearchCompleted(false);
       setAiSearchMessage('');
       setAiSearchError('');
@@ -926,9 +919,25 @@ export function Transactions() {
       const response = transactionSearchResponseSchema.safeParse(data);
       if (!response.success) throw new Error('AI_RESPONSE_INVALID');
       const { filters } = response.data;
-      setSemanticQuery(filters.semanticQuery);
-      setQuery(filters.semanticQuery || filters.query);
-      setDebouncedQuery(filters.semanticQuery ? '' : filters.query);
+      // Keep AI search on the reliable keyword RPC. If AI only identified
+      // structured filters, leave the keyword empty so those filters can
+      // still return matching transactions.
+      const hasStructuredFilter = Boolean(
+        filters.transactionType ||
+        filters.status ||
+        filters.purposeIds.length ||
+        filters.expenseTypeIds.length ||
+        filters.paymentMethodIds.length ||
+        filters.amountMin !== null ||
+        filters.amountMax !== null ||
+        filters.month !== null ||
+        filters.year !== null ||
+        filters.dateFrom ||
+        filters.dateTo,
+      );
+      const keyword = filters.query || (hasStructuredFilter ? '' : searchText);
+      setQuery(keyword);
+      setDebouncedQuery(keyword);
       setTransactionType(filters.transactionType || '');
       setStatus(filters.status || '');
       setPurposeIds(filters.purposeIds);
@@ -1023,7 +1032,7 @@ export function Transactions() {
                   className="field min-w-0"
                   style={{ paddingLeft: '2.75rem', paddingRight: voiceSupported ? '3rem' : undefined }}
                   value={query}
-                  onChange={(event) => { setQuery(event.target.value); setSemanticQuery(''); setAiSearchCompleted(false); setAiSearchMessage(''); setAiSearchError(''); }}
+                  onChange={(event) => { setQuery(event.target.value); setAiSearchCompleted(false); setAiSearchMessage(''); setAiSearchError(''); }}
                   placeholder={en ? 'Search description or notes…' : 'Tìm nội dung hoặc ghi chú…'}
                 />
                 {voiceSupported && (

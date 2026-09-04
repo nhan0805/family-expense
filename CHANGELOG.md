@@ -2,6 +2,14 @@
 
 ## 2026-09-04
 
+### Tắt semantic search trong AI search
+
+- Trước thay đổi: AI search phụ thuộc vào backfill `gte-small` và bảng `transaction_embeddings`, khiến việc phân tích AI thành công nhưng tải danh sách vẫn có thể lỗi trên Supabase Free.
+- Sau thay đổi: AI search chỉ áp dụng bộ lọc cấu trúc (loại, trạng thái, mục đích, danh mục, phương thức, số tiền, thời gian) và dùng keyword RPC ổn định; semantic search không còn được gọi từ giao diện. Multi-select vẫn giữ nguyên.
+- Files: `src/pages/Transactions.tsx`, `src/lib/transactionsApi.ts`, `src/lib/ai.ts`, `src/lib/transactionsApi.test.ts`, `src/lib/ai.test.ts`, `supabase/functions/search-transactions/index.ts`. Không xoá migration/bảng vector để có thể bật lại sau; không phát sinh backfill embedding mới.
+- Kiểm thử: sẽ chạy đầy đủ test, typecheck, lint, build và `git diff --check` trước khi merge.
+- Trạng thái triển khai dự kiến: Tạo PR vào `main`, bật auto-merge và chờ Cloudflare Pages Git deployment cùng Supabase deploy function parser.
+
 ### Loại bỏ account và event khỏi luồng ứng dụng
 
 - Trước thay đổi: Giao diện đã ẩn các trường Tài khoản/Thẻ và Sự kiện/Kế hoạch, nhưng schema, bản nháp, payload tạo/sao chép giao dịch, parser Excel cũ và truy vấn export vẫn còn giữ các trường legacy.

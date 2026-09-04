@@ -14,6 +14,14 @@
 - [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
 
+### Handoff — tắt semantic search trong AI search (04/09/2026)
+
+- Quyết định sản phẩm: tắt semantic search khỏi giao diện sau khi parser AI vẫn chạy nhưng semantic path tiếp tục không trả kết quả ổn định trên Supabase Free.
+- Bản sửa: `fetchTransactionPage` luôn dùng `list_family_transactions`; AI search bỏ `semanticQuery`, vẫn áp dụng đầy đủ bộ lọc multi-select và chỉ dùng keyword khi có từ khóa trực tiếp. Prompt parser không còn yêu cầu semantic search. Các migration/bảng/Edge Function vector được giữ lại nhưng không còn được gọi từ UI.
+- Files: `src/pages/Transactions.tsx`, `src/lib/transactionsApi.ts`, `src/lib/ai.ts`, `src/lib/transactionsApi.test.ts`, `src/lib/ai.test.ts`, `supabase/functions/search-transactions/index.ts`. Không đổi dữ liệu giao dịch, RLS hoặc schema hiện hành.
+- Validation: đang chạy full Vitest, typecheck, lint, build và `git diff --check`.
+- Trạng thái triển khai dự kiến: Chưa deploy production; chờ PR, required checks, Supabase function deploy và Cloudflare Pages production deployment.
+
 ### Handoff — loại bỏ account và event khỏi luồng ứng dụng (04/09/2026)
 
 - Giao diện form giao dịch, template/import hiện hành và export đã không hiển thị hai trường này; bản sửa lần này dọn nốt các tham chiếu frontend còn lại trong schema, draft, payload tạo/sao chép, parser Excel cũ và quan hệ truy vấn export.

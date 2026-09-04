@@ -3,7 +3,6 @@ import { supabase } from './supabase';
 
 export type ServerTransactionFilters = {
   query: string;
-  semanticQuery: string;
   transactionType: string;
   status: string;
   purposeIds: string[];
@@ -66,62 +65,6 @@ export async function fetchTransactionPage(
   page: number,
   pageSize = 50,
 ) {
-  if (filters.semanticQuery) {
-    // Backfill is best-effort. A resource-limited embedding batch must not
-    // hide otherwise valid structural/keyword results from the user.
-    try {
-      await supabase.functions.invoke(
-        'process-transaction-embeddings',
-        {
-          body: {
-            familyId,
-            limit: 5,
-          },
-        },
-      );
-    } catch {
-      // The semantic query below can still return filtered rows without a
-      // completed lazy backfill.
-    }
-    const { data, error } = await supabase.functions.invoke<unknown>(
-      'search-transactions-semantic',
-      {
-        body: {
-          familyId,
-          semanticQuery: filters.semanticQuery,
-          page,
-          pageSize,
-          query: filters.query || filters.semanticQuery,
-          transactionType: filters.transactionType || null,
-          status: filters.status || null,
-          purposeIds: filters.purposeIds,
-          expenseTypeIds: filters.expenseTypeIds,
-          paymentMethodIds: filters.paymentMethodIds,
-          amountMin: filters.amountMin ? Number(filters.amountMin) : null,
-          amountMax: filters.amountMax ? Number(filters.amountMax) : null,
-          month: filters.month ? Number(filters.month) : null,
-          year: filters.year ? Number(filters.year) : null,
-          dateFrom: filters.dateFrom || null,
-          dateTo: filters.dateTo || null,
-          sort: filters.sort,
-        },
-      },
-    );
-    if (error) throw error;
-    const result = data as {
-      rows?: TransactionRow[];
-      hasMore?: boolean;
-      totalAmount?: number | string;
-      totalCount?: number;
-    };
-    return {
-      rows: (result.rows || []).map(mapTransactionRow),
-      hasMore: Boolean(result.hasMore),
-      totalAmount: Number(result.totalAmount || 0),
-      totalCount: Number(result.totalCount || 0),
-      page,
-    };
-  }
   const { data, error } = await supabase.rpc('list_family_transactions', {
     p_family_id: familyId,
     p_limit: pageSize,
