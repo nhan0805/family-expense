@@ -106,6 +106,7 @@ export function BudgetNotifications() {
   const en = language === 'en';
   const { notify, askConfirm } = useFeedback();
   const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const confirmingIdRef = useRef<string | null>(null);
   const [dueError, setDueError] = useState('');
@@ -162,6 +163,23 @@ export function BudgetNotifications() {
       notify(notificationMessage(notification, language), notification.kind === 'over' ? 'error' : 'info');
     });
   }, [familyId, language, notify, summary]);
+
+  useEffect(() => {
+    if (!open) return;
+    const closeOnOutsidePointer = (event: PointerEvent) => {
+      const target = event.target;
+      if (target instanceof Node && !containerRef.current?.contains(target)) setOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('pointerdown', closeOnOutsidePointer);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsidePointer);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [open]);
 
   if (!familyId) return null;
 
@@ -222,7 +240,7 @@ export function BudgetNotifications() {
   };
 
   return (
-    <div className="relative">
+    <div ref={containerRef} className="relative">
       <button
         type="button"
         className="icon-button relative"

@@ -35,6 +35,14 @@ describe('Giao dịch mobile', () => {
     expect(detailedFilterGrid).not.toHaveClass('xl:grid-cols-5');
     expect(screen.getByLabelText('Loại giao dịch')).toBeInTheDocument();
     expect(screen.getByLabelText('Trạng thái')).toBeInTheDocument();
+    const purposeDetails = screen.getByText('Tất cả mục đích').closest('details');
+    fireEvent.click(screen.getByText('Tất cả mục đích'));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Mục đích: Sinh hoạt' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Mục đích: Du lịch' }));
+    expect(screen.getByText('Sinh hoạt, Du lịch')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Mục đích: Sinh hoạt' }));
+    expect(purposeDetails?.querySelector('summary')).toHaveTextContent('Du lịch');
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Mục đích: Du lịch' }));
     const minAmountInput = screen.getByLabelText('Từ số tiền');
     const maxAmountInput = screen.getByLabelText('Đến số tiền');
     expect(minAmountInput).toHaveAttribute('type', 'text');

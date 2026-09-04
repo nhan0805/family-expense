@@ -96,6 +96,20 @@ describe('BudgetNotifications', () => {
     expect(screen.getByText('Near limit: Family living')).toBeInTheDocument();
   });
 
+  it('đóng panel khi bấm ra ngoài vùng thông báo', async () => {
+    const [year = '2000', month = '1'] = monthKey().split('-');
+    upsertLocalBudget({ year: Number(year), month: Number(month), purposeId: 'p1', amount: 1_000_000, warningThreshold: 0.8 });
+    renderNotifications();
+
+    await waitFor(() => expect(screen.getByText(/Sinh hoạt đã dùng 80% ngân sách/)).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: 'Thông báo' }));
+    expect(screen.getByRole('dialog', { name: 'Thông báo' })).toBeInTheDocument();
+
+    fireEvent.pointerDown(document.body);
+
+    expect(screen.queryByRole('dialog', { name: 'Thông báo' })).not.toBeInTheDocument();
+  });
+
   it('xóa thông báo đã đọc nhưng giữ lại thông báo chưa đọc', async () => {
     const [year = '2000', month = '1'] = monthKey().split('-');
     upsertLocalBudget({ year: Number(year), month: Number(month), purposeId: 'p1', amount: 1_000_000, warningThreshold: 0.8 });
