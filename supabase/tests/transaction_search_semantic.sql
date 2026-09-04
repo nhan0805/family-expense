@@ -40,7 +40,9 @@ select ok(
     join pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public'
       and p.proname = 'list_family_transactions'
-      and pg_get_function_identity_arguments(p.oid) like '%uuid[], uuid[], uuid[]%'
+      and p.proargtypes[6] = 'uuid[]'::regtype
+      and p.proargtypes[7] = 'uuid[]'::regtype
+      and p.proargtypes[8] = 'uuid[]'::regtype
   ),
   'list_family_transactions accepts array catalog filters'
 );
@@ -51,7 +53,9 @@ select ok(
     join pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public'
       and p.proname = 'list_deleted_transactions'
-      and pg_get_function_identity_arguments(p.oid) like '%uuid[], uuid[], uuid[]%'
+      and p.proargtypes[5] = 'uuid[]'::regtype
+      and p.proargtypes[6] = 'uuid[]'::regtype
+      and p.proargtypes[7] = 'uuid[]'::regtype
   ),
   'list_deleted_transactions accepts array catalog filters'
 );
@@ -63,7 +67,7 @@ select ok(
     where n.nspname = 'public'
       and p.proname = 'search_family_transactions_semantic'
       and p.prosecdef
-      and pg_get_function_identity_arguments(p.oid) like '%extensions.vector%'
+      and p.proargtypes[1] = 'extensions.vector'::regtype
   ),
   'semantic search RPC is security definer and accepts a vector'
 );
@@ -75,7 +79,7 @@ select ok(
     where n.nspname = 'public'
       and p.proname = 'upsert_transaction_embedding'
       and p.prosecdef
-      and pg_get_function_identity_arguments(p.oid) like '%extensions.vector%'
+      and p.proargtypes[2] = 'extensions.vector'::regtype
   ),
   'embedding writes go through a security definer RPC'
 );
