@@ -14,13 +14,20 @@
 - [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
 
+### Handoff — hiển thị đầy đủ tên dài trong Danh mục (04/09/2026)
+
+- Bổ sung sau bản sửa badge: tên mục đích/danh mục dài không còn bị `truncate` thành dấu `...`, mà tự xuống dòng trong vùng nội dung riêng.
+- Icon, badge `Ẩn ngân sách` và cụm nút sửa/xóa vẫn giữ vị trí; không thay đổi API, schema, migration, dữ liệu hoặc quy tắc ngân sách.
+- Files: `src/pages/Catalogs.tsx`, `src/pages/Catalogs.test.tsx`.
+- Trạng thái: Chưa deploy production; cần chạy quality gates, commit/push branch và theo dõi PR qua Git integration khi người dùng yêu cầu deploy.
+
 ### Handoff — sửa badge Ẩn ngân sách che tên mục đích (04/09/2026)
 
 - Nguyên nhân: card Danh mục trên desktop 3 cột đặt tên, badge `Ẩn ngân sách` và cụm nút trong cùng một hàng; flex ưu tiên giữ badge/nút nên tên bị co quá mức.
 - Bản sửa: mỗi item có vùng nội dung riêng; tên nằm ở dòng trên với `truncate`, badge nằm dưới bằng `w-fit`, còn icon và nút sửa/xóa giữ vị trí hiện tại. Không thay đổi API, schema, migration hoặc dữ liệu.
 - Files: `src/pages/Catalogs.tsx`, `src/pages/Catalogs.test.tsx`.
 - Validation: `vitest run` đạt 29/29 file, 115/115 test; lint, typecheck, build và `git diff --check` pass. Build còn cảnh báo chunk ExcelJS lớn hiện hữu.
-- Trạng thái triển khai dự kiến: Commit/push branch, tạo hoặc cập nhật PR vào `main`, bật auto-merge và theo dõi required checks cùng Cloudflare Pages Git integration.
+- Trạng thái triển khai: Đã merge PR [#113](https://github.com/nhan0805/family-expense/pull/113) vào `main` với squash merge commit `4534675f54c1d3629a7192de23c6b7ffd4d889c2`. CI main [run 33838912432](https://github.com/nhan0805/family-expense/actions/runs/33838912432) pass với `quality` và `db-security`; Cloudflare Pages production check pass; production trả HTTP 200 và chunk Danh mục chứa layout badge dòng riêng lúc `04/09/2026 15:23` (`Asia/Ho_Chi_Minh`). Không có migration mới nên không cần Supabase Production Deploy.
 
 ### Handoff — cảnh báo ngân sách trong app, Phase 8 (04/09/2026)
 
@@ -29,7 +36,7 @@
 - Local fallback dùng `buildLocalBudgetSummary`; mục đích `budgetEnabled: false` tiếp tục bị loại khỏi cảnh báo. Trạng thái đọc/toast là metadata UI theo thiết bị, không đồng bộ giữa thiết bị trong V1; Web Push vẫn để phase sau.
 - Files chính: `src/components/BudgetNotifications.tsx`, `src/lib/budgetNotifications.ts`, tests tương ứng, `src/components/Layout.tsx`, `src/context/LanguageContext.tsx`, `src/pages/Dashboard.tsx`, `src/pages/TransactionForm.tsx`, `src/pages/Transactions.tsx`. Không có migration mới, không đổi schema/RLS/RPC.
 - Validation local: `vitest run` 29/29 file, 115/115 test; `eslint . --max-warnings=0`, `tsc -b --pretty false`, `vite build` và `git diff --check` pass. Build còn cảnh báo chunk ExcelJS lớn hiện hữu.
-- Trạng thái triển khai: Chưa deploy production; cần commit/push branch, tạo PR vào `main`, bật auto-merge và chờ required checks cùng Cloudflare Pages Git integration. Chưa cần Supabase Production Deploy vì không có migration.
+- Trạng thái triển khai: Đã deploy production cùng PR [#113](https://github.com/nhan0805/family-expense/pull/113), merge commit `4534675f54c1d3629a7192de23c6b7ffd4d889c2`; Cloudflare Pages production check và smoke test HTTP 200 pass. Không có migration mới nên không cần Supabase Production Deploy.
 
 ### Handoff — kiểm thử hệ thống và chuẩn bị deploy (04/09/2026)
 
