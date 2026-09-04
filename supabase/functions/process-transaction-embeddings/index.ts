@@ -4,6 +4,7 @@ import {
   buildTransactionSearchText,
   generateTransactionEmbedding,
   TRANSACTION_EMBEDDING_MODEL,
+  toPgVectorLiteral,
 } from '../_shared/transactionEmbedding.ts';
 
 const cors = {
@@ -70,7 +71,7 @@ Deno.serve(async (req) => {
         const { error } = await db.rpc('upsert_transaction_embedding', {
           p_family_id: row.family_id,
           p_transaction_id: row.id,
-          p_embedding: embedding,
+          p_embedding: toPgVectorLiteral(embedding),
           p_model: TRANSACTION_EMBEDDING_MODEL,
           p_source_hash: row.source_hash,
         });

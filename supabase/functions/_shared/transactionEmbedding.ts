@@ -7,6 +7,9 @@ export const buildTransactionSearchText = (
   note: string | null,
 ) => [description.trim(), note?.trim() || ''].filter(Boolean).join('\n');
 
+export const toPgVectorLiteral = (embedding: number[]) =>
+  `[${embedding.join(',')}]`;
+
 export async function generateTransactionEmbedding(text: string) {
   const session = new Supabase.ai.Session(TRANSACTION_EMBEDDING_MODEL);
   const output = await session.run(text, {

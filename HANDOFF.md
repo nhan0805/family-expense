@@ -14,6 +14,22 @@
 - [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
 
+### Handoff — khắc phục AI search không tải được danh sách giao dịch (04/09/2026)
+
+- Bảng `transaction_embeddings` trống ban đầu là đúng với thiết kế backfill lazy: chỉ khi semantic search được gọi thì Edge Function mới tạo embedding theo batch. Lỗi người dùng gặp xảy ra ở runtime semantic path, trước khi hàng được ghi thành công.
+- Bản sửa: gửi vector lên RPC dưới dạng pgvector literal; dùng `md5` built-in cho `source_hash` để không phụ thuộc schema `pgcrypto`; gửi `pg_notify('pgrst', 'reload schema')` sau migration để PostgREST nhận function signature mới.
+- Files: `supabase/functions/_shared/transactionEmbedding.ts`, `supabase/functions/process-transaction-embeddings/index.ts`, `supabase/functions/search-transactions-semantic/index.ts`, `supabase/migrations/202609040003_fix_transaction_embedding_runtime.sql`.
+- Validation: `pnpm test` đạt 29/29 file, 121/121 test; typecheck, lint, build và `git diff --check` pass. Playwright đã khởi động được sau khi cài browser nhưng 2 test cloud bị bỏ qua vì chưa có `E2E_EMAIL`/`E2E_PASSWORD`.
+- Trạng thái triển khai: Chưa deploy production; thay đổi đang được kiểm tra cùng bản sửa UI dropdown.
+
+### Handoff — căn mũi tên cùng hàng cho bộ lọc multi-select (04/09/2026)
+
+- Nguyên nhân: `.field` đặt `display: block` nên ghi đè `flex` trên `<summary>` của multi-select; icon mũi tên bị xuống dòng và trigger cao hơn `<select>` native.
+- Bản sửa: thêm class scoped `multi-select-trigger { display: flex; }` cho trigger Mục đích, Danh mục và Phương thức thanh toán; nội dung và mũi tên giờ nằm cùng hàng, chiều cao đồng nhất.
+- Files: `src/components/MultiSelectField.tsx`, `src/index.css`, `src/pages/Transactions.ui.test.tsx`, `supabase/functions/_shared/transactionEmbedding.ts`, `supabase/functions/process-transaction-embeddings/index.ts`, `supabase/functions/search-transactions-semantic/index.ts`, `supabase/migrations/202609040003_fix_transaction_embedding_runtime.sql`. Không đổi API nghiệp vụ hoặc dữ liệu giao dịch.
+- Validation: `pnpm test` đạt 29/29 file, 121/121 test; typecheck, lint, build và `git diff --check` pass. Playwright đã khởi động được sau khi cài browser nhưng 2 test cloud bị bỏ qua vì chưa có `E2E_EMAIL`/`E2E_PASSWORD`.
+- Trạng thái triển khai: Chưa deploy production; thay đổi đang ở workspace.
+
 ### Handoff — multi-select và semantic search giao dịch (04/09/2026)
 
 - Đã chuyển bộ lọc Mục đích, Danh mục và Phương thức thanh toán sang chọn nhiều; nhiều giá trị trong cùng nhóm là OR, các nhóm khác là AND. Bộ lọc hoạt động cho cả demo local và RPC cloud mới.

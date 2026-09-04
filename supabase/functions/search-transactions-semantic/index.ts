@@ -3,6 +3,7 @@ import { z } from 'npm:zod@4.1.5';
 import {
   generateTransactionEmbedding,
   TRANSACTION_EMBEDDING_MODEL,
+  toPgVectorLiteral,
 } from '../_shared/transactionEmbedding.ts';
 
 const cors = {
@@ -70,7 +71,7 @@ Deno.serve(async (req) => {
     const embedding = await generateTransactionEmbedding(parsed.semanticQuery);
     const { data, error } = await db.rpc('search_family_transactions_semantic', {
       p_family_id: parsed.familyId,
-      p_query_embedding: embedding,
+      p_query_embedding: toPgVectorLiteral(embedding),
       p_limit: parsed.pageSize,
       p_offset: parsed.page * parsed.pageSize,
       p_keyword: parsed.query,
