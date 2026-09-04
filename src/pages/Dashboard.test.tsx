@@ -3,7 +3,6 @@ import {
   fireEvent,
   render,
   screen,
-  waitFor,
 } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
@@ -128,6 +127,19 @@ describe('Dashboard', () => {
     ).toHaveLength(4);
   });
 
+  it('không hiển thị khu vực xác nhận giao dịch dự kiến trên Tổng quan', () => {
+    vi.mocked(useApp).mockReturnValue({
+      transactions: [transaction('Tiền điện dự kiến', '2020-01-10', 500_000, 'Dự kiến')],
+      purposes: [{ id: 'p1', name: 'Sinh hoạt' }],
+      expenseTypes: [{ id: 'e1', name: 'Thực phẩm' }],
+      confirmPlannedTransaction,
+    } as unknown as ReturnType<typeof useApp>);
+    renderDashboard();
+
+    expect(screen.queryByText('Giao dịch dự kiến đến hạn')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Xác nhận thực tế' })).not.toBeInTheDocument();
+  });
+
   it('ẩn label pie của lát nhỏ để tránh chồng lấp', () => {
     const expenseTypes = Array.from({ length: 9 }, (_, index) => ({
       id: `e${index + 1}`,
@@ -155,28 +167,6 @@ describe('Dashboard', () => {
     expect(summarized).toHaveLength(6);
     expect(summarized.at(-1)).toMatchObject({ id: 'other', name: 'Khác', value: 14_000 });
     expect(summarized.at(-1)?.hiddenItems).toHaveLength(4);
-  });
-
-  it('cho phép xác nhận giao dịch dự kiến đã đến hạn', async () => {
-    confirmPlannedTransaction.mockClear();
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
-    vi.mocked(useApp).mockReturnValue({
-      transactions: [
-        transaction('Tiền điện dự kiến', '2020-01-10', 500_000, 'Dự kiến'),
-      ],
-      purposes: [{ id: 'p1', name: 'Sinh hoạt' }],
-      expenseTypes: [{ id: 'e1', name: 'Thực phẩm' }],
-      confirmPlannedTransaction,
-    } as unknown as ReturnType<typeof useApp>);
-    renderDashboard();
-
-    expect(screen.getByText('Giao dịch dự kiến đến hạn')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Xác nhận thực tế' }));
-    await waitFor(() =>
-      expect(confirmPlannedTransaction).toHaveBeenCalledWith(
-        'Tiền điện dự kiến',
-      ),
-    );
   });
 
   it('tính đúng hai loại giao dịch và các preset kỳ xem', () => {

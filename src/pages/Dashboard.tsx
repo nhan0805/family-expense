@@ -39,7 +39,6 @@ import { fetchBudgetSummary } from '../lib/budgetsApi';
 import { formatCompactVnd, formatVnd, getCatalogDisplayName, type CatalogItem, type CatalogLanguage, type Transaction } from '../lib/domain';
 import { isSupabaseConfigured } from '../lib/supabase';
 import {
-  fetchDashboardDueTransactions,
   fetchDashboardTransactions,
   fetchTransactionYears,
 } from '../lib/transactionsApi';
@@ -238,7 +237,7 @@ export function Dashboard() {
   const queryClient = useQueryClient();
   const { language } = useOptionalLanguage();
   const en = language === 'en';
-  const { familyId, transactions, purposes, expenseTypes, confirmPlannedTransaction } = useApp();
+  const { familyId, transactions, purposes, expenseTypes } = useApp();
   const currentMonth = currentMonthKey();
   const [currentYear, currentMonthNumber] = currentMonth.split('-');
   const [selectedYear, setSelectedYear] = useState(currentYear || '');
@@ -246,8 +245,6 @@ export function Dashboard() {
   const [mode, setMode] = useState<DashboardMode>('month');
   const [customFrom, setCustomFrom] = useState(`${currentMonth}-01`);
   const [customTo, setCustomTo] = useState(todayKey());
-  const [confirmingId, setConfirmingId] = useState<string | null>(null);
-  const [dueError, setDueError] = useState('');
   const anchorKey = `${selectedYear}-${selectedMonth}`;
   const selectedPeriods = useMemo(() => periodsForMode(anchorKey, mode, customFrom, customTo), [anchorKey, mode, customFrom, customTo]);
   const selectedRange = useMemo(() => rangeForPeriods(selectedPeriods, mode === 'custom' ? customFrom : '', mode === 'custom' ? customTo : ''), [selectedPeriods, mode, customFrom, customTo]);
@@ -272,11 +269,6 @@ export function Dashboard() {
     queryKey: ['dashboard-data', familyId, queryFrom, queryTo],
     queryFn: () => fetchDashboardTransactions(familyId, queryFrom, queryTo),
     enabled: isSupabaseConfigured && Boolean(familyId) && validRange,
-  });
-  const dueQuery = useQuery({
-    queryKey: ['dashboard-due', familyId],
-    queryFn: () => fetchDashboardDueTransactions(familyId, todayKey()),
-    enabled: isSupabaseConfigured && Boolean(familyId),
   });
   const budgetQuery = useQuery({
     queryKey: ['budgets', familyId, Number(selectedYear), Number(selectedMonth)],
@@ -332,9 +324,6 @@ export function Dashboard() {
     params.set('dateTo', range.to);
     return `/giao-dich?${params.toString()}`;
   };
-  const dueTransactions = isSupabaseConfigured ? dueQuery.data || [] : transactions
-    .filter((transaction) => !transaction.deletedAt && transaction.status === 'Dự kiến' && transaction.transactionDate <= todayKey())
-    .sort((a, b) => a.transactionDate.localeCompare(b.transactionDate));
   const budgetSummary = isSupabaseConfigured
     ? budgetQuery.data
     : buildLocalBudgetSummary(purposes, transactions, Number(selectedYear), Number(selectedMonth));
@@ -358,7 +347,7 @@ export function Dashboard() {
     selectedExpense,
     trend: insightTrend,
   });
-  const error = dashboardQuery.isError || dueQuery.isError || yearsQuery.isError;
+  const error = dashboardQuery.isError || yearsQuery.isError;
   const aiSummaryQueryKey = [
     'ai-dashboard-summary',
     familyId,
@@ -410,20 +399,6 @@ export function Dashboard() {
       // The query keeps the error so the UI can offer an explicit retry.
     }
   };
-  const confirmDueTransaction = async (id: string, description: string) => {
-    if (!window.confirm(en ? `Confirm “${description}” as actual?` : `Xác nhận giao dịch “${description}” đã phát sinh thực tế?`)) return;
-    setConfirmingId(id);
-    setDueError('');
-    const result = await confirmPlannedTransaction(id);
-    setConfirmingId(null);
-    if (result) setDueError(result);
-    else if (isSupabaseConfigured) {
-      await queryClient.invalidateQueries({ queryKey: ['dashboard-due', familyId] });
-      await queryClient.invalidateQueries({ queryKey: ['dashboard-data', familyId] });
-      await queryClient.invalidateQueries({ queryKey: ['budgets', familyId] });
-    }
-  };
-
   if (isSupabaseConfigured && dashboardQuery.isPending)
     return <PageSkeleton label={en ? 'Loading financial overview…' : 'Đang tải tổng quan tài chính…'} />;
 
@@ -466,7 +441,6 @@ export function Dashboard() {
         </>}
       </section>
 
-      {dueTransactions.length > 0 && <section className="card attention-card border-amber-300 p-4 sm:p-5 dark:border-amber-700"><div className="mb-3"><h3 className="font-bold">{en ? 'Due planned transactions' : 'Giao dịch dự kiến đến hạn'}</h3><p className="text-sm text-gray-500">{en ? `${dueTransactions.length} transaction(s) need confirmation before they are included in actual reports.` : `${dueTransactions.length} giao dịch cần xác nhận trước khi tính vào báo cáo thực tế.`}</p></div>{dueError && <p role="alert" className="mb-3 rounded-lg border border-red-200 bg-red-50 p-2 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300">{dueError}</p>}<div className="divide-y divide-black/10 dark:divide-white/10">{dueTransactions.map((transaction) => <div key={transaction.id} className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between"><div className="min-w-0"><p className="truncate font-semibold">{transaction.description}</p><p className="text-xs text-gray-500">{en ? 'Due ' : 'Đến hạn '}{formatDate(transaction.transactionDate)} · {formatVnd(transaction.amount)}</p></div><button type="button" className="btn-primary shrink-0" disabled={confirmingId === transaction.id} onClick={() => void confirmDueTransaction(transaction.id, transaction.description)}>{confirmingId === transaction.id ? (en ? 'Confirming…' : 'Đang xác nhận…') : (en ? 'Confirm actual' : 'Xác nhận thực tế')}</button></div>)}</div></section>}
 
       <section className="card dashboard-chart-card min-w-0 overflow-hidden p-4 sm:p-5" aria-labelledby="dashboard-trend-title"><div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between"><div><h3 id="dashboard-trend-title" className="text-lg font-bold">{en ? 'Spending and income trend' : 'Xu hướng thu chi'}</h3><p className="text-sm text-gray-500 dark:text-gray-400">{mode === 'month' ? (en ? 'Six months ending in the selected month' : 'Sáu tháng kết thúc tại tháng đang chọn') : (en ? 'Monthly breakdown for this view' : 'Phân bổ theo từng tháng trong kỳ xem')}</p></div><div className="text-right text-sm"><p className="font-bold text-[#d96f4f]">{formatVnd(selectedExpense)}</p><p className="text-gray-500">{en ? 'expenses in view' : 'chi trong kỳ xem'}</p></div></div><div className="h-80 min-w-0 max-w-full">{trend.some((item) => item.expense || item.income) ? <ResponsiveContainer><ComposedChart data={trend} margin={{ top: 20, right: 12, left: 4, bottom: 6 }}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="label" /><YAxis tickFormatter={(value) => formatCompactVnd(Number(value)).replace(' ₫', '')} width={54} /><Tooltip labelFormatter={(label) => formatPeriodKey(String(trend.find((item) => item.label === label)?.key || ''), en)} formatter={(value) => formatVnd(Number(value))} /><Legend verticalAlign="top" align="right" /><Bar name={en ? 'Expenses' : 'Chi tiêu'} dataKey="expense" fill="#d96f4f" radius={[8, 8, 0, 0]} cursor="pointer" onClick={(_, index) => { const period = trend[index]; if (period) navigate(`/giao-dich?transactionType=Chi tiêu&month=${period.key.slice(5, 7)}&year=${period.key.slice(0, 4)}`); }}><LabelList dataKey="expense" position="top" formatter={(value) => Number(value) > 0 ? formatCompactVnd(Number(value)).replace(' ₫', '') : ''} /></Bar><Line name={en ? 'Income' : 'Thu nhập'} type="monotone" dataKey="income" stroke="#155e46" strokeWidth={3} dot={{ r: 4 }} /><Line name={en ? 'Net value' : 'Thu ròng'} type="monotone" dataKey="net" stroke="#247df2" strokeWidth={2} strokeDasharray="5 5" dot={false} /></ComposedChart></ResponsiveContainer> : <EmptyState title={en ? 'No trend data' : 'Chưa có dữ liệu xu hướng'} description={en ? 'The trend will appear when the selected period has actual transactions.' : 'Xu hướng sẽ xuất hiện khi kỳ đang chọn có giao dịch thực tế.'} />}</div></section>
 

@@ -151,3 +151,9 @@ export function markAllBudgetNotificationsRead(familyId: string, now = new Date(
   writeStorage(next);
   return sortNotifications(next.filter((item) => item.familyId === familyId));
 }
+
+export function deleteReadBudgetNotifications(familyId: string) {
+  const next = readStorage().filter((item) => item.familyId !== familyId || item.readAt === null);
+  writeStorage(next);
+  return sortNotifications(next.filter((item) => item.familyId === familyId));
+}

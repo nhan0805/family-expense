@@ -2,13 +2,21 @@
 
 ## 2026-09-04
 
+### Trung tâm thông báo: xác nhận giao dịch dự kiến và xóa cảnh báo đã đọc
+
+- Sau thay đổi: Nút chuông hiển thị cả cảnh báo ngân sách và giao dịch dự kiến đã tới hạn; người dùng có thể xác nhận từng giao dịch hoặc tất cả ngay trong panel. Khối xác nhận giao dịch dự kiến được bỏ khỏi Tổng quan để giảm chiều dài trang.
+- Bổ sung nút `Xóa đã đọc` để dọn các cảnh báo ngân sách đã đọc; cảnh báo chưa đọc và dữ liệu giao dịch không bị ảnh hưởng. Badge chuông tính cả mục chưa đọc và giao dịch cần xác nhận.
+- Kỹ thuật: cập nhật `src/components/BudgetNotifications.tsx`, `src/lib/budgetNotifications.ts`, `src/pages/Dashboard.tsx` và test tương ứng. Không thêm migration, schema, API hoặc thay đổi RLS/RPC.
+- Kiểm thử: Test tập trung 14/14 pass; full `pnpm test` đạt 29/29 file, 118/118 test; lint, typecheck và build pass. Build vẫn cảnh báo chunk ExcelJS lớn đã có từ trước.
+- Trạng thái triển khai dự kiến: Đã pass quality gates; sẽ commit/push branch, tạo PR vào `main`, bật auto-merge và xác minh Cloudflare Pages Git deployment của merge commit.
+
 ### Hiển thị đầy đủ tên dài trong Danh mục
 
 - Trước thay đổi: Tên mục đích/danh mục dài vẫn bị `truncate` thành dấu `...`, khiến người dùng không xem được toàn bộ nội dung dù badge `Ẩn ngân sách` đã được tách xuống dòng.
 - Sau thay đổi: Ba card Danh mục trên desktop có chiều rộng tối thiểu 440px và cuộn ngang khi màn hình hẹp; tên dài giữ một dòng, không còn `...`. Trên mobile, tên vẫn có thể xuống dòng để không làm vỡ màn hình; icon, badge và nút sửa/xóa giữ bố cục ổn định.
 - Kỹ thuật: cập nhật grid Danh mục và layout item trong `src/pages/Catalogs.tsx`, cho danh sách cuộn ngang trong `src/index.css`, và cập nhật regression assertion trong `src/pages/Catalogs.test.tsx`. Không thay đổi API, schema, migration, dữ liệu hoặc quy tắc ngân sách.
 - Kiểm thử: Bổ sung assertion tên dùng `lg:whitespace-nowrap`, không còn `truncate`, card dùng grid tối thiểu 440px; cần chạy lại `vitest`, lint, typecheck, build và `git diff --check` trước khi commit/deploy.
-- Trạng thái triển khai: Chưa deploy production.
+- Trạng thái triển khai dự kiến: Sẽ phát hành cùng PR deploy hiện tại qua Cloudflare Pages Git integration.
 
 ### Sửa badge Ẩn ngân sách che tên mục đích
 
