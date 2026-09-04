@@ -27,6 +27,7 @@ export function Catalogs() {
   } = useApp();
   const canManage = currentUserRole === 'owner';
   const [editor, setEditor] = useState<Editor>(null);
+  const [activeKind, setActiveKind] = useState<CatalogKind>('purpose');
   const [name, setName] = useState('');
   const [nameEn, setNameEn] = useState('');
   const [icon, setIcon] = useState('tag');
@@ -103,6 +104,11 @@ export function Catalogs() {
     onSubmit: submit,
     onDelete: remove,
   };
+  const catalogTabs: Array<{ kind: CatalogKind; title: string; items: CatalogItem[] }> = [
+    { kind: 'purpose', title: isEnglish ? 'Purpose' : 'Mục đích', items: purposes },
+    { kind: 'expenseType', title: isEnglish ? 'Expense type' : 'Danh mục', items: expenseTypes },
+    { kind: 'paymentMethod', title: isEnglish ? 'Payment method' : 'Phương thức thanh toán', items: paymentMethods },
+  ];
   return <div className="catalogs-page space-y-5">
     <div className="page-header">
       <p className="page-kicker">{isEnglish ? 'Family setup' : 'Thiết lập gia đình'}</p>
@@ -111,10 +117,29 @@ export function Catalogs() {
         ? (isEnglish ? 'You can add, rename and delete unused categories.' : 'Bạn có thể thêm, đổi tên và xóa danh mục chưa được sử dụng.')
         : (isEnglish ? 'You can view categories. Only the family owner can edit them.' : 'Bạn có thể xem danh mục. Chỉ chủ gia đình mới có quyền chỉnh sửa.')}</p>
     </div>
-    <div className="grid gap-4 lg:grid-cols-[repeat(3,minmax(440px,1fr))] lg:overflow-x-auto lg:pb-2">
-      <Catalog isEnglish={isEnglish} title={isEnglish ? 'Purpose' : 'Mục đích'} kind="purpose" items={purposes} canManage={canManage} error={errorKind === 'purpose' ? error : ''} {...shared} />
-      <Catalog isEnglish={isEnglish} title={isEnglish ? 'Expense type' : 'Danh mục'} kind="expenseType" items={expenseTypes} canManage={canManage} error={errorKind === 'expenseType' ? error : ''} {...shared} />
-      <Catalog isEnglish={isEnglish} title={isEnglish ? 'Payment method' : 'Phương thức thanh toán'} kind="paymentMethod" items={paymentMethods} canManage={canManage} error={errorKind === 'paymentMethod' ? error : ''} {...shared} />
+    <div className="catalog-tabs" role="tablist" aria-label={isEnglish ? 'Catalog groups' : 'Nhóm danh mục'}>
+      {catalogTabs.map(({ kind, title }) => <button
+        key={kind}
+        id={`catalog-tab-${kind}`}
+        type="button"
+        role="tab"
+        aria-selected={activeKind === kind}
+        aria-controls={`catalog-panel-${kind}`}
+        className="catalog-tab"
+        onClick={() => setActiveKind(kind)}
+      >{title}</button>)}
+    </div>
+    <div className="catalog-tab-panels">
+      {catalogTabs.map(({ kind, title, items }) => <div
+        key={kind}
+        id={`catalog-panel-${kind}`}
+        role="tabpanel"
+        aria-labelledby={`catalog-tab-${kind}`}
+        hidden={activeKind !== kind}
+        className="catalog-tab-panel"
+      >
+        <Catalog isEnglish={isEnglish} title={title} kind={kind} items={items} canManage={canManage} error={errorKind === kind ? error : ''} {...shared} />
+      </div>)}
     </div>
   </div>;
 }

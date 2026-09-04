@@ -14,6 +14,14 @@
 - [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
 
+### Handoff — chuyển Danh mục sang tab để bỏ thanh cuộn ngang (04/09/2026)
+
+- Ba card Danh mục trên desktop đã chuyển thành tab `Mục đích`, `Danh mục` và `Phương thức thanh toán`; mỗi lần chỉ render một panel nên không còn cần thanh cuộn ngang, tên dài vẫn hiển thị đầy đủ. Mobile dùng cùng cơ chế tab, không thay đổi route hay dữ liệu.
+- Tab có trạng thái active và cấu trúc truy cập `tablist`/`tab`/`tabpanel`; thao tác thêm, sửa, xóa và badge `Ẩn ngân sách` được giữ nguyên.
+- Files: `src/pages/Catalogs.tsx`, `src/index.css`, `src/pages/Catalogs.test.tsx`. Không có migration mới, không đổi API/schema/RLS/RPC.
+- Validation: `vitest run` đạt 29/29 file, 119/119 test; test Catalogs 6/6; lint, typecheck, build và `git diff --check` pass. Build vẫn cảnh báo chunk ExcelJS lớn hiện hữu.
+- Trạng thái triển khai: Đã kiểm tra local lúc `04/09/2026 16:22` (`Asia/Ho_Chi_Minh`); đang chuẩn bị PR deploy qua Cloudflare Pages Git integration theo yêu cầu deploy.
+
 ### Handoff — trung tâm thông báo và xác nhận giao dịch dự kiến (04/09/2026)
 
 - Nút chuông hiện gom cảnh báo ngân sách và các giao dịch `Dự kiến` đã tới hạn. Có thể xác nhận từng giao dịch hoặc tất cả trong panel; thao tác vẫn đi qua `confirmPlannedTransaction` và cập nhật cache liên quan.
@@ -22,14 +30,15 @@
 - Files: `src/components/BudgetNotifications.tsx`, `src/lib/budgetNotifications.ts`, `src/lib/budgetNotifications.test.ts`, `src/components/BudgetNotifications.test.tsx`, `src/pages/Dashboard.tsx`, `src/pages/Dashboard.test.tsx`.
 - Không có migration mới, không đổi schema/RLS/RPC. Trạng thái đọc/xóa cảnh báo vẫn lưu local trên thiết bị trong V1.
 - Validation: test tập trung 14/14 pass; full `pnpm test` đạt 29/29 file, 118/118 test; lint, typecheck và build pass. Build vẫn cảnh báo chunk ExcelJS lớn hiện hữu.
-- Trạng thái triển khai dự kiến: Đã pass quality gates; sẽ commit/push branch, tạo PR vào `main`, bật auto-merge và xác minh Cloudflare Pages Git deployment của merge commit.
+- Trạng thái triển khai: Đã merge PR [#115](https://github.com/nhan0805/family-expense/pull/115) vào `main` với squash merge commit `5357ba915d873bb4fb1ffcd331eed27e9c6887a7`. CI main [run 33856554881](https://github.com/nhan0805/family-expense/actions/runs/33856554881) pass với `quality` và `db-security`; Cloudflare Pages production check pass trên merge commit. Production `https://family-expense-8fo.pages.dev/` trả HTTP 200 lúc `04/09/2026 16:10` (`Asia/Ho_Chi_Minh`). Không có migration mới nên không chạy Supabase Production Deploy; không dùng Wrangler deploy trực tiếp và không tạo deploy lần hai chỉ để cập nhật tài liệu.
 
 ### Handoff — hiển thị đầy đủ tên dài trong Danh mục (04/09/2026)
 
 - Bổ sung sau bản sửa badge: ba card Danh mục trên desktop có chiều rộng tối thiểu 440px và cuộn ngang khi cần; tên dài giữ một dòng, không còn bị `truncate` thành dấu `...`. Mobile vẫn cho phép xuống dòng khi chiều rộng không đủ.
 - Icon, badge `Ẩn ngân sách` và cụm nút sửa/xóa vẫn giữ vị trí; không thay đổi API, schema, migration, dữ liệu hoặc quy tắc ngân sách.
 - Files: `src/index.css`, `src/pages/Catalogs.tsx`, `src/pages/Catalogs.test.tsx`.
-- Trạng thái triển khai dự kiến: Sẽ phát hành cùng PR deploy hiện tại qua Cloudflare Pages Git integration.
+- Validation: `vitest run` đạt 29/29 file, 115/115 test; lint, typecheck, build và `git diff --check` pass. Build vẫn cảnh báo chunk ExcelJS lớn đã có từ trước.
+- Trạng thái triển khai: Đã merge PR [#114](https://github.com/nhan0805/family-expense/pull/114) vào `main` với merge commit `20f0cabf24d01dd3ad267f9205791f28aa514f9c`. PR checks gồm quality, db-security và Cloudflare Preview đều pass; CI main [run 33855827219](https://github.com/nhan0805/family-expense/actions/runs/33855827219) pass với quality và db-security. Production `https://family-expense-8fo.pages.dev/` trả HTTP 200 và bundle Danh mục chứa layout `minmax(440px)`, `overflow-x-auto`, `lg:whitespace-nowrap` lúc `04/09/2026 16:02` (`Asia/Ho_Chi_Minh`). Không có migration mới nên không cần Supabase Production Deploy.
 
 ### Handoff — sửa badge Ẩn ngân sách che tên mục đích (04/09/2026)
 
