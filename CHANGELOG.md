@@ -2,6 +2,14 @@
 
 ## 2026-09-04
 
+### Loại bỏ semantic search và dữ liệu embedding
+
+- Trước thay đổi: AI search phụ thuộc vào backfill `gte-small` và bảng `transaction_embeddings`, khiến việc phân tích AI thành công nhưng tải danh sách vẫn có thể lỗi trên Supabase Free.
+- Sau thay đổi: AI search chỉ áp dụng bộ lọc cấu trúc (loại, trạng thái, mục đích, danh mục, phương thức, số tiền, thời gian) và dùng keyword RPC ổn định; semantic search không còn được gọi từ giao diện. Multi-select vẫn giữ nguyên. Migration mới xoá bảng `transaction_embeddings`, các RPC embedding/semantic và extension `vector`; hai Edge Function semantic cùng helper cũng được gỡ khỏi source và workflow deploy.
+- Files: `src/pages/Transactions.tsx`, `src/lib/transactionsApi.ts`, `src/lib/ai.ts`, `src/lib/transactionsApi.test.ts`, `src/lib/ai.test.ts`, `supabase/functions/search-transactions/index.ts`, `supabase/config.toml`, `.github/workflows/supabase-deploy.yml`, `supabase/migrations/202609040005_remove_semantic_search.sql`, `supabase/tests/transaction_search_filters.sql`, `README.md`. Không xoá dữ liệu giao dịch.
+- Kiểm thử: full test, typecheck, lint, build và `git diff --check` sẽ chạy lại trước khi merge; pgTAP kiểm tra các object semantic đã được xoá.
+- Trạng thái triển khai dự kiến: Cập nhật PR vào `main`, bật auto-merge và chờ migration Supabase production cùng Cloudflare Pages Git deployment.
+
 ### Loại bỏ account và event khỏi luồng ứng dụng
 
 - Trước thay đổi: Giao diện đã ẩn các trường Tài khoản/Thẻ và Sự kiện/Kế hoạch, nhưng schema, bản nháp, payload tạo/sao chép giao dịch, parser Excel cũ và truy vấn export vẫn còn giữ các trường legacy.

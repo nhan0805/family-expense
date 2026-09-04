@@ -1,44 +1,38 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fetchTransactionPage } from './transactionsApi';
 
-const { invokeMock } = vi.hoisted(() => ({ invokeMock: vi.fn() }));
+const { rpcMock } = vi.hoisted(() => ({ rpcMock: vi.fn() }));
 
 vi.mock('./supabase', () => ({
-  supabase: { functions: { invoke: invokeMock } },
+  supabase: { rpc: rpcMock },
 }));
 
 const filters = {
-  query: '',
-  semanticQuery: 'mua đồ cho em bé',
-  transactionType: '',
-  status: '',
+  query: 'quần áo',
+  transactionType: 'Chi tiêu',
+  status: 'Thực tế',
   purposeIds: [],
-  expenseTypeIds: [],
+  expenseTypeIds: ['22222222-2222-4222-8222-222222222222'],
   paymentMethodIds: [],
   amountMin: '',
   amountMax: '',
-  month: '',
-  year: '',
+  month: '09',
+  year: '2026',
   dateFrom: '',
   dateTo: '',
   sort: 'date-desc',
 };
 
-describe('fetchTransactionPage semantic search', () => {
+describe('fetchTransactionPage keyword search', () => {
   afterEach(() => {
-    invokeMock.mockReset();
+    rpcMock.mockReset();
   });
 
-  it('attempts a bounded embedding batch before searching', async () => {
-    invokeMock
-      .mockResolvedValueOnce({
-        data: { processed: 1, failed: 0, remainingHint: false },
-        error: null,
-      })
-      .mockResolvedValueOnce({
-        data: { rows: [], hasMore: false, totalAmount: 0, totalCount: 0 },
-        error: null,
-      });
+  it('uses the normal family RPC without invoking semantic search', async () => {
+    rpcMock.mockResolvedValueOnce({
+      data: { rows: [], hasMore: false, totalAmount: 0, totalCount: 0 },
+      error: null,
+    });
 
     await fetchTransactionPage(
       '11111111-1111-4111-8111-111111111111',
@@ -46,52 +40,23 @@ describe('fetchTransactionPage semantic search', () => {
       0,
     );
 
-    expect(invokeMock).toHaveBeenNthCalledWith(
-      1,
-      'process-transaction-embeddings',
-      {
-        body: {
-          familyId: '11111111-1111-4111-8111-111111111111',
-          limit: 5,
-        },
-      },
-    );
-    expect(invokeMock).toHaveBeenNthCalledWith(
-      2,
-      'search-transactions-semantic',
-      expect.objectContaining({
-        body: expect.objectContaining({
-          familyId: '11111111-1111-4111-8111-111111111111',
-          semanticQuery: 'mua đồ cho em bé',
-          query: 'mua đồ cho em bé',
-        }),
-      }),
-    );
-  });
-
-  it('still runs semantic search when the optional backfill is resource-limited', async () => {
-    invokeMock
-      .mockRejectedValueOnce(new Error('WORKER_RESOURCE_LIMIT'))
-      .mockResolvedValueOnce({
-        data: { rows: [], hasMore: false, totalAmount: 0, totalCount: 0 },
-        error: null,
-      });
-
-    await fetchTransactionPage(
-      '11111111-1111-4111-8111-111111111111',
-      filters,
-      0,
-    );
-
-    expect(invokeMock).toHaveBeenNthCalledWith(
-      2,
-      'search-transactions-semantic',
-      expect.objectContaining({
-        body: expect.objectContaining({
-          query: 'mua đồ cho em bé',
-          semanticQuery: 'mua đồ cho em bé',
-        }),
-      }),
-    );
+    expect(rpcMock).toHaveBeenCalledWith('list_family_transactions', {
+      p_family_id: '11111111-1111-4111-8111-111111111111',
+      p_limit: 50,
+      p_offset: 0,
+      p_query: 'quần áo',
+      p_transaction_type: 'Chi tiêu',
+      p_status: 'Thực tế',
+      p_purpose_ids: [],
+      p_expense_type_ids: ['22222222-2222-4222-8222-222222222222'],
+      p_payment_method_ids: [],
+      p_amount_min: null,
+      p_amount_max: null,
+      p_month: 9,
+      p_year: 2026,
+      p_date_from: null,
+      p_date_to: null,
+      p_sort: 'date-desc',
+    });
   });
 });

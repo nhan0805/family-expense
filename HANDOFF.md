@@ -14,6 +14,14 @@
 - [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
 
+### Handoff — loại bỏ semantic search và dữ liệu embedding (04/09/2026)
+
+- Quyết định sản phẩm: tắt semantic search khỏi giao diện sau khi parser AI vẫn chạy nhưng semantic path tiếp tục không trả kết quả ổn định trên Supabase Free.
+- Bản sửa: `fetchTransactionPage` luôn dùng `list_family_transactions`; AI search bỏ `semanticQuery`, vẫn áp dụng đầy đủ bộ lọc multi-select và chỉ dùng keyword khi có từ khóa trực tiếp. Prompt parser không còn yêu cầu semantic search. Migration `202609040005_remove_semantic_search.sql` xoá bảng `transaction_embeddings`, các RPC embedding/semantic và extension `vector`; source/config/workflow gỡ hai Edge Function semantic cùng helper.
+- Files: `src/pages/Transactions.tsx`, `src/lib/transactionsApi.ts`, `src/lib/ai.ts`, `src/lib/transactionsApi.test.ts`, `src/lib/ai.test.ts`, `supabase/functions/search-transactions/index.ts`, `supabase/config.toml`, `.github/workflows/supabase-deploy.yml`, `supabase/migrations/202609040005_remove_semantic_search.sql`, `supabase/tests/transaction_search_filters.sql`, `README.md`. Không đổi dữ liệu giao dịch hoặc RLS giao dịch.
+- Validation: sẽ chạy lại full Vitest, typecheck, lint, build, `git diff --check` và pgTAP database tests.
+- Trạng thái triển khai dự kiến: Chưa deploy production; chờ PR, required checks, migration Supabase production và Cloudflare Pages production deployment.
+
 ### Handoff — loại bỏ account và event khỏi luồng ứng dụng (04/09/2026)
 
 - Giao diện form giao dịch, template/import hiện hành và export đã không hiển thị hai trường này; bản sửa lần này dọn nốt các tham chiếu frontend còn lại trong schema, draft, payload tạo/sao chép, parser Excel cũ và quan hệ truy vấn export.

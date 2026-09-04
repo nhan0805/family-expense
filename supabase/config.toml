@@ -27,9 +27,3 @@ verify_jwt = true
 
 [functions.search-transactions]
 verify_jwt = true
-
-[functions.process-transaction-embeddings]
-verify_jwt = true
-
-[functions.search-transactions-semantic]
-verify_jwt = true

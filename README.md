@@ -8,8 +8,8 @@ Web app quản lý chi tiêu gia đình bằng tiếng Việt, mobile-first, có
 
 - Frontend: React 19, TypeScript strict, Vite, React Router, Tailwind CSS, TanStack Query, React Hook Form + Zod, Recharts và vite-plugin-pwa.
 - Backend: Supabase Cloud (PostgreSQL, Auth, RLS, Edge Functions). Storage đã sẵn sàng để bổ sung chứng từ sau MVP nhưng hiện chưa dùng.
-- AI: Supabase Edge Functions `parse-expense`, `summarize-dashboard` và `search-transactions` gọi Gemini GenerateContent qua HTTP, dùng JSON Schema structured output; gợi ý danh mục tham khảo lịch sử cùng family, Dashboard chỉ gửi số liệu tổng hợp, và tìm kiếm AI chỉ trả về bộ lọc để người dùng áp dụng. Tìm kiếm AI có thể trả về nhiều mục đích/danh mục/phương thức thanh toán cùng lúc và phần nội dung còn lại được chuyển sang semantic search.
-- Search: bộ lọc danh mục trên trang Giao dịch hỗ trợ chọn nhiều giá trị theo phép OR trong cùng một nhóm; các nhóm khác vẫn kết hợp theo phép AND. Semantic search dùng `pgvector` trong Supabase Postgres và model embedding chạy sẵn `gte-small` trong Edge Functions, lưu vector 384 chiều ở `transaction_embeddings`; chỉ embedding `description` + `note`, còn ngày, số tiền, loại, trạng thái và catalog vẫn lọc bằng SQL. Không cần gọi Gemini để tạo embedding và không đặt vector/secret ở frontend.
+- AI: Supabase Edge Functions `parse-expense`, `summarize-dashboard` và `search-transactions` gọi Gemini GenerateContent qua HTTP, dùng JSON Schema structured output; gợi ý danh mục tham khảo lịch sử cùng family, Dashboard chỉ gửi số liệu tổng hợp, và tìm kiếm AI chỉ trả về bộ lọc để người dùng áp dụng. Tìm kiếm AI có thể trả về nhiều mục đích/danh mục/phương thức thanh toán cùng lúc; kết quả dùng bộ lọc cấu trúc và keyword search thông thường.
+- Search: bộ lọc danh mục trên trang Giao dịch hỗ trợ chọn nhiều giá trị theo phép OR trong cùng một nhóm; các nhóm khác vẫn kết hợp theo phép AND. Tìm kiếm AI không dùng semantic search hoặc bảng embedding; ngày, số tiền, loại, trạng thái và catalog được lọc bằng SQL, còn nội dung được tìm theo từ khóa.
 - Hosting: frontend Cloudflare Pages; dữ liệu, auth và function trên Supabase.
 
 Mặc định dùng VND, `Asia/Ho_Chi_Minh`, ngày `dd/MM/yyyy`; `amount` luôn dương và ý nghĩa ròng được xác định bằng `transaction_type`.
@@ -84,7 +84,7 @@ npm run dev
 
 Nếu chưa cấu hình Supabase, app vẫn mở với dữ liệu demo để kiểm tra UI; đăng nhập, lưu cloud và AI cần project Supabase thật.
 
-Khi người dùng bấm **Gợi ý AI** trên trang **Giao dịch**, `search-transactions` trước hết tách câu tự nhiên thành các bộ lọc có cấu trúc. Nếu còn khái niệm về nội dung giao dịch, response có `semanticQuery`; frontend gọi `process-transaction-embeddings` để bổ sung dần vector còn thiếu/cũ rồi gọi `search-transactions-semantic` để xếp hạng theo cosine similarity. Các giao dịch cũ được backfill theo từng batch khi semantic search được dùng; giao dịch mới hoặc giao dịch đổi nội dung cũng sẽ được xử lý lại khi batch kế tiếp chạy. Vì embedding dùng model built-in của Supabase, luồng này không phát sinh request tới Gemini; vẫn cần theo dõi dung lượng database và quota Edge Functions của project Free.
+Khi người dùng bấm **Gợi ý AI** trên trang **Giao dịch**, `search-transactions` tách câu tự nhiên thành các bộ lọc có cấu trúc như loại giao dịch, trạng thái, mục đích, danh mục, phương thức thanh toán, số tiền và thời gian. Frontend áp dụng các bộ lọc này bằng `list_family_transactions`; nếu còn từ khóa nội dung thì dùng tìm kiếm chuỗi không phân biệt dấu trên mô tả và ghi chú. Không có bước tạo embedding, backfill hoặc gọi Edge Function semantic.
 
 ## Import Excel
 
@@ -162,7 +162,7 @@ Thêm route fallback SPA về `index.html` nếu cấu hình Pages yêu cầu. T
 - Một câu AI chỉ tạo một đề xuất giao dịch; không OCR, ảnh hoặc giọng nói.
 - Owner quản lý thành viên/danh mục; member xem và nhập/sửa giao dịch theo RLS. Mời thành viên nâng cao và UI recurring transaction để sau MVP.
 - Accounts chỉ lưu tên, tổ chức và bốn số cuối, không lưu toàn bộ số tài khoản/thẻ.
-- Storage chưa dùng; vector semantic search nằm trong database, không dùng Supabase Storage. Semantic search hiện chỉ xét `description` và `note`; các thuộc tính có cấu trúc như ngày, số tiền, loại, trạng thái và catalog cần được AI tách thành bộ lọc SQL. Dark mode nền tảng CSS đã chuẩn bị nhưng chưa có nút chuyển theme.
+- Storage chưa dùng cho giao dịch; tìm kiếm không lưu vector hoặc dữ liệu embedding. Dark mode nền tảng CSS đã chuẩn bị nhưng chưa có nút chuyển theme.
 - CI chạy pgTAP kiểm tra schema/RLS trên Supabase local; drill backup/restore staging theo [`docs/OPERATIONS_RUNBOOK.md`](docs/OPERATIONS_RUNBOOK.md) trước mỗi thay đổi database lớn.
 
 ## Bảo mật
