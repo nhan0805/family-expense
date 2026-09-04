@@ -28,10 +28,8 @@ type TransactionRow = {
   amount: number | string;
   purpose_id: string;
   expense_type_id: string;
-  event_id: string | null;
   beneficiary_id: string | null;
   payment_method_id: string | null;
-  account_id: string | null;
   note: string | null;
   source: Transaction['source'];
   source_reference: string | null;
@@ -51,10 +49,8 @@ export const mapTransactionRow = (row: TransactionRow): Transaction => ({
   amount: Number(row.amount),
   purposeId: row.purpose_id,
   expenseTypeId: row.expense_type_id,
-  eventId: row.event_id,
   beneficiaryId: row.beneficiary_id,
   paymentMethodId: row.payment_method_id,
-  accountId: row.account_id,
   note: row.note,
   source: row.source,
   sourceReference: row.source_reference,

@@ -30,6 +30,24 @@ describe('định dạng và quy tắc giao dịch', () => {
       aiGenerated: false,
     }).success).toBe(false);
   });
+  it('không còn đưa trường tài khoản và sự kiện vào dữ liệu giao dịch', () => {
+    const parsed = transactionSchema.parse({
+      transactionDate: '2026-08-25',
+      transactionType: 'Chi tiêu',
+      status: 'Thực tế',
+      description: 'Ăn trưa',
+      amount: 100000,
+      purposeId: 'p',
+      expenseTypeId: 'e',
+      paymentMethodId: 'm',
+      eventId: 'legacy-event',
+      accountId: 'legacy-account',
+      source: 'manual',
+      aiGenerated: false,
+    });
+    expect(parsed).not.toHaveProperty('eventId');
+    expect(parsed).not.toHaveProperty('accountId');
+  });
   it('ưu tiên tên tiếng Anh và fallback về tiếng Việt', () => {
     const item = { id: 'p1', name: 'Du lịch', nameEn: 'Travel' };
     expect(getCatalogDisplayName(item, 'en')).toBe('Travel');
