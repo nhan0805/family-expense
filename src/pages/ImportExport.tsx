@@ -13,6 +13,7 @@ import { useApp } from '../context/AppContext';
 import { useOptionalLanguage } from '../context/LanguageContext';
 import { getCatalogDisplayName, transactionTypeLabel, type CatalogLanguage, type Transaction } from '../lib/domain';
 import { formatImportCheckSummary } from '../lib/importSummary';
+import { userFacingError } from '../lib/errorRecovery';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { inferImportMode, type TemplateError, type TemplateRow } from '../lib/templateTypes';
 
@@ -38,8 +39,10 @@ export function ImportExport() {
   const {
     familyId,
     currentUserEmail,
+    currentUserId,
     currentUserRole,
     transactions,
+    setTransactions,
     purposes,
     expenseTypes,
     paymentMethods,
@@ -222,6 +225,42 @@ export function ImportExport() {
       note: row.note,
     }));
     const importMode = inferImportMode(rows);
+    if (!isSupabaseConfigured) {
+      const imported = rows.map((row) => ({
+        id: row.id || crypto.randomUUID(),
+        familyId,
+        transactionDate: row.transactionDate,
+        amount: row.amount,
+        transactionType: row.transactionType,
+        status: row.status,
+        description: row.description,
+        paymentMethodId: row.paymentMethodId,
+        purposeId: row.purposeId,
+        expenseTypeId: row.expenseTypeId,
+        note: row.note || null,
+        source: 'excel_import' as const,
+        sourceReference: fileName,
+        aiGenerated: false,
+        createdBy: currentUserId,
+      }));
+      setTransactions((items) => {
+        const updates = new Map(imported.map((item) => [item.id, item]));
+        const existingIds = new Set(items.map((item) => item.id));
+        return [
+          ...items.map((item) => updates.get(item.id) || item),
+          ...imported.filter((item) => !existingIds.has(item.id)),
+        ];
+      });
+      setImportBusy(false);
+      setMessage(
+        `${en ? 'Imported' : 'Đã import'} ${rows.length.toLocaleString('vi-VN')} ${en ? 'transactions.' : 'giao dịch.'}`,
+      );
+      setValidRows([]);
+      setImportErrors([]);
+      setFileName('');
+      window.setTimeout(() => window.location.assign('/giao-dich'), 700);
+      return;
+    }
     const { data, error } = await supabase.rpc('import_template_transactions', {
       p_family_id: familyId,
       p_file_name: fileName,
@@ -231,7 +270,7 @@ export function ImportExport() {
     });
     setImportBusy(false);
     if (error) {
-      setMessage(`${en ? 'Import failed' : 'Import thất bại'}: ${error.message}`);
+      setMessage(`${en ? 'Import failed' : 'Import thất bại'}: ${userFacingError(error, en ? 'Could not save imported transactions.' : 'Không thể lưu dữ liệu import.')}`);
       return;
     }
     setMessage(

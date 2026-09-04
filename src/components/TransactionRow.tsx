@@ -8,6 +8,7 @@ import {
 import { Link } from 'react-router-dom';
 import {
   canDeleteTransaction,
+  formatDateOnlyVi,
   formatVnd,
   transactionTypeLabel,
   type Transaction,
@@ -67,7 +68,7 @@ export function TransactionRow({
     ? { rowClass: 'bg-gradient-to-r from-emerald-100/90 via-emerald-50/55 to-transparent dark:from-[#50fa7b1f] dark:via-[#50fa7b08] dark:to-transparent', amountClass: 'text-emerald-700 dark:text-[#50fa7b]', badgeClass: 'border border-emerald-300 bg-emerald-200 text-emerald-950 shadow-sm dark:border-[#50fa7b99] dark:bg-[#50fa7b1f] dark:text-[#50fa7b]' }
         : { rowClass: 'bg-gradient-to-r from-rose-100/90 via-rose-50/55 to-transparent dark:from-[#ff79c61f] dark:via-[#ff79c608] dark:to-transparent', amountClass: 'text-rose-700 dark:text-[#ff79c6]', badgeClass: 'border border-rose-300 bg-rose-200 text-rose-950 shadow-sm dark:border-[#ff79c699] dark:bg-[#ff79c61f] dark:text-[#ff79c6]' };
   const setOnlySelected = () => onSetSelected(new Set([transaction.id]));
-  const date = new Date(`${transaction.transactionDate}T00:00:00`).toLocaleDateString('vi-VN');
+  const date = formatDateOnlyVi(transaction.transactionDate);
   const canDelete = canDeleteTransaction(transaction, currentUserRole, currentUserId);
 
   return (

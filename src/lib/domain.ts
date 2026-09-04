@@ -195,6 +195,10 @@ export const formatVnd = (value: number) =>
     currency: 'VND',
     maximumFractionDigits: 0,
   }).format(value);
+export const formatDateOnlyVi = (value: string) => {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  return match ? `${match[3]}/${match[2]}/${match[1]}` : value;
+};
 export const formatCompactVnd = (value: number) => {
   const absolute = Math.abs(value);
   const compact =

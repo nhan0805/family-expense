@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { useLanguage } from '../context/LanguageContext';
+import { authErrorMessage } from '../lib/errorRecovery';
 
 type Mode = 'login' | 'signup' | 'magic' | 'forgot';
 
@@ -22,6 +23,14 @@ export function Login() {
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (!email.trim()) {
+      setMessage(en ? 'Enter your email.' : 'Vui lòng nhập email.');
+      return;
+    }
+    if (mode !== 'magic' && mode !== 'forgot' && password.length < 6) {
+      setMessage(en ? 'Password must be at least 6 characters.' : 'Mật khẩu phải có ít nhất 6 ký tự.');
+      return;
+    }
     setBusy(true);
     setMessage(en ? 'Processing…' : 'Đang xử lý…');
 
@@ -31,37 +40,45 @@ export function Login() {
       return;
     }
 
-    const origin = window.location.origin;
-    if (mode === 'forgot') {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${origin}/dat-lai-mat-khau`,
-      });
+    try {
+      const origin = window.location.origin;
+      if (mode === 'forgot') {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${origin}/dat-lai-mat-khau`,
+        });
+        if (error) {
+          setMessage(authErrorMessage(error, en));
+          return;
+        }
+        setMessage(en ? 'Password reset link sent. Check your email.' : 'Đã gửi liên kết đặt lại mật khẩu. Vui lòng kiểm tra email.');
+        return;
+      }
+
+      const result = mode === 'login'
+        ? await supabase.auth.signInWithPassword({ email, password })
+        : mode === 'signup'
+          ? await supabase.auth.signUp({ email, password, options: { emailRedirectTo: `${origin}/` } })
+          : await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: `${origin}/` } });
+
+      if (result.error) {
+        setMessage(authErrorMessage(result.error, en));
+        return;
+      }
+      if (mode === 'magic') {
+        setMessage(en ? 'Magic link sent. Check your email.' : 'Đã gửi liên kết đăng nhập. Vui lòng kiểm tra email.');
+        return;
+      }
+      if (mode === 'signup' && !result.data.session) {
+        setMessage(en ? 'Account created. Confirm your email before logging in.' : 'Tài khoản đã được tạo. Vui lòng xác nhận email trước khi đăng nhập.');
+        return;
+      }
+      const from = (location.state as { from?: string } | null)?.from || '/';
+      navigate(from, { replace: true });
+    } catch (error) {
+      setMessage(authErrorMessage(error, en));
+    } finally {
       setBusy(false);
-      setMessage(error ? error.message : (en ? 'Password reset link sent. Check your email.' : 'Đã gửi liên kết đặt lại mật khẩu. Vui lòng kiểm tra email.'));
-      return;
     }
-
-    const result = mode === 'login'
-      ? await supabase.auth.signInWithPassword({ email, password })
-      : mode === 'signup'
-        ? await supabase.auth.signUp({ email, password, options: { emailRedirectTo: `${origin}/` } })
-        : await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: `${origin}/` } });
-
-    setBusy(false);
-    if (result.error) {
-      setMessage(result.error.message);
-      return;
-    }
-    if (mode === 'magic') {
-      setMessage(en ? 'Magic link sent. Check your email.' : 'Đã gửi liên kết đăng nhập. Vui lòng kiểm tra email.');
-      return;
-    }
-    if (mode === 'signup' && !result.data.session) {
-      setMessage(en ? 'Account created. Confirm your email before logging in.' : 'Tài khoản đã được tạo. Vui lòng xác nhận email trước khi đăng nhập.');
-      return;
-    }
-    const from = (location.state as { from?: string } | null)?.from || '/';
-    navigate(from, { replace: true });
   };
 
   const title = en ? (mode === 'login' ? 'Log in' : mode === 'signup' ? 'Create account' : mode === 'magic' ? 'Magic link' : 'Forgot password') : (mode === 'login' ? 'Đăng nhập' : mode === 'signup' ? 'Tạo tài khoản' : mode === 'magic' ? 'Liên kết đăng nhập' : 'Quên mật khẩu');

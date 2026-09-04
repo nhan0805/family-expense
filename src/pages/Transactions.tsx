@@ -32,6 +32,7 @@ import { transactionSearchResponseSchema } from '../lib/ai';
 import { aiErrorMessage, invokeAiFunction } from '../lib/aiClient';
 import {
   canDeleteTransaction,
+  formatDateOnlyVi,
   formatVnd,
   getCatalogDisplayName,
   getTransactionTotalImpact,
@@ -513,8 +514,8 @@ export function Transactions() {
     amountMax && { key: 'amountMax', label: `${en ? 'Up to' : 'Đến'} ${formatVnd(Number(amountMax))}`, clear: () => setAmountMax('') },
     month && { key: 'month', label: en ? (englishMonthNames[Number(month) - 1] || `Month ${Number(month)}`) : `Tháng ${Number(month)}`, clear: () => setMonth('') },
     year && { key: 'year', label: `${en ? 'Year' : 'Năm'} ${year}`, clear: () => setYear('') },
-    dateFrom && { key: 'dateFrom', label: `${en ? 'From' : 'Từ'} ${new Date(`${dateFrom}T00:00:00`).toLocaleDateString('vi-VN')}`, clear: () => setDateFrom('') },
-    dateTo && { key: 'dateTo', label: `${en ? 'To' : 'Đến'} ${new Date(`${dateTo}T00:00:00`).toLocaleDateString('vi-VN')}`, clear: () => setDateTo('') },
+    dateFrom && { key: 'dateFrom', label: `${en ? 'From' : 'Từ'} ${formatDateOnlyVi(dateFrom)}`, clear: () => setDateFrom('') },
+    dateTo && { key: 'dateTo', label: `${en ? 'To' : 'Đến'} ${formatDateOnlyVi(dateTo)}`, clear: () => setDateTo('') },
   ].filter(Boolean) as { key: string; label: string; clear: () => void }[];
   const filteredTotal = isSupabaseConfigured
     ? (showTrash ? rows.reduce((total, transaction) => total + getTransactionTotalImpact(transaction.amount, transaction.transactionType), 0) : transactionQuery.data?.pages[0]?.totalAmount || 0)

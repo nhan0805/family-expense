@@ -24,7 +24,7 @@ const friendlyError = (message: string) => {
     return 'Tài khoản này đang thuộc một gia đình khác.';
   if (message.includes('FORBIDDEN'))
     return 'Chỉ chủ gia đình mới được thêm thành viên.';
-  return message;
+  return 'Không thể hoàn tất thao tác thành viên. Vui lòng thử lại.';
 };
 
 export function Members() {
@@ -90,6 +90,36 @@ export function Members() {
     event.preventDefault();
     setBusy(true);
     setMessage('');
+    if (!isSupabaseConfigured) {
+      const normalizedEmail = email.trim();
+      if (!normalizedEmail) {
+        setBusy(false);
+        setMessage('Vui lòng nhập email thành viên.');
+        return;
+      }
+      if (members.some((member) => member.email.toLowerCase() === normalizedEmail.toLowerCase())) {
+        setBusy(false);
+        setMessage('Email này đã có trong danh sách thành viên.');
+        return;
+      }
+      setMembers((items) => [
+        ...items,
+        {
+          id: `local-member-${crypto.randomUUID()}`,
+          user_id: `local-user-${crypto.randomUUID()}`,
+          display_name: displayName.trim() || normalizedEmail,
+          email: normalizedEmail,
+          role: 'member',
+          status: 'active',
+          created_at: new Date().toISOString(),
+        },
+      ]);
+      setEmail('');
+      setDisplayName('');
+      setBusy(false);
+      setMessage('Đã thêm thành viên demo.');
+      return;
+    }
     const { error } = await supabase.rpc('add_family_member', {
       p_family_id: familyId,
       p_email: email,
@@ -113,6 +143,20 @@ export function Members() {
     if (!editingId) return;
     setBusy(true);
     setMessage('');
+    if (!isSupabaseConfigured) {
+      const name = editingName.trim();
+      if (!name) {
+        setBusy(false);
+        setMessage('Tên hiển thị không được để trống.');
+        return;
+      }
+      setMembers((items) => items.map((member) => member.id === editingId ? { ...member, display_name: name } : member));
+      setEditingId(null);
+      setEditingName('');
+      setBusy(false);
+      setMessage('Đã cập nhật tên hiển thị demo.');
+      return;
+    }
     const { error } = await supabase.rpc('update_family_member_name', {
       p_family_id: familyId,
       p_member_id: editingId,
@@ -142,6 +186,12 @@ export function Members() {
       return;
     setBusy(true);
     setMessage('');
+    if (!isSupabaseConfigured) {
+      setMembers((items) => items.filter((item) => item.id !== member.id));
+      setBusy(false);
+      setMessage('Đã xóa thành viên demo khỏi gia đình.');
+      return;
+    }
     const { error } = await supabase.rpc('remove_family_member', {
       p_family_id: familyId,
       p_member_id: member.id,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { shouldRetryQuery, userFacingError } from './errorRecovery';
+import { authErrorMessage, shouldRetryQuery, userFacingError } from './errorRecovery';
 
 describe('xử lý lỗi và retry', () => {
   it('đổi lỗi mạng thành thông báo tiếng Việt', () => {
@@ -15,5 +15,15 @@ describe('xử lý lỗi và retry', () => {
     expect(shouldRetryQuery(0, new Error('FORBIDDEN'))).toBe(false);
     expect(shouldRetryQuery(2, new Error('network'))).toBe(false);
     expect(shouldRetryQuery(0, new Error('temporary server error'))).toBe(true);
+  });
+
+  it('dịch lỗi xác thực phổ biến và không lộ thông báo provider', () => {
+    expect(authErrorMessage(new Error('Invalid login credentials'))).toBe('Email hoặc mật khẩu không đúng.');
+    expect(authErrorMessage(new Error('Invalid login credentials'), true)).toBe('The email or password is incorrect.');
+    expect(authErrorMessage(new Error('internal provider detail'))).toBe('Không thể hoàn tất yêu cầu xác thực. Vui lòng thử lại.');
+  });
+
+  it('dùng fallback thay vì lộ lỗi backend không nhận diện', () => {
+    expect(userFacingError(new Error('internal provider detail'), 'Không thể tải dữ liệu.')).toBe('Không thể tải dữ liệu.');
   });
 });

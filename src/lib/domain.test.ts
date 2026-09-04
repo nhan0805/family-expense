@@ -3,6 +3,7 @@ import {
   canDeleteTransaction,
   findDuplicates,
   formatCompactVnd,
+  formatDateOnlyVi,
   formatVnd,
   getCatalogDisplayName,
   getNetExpense,
@@ -37,6 +38,10 @@ describe('định dạng và quy tắc giao dịch', () => {
   });
   it('định dạng VND không có số thập phân', () =>
     expect(formatVnd(1200000)).toMatch(/1[.\s]200[.\s]000\s₫/));
+  it('định dạng ngày chỉ theo lịch Việt Nam, không phụ thuộc múi giờ thiết bị', () => {
+    expect(formatDateOnlyVi('2026-08-30')).toBe('30/08/2026');
+    expect(formatDateOnlyVi('not-a-date')).toBe('not-a-date');
+  });
   it('viết gọn số tiền KPI theo K và M', () => {
     expect(formatCompactVnd(850000)).toBe('850K ₫');
     expect(formatCompactVnd(12500000)).toBe('12,5M ₫');
