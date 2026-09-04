@@ -2,13 +2,21 @@
 
 ## 2026-09-04
 
+### Hiển thị đầy đủ tên dài trong Danh mục
+
+- Trước thay đổi: Tên mục đích/danh mục dài vẫn bị `truncate` thành dấu `...`, khiến người dùng không xem được toàn bộ nội dung dù badge `Ẩn ngân sách` đã được tách xuống dòng.
+- Sau thay đổi: Ba card Danh mục trên desktop có chiều rộng tối thiểu 440px và cuộn ngang khi màn hình hẹp; tên dài giữ một dòng, không còn `...`. Trên mobile, tên vẫn có thể xuống dòng để không làm vỡ màn hình; icon, badge và nút sửa/xóa giữ bố cục ổn định.
+- Kỹ thuật: cập nhật grid Danh mục và layout item trong `src/pages/Catalogs.tsx`, cho danh sách cuộn ngang trong `src/index.css`, và cập nhật regression assertion trong `src/pages/Catalogs.test.tsx`. Không thay đổi API, schema, migration, dữ liệu hoặc quy tắc ngân sách.
+- Kiểm thử: Bổ sung assertion tên dùng `lg:whitespace-nowrap`, không còn `truncate`, card dùng grid tối thiểu 440px; cần chạy lại `vitest`, lint, typecheck, build và `git diff --check` trước khi commit/deploy.
+- Trạng thái triển khai: Chưa deploy production.
+
 ### Sửa badge Ẩn ngân sách che tên mục đích
 
 - Trước thay đổi: Trong card Danh mục dạng 3 cột, badge `Ẩn ngân sách` và các nút thao tác chiếm chỗ của tên mục đích; tên dài có thể bị co xuống chỉ còn một vài ký tự và nhìn như bị badge che.
 - Sau thay đổi: Tên mục đích có vùng nội dung riêng; badge `Ẩn ngân sách` nằm ở dòng bên dưới, không còn che hoặc ép tên co quá mức trên desktop hẹp và mobile.
 - Kỹ thuật: cập nhật layout item trong `src/pages/Catalogs.tsx` và regression assertion trong `src/pages/Catalogs.test.tsx`. Không thay đổi API, schema, migration, dữ liệu hoặc quy tắc ngân sách.
 - Kiểm thử: Đã bổ sung assertion bảo đảm tên dùng `truncate`, badge nằm cùng vùng nội dung nhưng ở dòng riêng; `vitest run` đạt 29/29 file, 115/115 test; lint, typecheck, build và `git diff --check` pass. Build vẫn cảnh báo chunk ExcelJS lớn đã có từ trước.
-- Trạng thái triển khai dự kiến: Commit/push branch, tạo hoặc cập nhật PR vào `main`, bật auto-merge và chờ required checks cùng Cloudflare Pages Git integration.
+- Triển khai: PR [#113](https://github.com/nhan0805/family-expense/pull/113) đã merge vào `main` với squash merge commit `4534675f54c1d3629a7192de23c6b7ffd4d889c2`. CI main [run 33838912432](https://github.com/nhan0805/family-expense/actions/runs/33838912432) pass gồm `quality` và `db-security`; Cloudflare Pages production check pass. Production `https://family-expense-8fo.pages.dev/` trả HTTP 200; lazy chunk Danh mục chứa layout badge ở dòng riêng lúc `04/09/2026 15:23` (`Asia/Ho_Chi_Minh`). Không có migration mới nên không chạy Supabase Production Deploy; không dùng Wrangler deploy trực tiếp và không tạo deploy lần hai chỉ để cập nhật tài liệu.
 
 ### Cảnh báo ngân sách trong app — Phase 8
 
@@ -17,7 +25,7 @@
 - UX hỗ trợ đầy đủ Việt/Anh và Dracula dark mode; dữ liệu cảnh báo được suy ra từ `get_budget_summary` cho cloud hoặc local fallback cho demo. Trạng thái đọc/toast lưu trên thiết bị, không thêm dữ liệu tài chính hoặc secret mới; mục đích đã ẩn khỏi ngân sách tiếp tục không tạo cảnh báo.
 - Kỹ thuật: thêm `src/components/BudgetNotifications.tsx`, `src/lib/budgetNotifications.ts` và test; tích hợp vào `src/components/Layout.tsx`, thêm bản dịch trong `src/context/LanguageContext.tsx`; invalidate cache ngân sách sau các mutation giao dịch ở Dashboard/Transactions/TransactionForm. Không thêm migration, bảng DB, API hoặc thay đổi RLS/RPC.
 - Kiểm thử: `vitest run` đạt 29/29 file, 115/115 test; `eslint . --max-warnings=0`, `tsc -b --pretty false`, `vite build` và `git diff --check` pass. Build vẫn cảnh báo chunk ExcelJS lớn đã có từ trước.
-- Trạng thái triển khai: Chưa deploy production; thay đổi đã sẵn sàng để commit/push branch, tạo PR vào `main`, bật auto-merge và chờ required checks/Cloudflare Pages Git integration theo quy trình.
+- Triển khai: Đã deploy production cùng PR [#113](https://github.com/nhan0805/family-expense/pull/113), merge commit `4534675f54c1d3629a7192de23c6b7ffd4d889c2`; Cloudflare Pages production check và smoke test HTTP 200 đều pass.
 
 ### Kiểm thử hệ thống và hardening fallback/auth/maintenance
 
