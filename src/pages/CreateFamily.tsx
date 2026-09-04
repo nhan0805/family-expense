@@ -3,7 +3,8 @@ import { Navigate } from 'react-router-dom';
 import { HousePlus, LogOut } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useOptionalLanguage } from '../context/LanguageContext';
-import { supabase } from '../lib/supabase';
+import { isSupabaseConfigured, supabase } from '../lib/supabase';
+import { userFacingError } from '../lib/errorRecovery';
 
 export function CreateFamily() {
   const { language, t } = useOptionalLanguage();
@@ -37,10 +38,14 @@ export function CreateFamily() {
   const signOut = async () => {
     setSigningOut(true);
     setMessage('');
+    if (!isSupabaseConfigured) {
+      window.location.assign('/dang-nhap');
+      return;
+    }
     const { error } = await supabase.auth.signOut();
     if (error) {
       setSigningOut(false);
-      setMessage(error.message);
+      setMessage(userFacingError(error, en ? 'Could not log out. Please try again.' : 'Không thể đăng xuất. Vui lòng thử lại.'));
       return;
     }
     window.location.assign('/dang-nhap');

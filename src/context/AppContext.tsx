@@ -72,15 +72,21 @@ const withDefaultIcons = (items: CatalogItem[]) =>
 const fallbackPurposes = withDefaultIcons(makeItems(purposeNames, purposeNameEn));
 const fallbackExpenseTypes = withDefaultIcons(makeItems(expenseTypeNames, expenseTypeNameEn));
 const fallbackPaymentMethods = withDefaultIcons(makeItems(paymentMethodNames, paymentMethodNameEn));
+const localFamilyId = 'local-family';
+const localDemoEmail = 'demo@family.local';
 
 export function shouldReloadAppForAuthEvent(event: AuthChangeEvent) {
   return event !== 'TOKEN_REFRESHED';
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [familyId, setFamilyId] = useState('');
+  const [familyId, setFamilyId] = useState(
+    isSupabaseConfigured ? '' : localFamilyId,
+  );
   const [familyName, setFamilyName] = useState('Gia đình của tôi');
-  const [currentUserEmail, setCurrentUserEmail] = useState('');
+  const [currentUserEmail, setCurrentUserEmail] = useState(
+    isSupabaseConfigured ? '' : localDemoEmail,
+  );
   const [currentUserId, setCurrentUserId] = useState(
     isSupabaseConfigured ? '' : 'local-user',
   );
@@ -133,6 +139,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
           setCurrentUserEmail('');
           setCurrentUserId('');
           setCurrentUserRole(null);
+          setFamilyId('');
+          setFamilyName('Gia đình của tôi');
+          setPurposes([]);
+          setExpenseTypes([]);
+          setPaymentMethods([]);
+          setTransactions([]);
           setLoading(false);
           setError(null);
         }
@@ -159,7 +171,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (active) {
           setLoading(false);
           setFamilyId('');
+          setFamilyName('Gia đình của tôi');
           setCurrentUserRole(null);
+          setPurposes([]);
+          setExpenseTypes([]);
+          setPaymentMethods([]);
+          setTransactions([]);
           setError(
             membershipError
               ? userFacingError(membershipError, 'Không thể tải gia đình hiện tại.')
@@ -194,6 +211,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (firstError) {
         if (active) {
           setLoading(false);
+          setFamilyId('');
+          setFamilyName('Gia đình của tôi');
+          setPurposes([]);
+          setExpenseTypes([]);
+          setPaymentMethods([]);
+          setTransactions([]);
           setError(userFacingError(firstError, 'Không thể tải danh mục gia đình.'));
         }
         return;
@@ -212,6 +235,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       } catch (loadError) {
         if (!active) return;
         setLoading(false);
+        setFamilyId('');
+        setFamilyName('Gia đình của tôi');
+        setPurposes([]);
+        setExpenseTypes([]);
+        setPaymentMethods([]);
+        setTransactions([]);
         setError(userFacingError(loadError, 'Không thể tải dữ liệu gia đình.'));
       }
     };
@@ -265,6 +294,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       const sortOrder = currentItems.length ? currentItems.length + 1 : 1;
       const code = `${normalizeText(name).replace(/\s+/g, '-')}-${crypto.randomUUID().slice(0, 8)}`;
+      if (!isSupabaseConfigured) {
+        const item: CatalogItem = {
+          id: `local-${kind}-${crypto.randomUUID()}`,
+          name,
+          nameEn: nameEn || undefined,
+          icon: icon || getDefaultCatalogIcon(name),
+          active: true,
+          ...(kind === 'purpose' ? { budgetEnabled } : {}),
+        };
+        if (kind === 'purpose') setPurposes((items) => [...items, item]);
+        else if (kind === 'expenseType') setExpenseTypes((items) => [...items, item]);
+        else setPaymentMethods((items) => [...items, item]);
+        return null;
+      }
       let data: CatalogItemRow | null = null;
       let insertError: { code?: string; message: string } | null = null;
       if (kind === 'purpose') {
@@ -320,7 +363,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (insertError)
         return insertError.code === '42501'
           ? 'Chỉ owner mới có quyền thêm danh mục.'
-          : insertError.message;
+          : userFacingError(insertError, 'Không thể thêm danh mục.');
       if (!data) return 'Không thể tạo danh mục.';
       const item = mapCatalogItem(data);
       if (kind === 'purpose') setPurposes((items) => [...items, item]);
@@ -362,6 +405,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
           : kind === 'expenseType'
             ? 'expense_types'
             : 'payment_methods';
+      if (!isSupabaseConfigured) {
+        const replace = (items: CatalogItem[]) =>
+          items.map((item) =>
+            item.id === id
+              ? {
+                  ...item,
+                  name,
+                  nameEn: nameEn || undefined,
+                  icon: icon || getDefaultCatalogIcon(name),
+                  ...(kind === 'purpose' ? { budgetEnabled: nextBudgetEnabled } : {}),
+                }
+              : item,
+          );
+        if (kind === 'purpose') setPurposes(replace);
+        else if (kind === 'expenseType') setExpenseTypes(replace);
+        else setPaymentMethods(replace);
+        return null;
+      }
       if (kind === 'purpose') {
         const result = await supabase
           .from(table)
@@ -373,7 +434,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (result.error)
           return result.error.code === '42501'
             ? 'Chỉ owner mới có quyền sửa danh mục.'
-            : result.error.message;
+            : userFacingError(result.error, 'Không thể sửa danh mục.');
         const replace = (items: CatalogItem[]) =>
           items.map((item) => (item.id === id ? { ...item, name, nameEn: nameEn || undefined, icon, budgetEnabled: nextBudgetEnabled } : item));
         setPurposes(replace);
@@ -389,7 +450,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (result.error)
         return result.error.code === '42501'
           ? 'Chỉ owner mới có quyền sửa danh mục.'
-          : result.error.message;
+          : userFacingError(result.error, 'Không thể sửa danh mục.');
       const replace = (items: CatalogItem[]) =>
         items.map((item) => (item.id === id ? { ...item, name, nameEn: nameEn || undefined, icon } : item));
       if (kind === 'expenseType') setExpenseTypes(replace);
@@ -402,6 +463,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const deleteCatalogItem = useCallback(
     async (kind: CatalogKind, id: string) => {
       if (!familyId) return 'Không tìm thấy gia đình hiện tại.';
+      if (!isSupabaseConfigured) {
+        const inUse = transactions.some(
+          (transaction) =>
+            !transaction.deletedAt &&
+            (kind === 'purpose'
+              ? transaction.purposeId === id
+              : kind === 'expenseType'
+                ? transaction.expenseTypeId === id
+                : transaction.paymentMethodId === id),
+        );
+        if (inUse)
+          return 'Không thể xóa vì danh mục đã được sử dụng trong bảng giao dịch.';
+        const remove = (items: CatalogItem[]) => items.filter((item) => item.id !== id);
+        if (kind === 'purpose') setPurposes(remove);
+        else if (kind === 'expenseType') setExpenseTypes(remove);
+        else setPaymentMethods(remove);
+        return null;
+      }
       const { data, error: rpcError } = await supabase.rpc(
         'delete_catalog_item',
         { p_family_id: familyId, p_kind: kind, p_item_id: id },
@@ -411,7 +490,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           return 'Không thể xóa vì danh mục đã được sử dụng trong bảng giao dịch.';
         if (rpcError.message.includes('FORBIDDEN') || rpcError.code === '42501')
           return 'Chỉ owner mới có quyền xóa danh mục.';
-        return rpcError.message;
+        return userFacingError(rpcError, 'Không thể xóa danh mục.');
       }
       if (data !== true) return 'Không tìm thấy danh mục cần xóa.';
       const remove = (items: CatalogItem[]) =>
@@ -421,7 +500,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       else setPaymentMethods(remove);
       return null;
     },
-    [familyId],
+    [familyId, transactions],
   );
 
   const confirmPlannedTransaction = useCallback(
@@ -447,7 +526,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         .is('deleted_at', null)
         .select('id')
         .maybeSingle();
-      if (updateError) return updateError.message;
+      if (updateError) return userFacingError(updateError, 'Không thể xác nhận giao dịch.');
       if (!data) return 'Giao dịch không còn ở trạng thái dự kiến.';
       markAsActual();
       return null;
@@ -461,6 +540,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (!name) return 'Tên gia đình không được để trống.';
       if (name.length > 100)
         return 'Tên gia đình không được dài quá 100 ký tự.';
+      if (!isSupabaseConfigured) {
+        setFamilyName(name);
+        return null;
+      }
       const { data, error: rpcError } = await supabase.rpc(
         'update_family_name',
         { p_family_id: familyId, p_name: name },
@@ -468,7 +551,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (rpcError)
         return rpcError.message.includes('FORBIDDEN')
           ? 'Chỉ chủ gia đình mới được đổi tên gia đình.'
-          : rpcError.message;
+          : userFacingError(rpcError, 'Không thể đổi tên gia đình.');
       setFamilyName(String(data));
       return null;
     },
@@ -479,6 +562,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const name = rawName.trim().replace(/\s+/g, ' ');
     if (!name) return 'Vui lòng nhập tên gia đình.';
     if (name.length > 100) return 'Tên gia đình không được dài quá 100 ký tự.';
+    if (!isSupabaseConfigured) {
+      setFamilyId(localFamilyId);
+      setFamilyName(name);
+      setCurrentUserId('local-user');
+      setCurrentUserEmail(localDemoEmail);
+      setCurrentUserRole('owner');
+      setAuthenticated(true);
+      setPurposes(fallbackPurposes);
+      setExpenseTypes(fallbackExpenseTypes);
+      setPaymentMethods(fallbackPaymentMethods);
+      setError(null);
+      return null;
+    }
     const { error: rpcError } = await supabase.rpc(
       'create_family_with_defaults',
       { p_name: name },
@@ -488,10 +584,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return 'Tài khoản này đã thuộc một gia đình.';
     if (rpcError.message.includes('INVALID_NAME'))
       return 'Tên gia đình không hợp lệ.';
-    return rpcError.message;
+    return userFacingError(rpcError, 'Không thể tạo gia đình.');
   }, []);
 
   const deleteFamily = useCallback(async () => {
+    if (!isSupabaseConfigured) {
+      setFamilyId('');
+      setFamilyName('Gia đình của tôi');
+      setCurrentUserRole(null);
+      setPurposes([]);
+      setExpenseTypes([]);
+      setPaymentMethods([]);
+      setTransactions([]);
+      return null;
+    }
     const { error: rpcError } = await supabase.rpc('delete_empty_family', {
       p_family_id: familyId,
     });
@@ -503,7 +609,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return 'Hãy xóa hết giao dịch trước khi xóa gia đình.';
       if (rpcError.message.includes('FORBIDDEN'))
         return 'Chỉ chủ gia đình mới được xóa gia đình.';
-      return rpcError.message;
+      return userFacingError(rpcError, 'Không thể xóa gia đình.');
     }
     setFamilyId('');
     setFamilyName('Gia đình của tôi');

@@ -1,5 +1,15 @@
 # Nhật ký thay đổi Family Expense
 
+## 2026-09-04
+
+### Kiểm thử hệ thống và hardening fallback/auth/maintenance
+
+- Trước thay đổi: Khi Supabase chưa cấu hình, AppContext không có `familyId` nên Layout chuyển demo sang trang tạo gia đình; CRUD danh mục, import Excel, thao tác thành viên và đăng xuất vẫn có thể gọi Supabase placeholder. Form xác thực còn lộ nguyên văn lỗi provider và có thể giữ trạng thái bận khi promise bị reject; ngày giao dịch dạng `YYYY-MM-DD` được format qua timezone của thiết bị.
+- Sau thay đổi: Demo fallback có family/user cục bộ và CRUD danh mục/import/thành viên/đăng xuất không gọi backend; lỗi auth được dịch theo VI/EN, có validate biên và `try/catch/finally`; ngày-only hiển thị ổn định theo lịch Việt Nam. Thêm migration harden `search_path` cho ba hàm `SECURITY DEFINER` bảo trì/xóa dữ liệu.
+- Kỹ thuật: cập nhật `src/context/AppContext.tsx`, `src/components/Layout.tsx`, `src/pages/CreateFamily.tsx`, `src/pages/Members.tsx`, `src/pages/ImportExport.tsx`, `src/pages/Login.tsx`, `src/pages/ResetPassword.tsx`, `src/lib/errorRecovery.ts`, `src/lib/domain.ts`, `src/components/TransactionRow.tsx`, `src/pages/Transactions.tsx`; thêm regression tests và `supabase/migrations/202609040001_harden_maintenance_search_paths.sql`. Không chạy migration production, không sửa migration đã áp dụng và không thay đổi dữ liệu production.
+- Kiểm thử: `pnpm test` đạt 27/27 file, 110/110 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Smoke UI cục bộ với cấu hình placeholder xác nhận mở Dashboard → Giao dịch → form, lưu giao dịch và truy cập Ngân sách/Danh mục. Playwright E2E chưa thực thi assertion vì thiếu browser binaries; Supabase/pgTAP local chưa chạy do Docker socket/CLI telemetry bị chặn.
+- Trạng thái triển khai: Chưa deploy; cần commit/push branch, PR vào `main`, required checks và Supabase/Cloudflare Git integration. Migration mới chỉ sẵn sàng chờ quy trình deploy được phê duyệt.
+
 ## 2026-09-03
 
 ### Mở rộng icon danh mục và căn chỉnh giao diện desktop
@@ -8,7 +18,7 @@
 - Sau thay đổi: Picker có thêm 61 icon phổ biến từ Lucide, đạt tổng cộng 100 lựa chọn và tìm được theo tên hoặc từ khóa tiếng Việt; bảng giao dịch desktop có cột phân loại rộng hơn, tên dài truncate đúng và cụm thao tác được cố định thành hai ô đều nhau. Lỗi badge `Ẩn ngân sách` che tên ở màn hình Danh mục vẫn được giữ bản sửa `flex-1`/`overflow-hidden`; icon và tên phân loại trên card giao dịch mobile có khoảng cách 6px dễ đọc hơn.
 - Kỹ thuật: nâng `lucide-react` từ `0.468.0` lên `0.485.0`; cập nhật `src/lib/catalogIcons.ts`, `src/components/TransactionRow.tsx`, `src/pages/Transactions.tsx` và regression tests tương ứng. Không thay đổi API, schema, migration, dữ liệu hoặc quy tắc nghiệp vụ.
 - Kiểm thử: `pnpm test` đạt 25/25 file, 104/104 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build vẫn cảnh báo chunk ExcelJS lớn đã có từ trước.
-- Trạng thái triển khai dự kiến: Commit/push branch, tạo PR vào `main`, bật auto-merge và chờ required checks cùng Cloudflare Pages production deployment qua Git integration.
+- Triển khai: PR [#110](https://github.com/nhan0805/family-expense/pull/110) đã merge phần mở rộng icon/layout vào `main`; bản sửa spacing mobile được merge tiếp qua PR [#111](https://github.com/nhan0805/family-expense/pull/111) với merge commit `cd5129081424ef44358b9e9bd6a39f6ca7508a2d`. CI main [run 33735783477](https://github.com/nhan0805/family-expense/actions/runs/33735783477) pass gồm `quality` và `db-security`; Cloudflare Pages production check pass. Production `https://family-expense-8fo.pages.dev/` trả HTTP 200 và artifact mới chứa spacing mobile lúc `03/09/2026 15:56` (`Asia/Ho_Chi_Minh`). Không có migration nên không chạy Supabase Production Deploy; không dùng Wrangler deploy trực tiếp và không tạo deploy lần hai chỉ để cập nhật tài liệu.
 
 ### Đưa Thành viên vào mục Thêm trên taskbar mobile
 

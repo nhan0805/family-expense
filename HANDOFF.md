@@ -1,6 +1,6 @@
 # Family Expense — Project Handoff
 
-> Cập nhật: **03/09/2026** (`Asia/Ho_Chi_Minh`)
+> Cập nhật: **04/09/2026** (`Asia/Ho_Chi_Minh`)
 > Trạng thái: **Production đang hoạt động; tài liệu này là ngữ cảnh kỹ thuật cho các phiên làm việc tiếp theo**  
 > Production: <https://family-expense-8fo.pages.dev>
 
@@ -14,6 +14,14 @@
 - [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
 
+### Handoff — kiểm thử hệ thống và chuẩn bị deploy (04/09/2026)
+
+- Trước thay đổi: Khi Supabase chưa cấu hình, fallback demo chưa có family/user cục bộ hoàn chỉnh; một số CRUD/import/thành viên/đăng xuất vẫn có thể gọi backend placeholder. Lỗi xác thực có thể lộ nguyên văn từ provider, còn ngày-only phụ thuộc timezone thiết bị.
+- Sau thay đổi: fallback demo có family/user cục bộ; CRUD danh mục, import, thành viên và đăng xuất hoạt động không cần backend. Auth có validate biên, dịch lỗi VI/EN và `try/catch/finally`; ngày `YYYY-MM-DD` hiển thị ổn định theo lịch Việt Nam. Thêm migration `supabase/migrations/202609040001_harden_maintenance_search_paths.sql` harden `search_path` cho ba hàm `SECURITY DEFINER` bảo trì/xóa dữ liệu.
+- Files chính: `src/context/AppContext.tsx`, `src/components/Layout.tsx`, `src/components/TransactionRow.tsx`, `src/lib/domain.ts`, `src/lib/errorRecovery.ts`, `src/pages/{CreateFamily,ImportExport,Login,Members,ResetPassword,Transactions}.tsx`, regression tests và migration mới. Không sửa migration đã áp dụng và không thay đổi dữ liệu production.
+- Validation local: `pnpm test` đạt 27/27 file, 110/110 test; `pnpm lint`, `pnpm typecheck`, `pnpm build`, coverage và `git diff --check` pass. Coverage V8 ghi nhận statements 63.22%, branches 59.63%, functions 54.15%, lines 63.22%; repository không đặt threshold. Playwright chưa chạy assertion vì thiếu browser binaries; Supabase/pgTAP local bị chặn bởi Docker socket/CLI telemetry.
+- Trạng thái triển khai dự kiến: commit/push branch, tạo PR vào `main`, bật auto-merge và theo dõi `quality`, `db-security`, Preview, Supabase Production Deploy và Cloudflare Pages production trên merge commit. Frontend/migration chỉ deploy qua Git integration/workflow; không dùng Wrangler trực tiếp.
+
 ### Handoff — mở rộng icon và sửa layout desktop (03/09/2026)
 
 - Picker Danh mục đã thêm 61 icon phổ biến từ Lucide, gồm `Venus` (kết quả tìm `women`), `CircleDollarSign` và `BanknoteArrowDown`; tổng cộng đúng 100 lựa chọn, tìm được theo tên icon hoặc từ khóa tiếng Việt.
@@ -21,7 +29,7 @@
 - Card giao dịch mobile có thêm khoảng cách 6px giữa icon và tên phân loại để tránh cảm giác dính chữ.
 - Files chính: `package.json`, `pnpm-lock.yaml`, `src/lib/catalogIcons.ts`, `src/components/TransactionRow.tsx`, `src/pages/Transactions.tsx` và tests tương ứng. Không thay đổi API, schema, migration, dữ liệu hoặc quy tắc nghiệp vụ.
 - Validation: `pnpm test` đạt 25/25 file, 104/104 test; `pnpm lint`, `pnpm typecheck`, `pnpm build` và `git diff --check` pass. Build vẫn cảnh báo chunk ExcelJS lớn đã có từ trước.
-- Trạng thái triển khai dự kiến: Chờ quality checks, commit/push branch, PR vào `main`, auto-merge và Cloudflare Pages production deployment qua Git integration.
+- Trạng thái triển khai: PR [#110](https://github.com/nhan0805/family-expense/pull/110) đã merge phần mở rộng icon/layout; PR spacing mobile [#111](https://github.com/nhan0805/family-expense/pull/111) đã merge vào `main` với merge commit `cd5129081424ef44358b9e9bd6a39f6ca7508a2d`. CI main [run 33735783477](https://github.com/nhan0805/family-expense/actions/runs/33735783477) pass với `quality` và `db-security`; Cloudflare Pages production check pass. Production `https://family-expense-8fo.pages.dev/` trả HTTP 200 và HTML chống cache trỏ tới artifact mới; lazy chunk Giao dịch chứa `transaction-card-tag gap-1.5` lúc `03/09/2026 15:56` (`Asia/Ho_Chi_Minh`). Không có migration nên không cần Supabase Production Deploy; không dùng Wrangler deploy trực tiếp và không tạo deploy lần hai chỉ để cập nhật tài liệu.
 
 ### Handoff — đưa Thành viên vào mục Thêm trên taskbar mobile (03/09/2026)
 

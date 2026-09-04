@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useLanguage } from '../context/LanguageContext';
+import { authErrorMessage } from '../lib/errorRecovery';
 
 export function ResetPassword() {
   const { language } = useLanguage(); const en = language === 'en';
@@ -15,10 +16,18 @@ export function ResetPassword() {
   useEffect(() => {
     let active = true;
     const checkSession = async () => {
-      const { data, error } = await supabase.auth.getSession();
+      let session: Awaited<ReturnType<typeof supabase.auth.getSession>>['data']['session'] = null;
+      let error: unknown = null;
+      try {
+        const result = await supabase.auth.getSession();
+        session = result.data.session;
+        error = result.error;
+      } catch (sessionError) {
+        error = sessionError;
+      }
       if (!active) return;
-      if (error || !data.session) {
-        setMessage(en ? 'The password reset link is invalid or expired.' : 'Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.');
+      if (error || !session) {
+        setMessage(error ? authErrorMessage(error, en) : (en ? 'The password reset link is invalid or expired.' : 'Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.'));
         return;
       }
       setReady(true);
@@ -46,13 +55,18 @@ export function ResetPassword() {
     }
     setBusy(true);
     setMessage(en ? 'Updating password…' : 'Đang cập nhật mật khẩu…');
-    const { error } = await supabase.auth.updateUser({ password });
-    setBusy(false);
-    if (error) {
-      setMessage(error.message);
-      return;
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) {
+        setMessage(authErrorMessage(error, en));
+        return;
+      }
+      navigate('/', { replace: true });
+    } catch (error) {
+      setMessage(authErrorMessage(error, en));
+    } finally {
+      setBusy(false);
     }
-    navigate('/', { replace: true });
   };
 
   return <main className="grid min-h-screen place-items-center bg-[#f6f7f2] p-4 dark:bg-[#282a36]">

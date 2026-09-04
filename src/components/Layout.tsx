@@ -2,7 +2,7 @@ import { BookOpen, House, LogOut, Menu, MoreHorizontal, PiggyBank, Plus, Tags, U
 import { Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { supabase } from '../lib/supabase';
+import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { PageSkeleton } from './AsyncStates';
 import { ThemeSelect } from './ThemeSelect';
 import { useLanguage } from '../context/LanguageContext';
@@ -36,6 +36,11 @@ export function Layout() {
 
   const signOut = async () => {
     setSigningOut(true);
+    if (!isSupabaseConfigured) {
+      setSigningOut(false);
+      navigate('/dang-nhap', { replace: true });
+      return;
+    }
     const { error: signOutError } = await supabase.auth.signOut();
     setSigningOut(false);
     if (!signOutError) navigate('/dang-nhap', { replace: true });
