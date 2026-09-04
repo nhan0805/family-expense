@@ -43,7 +43,9 @@ describe('Quản lý danh mục', () => {
     render(<Catalogs />);
 
     expect(screen.getByRole('heading', { name: 'Danh mục', level: 2 })).toHaveClass('page-title');
-    expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(3);
+    expect(screen.getAllByRole('tab')).toHaveLength(3);
+    expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(1);
+    expect(screen.getByRole('tab', { name: 'Mục đích' })).toHaveAttribute('aria-selected', 'true');
     const hiddenBudgetName = screen.getByText('Nhà cửa & gia dụng');
     expect(hiddenBudgetName).toHaveClass('block', 'whitespace-normal', 'break-words', 'lg:whitespace-nowrap');
     expect(hiddenBudgetName).not.toHaveClass('truncate');
@@ -57,6 +59,19 @@ describe('Quản lý danh mục', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Lưu danh mục' }));
 
     await waitFor(() => expect(addCatalogItem).toHaveBeenCalledWith('purpose', '  Giáo dục  ', '', 'bike', true));
+  });
+
+  it('cho phép chuyển giữa các nhóm bằng tab', () => {
+    mockedUseApp.mockReturnValue(appState('member'));
+    render(<Catalogs />);
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Danh mục' }));
+
+    expect(screen.getByRole('tab', { name: 'Danh mục' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tabpanel')).toHaveAttribute('aria-labelledby', 'catalog-tab-expenseType');
+    expect(screen.getByRole('heading', { name: 'Danh mục', level: 3 })).toBeVisible();
+    expect(screen.getByText('Thực phẩm')).toBeVisible();
+    expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(1);
   });
 
   it('cho owner đổi tên và xóa danh mục', async () => {
