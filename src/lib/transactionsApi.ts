@@ -34,6 +34,7 @@ type TransactionRow = {
   source: Transaction['source'];
   source_reference: string | null;
   ai_generated: boolean;
+  recurring_transaction_id?: string | null;
   created_by: string;
   created_at: string;
   deleted_at: string | null;
@@ -58,6 +59,7 @@ export const mapTransactionRow = (row: TransactionRow): Transaction => ({
   createdBy: row.created_by,
   createdAt: row.created_at,
   deletedAt: row.deleted_at,
+  recurringTransactionId: row.recurring_transaction_id || null,
 });
 
 export async function fetchTransactionPage(

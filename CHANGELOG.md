@@ -1,5 +1,16 @@
 # Nhật ký thay đổi Family Expense
 
+## 2026-09-05
+
+### Tự động tạo giao dịch chi phí định kỳ khi đến hạn
+
+- Trước thay đổi: `recurring_transactions` mới chỉ là bảng nền; chưa có form quản lý, lịch sử kỳ chạy, cơ chế tự tạo giao dịch hoặc chống trùng.
+- Sau thay đổi: Owner có thể tạo/sửa/tạm dừng/tiếp tục/bỏ qua mẫu chi định kỳ theo tuần, tháng hoặc năm. Supabase Cron chạy lúc 00:05 `Asia/Ho_Chi_Minh`, tự tạo các giao dịch `Dự kiến` đến hạn, catch-up các kỳ bị bỏ lỡ và chỉ chuyển thành `Thực tế` sau khi người dùng xác nhận.
+- Kỹ thuật: thêm migration `supabase/migrations/202609050001_recurring_expenses.sql` với `transaction_source=recurring`, liên kết `transactions.recurring_transaction_id`, bảng `recurring_transaction_runs`, RPC validation/RLS/idempotency và job `pg_cron`; thêm `src/lib/recurringExpense.ts`, `src/lib/recurringExpensesApi.ts`, `src/pages/RecurringExpenses.tsx`, route/navigation, badge giao dịch định kỳ và bản dịch VI/EN.
+- Fallback demo lưu mẫu ở localStorage và tự tạo giao dịch dự kiến khi mở màn hình; không thêm dependency và không tự động ghi dữ liệu cloud khi chưa có migration.
+- Kiểm thử: `tsc -b`, ESLint, full Vitest đạt 32/32 file, 132/132 test, production build và `git diff --check` pass. `supabase test db --local` chưa chạy được vì PostgreSQL local tại `127.0.0.1:54322` chưa hoạt động.
+- Trạng thái triển khai dự kiến: Chưa deploy production; cần PR, required checks/db-security, Supabase Production Deploy rồi Cloudflare Pages Git deployment. Không dùng Wrangler deploy trực tiếp.
+
 ## 2026-09-04
 
 ### Loại bỏ account và event khỏi luồng ứng dụng

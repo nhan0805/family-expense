@@ -1,4 +1,4 @@
-import { BookOpen, House, LogOut, Menu, MoreHorizontal, PiggyBank, Plus, Tags, UserRound, UsersRound, WalletCards, WifiOff, X } from 'lucide-react';
+import { BookOpen, House, LogOut, Menu, MoreHorizontal, PiggyBank, Plus, Repeat2, Tags, UserRound, UsersRound, WalletCards, WifiOff, X } from 'lucide-react';
 import { Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
@@ -8,8 +8,8 @@ import { ThemeSelect } from './ThemeSelect';
 import { useLanguage } from '../context/LanguageContext';
 import { BudgetNotifications } from './BudgetNotifications';
 
-const links = [['/', 'overview', House], ['/giao-dich', 'transactions', WalletCards], ['/ngan-sach', 'budgets', PiggyBank], ['/danh-muc', 'catalogs', Tags], ['/thanh-vien', 'members', UsersRound], ['/du-lieu', 'data', BookOpen]] as const;
-const mobilePrimaryLinks = [links[0], links[1], links[2], links[3]] as const;
+const links = [['/', 'overview', House], ['/giao-dich', 'transactions', WalletCards], ['/ngan-sach', 'budgets', PiggyBank], ['/chi-phi-dinh-ky', 'recurringExpenses', Repeat2], ['/danh-muc', 'catalogs', Tags], ['/thanh-vien', 'members', UsersRound], ['/du-lieu', 'data', BookOpen]] as const;
+const mobilePrimaryLinks = [links[0], links[1], links[2], links[4]] as const;
 
 export function Layout() {
   const [open, setOpen] = useState(false);

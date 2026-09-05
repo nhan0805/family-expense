@@ -53,6 +53,14 @@ describe('TransactionRow', () => {
     expect(screen.getAllByText(/120\.000/).length).toBeGreaterThan(0);
   });
 
+  it('hiển thị nhãn giao dịch định kỳ khi nguồn là recurring', () => {
+    renderRow({
+      transaction: { ...transaction, source: 'recurring' },
+      recurringLabel: 'Recurring',
+    });
+    expect(screen.getAllByText('Recurring').length).toBeGreaterThan(0);
+  });
+
   it('hiển thị icon danh mục ở mobile và desktop', () => {
     renderRow({ purposeIcon: 'house', expenseTypeIcon: 'utensils', paymentMethodIcon: 'banknote' });
     expect(document.querySelectorAll('.catalog-tag-icon')).toHaveLength(3);

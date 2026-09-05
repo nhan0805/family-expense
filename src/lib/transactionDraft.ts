@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { statuses, transactionTypes, type TransactionFormInput } from './domain';
+import { statuses, transactionSources, transactionTypes, type TransactionFormInput } from './domain';
 
 const draftSchema = z.object({
   transactionDate: z.string().optional(),
@@ -12,7 +12,7 @@ const draftSchema = z.object({
   paymentMethodId: z.string().optional(),
   beneficiaryId: z.string().nullable().optional(),
   note: z.string().nullable().optional(),
-  source: z.enum(['manual', 'ai', 'excel_import']).optional(),
+  source: z.enum(transactionSources).optional(),
   sourceReference: z.string().nullable().optional(),
   aiGenerated: z.boolean().optional(),
 });

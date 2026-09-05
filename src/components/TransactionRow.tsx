@@ -23,6 +23,7 @@ type TransactionRowProps = {
   expenseTypeIcon?: string;
   paymentMethodName: string;
   paymentMethodIcon?: string;
+  recurringLabel?: string;
   showTrash: boolean;
   selectMode: boolean;
   selected: boolean;
@@ -48,6 +49,7 @@ export function TransactionRow({
   expenseTypeIcon,
   paymentMethodName,
   paymentMethodIcon,
+  recurringLabel = 'Định kỳ',
   showTrash,
   selectMode,
   selected,
@@ -78,7 +80,7 @@ export function TransactionRow({
           {selectMode && <input type="checkbox" className="mt-1 size-5 shrink-0 accent-[#155e46]" aria-label={`Chọn giao dịch ${transaction.description}`} checked={selected} onChange={() => onToggleSelected(transaction.id)} />}
           <div className="min-w-0 flex-1">
             {showTrash ? <span className="block truncate text-base font-bold">{transaction.description}</span> : <Link to={`/giao-dich/${transaction.id}`} className="block truncate text-base font-bold active:opacity-70">{transaction.description}</Link>}
-            <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400"><span>{date}</span><span className={`rounded-full px-2 py-0.5 font-semibold ${tone.badgeClass}`}>{transactionTypeLabel(transaction.transactionType)}</span></div>
+            <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400"><span>{date}</span><span className={`rounded-full px-2 py-0.5 font-semibold ${tone.badgeClass}`}>{transactionTypeLabel(transaction.transactionType)}</span>{transaction.source === 'recurring' && <span className="ui-chip">{recurringLabel}</span>}</div>
           </div>
           <div className="flex shrink-0 items-start gap-1"><strong className={`pt-1 text-base ${tone.amountClass} ${showTrash ? 'line-through opacity-70' : ''}`}>{formatVnd(transaction.amount)}</strong>{showTrash && <><button type="button" className="rounded-lg p-2 text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-950/30" aria-label={`Khôi phục ${transaction.description}`} title="Khôi phục" onClick={() => { setOnlySelected(); onRestore(); }}><RotateCcw size={18}/></button><button type="button" className="rounded-lg p-2 text-red-600 hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-950/30" aria-label={`Xóa vĩnh viễn ${transaction.description}`} title="Xóa vĩnh viễn" onClick={() => { setOnlySelected(); onPermanentlyDelete(); }}><Trash2 size={18}/></button></>}{!showTrash && <button type="button" className="rounded-lg p-2 hover:bg-black/5 dark:hover:bg-white/5" aria-label={`Thao tác với ${transaction.description}`} aria-expanded={openMenu} onClick={() => onToggleMenu(transaction.id)}><MoreHorizontal size={19}/></button>}</div>
         </div>
@@ -88,7 +90,7 @@ export function TransactionRow({
       <div className={`transaction-table-row hidden w-full gap-1 border-t border-black/5 p-3 transition-colors hover:brightness-[.98] dark:border-white/5 dark:hover:brightness-110 md:grid md:min-w-[1080px] md:items-center ${selectMode ? 'md:grid-cols-[32px_80px_minmax(180px,1fr)_190px_160px_190px_220px]' : 'md:grid-cols-[80px_minmax(180px,1fr)_190px_160px_190px_220px]'} ${tone.rowClass}`}>
         {selectMode && <input type="checkbox" className="size-5 accent-[#155e46]" aria-label={`Chọn giao dịch ${transaction.description} trên bảng`} checked={selected} onChange={() => onToggleSelected(transaction.id)} />}
         <span className="text-sm text-gray-500">{date}</span>
-        <Link to={`/giao-dich/${transaction.id}`} className="min-w-0 truncate text-sm font-semibold hover:underline">{transaction.description}<span className={`ml-2 inline-flex rounded-full px-2 py-0.5 align-middle text-[11px] font-semibold ${tone.badgeClass}`}>{transactionTypeLabel(transaction.transactionType)}</span><small className="mt-1 block font-normal text-gray-500 md:hidden">{purposeName} · {expenseTypeName} · {paymentMethodName}</small></Link>
+        <Link to={`/giao-dich/${transaction.id}`} className="min-w-0 truncate text-sm font-semibold hover:underline">{transaction.description}<span className={`ml-2 inline-flex rounded-full px-2 py-0.5 align-middle text-[11px] font-semibold ${tone.badgeClass}`}>{transactionTypeLabel(transaction.transactionType)}</span>{transaction.source === 'recurring' && <span className="ui-chip ml-2 align-middle text-[11px]">{recurringLabel}</span>}<small className="mt-1 block font-normal text-gray-500 md:hidden">{purposeName} · {expenseTypeName} · {paymentMethodName}</small></Link>
         <CatalogValue name={purposeName} icon={purposeIcon} /><CatalogValue name={expenseTypeName} icon={expenseTypeIcon} /><CatalogValue name={paymentMethodName} icon={paymentMethodIcon} />
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_72px] items-center gap-1">
           <strong className={`transaction-row-amount min-w-0 truncate text-sm font-bold ${tone.amountClass}`}>{formatVnd(transaction.amount)}</strong>

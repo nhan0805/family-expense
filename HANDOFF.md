@@ -1,6 +1,6 @@
 # Family Expense — Project Handoff
 
-> Cập nhật: **04/09/2026** (`Asia/Ho_Chi_Minh`)
+> Cập nhật: **05/09/2026** (`Asia/Ho_Chi_Minh`)
 > Trạng thái: **Production đang hoạt động; tài liệu này là ngữ cảnh kỹ thuật cho các phiên làm việc tiếp theo**  
 > Production: <https://family-expense-8fo.pages.dev>
 
@@ -13,6 +13,16 @@
 - [x] Supabase production workflow đã kiểm tra thành công bằng `workflow_dispatch` với `dry_run=true`; không thay đổi database hoặc deploy Edge Function.
 - [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
+
+### Handoff — tự động tạo giao dịch chi phí định kỳ khi đến hạn (05/09/2026)
+
+- Owner có thể quản lý mẫu chi định kỳ theo tuần/tháng/năm tại route `/chi-phi-dinh-ky`; member chỉ xem. Mỗi mẫu lưu nội dung, số tiền VND, mục đích, danh mục, phương thức thanh toán, ngày chạy tiếp theo và ngày kết thúc tùy chọn.
+- Supabase Cron chạy lúc 00:05 `Asia/Ho_Chi_Minh`, gọi RPC security-definer để tự tạo các giao dịch `Dự kiến` đến hạn. Job catch-up các kỳ bị bỏ lỡ, idempotent qua `recurring_transaction_runs` và `source_reference`; người dùng vẫn phải xác nhận giao dịch trước khi tính là `Thực tế`.
+- Migration mới `supabase/migrations/202609050001_recurring_expenses.sql` mở rộng `recurring_transactions`, thêm `transactions.recurring_transaction_id`, lịch sử kỳ chạy, RLS/grants, validation RPC, pause/skip và lịch pg_cron. Không sửa migration đã áp dụng.
+- Frontend chính: `src/lib/recurringExpense.ts`, `src/lib/recurringExpensesApi.ts`, `src/pages/RecurringExpenses.tsx`, `src/App.tsx`, `src/components/Layout.tsx`, `src/context/LanguageContext.tsx`, `src/lib/domain.ts`, `src/lib/transactionDraft.ts`, `src/lib/transactionsApi.ts`, `src/components/TransactionRow.tsx`.
+- Demo fallback dùng localStorage và tự sinh giao dịch dự kiến khi mở màn hình. Giao dịch recurring có badge `Định kỳ`; chỉnh sửa giao dịch hiện tại không làm thay đổi mẫu.
+- Validation local: typecheck, lint, full Vitest đạt 32/32 file, 132/132 test, build và `git diff --check` pass; pgTAP local chưa chạy được vì PostgreSQL tại `127.0.0.1:54322` từ chối kết nối.
+- Trạng thái triển khai: Chưa deploy production; chờ PR, CI/db-security, Supabase Production Deploy và Cloudflare Pages Git deployment.
 
 ### Handoff — loại bỏ account và event khỏi luồng ứng dụng (04/09/2026)
 
@@ -602,7 +612,7 @@ Plan, billing owner và renewal date: **TBD — xác minh trong tài khoản nh�
 | Phân loại | `purposes`, `expense_types`, `payment_methods`, `accounts`, `events`, `beneficiaries` | Không hard-delete danh mục đã được dùng |
 | Giao dịch | `transactions` | `amount > 0`, soft delete bằng `deleted_at`, lưu nguồn/audit AI |
 | Semantic index | `transaction_embeddings` | Vector 384 chiều, hash nội dung, family-scoped RLS, HNSW cosine index |
-| Kế hoạch | `budgets`, `recurring_transactions` | Schema có sẵn; UI nâng cao ngoài MVP |
+| Kế hoạch | `budgets`, `recurring_transactions`, `recurring_transaction_runs` | Ngân sách V1 và tự tạo chi phí định kỳ đã có; cần theo dõi job Cron |
 | AI audit | `ai_usage_logs` | Chỉ metadata tối thiểu, không token/API key |
 | Import | `import_batches` và RPC liên quan | Atomic batch, chống trùng và audit |
 
@@ -715,7 +725,7 @@ Không ghi tài khoản test trong file. Tạo user/family riêng ở staging v�
 | P1 | Backup restore và rollback drill | TBD | Mỗi quý | Đã có script/runbook an toàn; drill staging thực tế chờ `STAGING_DB_URL` và `RESTORE_DB_URL` |
 | P1 | Chốt retention/log/privacy policy | Chủ dự án | 01/09/2026 | Đã chốt và deploy retention thùng rác và `ai_usage_logs` là 30 ngày; cần theo dõi Cron run đầu tiên |
 | P2 | Đánh giá migration enum Tiền vào/Tiền ra dài hạn | TBD | TBD | Theo dõi |
-| P3 | Storage chứng từ/recurring/queue khi có business case | TBD | TBD | Backlog |
+| P3 | Storage chứng từ/queue khi có business case | TBD | TBD | Backlog; recurring V1 đã triển khai |
 
 ---
 
