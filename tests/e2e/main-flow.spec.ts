@@ -20,7 +20,9 @@ test('luồng demo mở danh sách và form giao dịch', async ({ page }) => {
   await page.getByLabel('Phương thức thanh toán').selectOption({ index: 1 });
   await page.getByRole('button', { name: /Xác nhận và lưu/i }).click();
   await expect(page).toHaveURL(/\/giao-dich$/);
-  await expect(page.getByText('Kiểm tra luồng demo')).toBeVisible();
+  await expect(
+    page.locator('a:visible').filter({ hasText: 'Kiểm tra luồng demo' }).first(),
+  ).toBeVisible();
 });
 
 test('luồng đăng nhập và mở form giao dịch', async ({ page }) => {
