@@ -1,5 +1,15 @@
 # Nhật ký thay đổi Family Expense
 
+## 2026-09-06
+
+### Thu gọn thanh chọn kỳ ngân sách
+
+- Trước thay đổi: mô tả kỳ ngân sách nằm sát đáy, lệch với cụm chọn tháng/năm có nhãn phía trên; thanh lọc cao và có nhiều khoảng trống.
+- Sau thay đổi: tháng đang xem và ghi chú được tách thành hai dòng cạnh biểu tượng lịch, căn giữa với hai ô chọn. Ẩn nhãn lặp trên giao diện nhưng giữ tên truy cập cho trình đọc màn hình; giảm khoảng đệm trên desktop, xếp ô tháng/năm bên dưới trên mobile và dành thêm chiều rộng cho tên tháng.
+- Files: `src/pages/Budgets.tsx`, `CHANGELOG.md`, `HANDOFF.md`. Không đổi logic ngân sách, API hoặc database.
+- Kiểm thử: full Vitest đạt 34/34 file, 149/149 test; lint không có warning, typecheck, production build và `git diff --check` pass trên nhánh triển khai riêng. Dùng binary local tương đương scripts và Vite `envDir: false`; build còn cảnh báo chunk ExcelJS lớn hiện hữu. Kiểm tra trực quan demo local đạt tại 320, 390, 640 và 1280px, theme sáng/tối, tiếng Việt/Anh; thanh lọc không tràn ngang, ô chọn cao hơn 44px. CI sẽ chạy thêm coverage, E2E và db-security trước khi merge.
+- Trạng thái triển khai dự kiến: nhánh `codex/budget-period-layout-20260905` được tách từ `main` tại `b67c447`; tạo PR vào `main`, bật auto-merge sau required checks và chờ Cloudflare Pages Git integration deploy merge commit. Không có migration hoặc Edge Function cần triển khai.
+
 ## 2026-09-05
 
 ### Bổ sung khôi phục, xóa vĩnh viễn và chỉnh bố cục mẫu định kỳ
