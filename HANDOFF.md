@@ -21,6 +21,12 @@
 - Files: `src/components/TransactionRow.tsx`, `src/components/TransactionRow.test.tsx`. Không có migration mới, không đổi API/schema/RLS/RPC.
 - Validation local: full Vitest đạt 34/34 file, 149/149 test; typecheck, lint, production build và `git diff --check` pass. Build còn cảnh báo chunk ExcelJS lớn hiện hữu.
 
+### Handoff — tự làm mới khung xác nhận giao dịch dự kiến (06/09/2026)
+
+- Trang `/giao-dich` làm mới truy vấn `dashboard-due` sau khi xác nhận giao dịch dự kiến thành công, nên khung `Giao dịch dự kiến tới hạn` tự biến mất ngay khi không còn khoản đến hạn.
+- Files: `src/pages/Transactions.tsx`, `src/pages/Transactions.ui.test.tsx`; không đổi API/schema/RLS/RPC hoặc dữ liệu.
+- Regression test kiểm tra khung biến mất ở fallback demo; CI sẽ xác nhận thêm Supabase db-security, E2E, quality và Cloudflare preview.
+
 ### Handoff — thu gọn nút thao tác và bổ sung icon KPI chi phí định kỳ (06/09/2026)
 
 - Trang `/chi-phi-dinh-ky` có hai nút đầu trang gọn hơn, cùng chiều cao/căn giữa và responsive: hai cột trên màn hình rộng, xếp dọc trên mobile.
