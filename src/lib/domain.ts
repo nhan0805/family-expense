@@ -6,6 +6,7 @@ export const transactionTypes = [
 export type TransactionType = (typeof transactionTypes)[number];
 export const transactionTypeLabel = (type: string) => type === 'Chi tiêu' ? 'Tiền ra' : type === 'Thu nhập' ? 'Tiền vào' : type;
 export const statuses = ['Thực tế', 'Dự kiến'] as const;
+export const transactionSources = ['manual', 'ai', 'excel_import', 'recurring'] as const;
 export const statusForTransactionDate = (
   transactionDate: string,
   today: string,
@@ -25,7 +26,7 @@ export const transactionSchema = z
     beneficiaryId: z.string().nullable().optional(),
     paymentMethodId: z.string().nullable().optional(),
     note: z.string().nullable().optional(),
-    source: z.enum(['manual', 'ai', 'excel_import']).default('manual'),
+    source: z.enum(transactionSources).default('manual'),
     sourceReference: z.string().nullable().optional(),
     aiGenerated: z.boolean().default(false),
   })
@@ -40,6 +41,7 @@ export type Transaction = TransactionInput & {
   createdBy?: string;
   createdAt?: string;
   deletedAt?: string | null;
+  recurringTransactionId?: string | null;
 };
 export const canDeleteTransaction = (
   transaction: Transaction,

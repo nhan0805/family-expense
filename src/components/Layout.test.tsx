@@ -14,6 +14,7 @@ vi.mock('../context/LanguageContext', () => ({
       overview: 'Tổng quan',
       transactions: 'Giao dịch',
       budgets: 'Ngân sách',
+      recurringExpenses: 'Chi phí định kỳ',
       catalogs: 'Danh mục',
       members: 'Thành viên',
       data: 'Dữ liệu',
@@ -84,5 +85,6 @@ describe('Layout mobile navigation', () => {
 
     fireEvent.click(within(bottomNav!).getByRole('button', { name: 'Thêm' }));
     expect(screen.getByRole('link', { name: 'Thành viên' })).toHaveAttribute('href', '/thanh-vien');
+    expect(screen.getByRole('link', { name: 'Chi phí định kỳ' })).toHaveAttribute('href', '/chi-phi-dinh-ky');
   });
 });

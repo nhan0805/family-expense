@@ -28,6 +28,11 @@ const ImportExport = lazy(() =>
     default: module.ImportExport,
   })),
 );
+const RecurringExpenses = lazy(() =>
+  import('./pages/RecurringExpenses').then((module) => ({
+    default: module.RecurringExpenses,
+  })),
+);
 const Login = lazy(() =>
   import('./pages/Login').then((module) => ({ default: module.Login })),
 );
@@ -61,6 +66,7 @@ export function App() {
             <Route path="/giao-dich/moi" element={<TransactionForm />} />
             <Route path="/giao-dich/:id" element={<TransactionForm />} />
             <Route path="/ngan-sach" element={<Budgets />} />
+            <Route path="/chi-phi-dinh-ky" element={<RecurringExpenses />} />
             <Route path="/danh-muc" element={<Catalogs />} />
             <Route path="/thanh-vien" element={<Members />} />
             <Route path="/du-lieu" element={<ImportExport />} />

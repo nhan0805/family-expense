@@ -160,7 +160,7 @@ Thêm route fallback SPA về `index.html` nếu cấu hình Pages yêu cầu. T
 ## Giả định và giới hạn MVP
 
 - Một câu AI chỉ tạo một đề xuất giao dịch; không OCR, ảnh hoặc giọng nói.
-- Owner quản lý thành viên/danh mục; member xem và nhập/sửa giao dịch theo RLS. Mời thành viên nâng cao và UI recurring transaction để sau MVP.
+- Owner quản lý thành viên/danh mục và mẫu chi định kỳ; member xem và nhập/sửa giao dịch theo RLS. Giao dịch định kỳ được tự tạo ở trạng thái Dự kiến và cần người dùng xác nhận.
 - Accounts chỉ lưu tên, tổ chức và bốn số cuối, không lưu toàn bộ số tài khoản/thẻ.
 - Storage chưa dùng cho giao dịch; tìm kiếm không lưu vector hoặc dữ liệu embedding. Dark mode nền tảng CSS đã chuẩn bị nhưng chưa có nút chuyển theme.
 - CI chạy pgTAP kiểm tra schema/RLS trên Supabase local; drill backup/restore staging theo [`docs/OPERATIONS_RUNBOOK.md`](docs/OPERATIONS_RUNBOOK.md) trước mỗi thay đổi database lớn.

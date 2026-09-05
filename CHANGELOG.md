@@ -1,5 +1,16 @@
 # Nhật ký thay đổi Family Expense
 
+## 2026-09-05
+
+### Tự động tạo giao dịch chi phí định kỳ khi đến hạn
+
+- Trước thay đổi: `recurring_transactions` mới chỉ là bảng nền; chưa có form quản lý, lịch sử kỳ chạy, cơ chế tự tạo giao dịch hoặc chống trùng.
+- Sau thay đổi: Owner có thể tạo/sửa/tạm dừng/tiếp tục/bỏ qua mẫu chi định kỳ theo tuần, tháng hoặc năm. Supabase Cron chạy lúc 00:05 `Asia/Ho_Chi_Minh`, tự tạo các giao dịch `Dự kiến` đến hạn, catch-up các kỳ bị bỏ lỡ và chỉ chuyển thành `Thực tế` sau khi người dùng xác nhận.
+- Kỹ thuật: thêm migration `supabase/migrations/202609050001_recurring_expenses.sql` với `transaction_source=recurring`, liên kết `transactions.recurring_transaction_id`, bảng `recurring_transaction_runs`, RPC validation/RLS/idempotency và job `pg_cron`; thêm `src/lib/recurringExpense.ts`, `src/lib/recurringExpensesApi.ts`, `src/pages/RecurringExpenses.tsx`, route/navigation, badge giao dịch định kỳ và bản dịch VI/EN.
+- Fallback demo lưu mẫu ở localStorage và tự tạo giao dịch dự kiến khi mở màn hình; không thêm dependency và không tự động ghi dữ liệu cloud khi chưa có migration.
+- Kiểm thử: `tsc -b`, ESLint, full Vitest đạt 33/33 file, 134/134 test, production build và `git diff --check` pass. `supabase test db --local` chưa chạy được vì PostgreSQL local tại `127.0.0.1:54322` chưa hoạt động.
+- Trạng thái triển khai dự kiến: Chưa deploy production; cần PR, required checks/db-security, Supabase Production Deploy rồi Cloudflare Pages Git deployment. Không dùng Wrangler deploy trực tiếp.
+
 ## 2026-09-04
 
 ### Tăng tốc AI search
@@ -24,7 +35,7 @@
 - Sau thay đổi: Loại bỏ hai trường khỏi model giao dịch phía frontend, bản nháp, import/parser, payload ghi giao dịch và quan hệ truy vấn export; template Excel hiện hành và dữ liệu giao dịch mới không còn phụ thuộc account/event.
 - Kỹ thuật: Cập nhật `src/lib/domain.ts`, `src/lib/transactionDraft.ts`, `src/lib/transactionsApi.ts`, `src/pages/TransactionForm.tsx`, `src/pages/Transactions.tsx`, `src/pages/ImportExport.tsx`, `src/lib/importExcel.ts` và regression test tương ứng. Không thêm migration, không xóa dữ liệu hoặc bảng/cột legacy trong database để bảo toàn dữ liệu cũ.
 - Kiểm thử: Full suite đạt 30/30 file, 124/124 test; typecheck, lint, build và `git diff --check` pass. Build vẫn cảnh báo chunk ExcelJS lớn đã có từ trước.
-- Trạng thái triển khai dự kiến: Push branch, tạo/cập nhật PR vào `main`, bật auto-merge và chờ Supabase Production Deploy cùng Cloudflare Pages Git deployment.
+- Trạng thái triển khai thực tế: PR [#122](https://github.com/nhan0805/family-expense/pull/122) đã merge vào `main` với merge commit `10b400b2cffb8bd5e514039fd84dde481df758b8`. CI main [run 33881057378](https://github.com/nhan0805/family-expense/actions/runs/33881057378) pass với `quality` và `db-security`; check [Cloudflare Pages](https://github.com/nhan0805/family-expense/runs/101049819883) báo deploy thành công. Production [family-expense-8fo.pages.dev](https://family-expense-8fo.pages.dev/) smoke test trả HTTP 200 lúc `04/09/2026 21:01` (`Asia/Ho_Chi_Minh`). Không có migration/function thay đổi nên không chạy Supabase Production Deploy; cập nhật tài liệu sau deploy chỉ ở local để tránh tạo deploy lần hai.
 
 ### Giữ kết quả AI search khi backfill embedding lỗi
 
