@@ -40,9 +40,8 @@ select ok(
   exists(select 1 from pg_policies where schemaname = 'public' and tablename = 'recurring_transactions' and policyname = 'recurring_transactions_select'),
   'recurring templates keep member read access'
 );
-select like(
-  (select pg_get_expr(polqual, polrelid) from pg_policy where polname = 'recurring_transactions_select' and polrelid = 'public.recurring_transactions'::regclass),
-  '%deleted_at IS NULL%',
+select ok(
+  (select pg_get_expr(polqual, polrelid) from pg_policy where polname = 'recurring_transactions_select' and polrelid = 'public.recurring_transactions'::regclass) ilike '%deleted_at IS NULL%',
   'recurring select policy hides soft-deleted templates'
 );
 select ok(
@@ -53,14 +52,12 @@ select ok(
   exists(select 1 from cron.job where jobname = 'generate-due-recurring-transactions' and schedule = '5 17 * * *'),
   'daily recurring generation job is scheduled at 00:05 Vietnam time'
 );
-select like(
-  pg_get_functiondef('public.generate_due_recurring_transactions(uuid,date)'::regprocedure),
-  '%r.status = ''skipped''%',
+select ok(
+  pg_get_functiondef('public.generate_due_recurring_transactions(uuid,date)'::regprocedure) ilike '%r.status = ''skipped''%',
   'skipped occurrences are checked before generation'
 );
-select like(
-  pg_get_functiondef('public.upsert_recurring_transaction(uuid,uuid,text,jsonb,text,date,date)'::regprocedure),
-  '%previous_next_run_date is distinct from p_next_run_date%',
+select ok(
+  pg_get_functiondef('public.upsert_recurring_transaction(uuid,uuid,text,jsonb,text,date,date)'::regprocedure) ilike '%previous_next_run_date is distinct from p_next_run_date%',
   'editing template content preserves the existing calendar anchor'
 );
 
