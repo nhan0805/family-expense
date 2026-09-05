@@ -18,7 +18,7 @@
 
 - Câu `chi tiêu cho du lịch và hiếu hỉ` nay giải quyết `Du lịch` theo ngữ cảnh `cho` như một mục đích, nên trả về các giao dịch thuộc mục đích Du lịch/Hiếu hỉ thay vì đồng thời lọc thêm danh mục Du lịch. Ngữ cảnh `danh mục`, `loại chi phí` hoặc `category` ưu tiên danh mục; nhãn trùng không còn tạo điều kiện AND ngoài ý muốn.
 - Card mobile và bảng desktop chỉ render badge trạng thái khi `transaction.status === 'Dự kiến'`; giao dịch `Thực tế` không còn badge trạng thái. Badge `Định kỳ`, màu thu/chi và trạng thái dữ liệu không đổi.
-- Files: `src/lib/quickTransactionSearch.ts`, `src/lib/quickTransactionSearch.test.ts`, `src/components/TransactionRow.tsx`, `src/components/TransactionRow.test.tsx`. Không có migration mới, không đổi API/schema/RLS/RPC.
+- Files: `src/lib/quickTransactionSearch.ts`, `src/lib/quickTransactionSearch.test.ts`, `src/components/TransactionRow.tsx`, `src/components/TransactionRow.test.tsx`, `src/components/Feedback.tsx`. Không có migration mới, không đổi API/schema/RLS/RPC; timer Feedback được dọn khi unmount để tránh lỗi async sau teardown trong coverage CI.
 - Validation local: full Vitest đạt 34/34 file, 151/151 test; typecheck, lint, production build và `git diff --check` pass. Build còn cảnh báo chunk ExcelJS lớn hiện hữu.
 - Triển khai dự kiến: PR vào `main`, bật auto-merge sau required checks và xác minh Cloudflare Pages production trên merge commit.
 

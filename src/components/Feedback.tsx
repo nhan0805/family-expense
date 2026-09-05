@@ -17,13 +17,29 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
   const dialogRef = useRef<HTMLElement | null>(null);
   const dialogTriggerRef = useRef<HTMLElement | null>(null);
   const closingToastIdsRef = useRef(new Set<number>());
+  const timeoutIdsRef = useRef(new Set<number>());
   const nextId = useRef(1);
+
+  const scheduleTimeout = useCallback((callback: () => void, delay: number) => {
+    const timeoutId = window.setTimeout(() => {
+      timeoutIdsRef.current.delete(timeoutId);
+      callback();
+    }, delay);
+    timeoutIdsRef.current.add(timeoutId);
+  }, []);
+
+  useEffect(() => () => {
+    timeoutIdsRef.current.forEach((timeoutId) => window.clearTimeout(timeoutId));
+    timeoutIdsRef.current.clear();
+    resolver.current?.(false);
+    resolver.current = null;
+  }, []);
 
   const dismissToast = useCallback((id: number) => {
     if (closingToastIdsRef.current.has(id)) return;
     closingToastIdsRef.current.add(id);
     setClosingToastIds((items) => new Set(items).add(id));
-    window.setTimeout(() => {
+    scheduleTimeout(() => {
       setToasts((items) => items.filter((item) => item.id !== id));
       setClosingToastIds((items) => {
         const next = new Set(items);
@@ -32,13 +48,13 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
       });
       closingToastIdsRef.current.delete(id);
     }, 180);
-  }, []);
+  }, [scheduleTimeout]);
 
   const notify = useCallback((message: string, tone: ToastTone = 'success') => {
     const id = nextId.current++;
     setToasts((items) => [...items, { id, message, tone }]);
-    window.setTimeout(() => dismissToast(id), 3500);
-  }, [dismissToast]);
+    scheduleTimeout(() => dismissToast(id), 3500);
+  }, [dismissToast, scheduleTimeout]);
   const askConfirm = useCallback((options: ConfirmOptions) => new Promise<boolean>((resolve) => {
     dialogTriggerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     resolver.current = resolve;
@@ -50,13 +66,13 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
     resolver.current?.(result);
     resolver.current = null;
     setDialogClosing(true);
-    window.setTimeout(() => {
+    scheduleTimeout(() => {
       setDialog(null);
       setDialogClosing(false);
       dialogTriggerRef.current?.focus();
       dialogTriggerRef.current = null;
     }, 180);
-  }, [dialogClosing]);
+  }, [dialogClosing, scheduleTimeout]);
   useEffect(() => {
     if (!dialog) return;
     const focusTimer = window.setTimeout(() => dialogRef.current?.querySelector<HTMLElement>('button')?.focus(), 0);
