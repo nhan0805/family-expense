@@ -14,6 +14,15 @@
 - [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
 
+### Handoff — AI search hỗ trợ điều kiện loại trừ (05/09/2026)
+
+- AI search hiện hiểu các câu như “tất cả chi tiêu trừ khoản đầu tư”: `transactionType = Chi tiêu`, các mảng bao gồm để trống và `excludePurposeIds` chứa ID mục đích `Đầu tư`. Các câu “trừ danh mục …” hoặc “trừ phương thức …” được đưa vào mảng loại trừ tương ứng.
+- Frontend có state, chip và bộ lọc chi tiết cho `excludePurposeIds`, `excludeExpenseTypeIds`, `excludePaymentMethodIds`; khi không có điều kiện bao gồm, truy vấn vẫn lấy mọi mục còn lại rồi loại trừ đúng nhóm được chỉ định.
+- Backend thêm migration `supabase/migrations/202609050002_transaction_search_exclusions.sql` với RPC `list_family_transactions_v2` và `list_deleted_transactions_v2`; RPC cũ không bị thay đổi. Cả hai RPC đều kiểm tra membership và giữ scope theo `family_id`.
+- Edge Function `search-transactions` đã mở rộng schema/prompt/kiểm tra catalog ID; quick path xử lý ngay các câu cấu trúc rõ ràng để giảm độ trễ và không cần gọi Gemini.
+- Validation local: full Vitest, typecheck, lint, build và `git diff --check` pass. Cần chờ required CI/db-security trước khi merge; pgTAP local phụ thuộc PostgreSQL/Docker.
+- Trạng thái triển khai: Chưa deploy production; chờ PR, Supabase Production Deploy và Cloudflare Pages Git deployment.
+
 ### Handoff — tự động tạo giao dịch chi phí định kỳ khi đến hạn (05/09/2026)
 
 - Owner có thể quản lý mẫu chi định kỳ theo tuần/tháng/năm tại route `/chi-phi-dinh-ky`; member chỉ xem. Mỗi mẫu lưu nội dung, số tiền VND, mục đích, danh mục, phương thức thanh toán, ngày chạy tiếp theo và ngày kết thúc tùy chọn.

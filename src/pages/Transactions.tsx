@@ -64,6 +64,9 @@ type TransactionFilters = {
   purposeIds: string[];
   expenseTypeIds: string[];
   paymentMethodIds: string[];
+  excludePurposeIds: string[];
+  excludeExpenseTypeIds: string[];
+  excludePaymentMethodIds: string[];
   amountMin: string;
   amountMax: string;
   month: string;
@@ -269,6 +272,9 @@ export const filterAndSortTransactions = (
         !filters.paymentMethodIds.includes(transaction.paymentMethodId || '')
       )
         return false;
+      if (filters.excludePurposeIds.includes(transaction.purposeId)) return false;
+      if (filters.excludeExpenseTypeIds.includes(transaction.expenseTypeId)) return false;
+      if (filters.excludePaymentMethodIds.includes(transaction.paymentMethodId || '')) return false;
       const amountMin = filters.amountMin ? Number(filters.amountMin) : null;
       const amountMax = filters.amountMax ? Number(filters.amountMax) : null;
       if (amountMin !== null && (!Number.isFinite(amountMin) || transaction.amount < amountMin))
@@ -338,6 +344,15 @@ export function Transactions() {
   const [paymentMethodIds, setPaymentMethodIds] = useState(() =>
     getInitialFilterIds(searchParams, 'paymentMethodId'),
   );
+  const [excludePurposeIds, setExcludePurposeIds] = useState(() =>
+    getInitialFilterIds(searchParams, 'excludePurposeId'),
+  );
+  const [excludeExpenseTypeIds, setExcludeExpenseTypeIds] = useState(() =>
+    getInitialFilterIds(searchParams, 'excludeExpenseTypeId'),
+  );
+  const [excludePaymentMethodIds, setExcludePaymentMethodIds] = useState(() =>
+    getInitialFilterIds(searchParams, 'excludePaymentMethodId'),
+  );
   const [amountMin, setAmountMin] = useState('');
   const [amountMax, setAmountMax] = useState('');
   const [month, setMonth] = useState(initialMonth);
@@ -394,6 +409,9 @@ export function Transactions() {
         purposeIds,
         expenseTypeIds,
         paymentMethodIds,
+        excludePurposeIds,
+        excludeExpenseTypeIds,
+        excludePaymentMethodIds,
         amountMin,
         amountMax,
         month,
@@ -409,6 +427,9 @@ export function Transactions() {
       purposeIds,
       expenseTypeIds,
       paymentMethodIds,
+      excludePurposeIds,
+      excludeExpenseTypeIds,
+      excludePaymentMethodIds,
       amountMin,
       amountMax,
       month,
@@ -427,6 +448,9 @@ export function Transactions() {
       purposeIds,
       expenseTypeIds,
       paymentMethodIds,
+      excludePurposeIds,
+      excludeExpenseTypeIds,
+      excludePaymentMethodIds,
       amountMin,
       amountMax,
       month,
@@ -441,6 +465,9 @@ export function Transactions() {
       purposeIds,
       expenseTypeIds,
       paymentMethodIds,
+      excludePurposeIds,
+      excludeExpenseTypeIds,
+      excludePaymentMethodIds,
       amountMin,
       amountMax,
       month,
@@ -480,7 +507,7 @@ export function Transactions() {
     ),
     [purposes, expenseTypes, paymentMethods],
   );
-  const trashFilters = { query, transactionType, status, purposeIds, expenseTypeIds, paymentMethodIds, amountMin, amountMax, month, year, dateFrom, dateTo, sort } satisfies TransactionFilters;
+  const trashFilters = { query, transactionType, status, purposeIds, expenseTypeIds, paymentMethodIds, excludePurposeIds, excludeExpenseTypeIds, excludePaymentMethodIds, amountMin, amountMax, month, year, dateFrom, dateTo, sort } satisfies TransactionFilters;
   const localTrashRows = useMemo(() => filterAndSortTransactions(transactions.filter((item) => item.deletedAt && (currentUserRole === 'owner' || item.createdBy === currentUserId)), trashFilters, true), [transactions, currentUserRole, currentUserId, trashFilters]);
   const rows = showTrash
     ? (isSupabaseConfigured ? trashQuery.data?.rows || [] : localTrashRows)
@@ -498,6 +525,9 @@ export function Transactions() {
     purposeIds.join(','),
     expenseTypeIds.join(','),
     paymentMethodIds.join(','),
+    excludePurposeIds.join(','),
+    excludeExpenseTypeIds.join(','),
+    excludePaymentMethodIds.join(','),
     amountMin,
     amountMax,
     month,
@@ -514,6 +544,9 @@ export function Transactions() {
     purposeIds.length > 0 ||
     expenseTypeIds.length > 0 ||
     paymentMethodIds.length > 0 ||
+    excludePurposeIds.length > 0 ||
+    excludeExpenseTypeIds.length > 0 ||
+    excludePaymentMethodIds.length > 0 ||
     amountMin ||
     amountMax ||
     month ||
@@ -528,6 +561,9 @@ export function Transactions() {
     ...purposeIds,
     ...expenseTypeIds,
     ...paymentMethodIds,
+    ...excludePurposeIds,
+    ...excludeExpenseTypeIds,
+    ...excludePaymentMethodIds,
     amountMin,
     amountMax,
     month,
@@ -541,6 +577,9 @@ export function Transactions() {
     ...purposeIds.map((id) => ({ key: `purposeId-${id}`, label: getCatalogDisplayName(purposes.find((item) => item.id === id), language) || (en ? 'Purpose' : 'Mục đích'), clear: () => setPurposeIds((current) => current.filter((item) => item !== id)) })),
     ...expenseTypeIds.map((id) => ({ key: `expenseTypeId-${id}`, label: getCatalogDisplayName(expenseTypes.find((item) => item.id === id), language) || (en ? 'Category' : 'Danh mục'), clear: () => setExpenseTypeIds((current) => current.filter((item) => item !== id)) })),
     ...paymentMethodIds.map((id) => ({ key: `paymentMethodId-${id}`, label: getCatalogDisplayName(paymentMethods.find((item) => item.id === id), language) || (en ? 'Payment method' : 'Thanh toán'), clear: () => setPaymentMethodIds((current) => current.filter((item) => item !== id)) })),
+    ...excludePurposeIds.map((id) => ({ key: `excludePurposeId-${id}`, label: `${en ? 'Exclude purpose' : 'Trừ mục đích'}: ${getCatalogDisplayName(purposes.find((item) => item.id === id), language) || (en ? 'Purpose' : 'Mục đích')}`, clear: () => setExcludePurposeIds((current) => current.filter((item) => item !== id)) })),
+    ...excludeExpenseTypeIds.map((id) => ({ key: `excludeExpenseTypeId-${id}`, label: `${en ? 'Exclude category' : 'Trừ danh mục'}: ${getCatalogDisplayName(expenseTypes.find((item) => item.id === id), language) || (en ? 'Category' : 'Danh mục')}`, clear: () => setExcludeExpenseTypeIds((current) => current.filter((item) => item !== id)) })),
+    ...excludePaymentMethodIds.map((id) => ({ key: `excludePaymentMethodId-${id}`, label: `${en ? 'Exclude payment method' : 'Trừ phương thức'}: ${getCatalogDisplayName(paymentMethods.find((item) => item.id === id), language) || (en ? 'Payment method' : 'Phương thức')}`, clear: () => setExcludePaymentMethodIds((current) => current.filter((item) => item !== id)) })),
     amountMin && { key: 'amountMin', label: `${en ? 'From' : 'Từ'} ${formatVnd(Number(amountMin))}`, clear: () => setAmountMin('') },
     amountMax && { key: 'amountMax', label: `${en ? 'Up to' : 'Đến'} ${formatVnd(Number(amountMax))}`, clear: () => setAmountMax('') },
     month && { key: 'month', label: en ? (englishMonthNames[Number(month) - 1] || `Month ${Number(month)}`) : `Tháng ${Number(month)}`, clear: () => setMonth('') },
@@ -568,6 +607,9 @@ export function Transactions() {
     setPurposeIds([]);
     setExpenseTypeIds([]);
     setPaymentMethodIds([]);
+    setExcludePurposeIds([]);
+    setExcludeExpenseTypeIds([]);
+    setExcludePaymentMethodIds([]);
     setAmountMin('');
     setAmountMax('');
     setMonth('');
@@ -960,6 +1002,9 @@ export function Transactions() {
         filters.purposeIds.length ||
         filters.expenseTypeIds.length ||
         filters.paymentMethodIds.length ||
+        filters.excludePurposeIds.length ||
+        filters.excludeExpenseTypeIds.length ||
+        filters.excludePaymentMethodIds.length ||
         filters.amountMin !== null ||
         filters.amountMax !== null ||
         filters.month !== null ||
@@ -975,6 +1020,9 @@ export function Transactions() {
       setPurposeIds(filters.purposeIds);
       setExpenseTypeIds(filters.expenseTypeIds);
       setPaymentMethodIds(filters.paymentMethodIds);
+      setExcludePurposeIds(filters.excludePurposeIds);
+      setExcludeExpenseTypeIds(filters.excludeExpenseTypeIds);
+      setExcludePaymentMethodIds(filters.excludePaymentMethodIds);
       setAmountMin(filters.amountMin === null ? '' : String(filters.amountMin));
       setAmountMax(filters.amountMax === null ? '' : String(filters.amountMax));
       setSort(filters.sort);
@@ -1157,6 +1205,33 @@ export function Transactions() {
             onChange={setPaymentMethodIds}
             language={language}
             placeholder={en ? 'All payment methods' : 'Tất cả phương thức'}
+          />
+          <MultiSelectField
+            id="exclude-purpose-filter"
+            label={en ? 'Exclude purpose' : 'Không gồm mục đích'}
+            values={excludePurposeIds}
+            options={purposes}
+            onChange={setExcludePurposeIds}
+            language={language}
+            placeholder={en ? 'No excluded purposes' : 'Không loại trừ mục đích'}
+          />
+          <MultiSelectField
+            id="exclude-expense-type-filter"
+            label={en ? 'Exclude category' : 'Không gồm danh mục'}
+            values={excludeExpenseTypeIds}
+            options={expenseTypes}
+            onChange={setExcludeExpenseTypeIds}
+            language={language}
+            placeholder={en ? 'No excluded categories' : 'Không loại trừ danh mục'}
+          />
+          <MultiSelectField
+            id="exclude-payment-method-filter"
+            label={en ? 'Exclude payment method' : 'Không gồm phương thức'}
+            values={excludePaymentMethodIds}
+            options={paymentMethods}
+            onChange={setExcludePaymentMethodIds}
+            language={language}
+            placeholder={en ? 'No excluded methods' : 'Không loại trừ phương thức'}
           />
           <label className="min-w-0">
             <span className="label">{en ? 'Minimum amount' : 'Từ số tiền'}</span>

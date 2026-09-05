@@ -22,4 +22,18 @@ describe('quick transaction search', () => {
   it('để câu mơ hồ cho Gemini xử lý', () => {
     expect(getQuickTransactionSearch('mua quần áo ở cửa hàng gần nhà', 'vi', catalog)).toBeNull();
   });
+
+  it('nhận diện nhanh câu lấy mọi chi tiêu trừ một mục đích', () => {
+    const response = getQuickTransactionSearch('tất cả chi tiêu trừ khoản đầu tư', 'vi', {
+      ...catalog,
+      purposes: [{ id: 'purpose-investment', name: 'Đầu tư' }, ...catalog.purposes],
+    });
+    expect(response?.filters).toMatchObject({
+      transactionType: 'Chi tiêu',
+      purposeIds: [],
+      expenseTypeIds: [],
+      excludePurposeIds: ['purpose-investment'],
+      query: '',
+    });
+  });
 });
