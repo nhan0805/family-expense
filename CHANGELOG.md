@@ -18,6 +18,14 @@
 - Kiểm thử: đã bổ sung regression test cho cả giao dịch `Dự kiến` và `Thực tế` trong mobile/desktop.
 - Trạng thái triển khai dự kiến: cùng PR với bản sửa bộ lọc tìm kiếm.
 
+### Tự làm mới khung xác nhận giao dịch dự kiến
+
+- Trước thay đổi: sau khi xác nhận giao dịch dự kiến trên trang Giao dịch, khung `Giao dịch dự kiến tới hạn` vẫn còn hiển thị vì truy vấn riêng của khung chưa được làm mới.
+- Sau thay đổi: sau khi Supabase cập nhật thành công, truy vấn giao dịch dự kiến tới hạn được invalidation cùng danh sách giao dịch, dashboard và ngân sách; khung tự tải lại và biến mất khi không còn giao dịch cần xác nhận.
+- Files: `src/pages/Transactions.tsx`, `src/pages/Transactions.ui.test.tsx`. Không đổi API, migration, RLS/RPC hoặc dữ liệu.
+- Kiểm thử: bổ sung regression test xác nhận khung biến mất ở fallback demo; sẽ chạy full Vitest, lint, typecheck, build và E2E trước PR.
+- Trạng thái triển khai dự kiến: tạo PR vào `main`, bật auto-merge sau required checks rồi chờ Cloudflare Pages Git integration.
+
 ### Gỡ badge Tiền ra/Tiền vào khỏi danh sách giao dịch
 
 - Trước thay đổi: Mỗi dòng giao dịch hiển thị thêm badge `Tiền ra` hoặc `Tiền vào` dù nền dòng và màu số tiền đã thể hiện loại giao dịch.
