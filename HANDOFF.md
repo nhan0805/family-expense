@@ -23,6 +23,12 @@
 - Demo fallback dùng localStorage và tự sinh giao dịch dự kiến khi mở màn hình. Giao dịch recurring có badge `Định kỳ`; chỉnh sửa giao dịch hiện tại không làm thay đổi mẫu.
 - Validation local: typecheck, lint, full Vitest đạt 33/33 file, 134/134 test, build và `git diff --check` pass; pgTAP local chưa chạy được vì PostgreSQL tại `127.0.0.1:54322` từ chối kết nối.
 - Trạng thái triển khai: Chưa deploy production; chờ PR, CI/db-security, Supabase Production Deploy và Cloudflare Pages Git deployment.
+
+### Handoff — làm idempotent bước dọn Edge Function khi deploy (05/09/2026)
+
+- Lần chạy Supabase Production Deploy của merge commit đã apply migration recurring và deploy các function còn dùng, nhưng dừng ở bước xóa `process-transaction-embeddings` vì function này đã không tồn tại trên production.
+- Đã cập nhật `.github/workflows/supabase-deploy.yml` để bỏ qua đúng lỗi function không tồn tại; các lỗi khác vẫn làm workflow fail. Cần rerun qua một PR mới để hoàn tất trạng thái deploy xanh.
+
 ### Handoff — tăng tốc AI search (04/09/2026)
 
 - Mục tiêu: giảm thời gian chờ khi người dùng dùng **Gợi ý AI** trên trang Giao dịch.
