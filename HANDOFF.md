@@ -14,13 +14,21 @@
 - [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
 
+### Handoff — khôi phục, xóa vĩnh viễn và bố cục mẫu định kỳ (05/09/2026)
+
+- Owner có thể mở khu vực `Mẫu định kỳ đã xóa`, khôi phục mẫu về trạng thái active/paused trước khi xóa hoặc xóa vĩnh viễn sau hộp thoại xác nhận. Member không thấy khu vực và các nút quản trị.
+- Khôi phục không xóa các giao dịch đã phát sinh; nếu xóa vĩnh viễn thì chỉ mẫu và `recurring_transaction_runs` bị xóa, còn `transactions` giữ nguyên và tự bỏ liên kết template qua khóa ngoại `on delete set null`.
+- Migration mới `supabase/migrations/202609050005_recurring_restore_hard_delete.sql` thêm `deleted_active_before`, cập nhật RLS select cho owner xem thùng rác và thêm hai RPC security-definer có scope `family_id`. Local fallback giữ cùng hành vi trong localStorage.
+- Cụm nút trong mỗi dòng chuyển sang lưới đồng kích thước; hai nút `Tạo giao dịch đến hạn`/`Thêm khoản định kỳ` dùng cùng chiều rộng và căn giữa, responsive trên mobile.
+- Validation hiện tại: recurring Vitest 15/15; typecheck và lint các file thay đổi pass. Chưa deploy migration mới; PR/CI và production deployment cần được cập nhật sau khi merge.
+
 ### Handoff — bổ sung xóa mềm mẫu chi phí định kỳ (05/09/2026)
 
 - Owner có thể bấm `Xóa` trên mẫu ở `/chi-phi-dinh-ky` và xác nhận trong hộp thoại. Member vẫn chỉ có quyền xem.
 - Xóa là soft-delete: mẫu bị ẩn khỏi danh sách, không thể resume và không được job nền chọn để sinh kỳ mới. Các giao dịch đã tạo và `recurring_transaction_runs` không bị xóa.
 - Backend thêm `deleted_at`, `deleted_by` và RPC security-definer `delete_recurring_transaction` có kiểm tra owner/family; frontend có fallback localStorage tương ứng.
 - Files: `src/pages/RecurringExpenses.tsx`, `src/lib/recurringExpense.ts`, `src/lib/recurringExpensesApi.ts`, `src/lib/recurringExpense.test.ts`, `src/pages/RecurringExpenses.test.tsx`, `supabase/migrations/202609050004_recurring_delete.sql`, `supabase/tests/recurring_expenses.sql`.
-- Validation/deployment: Vitest đạt 34/34 file, 146/146 test; typecheck, lint, production build và `git diff --check` pass. E2E smoke Chromium chạy được nhưng skip 2 test cloud vì thiếu `E2E_EMAIL/E2E_PASSWORD` trong local. Build còn cảnh báo chunk ExcelJS lớn hiện hữu; pgTAP local chưa chạy được vì PostgreSQL tại `127.0.0.1:54322` chưa hoạt động. Chưa deploy production; migration `202609050004_recurring_delete.sql` phải được apply trước khi frontend cloud sử dụng các cột/RPC mới.
+- Validation/deployment: Vitest đạt 34/34 file, 146/146 test; typecheck, lint, production build và `git diff --check` pass. E2E smoke Chromium chạy được nhưng skip 2 test cloud vì thiếu `E2E_EMAIL/E2E_PASSWORD` trong local. Build còn cảnh báo chunk ExcelJS lớn hiện hữu; pgTAP local chưa chạy được vì PostgreSQL tại `127.0.0.1:54322` chưa hoạt động. PR [#129](https://github.com/nhan0805/family-expense/pull/129) đã merge; Supabase Production Deploy [run 33976812549](https://github.com/nhan0805/family-expense/actions/runs/33976812549) đã apply migration `202609050003` và `202609050004`, Cloudflare production check trên commit cuối pass và smoke HTTP 200.
 
 ### Handoff — triển khai các đợt Phase 0–4 (05/09/2026)
 
@@ -29,7 +37,7 @@
 - Đợt ba đã bổ sung dự báo bốn kỳ sắp tới và lịch sử kỳ chạy trên trang `/chi-phi-dinh-ky`. Migration `202609050003_recurring_hardening.sql` giữ anchor lịch khi chỉ sửa nội dung mẫu và coi occurrence `skipped` là terminal; migration `202609050004_recurring_delete.sql` giữ xóa mềm template và không chạm giao dịch đã tạo. `supabase/tests/recurring_expenses.sql` có assertion kiểm tra hai quy tắc hardening.
 - Theo dõi lỗi đã sẵn sàng qua `src/lib/telemetry.ts`; khi cấu hình `VITE_ERROR_REPORTING_ENDPOINT`, payload chỉ gồm mã lỗi, route, trạng thái online và thời điểm. Backup/restore drill, synthetic staging với tài khoản riêng và kiểm tra RTO/RPO vẫn là việc vận hành cần thực hiện trước khi mở rộng Phase 5.
 - CI bổ sung job Playwright Chromium, gồm smoke flow demo không cần credential; test cloud vẫn cần `E2E_EMAIL`/`E2E_PASSWORD` của tài khoản staging riêng. Cách đo FCP/LCP/CLS, payload và thời gian import nằm trong [docs/PERFORMANCE_BASELINE.md](docs/PERFORMANCE_BASELINE.md).
-- Trạng thái workspace: đã hợp nhất cập nhật mới nhất từ `main`, quality gates pass: Vitest 34/34 file, 146/146 test, typecheck, lint, build và `git diff --check`. pgTAP local vẫn chờ PostgreSQL/Docker tại `127.0.0.1:54322`; PR và production deploy đang chờ push/CI.
+- Trạng thái workspace: PR [#129](https://github.com/nhan0805/family-expense/pull/129), [#130](https://github.com/nhan0805/family-expense/pull/130) và [#131](https://github.com/nhan0805/family-expense/pull/131) đã merge vào `main`; CI main cuối [run 33978281606](https://github.com/nhan0805/family-expense/actions/runs/33978281606) pass với quality, E2E và db-security. Merge commit cuối `dfe030b467957ce077e5cd02024354431172b4d5` đã được Cloudflare Pages deploy production; smoke URL `https://family-expense-8fo.pages.dev/` trả HTTP 200. Backup/restore drill, baseline staging và kiểm tra RTO/RPO vẫn cần thực hiện trước Phase 5.
 
 ### Handoff — AI search hỗ trợ điều kiện loại trừ (05/09/2026)
 

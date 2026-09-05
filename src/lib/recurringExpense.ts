@@ -35,6 +35,7 @@ export const recurringExpenseSchema = z.object({
   lastErrorCode: z.string().nullable().optional(),
   deletedAt: z.string().nullable().optional(),
   deletedBy: z.string().nullable().optional(),
+  deletedActiveBefore: z.boolean().nullable().optional(),
 });
 
 export type RecurringExpense = z.infer<typeof recurringExpenseSchema>;
@@ -139,6 +140,7 @@ export type RecurringExpenseRow = {
   last_error_code: string | null;
   deleted_at: string | null;
   deleted_by: string | null;
+  deleted_active_before: boolean | null;
 };
 
 export function mapRecurringExpenseRow(row: RecurringExpenseRow): RecurringExpense {
@@ -158,6 +160,7 @@ export function mapRecurringExpenseRow(row: RecurringExpenseRow): RecurringExpen
     lastErrorCode: row.last_error_code,
     deletedAt: row.deleted_at,
     deletedBy: row.deleted_by,
+    deletedActiveBefore: row.deleted_active_before,
   });
   if (!parsed.success) throw new Error('INVALID_RECURRING_EXPENSE');
   return parsed.data;
@@ -165,14 +168,22 @@ export function mapRecurringExpenseRow(row: RecurringExpenseRow): RecurringExpen
 
 const localStorageKey = (familyId: string) => `family-expense:recurring-expenses:${familyId}`;
 
-export function getLocalRecurringExpenses(familyId: string): RecurringExpense[] {
+function readLocalRecurringExpenses(familyId: string): RecurringExpense[] {
   try {
     const raw = window.localStorage.getItem(localStorageKey(familyId));
     const parsed = z.array(recurringExpenseSchema).safeParse(raw ? JSON.parse(raw) : []);
-    return parsed.success ? parsed.data.filter((item) => !item.deletedAt) : [];
+    return parsed.success ? parsed.data : [];
   } catch {
     return [];
   }
+}
+
+export function getLocalRecurringExpenses(familyId: string): RecurringExpense[] {
+  return readLocalRecurringExpenses(familyId).filter((item) => !item.deletedAt);
+}
+
+export function getLocalDeletedRecurringExpenses(familyId: string): RecurringExpense[] {
+  return readLocalRecurringExpenses(familyId).filter((item) => Boolean(item.deletedAt));
 }
 
 function saveLocalRecurringExpenses(familyId: string, items: RecurringExpense[]) {
@@ -222,15 +233,39 @@ export function setLocalRecurringExpenseActive(familyId: string, id: string, act
 }
 
 export function deleteLocalRecurringExpense(familyId: string, id: string) {
-  const items = getLocalRecurringExpenses(familyId);
-  const item = items.find((entry) => entry.id === id);
+  const items = readLocalRecurringExpenses(familyId);
+  const item = items.find((entry) => entry.id === id && !entry.deletedAt);
   if (!item) throw new Error('NOT_FOUND');
   saveLocalRecurringExpenses(familyId, items.map((entry) => entry.id === id ? {
     ...entry,
     active: false,
     deletedAt: new Date().toISOString(),
     deletedBy: 'local-user',
+    deletedActiveBefore: entry.active,
   } : entry));
+}
+
+export function restoreLocalRecurringExpense(familyId: string, id: string): RecurringExpense {
+  const items = readLocalRecurringExpenses(familyId);
+  const item = items.find((entry) => entry.id === id && entry.deletedAt);
+  if (!item) throw new Error('NOT_FOUND');
+  const restored = {
+    ...item,
+    active: item.deletedActiveBefore ?? false,
+    deletedAt: null,
+    deletedBy: null,
+    deletedActiveBefore: null,
+    lastErrorCode: null,
+  };
+  saveLocalRecurringExpenses(familyId, items.map((entry) => entry.id === id ? restored : entry));
+  return restored;
+}
+
+export function permanentlyDeleteLocalRecurringExpense(familyId: string, id: string) {
+  const items = readLocalRecurringExpenses(familyId);
+  const next = items.filter((entry) => entry.id !== id || !entry.deletedAt);
+  if (next.length === items.length) throw new Error('NOT_FOUND');
+  saveLocalRecurringExpenses(familyId, next);
 }
 
 export function skipLocalRecurringOccurrence(familyId: string, id: string) {
@@ -253,7 +288,7 @@ export function generateLocalDueTransactions(
   transactions: Transaction[],
   until = todayInVietnam(),
 ) {
-  const items = getLocalRecurringExpenses(familyId);
+  const items = readLocalRecurringExpenses(familyId);
   const created: Transaction[] = [];
   const updated = items.map((item) => {
     if (!item.active || item.nextRunDate > until) return item;
