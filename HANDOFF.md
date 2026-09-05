@@ -14,6 +14,13 @@
 - [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
 
+### Handoff — gỡ badge Tiền ra/Tiền vào khỏi danh sách giao dịch (06/09/2026)
+
+- Card mobile và bảng desktop không còn hiển thị badge loại giao dịch `Tiền ra`/`Tiền vào`; màu nền dòng và màu số tiền vẫn phân biệt thu/chi.
+- Badge trạng thái `Dự kiến`/`Thực tế`, badge `Định kỳ`, thao tác và dữ liệu giao dịch không thay đổi.
+- Files: `src/components/TransactionRow.tsx`, `src/components/TransactionRow.test.tsx`. Không có migration mới, không đổi API/schema/RLS/RPC.
+- Validation local: full Vitest đạt 34/34 file, 149/149 test; typecheck, lint, production build và `git diff --check` pass. Build còn cảnh báo chunk ExcelJS lớn hiện hữu.
+
 ### Handoff — thu gọn nút thao tác và bổ sung icon KPI chi phí định kỳ (06/09/2026)
 
 - Trang `/chi-phi-dinh-ky` có hai nút đầu trang gọn hơn, cùng chiều cao/căn giữa và responsive: hai cột trên màn hình rộng, xếp dọc trên mobile.

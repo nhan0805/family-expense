@@ -2,6 +2,13 @@
 
 ## 2026-09-06
 
+### Gỡ badge Tiền ra/Tiền vào khỏi danh sách giao dịch
+
+- Trước thay đổi: Mỗi dòng giao dịch hiển thị thêm badge `Tiền ra` hoặc `Tiền vào` dù nền dòng và màu số tiền đã thể hiện loại giao dịch.
+- Sau thay đổi: Gỡ badge loại giao dịch khỏi cả card mobile và bảng desktop; giữ màu nền và màu số tiền để phân biệt thu/chi, đồng thời giữ nguyên badge trạng thái và định kỳ.
+- Files: `src/components/TransactionRow.tsx`, `src/components/TransactionRow.test.tsx`. Không đổi API, migration, RLS/RPC hoặc dữ liệu.
+- Kiểm thử: full Vitest đạt 34/34 file, 149/149 test; typecheck, lint, production build và `git diff --check` pass. Build còn cảnh báo chunk ExcelJS lớn hiện hữu.
+
 ### Thu gọn nút thao tác và bổ sung icon KPI chi phí định kỳ
 
 - Trước thay đổi: Hai nút chính trên trang Chi phí định kỳ chiếm nhiều diện tích và bố cục chưa cân đối; ba KPI chỉ hiển thị nhãn và số.
