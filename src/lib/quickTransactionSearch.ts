@@ -15,7 +15,8 @@ const commonWords = new Set([
   'exclude', 'not', 'including', 'buy', 'purchase', 'spending',
   'expense', 'money', 'out', 'in', 'income', 'transaction', 'transactions',
   'for', 'during', 'from', 'to', 'over', 'under', 'at', 'least', 'month',
-  'year', 'actual', 'planned', 'and', 'the',
+  'year', 'actual', 'planned', 'and', 'the', 'danh', 'muc', 'loai', 'purpose',
+  'category', 'type',
 ]);
 
 const transactionTypeTerms = [
@@ -49,6 +50,59 @@ const findPhraseStart = (words: string[], phrase: string) => {
   return words.findIndex((_, index) =>
     phraseWords.every((word, offset) => words[index + offset] === word),
   );
+};
+
+const hasAnyPhrase = (words: string[], phrases: string[]) =>
+  phrases.some((phrase) => hasPhrase(words, phrase));
+
+const purposeContextPhrases = ['cho', 'for', 'muc dich', 'purpose'];
+const expenseTypeContextPhrases = ['danh muc', 'loai chi phi', 'category', 'expense type'];
+
+const catalogLabelsOverlap = (left: CatalogItem, right: CatalogItem) => {
+  const leftLabels = [left.name, left.nameEn]
+    .filter((value): value is string => Boolean(value))
+    .map(normalizeText);
+  const rightLabels = [right.name, right.nameEn]
+    .filter((value): value is string => Boolean(value))
+    .map(normalizeText);
+  return leftLabels.some((label) => rightLabels.includes(label));
+};
+
+const resolveAmbiguousCatalogMatches = (
+  words: string[],
+  purposes: CatalogItem[],
+  expenseTypes: CatalogItem[],
+) => {
+  const purposeContext = hasAnyPhrase(words, purposeContextPhrases);
+  const expenseTypeContext = hasAnyPhrase(words, expenseTypeContextPhrases);
+  const preferPurpose = purposeContext && !expenseTypeContext;
+  const preferExpenseType = expenseTypeContext && !purposeContext;
+
+  if (!preferPurpose && !preferExpenseType && (purposeContext || expenseTypeContext)) {
+    return { purposes, expenseTypes };
+  }
+
+  const overlappingExpenseTypeIds = new Set(
+    expenseTypes
+      .filter((expenseType) => purposes.some((purpose) => catalogLabelsOverlap(purpose, expenseType)))
+      .map((expenseType) => expenseType.id),
+  );
+  const overlappingPurposeIds = new Set(
+    purposes
+      .filter((purpose) => expenseTypes.some((expenseType) => catalogLabelsOverlap(purpose, expenseType)))
+      .map((purpose) => purpose.id),
+  );
+
+  if (preferPurpose || (!preferExpenseType && !purposeContext && !expenseTypeContext)) {
+    return {
+      purposes,
+      expenseTypes: expenseTypes.filter((item) => !overlappingExpenseTypeIds.has(item.id)),
+    };
+  }
+  return {
+    purposes: purposes.filter((item) => !overlappingPurposeIds.has(item.id)),
+    expenseTypes,
+  };
 };
 
 const exclusionMarkers = [
@@ -106,9 +160,12 @@ export function getQuickTransactionSearch(
 
   const matchedPurposes = matchingCatalogItems(words, catalog.purposes);
   const matchedExpenseTypes = matchingCatalogItems(words, catalog.expenseTypes);
+  const resolvedCatalogMatches = resolveAmbiguousCatalogMatches(words, matchedPurposes, matchedExpenseTypes);
+  const resolvedPurposes = resolvedCatalogMatches.purposes;
+  const resolvedExpenseTypes = resolvedCatalogMatches.expenseTypes;
   const matchedPaymentMethods = matchingCatalogItems(words, catalog.paymentMethods);
-  const excludedPurposes = matchedPurposes.filter((item) => isExcluded(words, item));
-  const excludedExpenseTypes = matchedExpenseTypes.filter((item) => isExcluded(words, item));
+  const excludedPurposes = resolvedPurposes.filter((item) => isExcluded(words, item));
+  const excludedExpenseTypes = resolvedExpenseTypes.filter((item) => isExcluded(words, item));
   const excludedPaymentMethods = matchedPaymentMethods.filter((item) => isExcluded(words, item));
   const matchedTypeTerms = transactionTypeTerms.filter((term) => hasPhrase(words, term.phrase));
   const matchedStatusTerms = statusTerms.filter((term) => hasPhrase(words, term.phrase));
@@ -127,7 +184,7 @@ export function getQuickTransactionSearch(
   const allowedWords = new Set(commonWords);
   matchedTypeTerms.forEach((term) => addTokens(allowedWords, term.phrase));
   matchedStatusTerms.forEach((term) => addTokens(allowedWords, term.phrase));
-  [...matchedPurposes, ...matchedExpenseTypes, ...matchedPaymentMethods]
+  [...resolvedPurposes, ...resolvedExpenseTypes, ...matchedPaymentMethods]
     .flatMap((item) =>
       [item.name, item.nameEn].filter((value): value is string => Boolean(value)),
     )
@@ -142,7 +199,7 @@ export function getQuickTransactionSearch(
 
   const hasStructuredFilter = Boolean(
     matchedPurposes.length ||
-    matchedExpenseTypes.length ||
+    resolvedExpenseTypes.length ||
     matchedPaymentMethods.length ||
     typeValues.size ||
     statusValues.size ||
@@ -156,10 +213,10 @@ export function getQuickTransactionSearch(
   return {
     filters: {
       query: '',
-      transactionType: transactionType || (matchedExpenseTypes.length ? 'Chi tiêu' : null),
+      transactionType: transactionType || (resolvedExpenseTypes.length ? 'Chi tiêu' : null),
       status: status || null,
-      purposeIds: matchedPurposes.filter((item) => !excludedPurposes.some((excluded) => excluded.id === item.id)).map((item) => item.id),
-      expenseTypeIds: matchedExpenseTypes.filter((item) => !excludedExpenseTypes.some((excluded) => excluded.id === item.id)).map((item) => item.id),
+      purposeIds: resolvedPurposes.filter((item) => !excludedPurposes.some((excluded) => excluded.id === item.id)).map((item) => item.id),
+      expenseTypeIds: resolvedExpenseTypes.filter((item) => !excludedExpenseTypes.some((excluded) => excluded.id === item.id)).map((item) => item.id),
       paymentMethodIds: matchedPaymentMethods.filter((item) => !excludedPaymentMethods.some((excluded) => excluded.id === item.id)).map((item) => item.id),
       excludePurposeIds: excludedPurposes.map((item) => item.id),
       excludeExpenseTypeIds: excludedExpenseTypes.map((item) => item.id),

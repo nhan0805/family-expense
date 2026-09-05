@@ -2,6 +2,22 @@
 
 ## 2026-09-06
 
+### Sửa bộ lọc tìm kiếm khi nhãn mục đích và danh mục bị trùng
+
+- Trước thay đổi: Câu `chi tiêu cho du lịch và hiếu hỉ` có thể nhận `Du lịch` đồng thời là mục đích và danh mục, khiến truy vấn áp dụng cả hai điều kiện và chỉ trả về rất ít giao dịch.
+- Sau thay đổi: Bộ phân tích ưu tiên `cho/for` cho mục đích, `danh mục/loại chi phí/category` cho danh mục; khi không có ngữ cảnh thì chỉ chọn một nhóm để không tạo bộ lọc AND ngoài ý muốn. Không đổi schema, API, RLS/RPC hay dữ liệu.
+- Files: `src/lib/quickTransactionSearch.ts`, `src/lib/quickTransactionSearch.test.ts`. Kiểm thử regression bao phủ câu tìm kiếm có nhãn trùng.
+- Kiểm thử: full Vitest đạt 34/34 file, 151/151 test; typecheck, lint, production build và `git diff --check` pass. Build còn cảnh báo chunk ExcelJS lớn hiện hữu.
+- Trạng thái triển khai dự kiến: tạo PR vào `main`, bật auto-merge và chờ CI cùng Cloudflare Pages Git deployment.
+
+### Chỉ hiển thị badge Dự kiến trên giao dịch
+
+- Trước thay đổi: Danh sách hiển thị thêm badge `Thực tế` trên các giao dịch đã thành thực tế, dù trạng thái này đã được thể hiện qua dữ liệu/màu giao diện.
+- Sau thay đổi: Chỉ giao dịch có trạng thái `Dự kiến` hiển thị badge; giao dịch `Thực tế` không hiện badge trạng thái. Badge `Định kỳ`, màu thu/chi và hành vi xác nhận vẫn giữ nguyên.
+- Files: `src/components/TransactionRow.tsx`, `src/components/TransactionRow.test.tsx`. Không đổi schema, API, RLS/RPC hoặc dữ liệu.
+- Kiểm thử: đã bổ sung regression test cho cả giao dịch `Dự kiến` và `Thực tế` trong mobile/desktop.
+- Trạng thái triển khai dự kiến: cùng PR với bản sửa bộ lọc tìm kiếm.
+
 ### Gỡ badge Tiền ra/Tiền vào khỏi danh sách giao dịch
 
 - Trước thay đổi: Mỗi dòng giao dịch hiển thị thêm badge `Tiền ra` hoặc `Tiền vào` dù nền dòng và màu số tiền đã thể hiện loại giao dịch.
