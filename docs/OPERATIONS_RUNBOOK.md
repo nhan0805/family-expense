@@ -5,6 +5,7 @@
 - Chỉ ghi mã lỗi, HTTP status, latency, model và request ID; không ghi email, nội dung giao dịch, prompt, token hoặc response Gemini.
 - Alert ownership: đội vận hành nhận cảnh báo đầu tiên; đội phát triển nhận lỗi ứng dụng; owner dự án quyết định escalation P1.
 - P1 (đăng nhập/ghi dữ liệu lỗi diện rộng): phản hồi 15 phút, cập nhật mỗi 30 phút. P2: phản hồi trong 4 giờ.
+- Client runtime errors dùng `VITE_ERROR_REPORTING_ENDPOINT` tùy chọn; payload chỉ có mã lỗi, route, trạng thái online và thời điểm. Khi endpoint chưa cấu hình, app không gửi telemetry. Trước khi bật production, kiểm tra rate limit, retention và alert routing trên staging.
 
 ## Synthetic smoke test
 
@@ -30,7 +31,7 @@ Target phải là project/database tạm đã áp dụng migrations và có sẵ
 
 ## Retention
 
-Giữ audit/AI usage logs tối đa 90 ngày; dữ liệu giao dịch giữ theo chính sách chủ sở hữu gia đình. Định kỳ xoá log hết hạn bằng job được review và ghi nhận kết quả.
+Giữ audit/AI usage logs tối đa 30 ngày; dữ liệu giao dịch giữ theo chính sách chủ sở hữu gia đình. Định kỳ xoá log hết hạn bằng job được review và ghi nhận kết quả.
 
 ## PWA iOS/offline
 

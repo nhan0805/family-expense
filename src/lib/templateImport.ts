@@ -157,6 +157,8 @@ export async function parseTemplate(
     raw: true,
     defval: '',
   });
+  const dataRowCount = rows.slice(1).filter((values) => values.some((value) => norm(value) !== '')).length;
+  if (dataRowCount > 1000) throw new Error('FILE_ROW_LIMIT_EXCEEDED');
   const header = rows[0] || [];
   const headerIndex = (name: string) => {
     const index = header.findIndex((value) => norm(value) === name);
@@ -184,6 +186,14 @@ export async function parseTemplate(
     items.find(
       (x) => [x.name, x.nameEn].some((candidate) => candidate ? normalizeText(candidate) === normalizeText(name) : false),
     )?.id;
+  const duplicateKey = (date: string, amount: number, description: string) =>
+    `${date}|${amount}|${normalizeText(description)}`;
+  const duplicateKeys = new Set(
+    transactions
+      .filter((transaction) => !transaction.deletedAt)
+      .map((transaction) => duplicateKey(transaction.transactionDate, transaction.amount, transaction.description)),
+  );
+  const fileKeys = new Set<string>();
   rows.slice(1).forEach((values, index) => {
     const n = index + 2;
     if (values.every((v) => norm(v) === '')) return;
@@ -215,14 +225,9 @@ export async function parseTemplate(
       errors.push({ rowNumber: n, messages });
       return;
     }
-    const duplicate = !raw.id && transactions.some(
-      (t) =>
-        !t.deletedAt &&
-        t.transactionDate === raw.date &&
-        t.amount === raw.amount &&
-        t.description.trim().toLocaleLowerCase('vi-VN') ===
-          raw.description.toLocaleLowerCase('vi-VN'),
-    );
+    const key = duplicateKey(raw.date, raw.amount, raw.description);
+    const duplicate = !raw.id && (duplicateKeys.has(key) || fileKeys.has(key));
+    if (!raw.id) fileKeys.add(key);
     valid.push({
       id: raw.id,
       rowNumber: n,

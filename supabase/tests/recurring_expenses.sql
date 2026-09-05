@@ -1,6 +1,6 @@
 -- Structural tests for automatic recurring-expense generation.
 begin;
-select plan(13);
+select plan(19);
 
 select ok(
   exists(select 1 from pg_type where typname = 'transaction_source' and 'recurring' = any(enum_range(null::public.transaction_source)::text[])),
@@ -18,9 +18,14 @@ select ok(
   exists(select 1 from information_schema.columns where table_schema = 'public' and table_name = 'transactions' and column_name = 'recurring_transaction_id'),
   'transactions link to recurring templates'
 );
+select ok(
+  exists(select 1 from information_schema.columns where table_schema = 'public' and table_name = 'recurring_transactions' and column_name = 'deleted_at'),
+  'recurring templates support soft delete'
+);
 select has_function('public', 'recurring_next_date', array['date','text','integer','integer'], 'recurring date helper exists');
 select has_function('public', 'upsert_recurring_transaction', array['uuid','uuid','text','jsonb','text','date','date'], 'recurring upsert is available');
 select has_function('public', 'set_recurring_transaction_active', array['uuid','uuid','boolean'], 'recurring pause function is available');
+select has_function('public', 'delete_recurring_transaction', array['uuid','uuid'], 'recurring delete function is available');
 select has_function('public', 'skip_recurring_occurrence', array['uuid','uuid'], 'recurring skip function is available');
 select has_function('public', 'generate_due_recurring_transactions', array['uuid','date'], 'recurring generation function is available');
 select ok(
@@ -28,8 +33,17 @@ select ok(
   'recurring generation is security definer'
 );
 select ok(
+  exists(select 1 from pg_proc where oid = 'public.delete_recurring_transaction(uuid,uuid)'::regprocedure and prosecdef),
+  'recurring delete is security definer'
+);
+select ok(
   exists(select 1 from pg_policies where schemaname = 'public' and tablename = 'recurring_transactions' and policyname = 'recurring_transactions_select'),
   'recurring templates keep member read access'
+);
+select like(
+  (select pg_get_expr(polqual, polrelid) from pg_policy where polname = 'recurring_transactions_select' and polrelid = 'public.recurring_transactions'::regclass),
+  '%deleted_at IS NULL%',
+  'recurring select policy hides soft-deleted templates'
 );
 select ok(
   exists(select 1 from pg_policies where schemaname = 'public' and tablename = 'recurring_transaction_runs' and policyname = 'recurring_transaction_runs_select'),
@@ -38,6 +52,16 @@ select ok(
 select ok(
   exists(select 1 from cron.job where jobname = 'generate-due-recurring-transactions' and schedule = '5 17 * * *'),
   'daily recurring generation job is scheduled at 00:05 Vietnam time'
+);
+select like(
+  pg_get_functiondef('public.generate_due_recurring_transactions(uuid,date)'::regprocedure),
+  '%r.status = ''skipped''%',
+  'skipped occurrences are checked before generation'
+);
+select like(
+  pg_get_functiondef('public.upsert_recurring_transaction(uuid,uuid,text,jsonb,text,date,date)'::regprocedure),
+  '%previous_next_run_date is distinct from p_next_run_date%',
+  'editing template content preserves the existing calendar anchor'
 );
 
 select * from finish();

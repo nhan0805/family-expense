@@ -153,22 +153,31 @@ export function TransactionForm() {
   const [draftRestored, setDraftRestored] = useState(false);
   const draftCheckedFamilyRef = useRef('');
   useEffect(() => {
-    if (id || !familyId || draftCheckedFamilyRef.current === familyId) return;
-    draftCheckedFamilyRef.current = familyId;
-    const draft = readTransactionDraft(familyId);
+    if (!familyId || (id && !existing)) return;
+    const draftScope = `${familyId}:${id || 'new'}`;
+    if (draftCheckedFamilyRef.current === draftScope) return;
+    draftCheckedFamilyRef.current = draftScope;
+    const draft = readTransactionDraft(familyId, id);
     setDraftRestored(false);
-    if (draft) {
-      reset(draft);
-      setDraftRestored(true);
-    }
-  }, [familyId, id, reset]);
+    if (id && existing) reset(draft ? { ...existing, ...draft } : existing);
+    else if (draft) reset(draft);
+    if (draft) setDraftRestored(true);
+  }, [existing, familyId, id, reset]);
   useEffect(() => {
-    if (id || !familyId || !isDirty) return;
-    saveTransactionDraft(familyId, watchedForm);
-  }, [familyId, id, isDirty, watchedForm]);
+    if (!familyId || !isDirty || (id && !existing)) return;
+    saveTransactionDraft(familyId, watchedForm, id);
+  }, [existing, familyId, id, isDirty, watchedForm]);
+  useEffect(() => {
+    if (!isDirty) return;
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty]);
   useEffect(() => {
     if (existing) {
-      reset(existing);
       const today = new Intl.DateTimeFormat('en-CA', {
         timeZone: 'Asia/Ho_Chi_Minh',
         year: 'numeric',
@@ -196,13 +205,21 @@ export function TransactionForm() {
     });
   }, [id, setValue, transactionDate]);
   useEffect(() => () => speechRecognitionRef.current?.stop(), []);
-  const handleCancel = () => {
-    if (!id && familyId) clearTransactionDraft(familyId);
+  const handleCancel = async () => {
+    if (isDirty && !await askConfirm({
+      title: en ? 'Discard unsaved changes?' : 'Bỏ thay đổi chưa lưu?',
+      description: en ? 'Your changes are saved as a local draft. You can return to this transaction later.' : 'Thay đổi đã được lưu thành bản nháp trên thiết bị. Bạn có thể quay lại giao dịch này sau.',
+      confirmLabel: en ? 'Discard and leave' : 'Bỏ và rời đi',
+      danger: true,
+    })) return;
+    if (familyId) clearTransactionDraft(familyId, id);
     nav(-1);
   };
   const onSubmit = async (data: TransactionInput) => {
     if (isSupabaseConfigured && !online) {
-      setSaveError(en ? 'You are offline. The draft was saved on this device; reconnect and try again.' : 'Đang mất kết nối mạng. Bản nháp đã được lưu trên thiết bị; hãy kết nối lại rồi thử lại.');
+      setSaveError(id
+        ? (en ? 'You are offline. Reconnect before saving your changes.' : 'Đang mất kết nối mạng. Hãy kết nối lại trước khi lưu thay đổi.')
+        : (en ? 'You are offline. The draft was saved on this device; reconnect and try again.' : 'Đang mất kết nối mạng. Bản nháp đã được lưu trên thiết bị; hãy kết nối lại rồi thử lại.'));
       return;
     }
     let duplicateCount = 0;
@@ -278,7 +295,7 @@ export function TransactionForm() {
         queryKey: ['transactions', familyId],
       });
       await queryClient.invalidateQueries({
-        queryKey: ['dashboard', familyId],
+        queryKey: ['dashboard-data', familyId],
       });
       await queryClient.invalidateQueries({
         queryKey: ['transaction-years', familyId],
@@ -293,8 +310,7 @@ export function TransactionForm() {
           : [{ ...data, id: crypto.randomUUID() }, ...items],
       );
     }
-    if (isSupabaseConfigured) clearTransactionDraft(familyId);
-    else if (!id) clearTransactionDraft(familyId);
+    clearTransactionDraft(familyId, id);
     setSaveBusy(false);
     notify(id ? (en ? 'Transaction updated.' : 'Đã cập nhật giao dịch.') : (en ? 'Transaction added.' : 'Đã thêm giao dịch mới.'));
     nav('/giao-dich');
@@ -336,7 +352,7 @@ export function TransactionForm() {
         queryKey: ['transactions', familyId],
       });
       await queryClient.invalidateQueries({
-        queryKey: ['dashboard', familyId],
+        queryKey: ['dashboard-data', familyId],
       });
       await queryClient.invalidateQueries({
         queryKey: ['transaction-years', familyId],

@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FeedbackProvider } from '../components/Feedback';
 import { useApp } from '../context/AppContext';
 import { LanguageProvider } from '../context/LanguageContext';
-import { todayInVietnam } from '../lib/recurringExpense';
+import { todayInVietnam, upsertLocalRecurringExpense } from '../lib/recurringExpense';
 import { RecurringExpenses } from './RecurringExpenses';
 
 vi.mock('../context/AppContext', () => ({ useApp: vi.fn() }));
@@ -78,5 +78,51 @@ describe('Chi phí định kỳ', () => {
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Chi phí định kỳ', level: 2 })).toBeInTheDocument());
     expect(screen.queryByRole('button', { name: 'Thêm khoản định kỳ' })).not.toBeInTheDocument();
     expect(screen.getByText('Chủ gia đình chưa thiết lập khoản chi định kỳ nào.')).toBeInTheDocument();
+  });
+
+  it('không hiển thị nút xóa cho member dù đã có mẫu', async () => {
+    mockedUseApp.mockReturnValue(appState('member'));
+    upsertLocalRecurringExpense('local-family', {
+      name: 'Tiền điện',
+      template: {
+        transactionType: 'Chi tiêu',
+        description: 'Tiền điện',
+        amount: 300000,
+        purposeId: 'p1',
+        expenseTypeId: 'e1',
+        paymentMethodId: 'm1',
+        note: null,
+      },
+      frequency: 'monthly',
+      nextRunDate: '2099-09-05',
+      endDate: null,
+    });
+    renderPage();
+
+    expect(await screen.findByText('Tiền điện')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Xóa' })).not.toBeInTheDocument();
+  });
+
+  it('cho owner xóa mềm mẫu và ẩn khỏi danh sách', async () => {
+    mockedUseApp.mockReturnValue(appState('owner'));
+    renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Thêm khoản định kỳ' }));
+    fireEvent.change(screen.getByLabelText('Tên mẫu'), { target: { value: 'Tiền điện' } });
+    fireEvent.change(screen.getByLabelText('Nội dung giao dịch'), { target: { value: 'Tiền điện' } });
+    fireEvent.change(screen.getByLabelText('Số tiền (VND)'), { target: { value: '300000' } });
+    fireEvent.change(screen.getByLabelText('Mục đích'), { target: { value: 'p1' } });
+    fireEvent.change(screen.getByLabelText('Danh mục'), { target: { value: 'e1' } });
+    fireEvent.change(screen.getByLabelText('Phương thức thanh toán'), { target: { value: 'm1' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu mẫu' }));
+
+    expect(await screen.findByText('Tiền điện')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Xóa' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Xóa mẫu' }));
+
+    await waitFor(() => expect(screen.getByText('Chưa có khoản chi định kỳ')).toBeInTheDocument());
+    const stored = JSON.parse(window.localStorage.getItem('family-expense:recurring-expenses:local-family') || '[]') as Array<{ deletedAt?: string; active?: boolean }>;
+    expect(stored[0]?.deletedAt).toBeTruthy();
+    expect(stored[0]?.active).toBe(false);
   });
 });

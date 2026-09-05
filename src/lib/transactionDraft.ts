@@ -17,23 +17,26 @@ const draftSchema = z.object({
   aiGenerated: z.boolean().optional(),
 });
 
-export const transactionDraftKey = (familyId: string) =>
-  `family-expense:transaction-draft:${familyId}`;
+export const transactionDraftKey = (familyId: string, transactionId?: string) =>
+  transactionId
+    ? `family-expense:transaction-draft:${familyId}:${transactionId}`
+    : `family-expense:transaction-draft:${familyId}`;
 
 export function saveTransactionDraft(
   familyId: string,
   values: Partial<TransactionFormInput>,
+  transactionId?: string,
 ) {
   try {
-    localStorage.setItem(transactionDraftKey(familyId), JSON.stringify(values));
+    localStorage.setItem(transactionDraftKey(familyId, transactionId), JSON.stringify(values));
   } catch {
     // Storage có thể bị khóa ở chế độ riêng tư; không làm hỏng luồng nhập liệu.
   }
 }
 
-export function readTransactionDraft(familyId: string) {
+export function readTransactionDraft(familyId: string, transactionId?: string) {
   try {
-    const raw = localStorage.getItem(transactionDraftKey(familyId));
+    const raw = localStorage.getItem(transactionDraftKey(familyId, transactionId));
     if (!raw) return null;
     const parsed = draftSchema.safeParse(JSON.parse(raw));
     return parsed.success ? parsed.data : null;
@@ -42,9 +45,9 @@ export function readTransactionDraft(familyId: string) {
   }
 }
 
-export function clearTransactionDraft(familyId: string) {
+export function clearTransactionDraft(familyId: string, transactionId?: string) {
   try {
-    localStorage.removeItem(transactionDraftKey(familyId));
+    localStorage.removeItem(transactionDraftKey(familyId, transactionId));
   } catch {
     // Không chặn điều hướng sau khi giao dịch đã lưu thành công.
   }

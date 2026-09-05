@@ -1,6 +1,6 @@
-import { CalendarClock, PauseCircle, Pencil, PlayCircle, Plus, RefreshCw, Repeat2, SkipForward, X } from 'lucide-react';
+import { CalendarClock, PauseCircle, Pencil, PlayCircle, Plus, RefreshCw, Repeat2, SkipForward, Trash2, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { EmptyState, PageSkeleton } from '../components/AsyncStates';
 import { useFeedback } from '../components/Feedback';
 import { useApp } from '../context/AppContext';
@@ -9,16 +9,20 @@ import { getCatalogDisplayName, formatDateOnlyVi, formatVnd } from '../lib/domai
 import { isSupabaseConfigured } from '../lib/supabase';
 import {
   generateDueRecurringTransactions,
+  deleteRecurringExpense,
   fetchRecurringExpenses,
+  fetchRecurringRuns,
   setRecurringExpenseActive,
   skipRecurringOccurrence,
   upsertRecurringExpense,
 } from '../lib/recurringExpensesApi';
 import {
   generateLocalDueTransactions,
+  deleteLocalRecurringExpense,
   getLocalRecurringExpenses,
   recurringExpenseInputSchema,
   recurringFrequencies,
+  recurringForecastDates,
   setLocalRecurringExpenseActive,
   skipLocalRecurringOccurrence,
   todayInVietnam,
@@ -27,6 +31,7 @@ import {
   type RecurringFrequency,
 } from '../lib/recurringExpense';
 import { userFacingError } from '../lib/errorRecovery';
+import { reportClientError } from '../lib/telemetry';
 
 type EditorValues = {
   name: string;
@@ -112,6 +117,7 @@ export function RecurringExpenses() {
         setItems(getLocalRecurringExpenses(familyId));
       }
     } catch (error) {
+      reportClientError(error, 'query');
       setPageError(recurringError(error, en, en ? 'Could not load recurring expenses.' : 'Không thể tải khoản chi định kỳ.'));
     } finally {
       setLoading(false);
@@ -160,7 +166,8 @@ export function RecurringExpenses() {
     if (!isSupabaseConfigured) return;
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ['transactions', familyId] }),
-      queryClient.invalidateQueries({ queryKey: ['dashboard', familyId] }),
+      queryClient.invalidateQueries({ queryKey: ['dashboard-due', familyId] }),
+      queryClient.invalidateQueries({ queryKey: ['dashboard-data', familyId] }),
       queryClient.invalidateQueries({ queryKey: ['budgets', familyId] }),
       queryClient.invalidateQueries({ queryKey: ['transaction-years', familyId] }),
     ]);
@@ -202,6 +209,7 @@ export function RecurringExpenses() {
       closeEditor();
       notify(en ? 'Recurring expense saved.' : 'Đã lưu khoản chi định kỳ.');
     } catch (error) {
+      reportClientError(error, 'mutation');
       setEditorError(recurringError(error, en, en ? 'Could not save the recurring expense.' : 'Không thể lưu khoản chi định kỳ.'));
     } finally {
       setBusyId(null);
@@ -239,9 +247,30 @@ export function RecurringExpenses() {
         ? await skipRecurringOccurrence(familyId, item.id)
         : skipLocalRecurringOccurrence(familyId, item.id);
       setItems((current) => current.map((entry) => entry.id === item.id ? { ...entry, nextRunDate: nextRunDate || entry.nextRunDate, active: nextRunDate ? (entry.endDate ? nextRunDate <= entry.endDate : entry.active) : false, lastErrorCode: null } : entry));
+      await queryClient.invalidateQueries({ queryKey: ['recurring-runs', familyId, item.id] });
       notify(en ? 'The next occurrence was skipped.' : 'Đã bỏ qua kỳ tiếp theo.');
     } catch (error) {
       notify(recurringError(error, en, en ? 'Could not skip the occurrence.' : 'Không thể bỏ qua kỳ.'), 'error');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const deleteItem = async (item: RecurringExpense) => {
+    if (!await askConfirm({
+      title: en ? 'Delete this recurring expense?' : 'Xóa khoản chi định kỳ này?',
+      description: en ? 'The template will be hidden and will no longer create transactions. Existing transactions will be kept.' : 'Mẫu sẽ được ẩn và không tạo giao dịch mới nữa. Các giao dịch đã tạo vẫn được giữ nguyên.',
+      confirmLabel: en ? 'Delete template' : 'Xóa mẫu',
+      danger: true,
+    })) return;
+    setBusyId(item.id);
+    try {
+      if (isSupabaseConfigured) await deleteRecurringExpense(familyId, item.id);
+      else deleteLocalRecurringExpense(familyId, item.id);
+      setItems((current) => current.filter((entry) => entry.id !== item.id));
+      notify(en ? 'Recurring expense deleted.' : 'Đã xóa khoản chi định kỳ.');
+    } catch (error) {
+      notify(recurringError(error, en, en ? 'Could not delete this recurring expense.' : 'Không thể xóa khoản chi định kỳ.'), 'error');
     } finally {
       setBusyId(null);
     }
@@ -262,6 +291,7 @@ export function RecurringExpenses() {
         if (created.length) setTransactions((current) => [...current, ...created]);
       }
       await refreshRelatedQueries();
+      await queryClient.invalidateQueries({ queryKey: ['recurring-runs', familyId] });
       await loadItems();
       notify(count ? (en ? `Created ${count} planned transaction(s).` : `Đã tạo ${count} giao dịch dự kiến.`) : (en ? 'There are no due occurrences.' : 'Không có kỳ nào đến hạn cần tạo.'));
     } catch (error) {
@@ -308,7 +338,7 @@ export function RecurringExpenses() {
 
     <section className="grid grid-cols-2 gap-3 sm:grid-cols-3" aria-label={en ? 'Recurring expense summary' : 'Tóm tắt chi phí định kỳ'}><SummaryCard label={en ? 'Active templates' : 'Mẫu đang hoạt động'} value={activeCount} /><SummaryCard label={en ? 'Due today or earlier' : 'Đã đến hạn'} value={dueCount} /><SummaryCard label={en ? 'All templates' : 'Tổng số mẫu'} value={items.length} /></section>
 
-    {!items.length ? <section className="card"><EmptyState icon={Repeat2} title={en ? 'No recurring expenses yet' : 'Chưa có khoản chi định kỳ'} description={canManage ? (en ? 'Add a template and the app will create planned transactions automatically on due dates.' : 'Thêm một mẫu để ứng dụng tự tạo giao dịch dự kiến khi đến ngày.') : (en ? 'The family owner has not set up any recurring expenses.' : 'Chủ gia đình chưa thiết lập khoản chi định kỳ nào.')} action={canManage ? <button type="button" className="btn-primary inline-flex items-center gap-2" onClick={() => openEditor()}><Plus size={17} />{en ? 'Add the first template' : 'Thêm mẫu đầu tiên'}</button> : undefined} /></section> : <section className="card overflow-hidden"><div className="flex flex-col gap-2 border-b border-black/10 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-white/10"><div><h3 className="text-lg font-extrabold">{en ? 'Recurring templates' : 'Các mẫu định kỳ'}</h3><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{en ? 'Due templates are generated by the daily background job.' : 'Mẫu đến hạn được job nền hằng ngày tự động tạo giao dịch.'}</p></div><span className="ui-chip">VND · {activeCount} {en ? 'active' : 'đang chạy'}</span></div><div className="divide-y divide-black/10 dark:divide-white/10">{items.map((item) => <RecurringRow key={item.id} item={item} en={en} canManage={canManage} busy={busyId === item.id} purposeName={purposeNames.get(item.template.purposeId) || '—'} expenseTypeName={expenseTypeNames.get(item.template.expenseTypeId) || '—'} paymentMethodName={paymentMethodNames.get(item.template.paymentMethodId) || '—'} onEdit={() => openEditor(item)} onToggle={() => void toggleActive(item)} onSkip={() => void skipNext(item)} />)}</div></section>}
+    {!items.length ? <section className="card"><EmptyState icon={Repeat2} title={en ? 'No recurring expenses yet' : 'Chưa có khoản chi định kỳ'} description={canManage ? (en ? 'Add a template and the app will create planned transactions automatically on due dates.' : 'Thêm một mẫu để ứng dụng tự tạo giao dịch dự kiến khi đến ngày.') : (en ? 'The family owner has not set up any recurring expenses.' : 'Chủ gia đình chưa thiết lập khoản chi định kỳ nào.')} action={canManage ? <button type="button" className="btn-primary inline-flex items-center gap-2" onClick={() => openEditor()}><Plus size={17} />{en ? 'Add the first template' : 'Thêm mẫu đầu tiên'}</button> : undefined} /></section> : <section className="card overflow-hidden"><div className="flex flex-col gap-2 border-b border-black/10 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-white/10"><div><h3 className="text-lg font-extrabold">{en ? 'Recurring templates' : 'Các mẫu định kỳ'}</h3><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{en ? 'Due templates are generated by the daily background job.' : 'Mẫu đến hạn được job nền hằng ngày tự động tạo giao dịch.'}</p></div><span className="ui-chip">VND · {activeCount} {en ? 'active' : 'đang chạy'}</span></div><div className="divide-y divide-black/10 dark:divide-white/10">{items.map((item) => <RecurringRow key={item.id} item={item} familyId={familyId} en={en} canManage={canManage} busy={busyId === item.id} purposeName={purposeNames.get(item.template.purposeId) || '—'} expenseTypeName={expenseTypeNames.get(item.template.expenseTypeId) || '—'} paymentMethodName={paymentMethodNames.get(item.template.paymentMethodId) || '—'} onEdit={() => openEditor(item)} onToggle={() => void toggleActive(item)} onSkip={() => void skipNext(item)} onDelete={() => void deleteItem(item)} />)}</div></section>}
   </div>;
 }
 
@@ -316,12 +346,25 @@ function SummaryCard({ label, value }: { label: string; value: number }) {
   return <div className="card p-4"><p className="text-xs font-semibold text-gray-500 dark:text-gray-400">{label}</p><p className="mt-2 text-2xl font-extrabold">{value}</p></div>;
 }
 
-function RecurringRow({ item, en, canManage, busy, purposeName, expenseTypeName, paymentMethodName, onEdit, onToggle, onSkip }: { item: RecurringExpense; en: boolean; canManage: boolean; busy: boolean; purposeName: string; expenseTypeName: string; paymentMethodName: string; onEdit: () => void; onToggle: () => void; onSkip: () => void }) {
+function RecurringRow({ item, familyId, en, canManage, busy, purposeName, expenseTypeName, paymentMethodName, onEdit, onToggle, onSkip, onDelete }: { item: RecurringExpense; familyId: string; en: boolean; canManage: boolean; busy: boolean; purposeName: string; expenseTypeName: string; paymentMethodName: string; onEdit: () => void; onToggle: () => void; onSkip: () => void; onDelete: () => void }) {
   const due = item.active && item.nextRunDate <= todayInVietnam();
+  const forecastDates = recurringForecastDates(item.nextRunDate, item.frequency, item.anchorDay, item.anchorMonth, item.endDate, 4);
+  const [showHistory, setShowHistory] = useState(false);
+  const historyQuery = useQuery({
+    queryKey: ['recurring-runs', familyId, item.id],
+    queryFn: () => fetchRecurringRuns(familyId, item.id),
+    enabled: showHistory && isSupabaseConfigured,
+    staleTime: 30_000,
+    retry: 1,
+  });
+  const history = historyQuery.data || [];
   return <article className={`p-4 sm:p-5 ${!item.active ? 'opacity-70' : ''}`}>
     <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-      <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h4 className="text-base font-extrabold">{item.name}</h4><span className={`ui-chip ${item.active ? '' : 'opacity-70'}`}>{item.active ? (en ? 'Active' : 'Đang chạy') : (en ? 'Paused' : 'Tạm dừng')}</span>{due && <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-800 dark:border-[#f1fa8c66] dark:bg-[#f1fa8c1f] dark:text-[#f1fa8c]">{en ? 'Due' : 'Đến hạn'}</span>}</div><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{item.template.description} · <strong className="text-gray-800 dark:text-gray-100">{formatVnd(item.template.amount)}</strong></p><div className="mt-3 flex flex-wrap gap-1.5 text-xs text-gray-600 dark:text-gray-300"><span className="ui-chip">{frequencyLabel(item.frequency, en)}</span><span className="ui-chip">{purposeName}</span><span className="ui-chip">{expenseTypeName}</span><span className="ui-chip">{paymentMethodName}</span></div><p className="mt-3 flex flex-wrap items-center gap-2 text-sm"><CalendarClock size={16} aria-hidden="true" /><span>{en ? 'Next:' : 'Kỳ tiếp theo:'} <strong>{formatDateOnlyVi(item.nextRunDate)}</strong></span>{item.endDate && <span className="text-gray-500 dark:text-gray-400">· {en ? `Until ${formatDateOnlyVi(item.endDate)}` : `Đến ${formatDateOnlyVi(item.endDate)}`}</span>}</p>{item.lastErrorCode && <p role="alert" className="mt-2 text-sm text-red-600 dark:text-red-300">{en ? 'The last automatic generation failed. Review the template and retry.' : 'Lần tự tạo gần nhất bị lỗi. Hãy kiểm tra mẫu và thử lại.'}</p>}</div>
-      {canManage && <div className="flex flex-wrap gap-2 lg:max-w-xs lg:justify-end"><button type="button" className="btn-secondary inline-flex items-center gap-1.5 text-sm" disabled={busy} onClick={onEdit}><Pencil size={16} aria-hidden="true" />{en ? 'Edit' : 'Sửa'}</button><button type="button" className="btn-secondary inline-flex items-center gap-1.5 text-sm" disabled={busy || !item.active} onClick={onSkip}><SkipForward size={16} aria-hidden="true" />{en ? 'Skip' : 'Bỏ qua'}</button><button type="button" className="btn-secondary inline-flex items-center gap-1.5 text-sm" disabled={busy} onClick={onToggle}>{item.active ? <PauseCircle size={16} aria-hidden="true" /> : <PlayCircle size={16} aria-hidden="true" />}{item.active ? (en ? 'Pause' : 'Tạm dừng') : (en ? 'Resume' : 'Tiếp tục')}</button></div>}
+      <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h4 className="text-base font-extrabold">{item.name}</h4><span className={`ui-chip ${item.active ? '' : 'opacity-70'}`}>{item.active ? (en ? 'Active' : 'Đang chạy') : (en ? 'Paused' : 'Tạm dừng')}</span>{due && <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-800 dark:border-[#f1fa8c66] dark:bg-[#f1fa8c1f] dark:text-[#f1fa8c]">{en ? 'Due' : 'Đến hạn'}</span>}</div><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{item.template.description} · <strong className="text-gray-800 dark:text-gray-100">{formatVnd(item.template.amount)}</strong></p><div className="mt-3 flex flex-wrap gap-1.5 text-xs text-gray-600 dark:text-gray-300"><span className="ui-chip">{frequencyLabel(item.frequency, en)}</span><span className="ui-chip">{purposeName}</span><span className="ui-chip">{expenseTypeName}</span><span className="ui-chip">{paymentMethodName}</span></div><p className="mt-3 flex flex-wrap items-center gap-2 text-sm"><CalendarClock size={16} aria-hidden="true" /><span>{en ? 'Next:' : 'Kỳ tiếp theo:'} <strong>{formatDateOnlyVi(item.nextRunDate)}</strong></span>{item.endDate && <span className="text-gray-500 dark:text-gray-400">· {en ? `Until ${formatDateOnlyVi(item.endDate)}` : `Đến ${formatDateOnlyVi(item.endDate)}`}</span>}</p>{forecastDates.length > 1 && <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300"><span className="font-semibold">{en ? 'Coming next:' : 'Các kỳ tiếp:'}</span>{forecastDates.slice(1).map((date) => <span key={date} className="ui-chip">{formatDateOnlyVi(date)}</span>)}</div>}{item.lastErrorCode && <p role="alert" className="mt-2 text-sm text-red-600 dark:text-red-300">{en ? 'The last automatic generation failed. Review the template and retry.' : 'Lần tự tạo gần nhất bị lỗi. Hãy kiểm tra mẫu và thử lại.'}</p>}</div>
+      <div className="flex flex-wrap gap-2 lg:max-w-xs lg:justify-end"><button type="button" className="btn-secondary inline-flex items-center gap-1.5 text-sm" aria-expanded={showHistory} onClick={() => setShowHistory((value) => !value)}><CalendarClock size={16} aria-hidden="true" />{showHistory ? (en ? 'Hide history' : 'Ẩn lịch sử') : (en ? 'Run history' : 'Lịch sử kỳ chạy')}</button>{canManage && <><button type="button" className="btn-secondary inline-flex items-center gap-1.5 text-sm" disabled={busy} onClick={onEdit}><Pencil size={16} aria-hidden="true" />{en ? 'Edit' : 'Sửa'}</button><button type="button" className="btn-secondary inline-flex items-center gap-1.5 text-sm" disabled={busy || !item.active} onClick={onSkip}><SkipForward size={16} aria-hidden="true" />{en ? 'Skip' : 'Bỏ qua'}</button><button type="button" className="btn-secondary inline-flex items-center gap-1.5 text-sm" disabled={busy} onClick={onToggle}>{item.active ? <PauseCircle size={16} aria-hidden="true" /> : <PlayCircle size={16} aria-hidden="true" />}{item.active ? (en ? 'Pause' : 'Tạm dừng') : (en ? 'Resume' : 'Tiếp tục')}</button><button type="button" className="btn-secondary inline-flex items-center gap-1.5 text-sm text-red-700 dark:text-red-300" disabled={busy} onClick={onDelete}><Trash2 size={16} aria-hidden="true" />{en ? 'Delete' : 'Xóa'}</button></>}</div>
     </div>
+    {showHistory && <div className="mt-4 rounded-2xl border border-black/10 bg-black/[.02] p-3 text-sm dark:border-white/10 dark:bg-white/[.03]" aria-live="polite">
+      {!isSupabaseConfigured ? <p className="text-gray-500 dark:text-gray-400">{en ? 'Run history is available after connecting Supabase.' : 'Lịch sử kỳ chạy sẽ có khi kết nối Supabase.'}</p> : historyQuery.isPending ? <p className="text-gray-500 dark:text-gray-400">{en ? 'Loading run history…' : 'Đang tải lịch sử kỳ chạy…'}</p> : historyQuery.isError ? <div role="alert" className="text-red-700 dark:text-red-300"><p>{en ? 'Could not load run history.' : 'Không thể tải lịch sử kỳ chạy.'}</p><button type="button" className="btn-secondary mt-2" onClick={() => void historyQuery.refetch()}>{en ? 'Try again' : 'Thử lại'}</button></div> : history.length ? <ul className="grid gap-2 sm:grid-cols-2">{history.map((run) => <li key={run.id} className="flex items-center justify-between gap-3 rounded-xl bg-white p-2.5 dark:bg-[#282a36]"><span><strong>{formatDateOnlyVi(run.occurrenceDate)}</strong><span className="ml-2 text-xs text-gray-500 dark:text-gray-400">{formatDateOnlyVi(run.performedAt.slice(0, 10))}</span></span><span className={`ui-chip ${run.status === 'generated' ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-800 dark:text-amber-200'}`}>{run.status === 'generated' ? (en ? 'Generated' : 'Đã tạo') : (en ? 'Skipped' : 'Đã bỏ qua')}</span></li>)}</ul> : <p className="text-gray-500 dark:text-gray-400">{en ? 'No run history yet.' : 'Chưa có lịch sử kỳ chạy.'}</p>}
+    </div>}
   </article>;
 }

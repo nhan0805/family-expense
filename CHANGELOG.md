@@ -2,14 +2,31 @@
 
 ## 2026-09-05
 
+### Bổ sung xóa mềm mẫu chi phí định kỳ
+
+- Trước thay đổi: Trang Chi phí định kỳ chưa có thao tác xóa; mẫu không thể được dừng vĩnh viễn khỏi danh sách bằng một luồng có xác nhận.
+- Sau thay đổi: Owner có nút `Xóa` với hộp thoại xác nhận. Mẫu được xóa mềm, ẩn khỏi danh sách và không tạo giao dịch mới; các giao dịch đã tạo và lịch sử kỳ chạy vẫn được giữ nguyên. Member không thấy thao tác thay đổi.
+- Kỹ thuật: thêm `deleted_at`/`deleted_by`, RPC owner-only `delete_recurring_transaction`, chặn resume mẫu đã xóa, lọc mẫu đã xóa ở API/localStorage và cập nhật test pgTAP/Vitest.
+- Files/DB object: `src/pages/RecurringExpenses.tsx`, `src/lib/recurringExpense.ts`, `src/lib/recurringExpensesApi.ts`, `src/lib/recurringExpense.test.ts`, `src/pages/RecurringExpenses.test.tsx`, `supabase/migrations/202609050004_recurring_delete.sql`, `supabase/tests/recurring_expenses.sql`.
+- Kiểm thử: Vitest đạt 34/34 file, 146/146 test; `tsc -b`, ESLint, production build và `git diff --check` pass. E2E smoke Chromium chạy được nhưng skip 2 test cloud vì thiếu `E2E_EMAIL/E2E_PASSWORD` trong local. Build còn cảnh báo chunk ExcelJS lớn hiện hữu. `supabase test db --local` chưa chạy được vì PostgreSQL local tại `127.0.0.1:54322` chưa hoạt động.
+- Trạng thái triển khai thực tế: Chưa deploy production; đã sẵn sàng commit/push, tạo PR và chờ required checks cùng Supabase/Cloudflare Git integration.
+
+### Triển khai các đợt Phase 0–4: ổn định, UI, hiệu năng và vận hành
+
+- Trước thay đổi: một số mutation vẫn invalidates sai key Dashboard; lỗi tải Dashboard có thể hiển thị KPI bằng 0; draft chỉnh sửa dùng chung với draft tạo mới; giao dịch định kỳ chưa có lịch sử xem lại và kỳ đã bỏ qua cần hardening chống tạo lại. Import kiểm tra trùng theo từng dòng, danh sách file chưa có giới hạn rõ ràng, biểu đồ `Khác` chưa drill-down được bằng bàn phím.
+- Sau thay đổi: thống nhất key `dashboard-data`, hiển thị retry và giữ dữ liệu cũ khi tải lại lỗi, draft theo từng giao dịch có cảnh báo rời trang, badge `Dự kiến/Thực tế` trên mobile/desktop, drill-down nhóm `Khác`, URL filter được giữ khi quay lại danh sách, import giới hạn 10 MB/1.000 dòng và kiểm tra trùng bằng Set. Trang định kỳ có dự báo các kỳ sắp tới và lịch sử kỳ chạy; migration hardening giữ anchor khi sửa mẫu và không tái tạo occurrence đã bỏ qua.
+- Hiệu năng/vận hành: Dashboard chỉ lấy các cột cần thiết và gom dữ liệu theo một lượt; thêm tài liệu đo baseline `docs/PERFORMANCE_BASELINE.md`, telemetry tùy chọn qua `VITE_ERROR_REPORTING_ENDPOINT` không gửi nội dung nhạy cảm, E2E demo luôn chạy trong CI, cùng hai assertion pgTAP cho recurring hardening. Runbook cập nhật retention log tối đa 30 ngày.
+- Files/DB objects: `src/pages/Dashboard.tsx`, `src/pages/Transactions.tsx`, `src/pages/TransactionForm.tsx`, `src/pages/RecurringExpenses.tsx`, `src/lib/transactionsApi.ts`, `src/lib/templateImport.ts`, `src/lib/templateImport.test.ts`, `src/lib/transactionDraft.ts`, `src/lib/recurringExpense.ts`, `src/lib/recurringExpensesApi.ts`, `src/lib/telemetry.ts`, `src/lib/telemetry.test.ts`, `src/components/Feedback.tsx`, `src/components/Layout.tsx`, `src/components/TransactionRow.tsx`, `src/main.tsx`, `.github/workflows/ci.yml`, `supabase/migrations/202609050003_recurring_hardening.sql`, `supabase/migrations/202609050004_recurring_delete.sql`, `supabase/tests/recurring_expenses.sql`, `docs/PERFORMANCE_BASELINE.md`, `docs/OPERATIONS_RUNBOOK.md`.
+- Kiểm thử: Vitest đạt 34/34 file, 146/146 test; typecheck, lint, production build và `git diff --check` pass. E2E Chromium khởi động được nhưng skip 2 test cloud vì local không có `E2E_EMAIL/E2E_PASSWORD`; pgTAP local chưa chạy vì PostgreSQL tại `127.0.0.1:54322` chưa hoạt động. Build còn cảnh báo chunk ExcelJS lớn hiện hữu.
+- Trạng thái triển khai dự kiến: Đã hợp nhất cập nhật mới nhất từ `main`, sẵn sàng push, mở PR vào `main`, bật auto-merge và chờ required checks cùng Supabase/Cloudflare Git integration; chưa deploy production hoặc chạy migration production.
+
 ### Hỗ trợ AI tìm kiếm giao dịch theo điều kiện loại trừ
 
 - Trước thay đổi: AI search chỉ biểu diễn được các điều kiện bao gồm; câu như “tất cả chi tiêu trừ khoản đầu tư” không có bộ lọc `NOT IN` nên có thể trả sai hoặc không trả kết quả.
 - Sau thay đổi: AI nhận diện các từ “trừ”, “ngoại trừ”, “không gồm”, “bỏ qua”, “không tính” và trả về bộ lọc loại trừ theo mục đích, danh mục hoặc phương thức thanh toán. Mảng bao gồm rỗng tiếp tục có nghĩa là lấy tất cả.
 - Kỹ thuật: mở rộng `src/lib/ai.ts`, `src/lib/quickTransactionSearch.ts`, Edge Function `search-transactions`, state/UI trang `Transactions`; thêm `list_family_transactions_v2` và `list_deleted_transactions_v2` trong migration `supabase/migrations/202609050002_transaction_search_exclusions.sql`. RPC cũ được giữ nguyên để tương thích.
-- Giao diện hiển thị chip `Trừ mục đích/danh mục/phương thức` và thêm bộ lọc chi tiết tương ứng; demo fallback cũng áp dụng đúng phép loại trừ.
-- Kiểm thử: full Vitest, typecheck, lint, production build và `git diff --check` pass; pgTAP sẽ xác nhận signature RPC trên CI.
-- Trạng thái triển khai dự kiến: Tạo PR vào `main`, bật auto-merge, chờ Supabase Production Deploy và Cloudflare Pages Git deployment. Không dùng Wrangler deploy trực tiếp.
+- Kiểm thử: full Vitest 33/33 file, 137/137 test; typecheck, lint, production build, `git diff --check` và CI `db-security` pass. Supabase Production Deploy [run 33962996428](https://github.com/nhan0805/family-expense/actions/runs/33962996428) pass; Cloudflare Pages [check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/67960011-9d47-4090-86f6-e47a9eec2eb4) pass; production smoke test HTTP 200.
+- Trạng thái triển khai thực tế: PR [#128](https://github.com/nhan0805/family-expense/pull/128) đã merge vào `main` với merge commit `af1cc76ac4eb70df5500b65c4d978f908569e031`; migration và Edge Function đã deploy production qua Git integration. Không dùng Wrangler deploy trực tiếp.
 
 ### Tự động tạo giao dịch chi phí định kỳ khi đến hạn
 
@@ -18,7 +35,7 @@
 - Kỹ thuật: thêm migration `supabase/migrations/202609050001_recurring_expenses.sql` với `transaction_source=recurring`, liên kết `transactions.recurring_transaction_id`, bảng `recurring_transaction_runs`, RPC validation/RLS/idempotency và job `pg_cron`; thêm `src/lib/recurringExpense.ts`, `src/lib/recurringExpensesApi.ts`, `src/pages/RecurringExpenses.tsx`, route/navigation, badge giao dịch định kỳ và bản dịch VI/EN.
 - Fallback demo lưu mẫu ở localStorage và tự tạo giao dịch dự kiến khi mở màn hình; không thêm dependency và không tự động ghi dữ liệu cloud khi chưa có migration.
 - Kiểm thử: `tsc -b`, ESLint, full Vitest đạt 33/33 file, 134/134 test, production build và `git diff --check` pass. `supabase test db --local` chưa chạy được vì PostgreSQL local tại `127.0.0.1:54322` chưa hoạt động.
-- Trạng thái triển khai dự kiến: Chưa deploy production; cần PR, required checks/db-security, Supabase Production Deploy rồi Cloudflare Pages Git deployment. Không dùng Wrangler deploy trực tiếp.
+- Trạng thái triển khai thực tế: PR [#125](https://github.com/nhan0805/family-expense/pull/125) đã merge với commit `827626d752285dd52b8a27c2fe4a628b61fded52`; migration recurring đã apply production. PR [#126](https://github.com/nhan0805/family-expense/pull/126) đã merge với commit `8165d040062a40cf40c4303576eb7e13825c9aa1` để làm cleanup idempotent. Supabase Production Deploy [run 33942519577](https://github.com/nhan0805/family-expense/actions/runs/33942519577) và Cloudflare Pages [deployment check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/69d94d69-b1cd-419d-bdf3-2ddd4a50e4e8) đều pass; smoke test production trả HTTP 200 lúc `05/09/2026 10:43` (`Asia/Ho_Chi_Minh`). Không dùng Wrangler deploy trực tiếp.
 
 ### Làm idempotent bước dọn Edge Function khi deploy
 
@@ -26,7 +43,7 @@
 - Sau thay đổi: Workflow chỉ bỏ qua đúng lỗi “function không tồn tại”, nhưng vẫn fail với các lỗi xóa khác để lần chạy sau có thể hoàn tất an toàn.
 - Files: `.github/workflows/supabase-deploy.yml`; không đổi schema hoặc dữ liệu ứng dụng.
 - Kiểm thử: kiểm tra YAML/script bằng CI; cần rerun `db-security`, Supabase Production Deploy và Cloudflare Pages sau khi merge.
-- Trạng thái triển khai dự kiến: Chờ PR sửa workflow và rerun production deployment; migration recurring đã apply thành công trong lần chạy trước.
+- Trạng thái triển khai thực tế: PR [#126](https://github.com/nhan0805/family-expense/pull/126) đã merge; Supabase Production Deploy [run 33942519577](https://github.com/nhan0805/family-expense/actions/runs/33942519577) pass sau khi rerun, gồm cleanup hai Edge Function semantic cũ.
 
 ## 2026-09-04
 

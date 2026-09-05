@@ -1,6 +1,6 @@
 import { BookOpen, House, LogOut, Menu, MoreHorizontal, PiggyBank, Plus, Repeat2, Tags, UserRound, UsersRound, WalletCards, WifiOff, X } from 'lucide-react';
 import { Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { PageSkeleton } from './AsyncStates';
@@ -15,6 +15,8 @@ export function Layout() {
   const [open, setOpen] = useState(false);
   const [menuMounted, setMenuMounted] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const menuTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const drawerRef = useRef<HTMLElement | null>(null);
   const { familyId, familyName, currentUserEmail, currentUserDisplayName, loading, authenticated, error, online, reloadApp } = useApp();
   const { t, language } = useLanguage();
   const en = language === 'en';
@@ -31,6 +33,25 @@ export function Layout() {
     if (!menuMounted) return;
     const timeout = window.setTimeout(() => setMenuMounted(false), 180);
     return () => window.clearTimeout(timeout);
+  }, [menuMounted, open]);
+  useEffect(() => {
+    if (!open) {
+      if (menuMounted) menuTriggerRef.current?.focus();
+      return;
+    }
+    const focusTimer = window.setTimeout(() => drawerRef.current?.querySelector<HTMLElement>('button, a')?.focus(), 0);
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') { event.preventDefault(); setOpen(false); return; }
+      if (event.key !== 'Tab' || !drawerRef.current) return;
+      const focusable = Array.from(drawerRef.current.querySelectorAll<HTMLElement>('button, a, input, select, textarea, [tabindex]:not([tabindex="-1"])')).filter((element) => !element.hasAttribute('disabled'));
+      if (!focusable.length) return;
+      const first = focusable[0]!;
+      const last = focusable[focusable.length - 1]!;
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    };
+    document.addEventListener('keydown', closeOnEscape);
+    return () => { window.clearTimeout(focusTimer); document.removeEventListener('keydown', closeOnEscape); };
   }, [menuMounted, open]);
 
   if (!loading && !authenticated) return <Navigate to="/dang-nhap" replace state={{ from: pathname }} />;
@@ -63,14 +84,14 @@ export function Layout() {
           <BudgetNotifications />
           <NavLink to="/thanh-vien" className="hidden max-w-64 items-center gap-2 rounded-xl px-3 py-2 text-sm text-gray-600 hover:bg-black/5 dark:text-gray-300 dark:hover:bg-white/5 md:flex" aria-label={en ? `Open members for ${userDisplayName}` : `Mở màn hình thành viên của ${userDisplayName}`} title={en ? 'Open members' : 'Mở màn hình thành viên'}><UserRound size={17} aria-hidden="true" /><span className="truncate">{userDisplayName}</span></NavLink>
           <button className="hidden items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold hover:bg-black/5 dark:hover:bg-white/5 md:flex" disabled={signingOut} onClick={signOut}><LogOut size={18}/>{signingOut ? t('loggingOut') : t('logout')}</button>
-          <button className="icon-button md:hidden" aria-label={en ? 'Open menu' : 'Mở trình đơn'} onClick={() => setOpen(true)}><Menu /></button>
+          <button ref={menuTriggerRef} className="icon-button md:hidden" aria-label={en ? 'Open menu' : 'Mở trình đơn'} onClick={() => setOpen(true)}><Menu /></button>
         </div>
       </div>
     </header>
     {!online && <div role="status" aria-live="polite" className="flex items-center justify-center gap-2 bg-amber-100 px-3 py-2 text-sm text-amber-900 dark:bg-amber-950/50 dark:text-amber-100"><WifiOff size={16} />{t('offline')}</div>}
     <div className="mx-auto flex max-w-7xl">
       {menuMounted && <button type="button" className={`app-scrim md:hidden ${open ? 'ui-overlay-enter' : 'ui-overlay-exit'}`} aria-label={en ? 'Close menu overlay' : 'Đóng lớp trình đơn'} onClick={() => setOpen(false)} />}
-      <aside className={`app-sidebar ${open ? 'app-sidebar-open ui-drawer-enter fixed inset-y-0 left-0 z-50 flex' : menuMounted ? 'ui-drawer-exit fixed inset-y-0 left-0 z-50 flex' : 'hidden'} w-72 flex-col border-r p-4 md:sticky md:top-[68px] md:flex md:h-[calc(100vh-68px)] md:w-64`}>
+      <aside ref={drawerRef} className={`app-sidebar ${open ? 'app-sidebar-open ui-drawer-enter fixed inset-y-0 left-0 z-50 flex' : menuMounted ? 'ui-drawer-exit fixed inset-y-0 left-0 z-50 flex' : 'hidden'} w-72 flex-col border-r p-4 md:sticky md:top-[68px] md:flex md:h-[calc(100vh-68px)] md:w-64`}>
         <div className="mb-3 flex items-center justify-between md:hidden">
           <p className="text-xs font-bold uppercase tracking-[.12em] text-gray-500 dark:text-gray-400">{en ? 'Menu' : 'Trình đơn'}</p>
           <button className="icon-button" aria-label={en ? 'Close menu' : 'Đóng trình đơn'} onClick={() => setOpen(false)}><X /></button>
