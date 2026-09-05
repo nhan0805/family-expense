@@ -20,7 +20,7 @@
 - Khôi phục không xóa các giao dịch đã phát sinh; nếu xóa vĩnh viễn thì chỉ mẫu và `recurring_transaction_runs` bị xóa, còn `transactions` giữ nguyên và tự bỏ liên kết template qua khóa ngoại `on delete set null`.
 - Migration mới `supabase/migrations/202609050005_recurring_restore_hard_delete.sql` thêm `deleted_active_before`, cập nhật RLS select cho owner xem thùng rác và thêm hai RPC security-definer có scope `family_id`. Local fallback giữ cùng hành vi trong localStorage.
 - Cụm nút trong mỗi dòng chuyển sang lưới đồng kích thước; hai nút `Tạo giao dịch đến hạn`/`Thêm khoản định kỳ` dùng cùng chiều rộng và căn giữa, responsive trên mobile.
-- Validation hiện tại: recurring Vitest 15/15; typecheck và lint các file thay đổi pass. Chưa deploy migration mới; PR/CI và production deployment cần được cập nhật sau khi merge.
+- Validation/deployment: recurring Vitest 15/15; full Vitest 34/34 file, 149/149 test; typecheck, lint, production build và `git diff --check` pass. CI main [run 33979156739](https://github.com/nhan0805/family-expense/actions/runs/33979156739) pass với quality, E2E và db-security. PR [#132](https://github.com/nhan0805/family-expense/pull/132) đã merge với commit `b67c447780aaac70bf3fe0c646fc6a657c854b68`; Supabase Production Deploy [run 33979156700](https://github.com/nhan0805/family-expense/actions/runs/33979156700) pass và đã apply migration `202609050005_recurring_restore_hard_delete.sql`; Cloudflare Pages production check [pass](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/b0acdfdf-40e9-4450-8635-1974222bddf7); production `https://family-expense-8fo.pages.dev/` smoke HTTP 200. Không dùng Wrangler deploy trực tiếp.
 
 ### Handoff — bổ sung xóa mềm mẫu chi phí định kỳ (05/09/2026)
 
