@@ -2,6 +2,15 @@
 
 ## 2026-09-05
 
+### Hỗ trợ AI tìm kiếm giao dịch theo điều kiện loại trừ
+
+- Trước thay đổi: AI search chỉ biểu diễn được các điều kiện bao gồm; câu như “tất cả chi tiêu trừ khoản đầu tư” không có bộ lọc `NOT IN` nên có thể trả sai hoặc không trả kết quả.
+- Sau thay đổi: AI nhận diện các từ “trừ”, “ngoại trừ”, “không gồm”, “bỏ qua”, “không tính” và trả về bộ lọc loại trừ theo mục đích, danh mục hoặc phương thức thanh toán. Mảng bao gồm rỗng tiếp tục có nghĩa là lấy tất cả.
+- Kỹ thuật: mở rộng `src/lib/ai.ts`, `src/lib/quickTransactionSearch.ts`, Edge Function `search-transactions`, state/UI trang `Transactions`; thêm `list_family_transactions_v2` và `list_deleted_transactions_v2` trong migration `supabase/migrations/202609050002_transaction_search_exclusions.sql`. RPC cũ được giữ nguyên để tương thích.
+- Giao diện hiển thị chip `Trừ mục đích/danh mục/phương thức` và thêm bộ lọc chi tiết tương ứng; demo fallback cũng áp dụng đúng phép loại trừ.
+- Kiểm thử: full Vitest, typecheck, lint, production build và `git diff --check` pass; pgTAP sẽ xác nhận signature RPC trên CI.
+- Trạng thái triển khai dự kiến: Tạo PR vào `main`, bật auto-merge, chờ Supabase Production Deploy và Cloudflare Pages Git deployment. Không dùng Wrangler deploy trực tiếp.
+
 ### Tự động tạo giao dịch chi phí định kỳ khi đến hạn
 
 - Trước thay đổi: `recurring_transactions` mới chỉ là bảng nền; chưa có form quản lý, lịch sử kỳ chạy, cơ chế tự tạo giao dịch hoặc chống trùng.
