@@ -22,6 +22,13 @@
 - Validation local: full Vitest đạt 34/34 file, 149/149 test; typecheck, lint, production build và `git diff --check` pass. Build còn cảnh báo chunk ExcelJS lớn hiện hữu.
 - Trạng thái triển khai: đã sẵn sàng tạo PR vào `main`, bật auto-merge và chờ Cloudflare Pages Git deployment.
 
+### Handoff — thu gọn thanh chọn kỳ ngân sách (06/09/2026)
+
+- Trang `/ngan-sach`: tháng đang xem và ghi chú chi tiêu thực tế xếp thành hai dòng cạnh biểu tượng lịch; căn giữa với hai ô chọn tháng/năm, giảm khoảng đệm trên desktop, xếp thành hai hàng trên mobile. Giữ tên truy cập và vùng bấm tối thiểu 44px cho select.
+- Phạm vi: `src/pages/Budgets.tsx` và tài liệu release; không đổi nghiệp vụ, API, schema hoặc dữ liệu. Các thay đổi trang Chi phí định kỳ đang làm song song không nằm trong đợt triển khai này.
+- Validation: full Vitest đạt 34 file/149 test, lint không có warning, typecheck, production build và `git diff --check` pass trên nhánh tách riêng từ `main`; dùng binary local và Vite `envDir: false` để không nạp cấu hình môi trường. Build còn cảnh báo chunk ExcelJS lớn hiện hữu. Kiểm tra trực quan demo local ở 320/390/640/1280px, tiếng Việt/Anh và sáng/tối đạt; CI chạy thêm coverage, E2E và db-security trước merge.
+- Triển khai dự kiến: nhánh `codex/budget-period-layout-20260905`, base `b67c447`; PR vào `main`, bật auto-merge sau required checks rồi xác minh Cloudflare Pages production trên merge commit. Chưa có số PR/deployment khi chuẩn bị commit; không cần migration/Edge Function.
+
 ### Handoff — khôi phục, xóa vĩnh viễn và bố cục mẫu định kỳ (05/09/2026)
 
 - Owner có thể mở khu vực `Mẫu định kỳ đã xóa`, khôi phục mẫu về trạng thái active/paused trước khi xóa hoặc xóa vĩnh viễn sau hộp thoại xác nhận. Member không thấy khu vực và các nút quản trị.

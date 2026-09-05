@@ -269,12 +269,30 @@ export function Budgets() {
       </div>
     </header>
 
-    <section className="card dashboard-controls space-y-3 p-4 sm:p-5" aria-label={en ? 'Budget period controls' : 'Bộ lọc kỳ ngân sách'}>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="flex min-w-0 items-center gap-2 text-sm text-gray-500 dark:text-gray-400"><CalendarDays size={17} aria-hidden="true" /><span className="font-semibold text-gray-800 dark:text-gray-100">{monthLabel}</span><span aria-hidden="true">·</span><span>{en ? 'Actual expenses only' : 'Chỉ tính chi tiêu thực tế'}</span></div>
-        <div className="grid grid-cols-2 gap-2 sm:flex">
-          <label className="min-w-0"><span className="label">{en ? 'Month' : 'Tháng'}</span><select className="field px-2 sm:min-w-32" aria-label={en ? 'Budget month' : 'Tháng ngân sách'} value={String(selectedMonth)} onChange={(event) => setSelectedMonth(Number(event.target.value))}>{Array.from({ length: 12 }, (_, index) => <option key={index + 1} value={index + 1}>{en ? new Intl.DateTimeFormat('en-US', { month: 'long' }).format(new Date(Date.UTC(2020, index, 1))) : `Tháng ${index + 1}`}</option>)}</select></label>
-          <label className="min-w-0"><span className="label">{en ? 'Year' : 'Năm'}</span><select className="field px-2 sm:min-w-28" aria-label={en ? 'Budget year' : 'Năm ngân sách'} value={String(selectedYear)} onChange={(event) => setSelectedYear(Number(event.target.value))}>{yearOptions.map((year) => <option key={year} value={year}>{year}</option>)}</select></label>
+    <section className="card dashboard-controls p-4 sm:py-3" aria-label={en ? 'Budget period controls' : 'Bộ lọc kỳ ngân sách'}>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 dark:bg-[#bd93f91f] dark:text-[#bd93f9]">
+            <CalendarDays size={20} aria-hidden="true" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-bold text-gray-800 first-letter:uppercase dark:text-gray-100">{monthLabel}</p>
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{en ? 'Actual expenses only' : 'Chỉ tính chi tiêu thực tế'}</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] gap-2 sm:w-72 sm:shrink-0">
+          <label className="min-w-0">
+            <span className="sr-only">{en ? 'Month' : 'Tháng'}</span>
+            <select className="field" aria-label={en ? 'Budget month' : 'Tháng ngân sách'} value={String(selectedMonth)} onChange={(event) => setSelectedMonth(Number(event.target.value))}>
+              {Array.from({ length: 12 }, (_, index) => <option key={index + 1} value={index + 1}>{en ? new Intl.DateTimeFormat('en-US', { month: 'long' }).format(new Date(Date.UTC(2020, index, 1))) : `Tháng ${index + 1}`}</option>)}
+            </select>
+          </label>
+          <label className="min-w-0">
+            <span className="sr-only">{en ? 'Year' : 'Năm'}</span>
+            <select className="field" aria-label={en ? 'Budget year' : 'Năm ngân sách'} value={String(selectedYear)} onChange={(event) => setSelectedYear(Number(event.target.value))}>
+              {yearOptions.map((year) => <option key={year} value={year}>{year}</option>)}
+            </select>
+          </label>
         </div>
       </div>
     </section>
