@@ -14,6 +14,9 @@ const filters = {
   purposeIds: [],
   expenseTypeIds: ['22222222-2222-4222-8222-222222222222'],
   paymentMethodIds: [],
+  excludePurposeIds: [],
+  excludeExpenseTypeIds: [],
+  excludePaymentMethodIds: [],
   amountMin: '',
   amountMax: '',
   month: '09',
@@ -28,7 +31,7 @@ describe('fetchTransactionPage keyword search', () => {
     rpcMock.mockReset();
   });
 
-  it('uses the normal family RPC without invoking semantic search', async () => {
+  it('uses the exclusion-aware family RPC without invoking semantic search', async () => {
     rpcMock.mockResolvedValueOnce({
       data: { rows: [], hasMore: false, totalAmount: 0, totalCount: 0 },
       error: null,
@@ -40,7 +43,7 @@ describe('fetchTransactionPage keyword search', () => {
       0,
     );
 
-    expect(rpcMock).toHaveBeenCalledWith('list_family_transactions', {
+    expect(rpcMock).toHaveBeenCalledWith('list_family_transactions_v2', {
       p_family_id: '11111111-1111-4111-8111-111111111111',
       p_limit: 50,
       p_offset: 0,
@@ -50,6 +53,9 @@ describe('fetchTransactionPage keyword search', () => {
       p_purpose_ids: [],
       p_expense_type_ids: ['22222222-2222-4222-8222-222222222222'],
       p_payment_method_ids: [],
+      p_exclude_purpose_ids: [],
+      p_exclude_expense_type_ids: [],
+      p_exclude_payment_method_ids: [],
       p_amount_min: null,
       p_amount_max: null,
       p_month: 9,

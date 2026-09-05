@@ -10,7 +10,9 @@ type QuickSearchCatalog = {
 const commonWords = new Set([
   'mua', 'chi', 'phi', 'tien', 'ra', 'vao', 'giao', 'dich', 'khoan', 'cac',
   'cho', 'trong', 'tu', 'den', 'tren', 'duoi', 'toi', 'it', 'nhat', 'la',
-  'va', 'voi', 'cua', 'thang', 'nam', 'ngay', 'buy', 'purchase', 'spending',
+  'va', 'voi', 'cua', 'thang', 'nam', 'ngay', 'tat', 'ca', 'tru', 'ngoai',
+  'khong', 'bao', 'gom', 'bo', 'qua', 'tinh', 'loai', 'except', 'excluding', 'without',
+  'exclude', 'not', 'including', 'buy', 'purchase', 'spending',
   'expense', 'money', 'out', 'in', 'income', 'transaction', 'transactions',
   'for', 'during', 'from', 'to', 'over', 'under', 'at', 'least', 'month',
   'year', 'actual', 'planned', 'and', 'the',
@@ -22,6 +24,8 @@ const transactionTypeTerms = [
   { phrase: 'mua', value: 'Chi tiêu' as const },
   { phrase: 'purchase', value: 'Chi tiêu' as const },
   { phrase: 'spending', value: 'Chi tiêu' as const },
+  { phrase: 'expense', value: 'Chi tiêu' as const },
+  { phrase: 'expenses', value: 'Chi tiêu' as const },
   { phrase: 'thu nhap', value: 'Thu nhập' as const },
   { phrase: 'tien vao', value: 'Thu nhập' as const },
   { phrase: 'income', value: 'Thu nhập' as const },
@@ -39,6 +43,44 @@ const hasPhrase = (words: string[], phrase: string) => {
     phraseWords.every((word, offset) => words[index + offset] === word),
   );
 };
+
+const findPhraseStart = (words: string[], phrase: string) => {
+  const phraseWords = phrase.split(' ');
+  return words.findIndex((_, index) =>
+    phraseWords.every((word, offset) => words[index + offset] === word),
+  );
+};
+
+const exclusionMarkers = [
+  ['tru'],
+  ['ngoai', 'tru'],
+  ['khong', 'gom'],
+  ['khong', 'bao', 'gom'],
+  ['loai', 'tru'],
+  ['bo', 'qua'],
+  ['khong', 'tinh'],
+  ['except'],
+  ['excluding'],
+  ['without'],
+  ['exclude'],
+  ['not', 'including'],
+];
+
+const isExcluded = (words: string[], item: CatalogItem) =>
+  [item.name, item.nameEn]
+    .filter((value): value is string => Boolean(value))
+    .some((value) => {
+      const start = findPhraseStart(words, normalizeText(value));
+      if (start < 0) return false;
+      return exclusionMarkers.some((marker) => {
+        const markerStart = start - marker.length - 3;
+        return Array.from({ length: 4 }, (_, offset) => markerStart + offset).some(
+          (index) =>
+            index >= 0 &&
+            marker.every((word, markerOffset) => words[index + markerOffset] === word),
+        );
+      });
+    });
 
 const matchingCatalogItems = (words: string[], items: CatalogItem[]) =>
   items.filter((item) =>
@@ -65,6 +107,9 @@ export function getQuickTransactionSearch(
   const matchedPurposes = matchingCatalogItems(words, catalog.purposes);
   const matchedExpenseTypes = matchingCatalogItems(words, catalog.expenseTypes);
   const matchedPaymentMethods = matchingCatalogItems(words, catalog.paymentMethods);
+  const excludedPurposes = matchedPurposes.filter((item) => isExcluded(words, item));
+  const excludedExpenseTypes = matchedExpenseTypes.filter((item) => isExcluded(words, item));
+  const excludedPaymentMethods = matchedPaymentMethods.filter((item) => isExcluded(words, item));
   const matchedTypeTerms = transactionTypeTerms.filter((term) => hasPhrase(words, term.phrase));
   const matchedStatusTerms = statusTerms.filter((term) => hasPhrase(words, term.phrase));
   const typeValues = new Set(matchedTypeTerms.map((term) => term.value));
@@ -113,9 +158,12 @@ export function getQuickTransactionSearch(
       query: '',
       transactionType: transactionType || (matchedExpenseTypes.length ? 'Chi tiêu' : null),
       status: status || null,
-      purposeIds: matchedPurposes.map((item) => item.id),
-      expenseTypeIds: matchedExpenseTypes.map((item) => item.id),
-      paymentMethodIds: matchedPaymentMethods.map((item) => item.id),
+      purposeIds: matchedPurposes.filter((item) => !excludedPurposes.some((excluded) => excluded.id === item.id)).map((item) => item.id),
+      expenseTypeIds: matchedExpenseTypes.filter((item) => !excludedExpenseTypes.some((excluded) => excluded.id === item.id)).map((item) => item.id),
+      paymentMethodIds: matchedPaymentMethods.filter((item) => !excludedPaymentMethods.some((excluded) => excluded.id === item.id)).map((item) => item.id),
+      excludePurposeIds: excludedPurposes.map((item) => item.id),
+      excludeExpenseTypeIds: excludedExpenseTypes.map((item) => item.id),
+      excludePaymentMethodIds: excludedPaymentMethods.map((item) => item.id),
       amountMin: null,
       amountMax: null,
       month,

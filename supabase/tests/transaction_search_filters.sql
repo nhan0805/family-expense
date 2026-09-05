@@ -1,6 +1,6 @@
 -- Structural tests for multi-select transaction filters and semantic cleanup.
 begin;
-select plan(6);
+select plan(8);
 
 select ok(
   exists (
@@ -27,6 +27,32 @@ select ok(
       and p.proargtypes[7] = 'uuid[]'::regtype
   ),
   'list_deleted_transactions accepts array catalog filters'
+);
+select ok(
+  exists (
+    select 1
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public'
+      and p.proname = 'list_family_transactions_v2'
+      and p.proargtypes[9] = 'uuid[]'::regtype
+      and p.proargtypes[10] = 'uuid[]'::regtype
+      and p.proargtypes[11] = 'uuid[]'::regtype
+  ),
+  'list_family_transactions_v2 accepts exclusion catalog filters'
+);
+select ok(
+  exists (
+    select 1
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public'
+      and p.proname = 'list_deleted_transactions_v2'
+      and p.proargtypes[8] = 'uuid[]'::regtype
+      and p.proargtypes[9] = 'uuid[]'::regtype
+      and p.proargtypes[10] = 'uuid[]'::regtype
+  ),
+  'list_deleted_transactions_v2 accepts exclusion catalog filters'
 );
 select ok(
   not exists (
