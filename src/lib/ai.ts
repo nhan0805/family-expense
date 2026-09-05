@@ -23,7 +23,6 @@ export type AiSuggestion = z.infer<typeof aiSuggestionSchema>;
 
 export const transactionSearchFiltersSchema = z.object({
   query: z.string().max(240),
-  semanticQuery: z.string().max(240),
   transactionType: z.enum(['Chi tiêu', 'Thu nhập']).nullable(),
   status: z.enum(['Thực tế', 'Dự kiến']).nullable(),
   purposeIds: z.array(z.string().uuid()).max(20),

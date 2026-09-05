@@ -1,6 +1,22 @@
+import { normalizeText } from './domain';
 import { supabase } from './supabase';
 
 export const AI_REQUEST_TIMEOUT_MS = 25_000;
+export const AI_SEARCH_CACHE_STALE_TIME_MS = 5 * 60_000;
+export const AI_SEARCH_CACHE_GC_TIME_MS = 30 * 60_000;
+
+export const getAiSearchCacheKey = (
+  familyId: string,
+  language: 'vi' | 'en',
+  text: string,
+  catalogVersion: string,
+) => [
+  'ai-transaction-search',
+  familyId,
+  language,
+  catalogVersion,
+  normalizeText(text),
+] as const;
 
 export class AiRequestTimeoutError extends Error {
   constructor() {

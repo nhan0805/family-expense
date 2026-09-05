@@ -21,8 +21,23 @@
 - Migration mới `supabase/migrations/202609050001_recurring_expenses.sql` mở rộng `recurring_transactions`, thêm `transactions.recurring_transaction_id`, lịch sử kỳ chạy, RLS/grants, validation RPC, pause/skip và lịch pg_cron. Không sửa migration đã áp dụng.
 - Frontend chính: `src/lib/recurringExpense.ts`, `src/lib/recurringExpensesApi.ts`, `src/pages/RecurringExpenses.tsx`, `src/App.tsx`, `src/components/Layout.tsx`, `src/context/LanguageContext.tsx`, `src/lib/domain.ts`, `src/lib/transactionDraft.ts`, `src/lib/transactionsApi.ts`, `src/components/TransactionRow.tsx`.
 - Demo fallback dùng localStorage và tự sinh giao dịch dự kiến khi mở màn hình. Giao dịch recurring có badge `Định kỳ`; chỉnh sửa giao dịch hiện tại không làm thay đổi mẫu.
-- Validation local: typecheck, lint, full Vitest đạt 32/32 file, 132/132 test, build và `git diff --check` pass; pgTAP local chưa chạy được vì PostgreSQL tại `127.0.0.1:54322` từ chối kết nối.
+- Validation local: typecheck, lint, full Vitest đạt 33/33 file, 134/134 test, build và `git diff --check` pass; pgTAP local chưa chạy được vì PostgreSQL tại `127.0.0.1:54322` từ chối kết nối.
 - Trạng thái triển khai: Chưa deploy production; chờ PR, CI/db-security, Supabase Production Deploy và Cloudflare Pages Git deployment.
+### Handoff — tăng tốc AI search (04/09/2026)
+
+- Mục tiêu: giảm thời gian chờ khi người dùng dùng **Gợi ý AI** trên trang Giao dịch.
+- Bản sửa: câu tìm kiếm chỉ gồm bộ lọc cấu trúc rõ ràng được xử lý nhanh trên client mà không gọi Gemini; các câu khác được cache theo family/ngôn ngữ/catalog/câu tìm kiếm trong 5 phút, đồng thời React Query chống gọi trùng. `keepPreviousData` giữ danh sách cũ trong khi bộ lọc mới tải.
+- Files: `src/lib/quickTransactionSearch.ts`, `src/lib/quickTransactionSearch.test.ts`, `src/lib/aiClient.ts`, `src/lib/aiClient.test.ts`, `src/pages/Transactions.tsx`. Không đổi schema, RLS hoặc dữ liệu giao dịch.
+- Validation: Chưa chạy; cần chạy full Vitest, typecheck, lint, build và `git diff --check`.
+- Trạng thái triển khai dự kiến: Chưa deploy; chờ PR và Cloudflare Pages production deployment.
+
+### Handoff — loại bỏ semantic search và dữ liệu embedding (04/09/2026)
+
+- Quyết định sản phẩm: tắt semantic search khỏi giao diện sau khi parser AI vẫn chạy nhưng semantic path tiếp tục không trả kết quả ổn định trên Supabase Free.
+- Bản sửa: `fetchTransactionPage` luôn dùng `list_family_transactions`; AI search bỏ `semanticQuery`, vẫn áp dụng đầy đủ bộ lọc multi-select và chỉ dùng keyword khi có từ khóa trực tiếp. Prompt parser không còn yêu cầu semantic search. Migration `202609040005_remove_semantic_search.sql` xoá bảng `transaction_embeddings`, các RPC embedding/semantic và extension `vector`; source/config/workflow gỡ hai Edge Function semantic cùng helper.
+- Files: `src/pages/Transactions.tsx`, `src/lib/transactionsApi.ts`, `src/lib/ai.ts`, `src/lib/transactionsApi.test.ts`, `src/lib/ai.test.ts`, `supabase/functions/search-transactions/index.ts`, `supabase/config.toml`, `.github/workflows/supabase-deploy.yml`, `supabase/migrations/202609040005_remove_semantic_search.sql`, `supabase/tests/transaction_search_filters.sql`, `README.md`. Không đổi dữ liệu giao dịch hoặc RLS giao dịch.
+- Validation: sẽ chạy lại full Vitest, typecheck, lint, build, `git diff --check` và pgTAP database tests.
+- Trạng thái triển khai dự kiến: Chưa deploy production; chờ PR, required checks, migration Supabase production và Cloudflare Pages production deployment.
 
 ### Handoff — loại bỏ account và event khỏi luồng ứng dụng (04/09/2026)
 

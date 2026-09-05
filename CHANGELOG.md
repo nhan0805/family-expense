@@ -8,10 +8,26 @@
 - Sau thay đổi: Owner có thể tạo/sửa/tạm dừng/tiếp tục/bỏ qua mẫu chi định kỳ theo tuần, tháng hoặc năm. Supabase Cron chạy lúc 00:05 `Asia/Ho_Chi_Minh`, tự tạo các giao dịch `Dự kiến` đến hạn, catch-up các kỳ bị bỏ lỡ và chỉ chuyển thành `Thực tế` sau khi người dùng xác nhận.
 - Kỹ thuật: thêm migration `supabase/migrations/202609050001_recurring_expenses.sql` với `transaction_source=recurring`, liên kết `transactions.recurring_transaction_id`, bảng `recurring_transaction_runs`, RPC validation/RLS/idempotency và job `pg_cron`; thêm `src/lib/recurringExpense.ts`, `src/lib/recurringExpensesApi.ts`, `src/pages/RecurringExpenses.tsx`, route/navigation, badge giao dịch định kỳ và bản dịch VI/EN.
 - Fallback demo lưu mẫu ở localStorage và tự tạo giao dịch dự kiến khi mở màn hình; không thêm dependency và không tự động ghi dữ liệu cloud khi chưa có migration.
-- Kiểm thử: `tsc -b`, ESLint, full Vitest đạt 32/32 file, 132/132 test, production build và `git diff --check` pass. `supabase test db --local` chưa chạy được vì PostgreSQL local tại `127.0.0.1:54322` chưa hoạt động.
+- Kiểm thử: `tsc -b`, ESLint, full Vitest đạt 33/33 file, 134/134 test, production build và `git diff --check` pass. `supabase test db --local` chưa chạy được vì PostgreSQL local tại `127.0.0.1:54322` chưa hoạt động.
 - Trạng thái triển khai dự kiến: Chưa deploy production; cần PR, required checks/db-security, Supabase Production Deploy rồi Cloudflare Pages Git deployment. Không dùng Wrangler deploy trực tiếp.
 
 ## 2026-09-04
+
+### Tăng tốc AI search
+
+- Trước thay đổi: Mỗi lần bấm **Gợi ý AI** đều gọi Edge Function/Gemini, kể cả khi người dùng lặp lại cùng câu; khi bộ lọc mới tải, danh sách có thể trống tạm thời.
+- Sau thay đổi: Các câu chỉ gồm bộ lọc cấu trúc rõ ràng (ví dụ danh mục, mục đích, phương thức, loại, trạng thái, tháng/năm) được xử lý nhanh ngay trên client; các câu còn lại dùng cache 5 phút, chống gọi trùng và giữ kết quả cũ trong lúc tải bộ lọc mới.
+- Files: `src/lib/quickTransactionSearch.ts`, `src/lib/quickTransactionSearch.test.ts`, `src/lib/aiClient.ts`, `src/lib/aiClient.test.ts`, `src/pages/Transactions.tsx`. Không đổi schema hoặc dữ liệu giao dịch.
+- Kiểm thử: Chạy full test, typecheck, lint, build và `git diff --check` trước khi merge.
+- Trạng thái triển khai dự kiến: Tạo PR vào `main`, bật auto-merge và chờ Cloudflare Pages Git deployment.
+
+### Loại bỏ semantic search và dữ liệu embedding
+
+- Trước thay đổi: AI search phụ thuộc vào backfill `gte-small` và bảng `transaction_embeddings`, khiến việc phân tích AI thành công nhưng tải danh sách vẫn có thể lỗi trên Supabase Free.
+- Sau thay đổi: AI search chỉ áp dụng bộ lọc cấu trúc (loại, trạng thái, mục đích, danh mục, phương thức, số tiền, thời gian) và dùng keyword RPC ổn định; semantic search không còn được gọi từ giao diện. Multi-select vẫn giữ nguyên. Migration mới xoá bảng `transaction_embeddings`, các RPC embedding/semantic và extension `vector`; hai Edge Function semantic cùng helper cũng được gỡ khỏi source và workflow deploy.
+- Files: `src/pages/Transactions.tsx`, `src/lib/transactionsApi.ts`, `src/lib/ai.ts`, `src/lib/transactionsApi.test.ts`, `src/lib/ai.test.ts`, `supabase/functions/search-transactions/index.ts`, `supabase/config.toml`, `.github/workflows/supabase-deploy.yml`, `supabase/migrations/202609040005_remove_semantic_search.sql`, `supabase/tests/transaction_search_filters.sql`, `README.md`. Không xoá dữ liệu giao dịch.
+- Kiểm thử: full test, typecheck, lint, build và `git diff --check` sẽ chạy lại trước khi merge; pgTAP kiểm tra các object semantic đã được xoá.
+- Trạng thái triển khai dự kiến: Cập nhật PR vào `main`, bật auto-merge và chờ migration Supabase production cùng Cloudflare Pages Git deployment.
 
 ### Loại bỏ account và event khỏi luồng ứng dụng
 
