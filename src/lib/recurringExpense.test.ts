@@ -3,10 +3,13 @@ import type { Transaction } from './domain';
 import {
   deleteLocalRecurringExpense,
   generateLocalDueTransactions,
+  getLocalDeletedRecurringExpenses,
   getLocalRecurringExpenses,
   nextRecurringDate,
+  permanentlyDeleteLocalRecurringExpense,
   recurringForecastDates,
   recurringExpenseInputSchema,
+  restoreLocalRecurringExpense,
   todayInVietnam,
   upsertLocalRecurringExpense,
 } from './recurringExpense';
@@ -113,6 +116,29 @@ describe('quy tắc chi phí định kỳ', () => {
     expect(generateLocalDueTransactions('family-1', 'user-1', created, '2026-10-05')).toHaveLength(0);
     expect(created).toHaveLength(1);
     expect(created[0]?.sourceReference).toBe(`recurring:${item.id}:2026-09-01`);
+  });
+
+  it('khôi phục mẫu về trạng thái trước khi xóa và hỗ trợ xóa cứng', () => {
+    const item = upsertLocalRecurringExpense('family-1', {
+      name: 'Tiền điện',
+      template,
+      frequency: 'monthly',
+      nextRunDate: '2026-09-01',
+      endDate: null,
+    });
+
+    deleteLocalRecurringExpense('family-1', item.id);
+    expect(getLocalDeletedRecurringExpenses('family-1')).toHaveLength(1);
+
+    const restored = restoreLocalRecurringExpense('family-1', item.id);
+    expect(restored.active).toBe(true);
+    expect(restored.deletedAt).toBeNull();
+    expect(getLocalRecurringExpenses('family-1')).toHaveLength(1);
+
+    deleteLocalRecurringExpense('family-1', item.id);
+    permanentlyDeleteLocalRecurringExpense('family-1', item.id);
+    expect(getLocalRecurringExpenses('family-1')).toHaveLength(0);
+    expect(getLocalDeletedRecurringExpenses('family-1')).toHaveLength(0);
   });
 
   it('trả ngày theo múi giờ Asia/Ho_Chi_Minh', () => {

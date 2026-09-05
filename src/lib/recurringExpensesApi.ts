@@ -18,14 +18,15 @@ const recurringRunSchema = z.object({
 
 export type RecurringRun = z.infer<typeof recurringRunSchema>;
 
-export async function fetchRecurringExpenses(familyId: string): Promise<RecurringExpense[]> {
-  const { data, error } = await supabase
+export async function fetchRecurringExpenses(familyId: string, includeDeleted = false): Promise<RecurringExpense[]> {
+  let request = supabase
     .from('recurring_transactions')
-    .select('id,family_id,name,template,frequency,next_run_date,end_date,anchor_day,anchor_month,active,created_by,last_run_at,last_error_code,deleted_at,deleted_by')
+    .select('id,family_id,name,template,frequency,next_run_date,end_date,anchor_day,anchor_month,active,created_by,last_run_at,last_error_code,deleted_at,deleted_by,deleted_active_before')
     .eq('family_id', familyId)
-    .is('deleted_at', null)
     .order('active', { ascending: false })
     .order('next_run_date', { ascending: true });
+  if (!includeDeleted) request = request.is('deleted_at', null);
+  const { data, error } = await request;
   if (error) throw error;
   return ((data || []) as RecurringExpenseRow[]).map(mapRecurringExpenseRow);
 }
@@ -109,6 +110,24 @@ export async function setRecurringExpenseActive(
 
 export async function deleteRecurringExpense(familyId: string, id: string) {
   const { data, error } = await supabase.rpc('delete_recurring_transaction', {
+    p_family_id: familyId,
+    p_id: id,
+  });
+  if (error) throw error;
+  if (!data) throw new Error('NOT_FOUND');
+}
+
+export async function restoreRecurringExpense(familyId: string, id: string) {
+  const { data, error } = await supabase.rpc('restore_recurring_transaction', {
+    p_family_id: familyId,
+    p_id: id,
+  });
+  if (error) throw error;
+  if (!data) throw new Error('NOT_FOUND');
+}
+
+export async function permanentlyDeleteRecurringExpense(familyId: string, id: string) {
+  const { data, error } = await supabase.rpc('permanently_delete_recurring_transaction', {
     p_family_id: familyId,
     p_id: id,
   });

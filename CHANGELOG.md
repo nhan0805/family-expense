@@ -2,6 +2,15 @@
 
 ## 2026-09-05
 
+### Bổ sung khôi phục, xóa vĩnh viễn và chỉnh bố cục mẫu định kỳ
+
+- Trước thay đổi: Mẫu chi phí định kỳ chỉ có xóa mềm; owner không có nơi xem lại để khôi phục hoặc xóa vĩnh viễn. Cụm nút trên desktop bị co và xuống dòng không đều; hai nút đầu trang cũng có chiều rộng khác nhau.
+- Sau thay đổi: Owner có khu vực `Mẫu định kỳ đã xóa` với thao tác `Khôi phục` về đúng trạng thái trước khi xóa và `Xóa vĩnh viễn` có xác nhận. Xóa vĩnh viễn chỉ xóa mẫu/lịch sử kỳ chạy, giữ giao dịch đã phát sinh. Cụm thao tác mỗi mẫu và hai nút đầu trang dùng kích thước đồng nhất, responsive theo mobile.
+- Kỹ thuật: thêm `deleted_active_before`, RPC owner-only `restore_recurring_transaction`/`permanently_delete_recurring_transaction`, RLS cho phép owner xem thùng rác mẫu; bổ sung API/local fallback, regression tests và migration mới `supabase/migrations/202609050005_recurring_restore_hard_delete.sql`.
+- Files/DB object: `src/pages/RecurringExpenses.tsx`, `src/lib/recurringExpense.ts`, `src/lib/recurringExpensesApi.ts`, `src/lib/recurringExpense.test.ts`, `src/pages/RecurringExpenses.test.tsx`, `supabase/migrations/202609050005_recurring_restore_hard_delete.sql`, `supabase/tests/recurring_expenses.sql`.
+- Kiểm thử: test tập trung recurring đạt 15/15; typecheck và lint các file thay đổi pass. Full test, build, CI, Supabase production migration và Cloudflare Pages production deployment sẽ chạy theo PR deploy.
+- Trạng thái triển khai dự kiến: cập nhật PR follow-up hiện tại, bật auto-merge và chờ required checks trước khi đưa migration/UI lên production.
+
 ### Bổ sung xóa mềm mẫu chi phí định kỳ
 
 - Trước thay đổi: Trang Chi phí định kỳ chưa có thao tác xóa; mẫu không thể được dừng vĩnh viễn khỏi danh sách bằng một luồng có xác nhận.

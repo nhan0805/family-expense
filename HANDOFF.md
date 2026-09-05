@@ -14,6 +14,14 @@
 - [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
 
+### Handoff — khôi phục, xóa vĩnh viễn và bố cục mẫu định kỳ (05/09/2026)
+
+- Owner có thể mở khu vực `Mẫu định kỳ đã xóa`, khôi phục mẫu về trạng thái active/paused trước khi xóa hoặc xóa vĩnh viễn sau hộp thoại xác nhận. Member không thấy khu vực và các nút quản trị.
+- Khôi phục không xóa các giao dịch đã phát sinh; nếu xóa vĩnh viễn thì chỉ mẫu và `recurring_transaction_runs` bị xóa, còn `transactions` giữ nguyên và tự bỏ liên kết template qua khóa ngoại `on delete set null`.
+- Migration mới `supabase/migrations/202609050005_recurring_restore_hard_delete.sql` thêm `deleted_active_before`, cập nhật RLS select cho owner xem thùng rác và thêm hai RPC security-definer có scope `family_id`. Local fallback giữ cùng hành vi trong localStorage.
+- Cụm nút trong mỗi dòng chuyển sang lưới đồng kích thước; hai nút `Tạo giao dịch đến hạn`/`Thêm khoản định kỳ` dùng cùng chiều rộng và căn giữa, responsive trên mobile.
+- Validation hiện tại: recurring Vitest 15/15; typecheck và lint các file thay đổi pass. Chưa deploy migration mới; PR/CI và production deployment cần được cập nhật sau khi merge.
+
 ### Handoff — bổ sung xóa mềm mẫu chi phí định kỳ (05/09/2026)
 
 - Owner có thể bấm `Xóa` trên mẫu ở `/chi-phi-dinh-ky` và xác nhận trong hộp thoại. Member vẫn chỉ có quyền xem.
