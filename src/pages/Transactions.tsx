@@ -832,6 +832,7 @@ export function Transactions() {
       }
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['transactions', familyId] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-due', familyId] }),
         queryClient.invalidateQueries({ queryKey: ['dashboard-data', familyId] }),
         queryClient.invalidateQueries({ queryKey: ['budgets', familyId] }),
       ]);
