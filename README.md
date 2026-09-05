@@ -84,7 +84,7 @@ npm run dev
 
 Nếu chưa cấu hình Supabase, app vẫn mở với dữ liệu demo để kiểm tra UI; đăng nhập, lưu cloud và AI cần project Supabase thật.
 
-Khi người dùng bấm **Gợi ý AI** trên trang **Giao dịch**, `search-transactions` tách câu tự nhiên thành các bộ lọc có cấu trúc như loại giao dịch, trạng thái, mục đích, danh mục, phương thức thanh toán, số tiền và thời gian. Frontend áp dụng các bộ lọc này bằng `list_family_transactions`; nếu còn từ khóa nội dung thì dùng tìm kiếm chuỗi không phân biệt dấu trên mô tả và ghi chú. Không có bước tạo embedding, backfill hoặc gọi Edge Function semantic.
+Khi người dùng bấm **Gợi ý AI** trên trang **Giao dịch**, `search-transactions` tách câu tự nhiên thành các bộ lọc có cấu trúc như loại giao dịch, trạng thái, mục đích, danh mục, phương thức thanh toán, số tiền và thời gian. Các cụm “trừ”, “ngoại trừ”, “không gồm” được chuyển thành bộ lọc loại trừ tương ứng; frontend áp dụng bằng `list_family_transactions_v2` và nếu còn từ khóa nội dung thì dùng tìm kiếm chuỗi không phân biệt dấu trên mô tả và ghi chú. Không có bước tạo embedding, backfill hoặc gọi Edge Function semantic.
 
 ## Import Excel
 

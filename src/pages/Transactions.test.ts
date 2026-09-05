@@ -116,6 +116,9 @@ describe('sắp xếp giao dịch theo ngày', () => {
       purposeIds: ['sinh-hoat'],
       expenseTypeIds: ['nuoc'],
       paymentMethodIds: [],
+      excludePurposeIds: [],
+      excludeExpenseTypeIds: [],
+      excludePaymentMethodIds: [],
       amountMin: '',
       amountMax: '',
       month: '',
@@ -134,7 +137,7 @@ describe('sắp xếp giao dịch theo ngày', () => {
       transaction('thang-2-2026', '2026-02-10'),
     ];
     const filters = {
-      query: '', transactionType: '', status: '', purposeIds: [], expenseTypeIds: [], paymentMethodIds: [], amountMin: '', amountMax: '',
+      query: '', transactionType: '', status: '', purposeIds: [], expenseTypeIds: [], paymentMethodIds: [], excludePurposeIds: [], excludeExpenseTypeIds: [], excludePaymentMethodIds: [], amountMin: '', amountMax: '',
       month: '02', year: '2025', dateFrom: '', dateTo: '', sort: 'date-desc' as const,
     };
     expect(filterAndSortTransactions(rows, filters).map((item) => item.id)).toEqual(['thang-2-2025']);
@@ -146,7 +149,7 @@ describe('sắp xếp giao dịch theo ngày', () => {
       { ...transaction('an-trua', '2026-08-11'), description: 'Ăn trưa' },
     ];
     const filters = {
-      query: 'dien nuoc da nang', transactionType: '', status: '', purposeIds: [], expenseTypeIds: [], paymentMethodIds: [], amountMin: '', amountMax: '',
+      query: 'dien nuoc da nang', transactionType: '', status: '', purposeIds: [], expenseTypeIds: [], paymentMethodIds: [], excludePurposeIds: [], excludeExpenseTypeIds: [], excludePaymentMethodIds: [], amountMin: '', amountMax: '',
       month: '', year: '', dateFrom: '', dateTo: '', sort: 'date-desc' as const,
     };
     expect(filterAndSortTransactions(rows, filters).map((item) => item.id)).toEqual(['dien-nuoc']);
@@ -158,7 +161,7 @@ describe('sắp xếp giao dịch theo ngày', () => {
       { ...transaction('large', '2026-08-12'), amount: 2000000 },
     ];
     const filters = {
-      query: '', transactionType: '', status: '', purposeIds: [], expenseTypeIds: [], paymentMethodIds: [], amountMin: '500000', amountMax: '1500000',
+      query: '', transactionType: '', status: '', purposeIds: [], expenseTypeIds: [], paymentMethodIds: [], excludePurposeIds: [], excludeExpenseTypeIds: [], excludePaymentMethodIds: [], amountMin: '500000', amountMax: '1500000',
       month: '', year: '', dateFrom: '', dateTo: '', sort: 'date-desc' as const,
     };
     expect(filterAndSortTransactions(rows, filters).map((item) => item.id)).toEqual(['middle']);
@@ -171,13 +174,26 @@ describe('sắp xếp giao dịch theo ngày', () => {
       { ...transaction('con-cai', '2026-08-12'), purposeId: 'con-cai', expenseTypeId: 'an-uong' },
     ];
     expect(filterAndSortTransactions(rows, {
-      query: '', transactionType: '', status: '', purposeIds: ['sinh-hoat', 'du-lich'], expenseTypeIds: ['an-uong'], paymentMethodIds: [], amountMin: '', amountMax: '',
+      query: '', transactionType: '', status: '', purposeIds: ['sinh-hoat', 'du-lich'], expenseTypeIds: ['an-uong'], paymentMethodIds: [], excludePurposeIds: [], excludeExpenseTypeIds: [], excludePaymentMethodIds: [], amountMin: '', amountMax: '',
       month: '', year: '', dateFrom: '', dateTo: '', sort: 'date-asc',
     }).map((item) => item.id)).toEqual(['sinh-hoat']);
     expect(filterAndSortTransactions(rows, {
-      query: '', transactionType: '', status: '', purposeIds: [], expenseTypeIds: ['an-uong', 'di-chuyen'], paymentMethodIds: [], amountMin: '', amountMax: '',
+      query: '', transactionType: '', status: '', purposeIds: [], expenseTypeIds: ['an-uong', 'di-chuyen'], paymentMethodIds: [], excludePurposeIds: [], excludeExpenseTypeIds: [], excludePaymentMethodIds: [], amountMin: '', amountMax: '',
       month: '', year: '', dateFrom: '', dateTo: '', sort: 'date-asc',
     }).map((item) => item.id)).toEqual(['sinh-hoat', 'du-lich', 'con-cai']);
+  });
+
+  it('loại trừ mục đích trong khi vẫn lấy mọi chi tiêu khác', () => {
+    const rows = [
+      { ...transaction('dau-tu', '2026-08-10'), purposeId: 'dau-tu' },
+      { ...transaction('sinh-hoat', '2026-08-11'), purposeId: 'sinh-hoat' },
+      { ...transaction('con-cai', '2026-08-12'), purposeId: 'con-cai' },
+    ];
+    expect(filterAndSortTransactions(rows, {
+      query: '', transactionType: 'Chi tiêu', status: '', purposeIds: [], expenseTypeIds: [], paymentMethodIds: [],
+      excludePurposeIds: ['dau-tu'], excludeExpenseTypeIds: [], excludePaymentMethodIds: [],
+      amountMin: '', amountMax: '', month: '', year: '', dateFrom: '', dateTo: '', sort: 'date-asc',
+    }).map((item) => item.id)).toEqual(['sinh-hoat', 'con-cai']);
   });
 
   it('định dạng số tiền lọc theo phân cách hàng nghìn và giữ dữ liệu số nguyên', () => {

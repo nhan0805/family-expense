@@ -8,6 +8,9 @@ export type ServerTransactionFilters = {
   purposeIds: string[];
   expenseTypeIds: string[];
   paymentMethodIds: string[];
+  excludePurposeIds: string[];
+  excludeExpenseTypeIds: string[];
+  excludePaymentMethodIds: string[];
   amountMin: string;
   amountMax: string;
   month: string;
@@ -67,7 +70,7 @@ export async function fetchTransactionPage(
   page: number,
   pageSize = 50,
 ) {
-  const { data, error } = await supabase.rpc('list_family_transactions', {
+  const { data, error } = await supabase.rpc('list_family_transactions_v2', {
     p_family_id: familyId,
     p_limit: pageSize,
     p_offset: page * pageSize,
@@ -77,6 +80,9 @@ export async function fetchTransactionPage(
     p_purpose_ids: filters.purposeIds,
     p_expense_type_ids: filters.expenseTypeIds,
     p_payment_method_ids: filters.paymentMethodIds,
+    p_exclude_purpose_ids: filters.excludePurposeIds,
+    p_exclude_expense_type_ids: filters.excludeExpenseTypeIds,
+    p_exclude_payment_method_ids: filters.excludePaymentMethodIds,
     p_amount_min: filters.amountMin ? Number(filters.amountMin) : null,
     p_amount_max: filters.amountMax ? Number(filters.amountMax) : null,
     p_month: filters.month ? Number(filters.month) : null,
@@ -184,7 +190,7 @@ export async function fetchDashboardDueTransactions(
 }
 
 export async function fetchDeletedTransactionPage(familyId: string, filters: ServerTransactionFilters, page: number, pageSize = 50) {
-  const { data, error } = await supabase.rpc('list_deleted_transactions', { p_family_id: familyId, p_limit: pageSize, p_offset: page * pageSize, p_query: filters.query, p_transaction_type: filters.transactionType, p_purpose_ids: filters.purposeIds, p_expense_type_ids: filters.expenseTypeIds, p_payment_method_ids: filters.paymentMethodIds, p_amount_min: filters.amountMin ? Number(filters.amountMin) : null, p_amount_max: filters.amountMax ? Number(filters.amountMax) : null, p_month: filters.month ? Number(filters.month) : null, p_year: filters.year ? Number(filters.year) : null, p_date_from: filters.dateFrom || null, p_date_to: filters.dateTo || null });
+  const { data, error } = await supabase.rpc('list_deleted_transactions_v2', { p_family_id: familyId, p_limit: pageSize, p_offset: page * pageSize, p_query: filters.query, p_transaction_type: filters.transactionType, p_purpose_ids: filters.purposeIds, p_expense_type_ids: filters.expenseTypeIds, p_payment_method_ids: filters.paymentMethodIds, p_exclude_purpose_ids: filters.excludePurposeIds, p_exclude_expense_type_ids: filters.excludeExpenseTypeIds, p_exclude_payment_method_ids: filters.excludePaymentMethodIds, p_amount_min: filters.amountMin ? Number(filters.amountMin) : null, p_amount_max: filters.amountMax ? Number(filters.amountMax) : null, p_month: filters.month ? Number(filters.month) : null, p_year: filters.year ? Number(filters.year) : null, p_date_from: filters.dateFrom || null, p_date_to: filters.dateTo || null });
   if (error) throw error;
   const result = data as unknown as { rows?: TransactionRow[]; hasMore?: boolean; totalCount?: number };
   return { rows: (result.rows || []).map(mapTransactionRow), hasMore: Boolean(result.hasMore), totalCount: Number(result.totalCount || 0), page };
