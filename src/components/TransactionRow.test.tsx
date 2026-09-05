@@ -46,11 +46,13 @@ const renderRow = (overrides: Partial<React.ComponentProps<typeof TransactionRow
 };
 
 describe('TransactionRow', () => {
-  it('hiển thị giao dịch và các nhãn phân loại', () => {
+  it('hiển thị giao dịch và các nhãn trạng thái/phân loại còn lại', () => {
     renderRow();
     expect(screen.getAllByText('Mua thực phẩm').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Thực phẩm').length).toBeGreaterThan(0);
     expect(screen.getAllByText(/120\.000/).length).toBeGreaterThan(0);
+    expect(screen.queryByText('Tiền ra')).not.toBeInTheDocument();
+    expect(screen.queryByText('Tiền vào')).not.toBeInTheDocument();
   });
 
   it('hiển thị nhãn giao dịch định kỳ khi nguồn là recurring', () => {
