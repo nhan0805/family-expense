@@ -2,6 +2,14 @@
 
 ## 2026-09-06
 
+### Thu gọn nút thao tác và bổ sung icon KPI chi phí định kỳ
+
+- Trước thay đổi: Hai nút chính trên trang Chi phí định kỳ chiếm nhiều diện tích và bố cục chưa cân đối; ba KPI chỉ hiển thị nhãn và số.
+- Sau thay đổi: Hai nút `Tạo giao dịch đến hạn` và `Thêm khoản định kỳ` dùng kích thước gọn, cùng chiều cao và tự xếp phù hợp theo màn hình; KPI có icon màu để nhận diện nhanh hơn.
+- Files: `src/pages/RecurringExpenses.tsx`, `src/index.css`. Không đổi API, migration, RLS/RPC hoặc dữ liệu.
+- Kiểm thử: full Vitest đạt 34/34 file, 149/149 test; typecheck, lint, production build và `git diff --check` pass. Build còn cảnh báo chunk ExcelJS lớn hiện hữu.
+- Trạng thái triển khai dự kiến: tạo PR vào `main`, bật auto-merge và chờ Cloudflare Pages Git deployment.
+
 ### Thu gọn thanh chọn kỳ ngân sách
 
 - Trước thay đổi: mô tả kỳ ngân sách nằm sát đáy, lệch với cụm chọn tháng/năm có nhãn phía trên; thanh lọc cao và có nhiều khoảng trống.

@@ -14,6 +14,14 @@
 - [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
 
+### Handoff — thu gọn nút thao tác và bổ sung icon KPI chi phí định kỳ (06/09/2026)
+
+- Trang `/chi-phi-dinh-ky` có hai nút đầu trang gọn hơn, cùng chiều cao/căn giữa và responsive: hai cột trên màn hình rộng, xếp dọc trên mobile.
+- Ba KPI `Mẫu đang hoạt động`, `Đã đến hạn`, `Tổng số mẫu` có icon màu riêng để tăng khả năng quét nhanh mà không đổi logic dữ liệu.
+- Files: `src/pages/RecurringExpenses.tsx`, `src/index.css`. Không có migration mới, không đổi API/schema/RLS/RPC.
+- Validation local: full Vitest đạt 34/34 file, 149/149 test; typecheck, lint, production build và `git diff --check` pass. Build còn cảnh báo chunk ExcelJS lớn hiện hữu.
+- Trạng thái triển khai: đã sẵn sàng tạo PR vào `main`, bật auto-merge và chờ Cloudflare Pages Git deployment.
+
 ### Handoff — thu gọn thanh chọn kỳ ngân sách (06/09/2026)
 
 - Trang `/ngan-sach`: tháng đang xem và ghi chú chi tiêu thực tế xếp thành hai dòng cạnh biểu tượng lịch; căn giữa với hai ô chọn tháng/năm, giảm khoảng đệm trên desktop, xếp thành hai hàng trên mobile. Giữ tên truy cập và vùng bấm tối thiểu 44px cho select.
