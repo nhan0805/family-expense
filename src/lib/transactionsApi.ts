@@ -127,13 +127,13 @@ export async function fetchDashboardTransactions(
   dateTo: string,
 ): Promise<Transaction[]> {
   const pageSize = 1000;
-  const rows: TransactionRow[] = [];
+  const rows: Array<Pick<TransactionRow, 'id' | 'transaction_date' | 'transaction_type' | 'amount' | 'purpose_id' | 'expense_type_id'>> = [];
   let offset = 0;
 
   while (true) {
     const { data, error } = await supabase
       .from('transactions')
-      .select('*')
+      .select('id,transaction_date,transaction_type,amount,purpose_id,expense_type_id')
       .eq('family_id', familyId)
       .eq('status', 'Thực tế')
       .is('deleted_at', null)
@@ -144,13 +144,25 @@ export async function fetchDashboardTransactions(
       .range(offset, offset + pageSize - 1);
     if (error) throw error;
 
-    const page = (data || []) as TransactionRow[];
+    const page = (data || []) as Array<Pick<TransactionRow, 'id' | 'transaction_date' | 'transaction_type' | 'amount' | 'purpose_id' | 'expense_type_id'>>;
     rows.push(...page);
     if (page.length < pageSize) break;
     offset += pageSize;
   }
 
-  return rows.map(mapTransactionRow);
+  return rows.map((row) => ({
+    id: row.id,
+    familyId,
+    transactionDate: row.transaction_date,
+    transactionType: row.transaction_type,
+    status: 'Thực tế' as const,
+    description: '',
+    amount: Number(row.amount),
+    purposeId: row.purpose_id,
+    expenseTypeId: row.expense_type_id,
+    source: 'manual' as const,
+    aiGenerated: false,
+  }));
 }
 
 export async function fetchDashboardDueTransactions(

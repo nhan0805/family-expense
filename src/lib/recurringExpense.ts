@@ -33,6 +33,8 @@ export const recurringExpenseSchema = z.object({
   createdBy: z.string().nullable().optional(),
   lastRunAt: z.string().nullable().optional(),
   lastErrorCode: z.string().nullable().optional(),
+  deletedAt: z.string().nullable().optional(),
+  deletedBy: z.string().nullable().optional(),
 });
 
 export type RecurringExpense = z.infer<typeof recurringExpenseSchema>;
@@ -90,6 +92,24 @@ export function nextRecurringDate(
   return `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(Math.min(day, daysInMonth(year, month))).padStart(2, '0')}`;
 }
 
+export function recurringForecastDates(
+  value: string,
+  frequency: RecurringFrequency,
+  anchorDay?: number,
+  anchorMonth?: number,
+  endDate?: string | null,
+  count = 3,
+) {
+  const dates: string[] = [];
+  let current = value;
+  for (let index = 0; index < count; index += 1) {
+    if (endDate && current > endDate) break;
+    dates.push(current);
+    current = nextRecurringDate(current, frequency, anchorDay, anchorMonth);
+  }
+  return dates;
+}
+
 export function todayInVietnam(now = new Date()) {
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Asia/Ho_Chi_Minh',
@@ -117,6 +137,8 @@ export type RecurringExpenseRow = {
   created_by: string | null;
   last_run_at: string | null;
   last_error_code: string | null;
+  deleted_at: string | null;
+  deleted_by: string | null;
 };
 
 export function mapRecurringExpenseRow(row: RecurringExpenseRow): RecurringExpense {
@@ -134,6 +156,8 @@ export function mapRecurringExpenseRow(row: RecurringExpenseRow): RecurringExpen
     createdBy: row.created_by,
     lastRunAt: row.last_run_at,
     lastErrorCode: row.last_error_code,
+    deletedAt: row.deleted_at,
+    deletedBy: row.deleted_by,
   });
   if (!parsed.success) throw new Error('INVALID_RECURRING_EXPENSE');
   return parsed.data;
@@ -145,7 +169,7 @@ export function getLocalRecurringExpenses(familyId: string): RecurringExpense[] 
   try {
     const raw = window.localStorage.getItem(localStorageKey(familyId));
     const parsed = z.array(recurringExpenseSchema).safeParse(raw ? JSON.parse(raw) : []);
-    return parsed.success ? parsed.data : [];
+    return parsed.success ? parsed.data.filter((item) => !item.deletedAt) : [];
   } catch {
     return [];
   }
@@ -177,8 +201,12 @@ export function upsertLocalRecurringExpense(
     frequency: input.frequency,
     nextRunDate: input.nextRunDate,
     endDate: input.endDate,
-    anchorDay: parts?.day,
-    anchorMonth: parts?.month,
+    anchorDay: current && current.frequency === input.frequency && current.nextRunDate === input.nextRunDate
+      ? current.anchorDay
+      : parts?.day,
+    anchorMonth: current && current.frequency === input.frequency && current.nextRunDate === input.nextRunDate
+      ? current.anchorMonth
+      : parts?.month,
     active: current?.active ?? true,
     createdBy: 'local-user',
     lastRunAt: current?.lastRunAt || null,
@@ -191,6 +219,18 @@ export function upsertLocalRecurringExpense(
 export function setLocalRecurringExpenseActive(familyId: string, id: string, active: boolean) {
   const items = getLocalRecurringExpenses(familyId);
   saveLocalRecurringExpenses(familyId, items.map((item) => item.id === id ? { ...item, active } : item));
+}
+
+export function deleteLocalRecurringExpense(familyId: string, id: string) {
+  const items = getLocalRecurringExpenses(familyId);
+  const item = items.find((entry) => entry.id === id);
+  if (!item) throw new Error('NOT_FOUND');
+  saveLocalRecurringExpenses(familyId, items.map((entry) => entry.id === id ? {
+    ...entry,
+    active: false,
+    deletedAt: new Date().toISOString(),
+    deletedBy: 'local-user',
+  } : entry));
 }
 
 export function skipLocalRecurringOccurrence(familyId: string, id: string) {

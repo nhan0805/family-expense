@@ -14,6 +14,31 @@
 - [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
 
+### Handoff — bổ sung xóa mềm mẫu chi phí định kỳ (05/09/2026)
+
+- Owner có thể bấm `Xóa` trên mẫu ở `/chi-phi-dinh-ky` và xác nhận trong hộp thoại. Member vẫn chỉ có quyền xem.
+- Xóa là soft-delete: mẫu bị ẩn khỏi danh sách, không thể resume và không được job nền chọn để sinh kỳ mới. Các giao dịch đã tạo và `recurring_transaction_runs` không bị xóa.
+- Backend thêm `deleted_at`, `deleted_by` và RPC security-definer `delete_recurring_transaction` có kiểm tra owner/family; frontend có fallback localStorage tương ứng.
+- Files: `src/pages/RecurringExpenses.tsx`, `src/lib/recurringExpense.ts`, `src/lib/recurringExpensesApi.ts`, `src/lib/recurringExpense.test.ts`, `src/pages/RecurringExpenses.test.tsx`, `supabase/migrations/202609050004_recurring_delete.sql`, `supabase/tests/recurring_expenses.sql`.
+- Validation/deployment: Vitest đạt 34/34 file, 143/143 test; typecheck, lint, production build và `git diff --check` pass. E2E smoke Chromium chạy được nhưng skip 2 test cloud vì thiếu `E2E_EMAIL/E2E_PASSWORD` trong local. Build còn cảnh báo chunk ExcelJS lớn hiện hữu; pgTAP local chưa chạy được vì PostgreSQL tại `127.0.0.1:54322` chưa hoạt động. Chưa deploy production; migration `202609050004_recurring_delete.sql` phải được apply trước khi frontend cloud sử dụng các cột/RPC mới.
+
+### Handoff — triển khai các đợt Phase 0–4 (05/09/2026)
+
+- Đợt đầu đã xử lý các lỗi ổn định và UI thiết yếu: invalidation Dashboard dùng cùng prefix, Dashboard có trạng thái lỗi/retry rõ ràng, draft tạo/sửa tách theo giao dịch và cảnh báo rời trang, dialog/drawer hỗ trợ Escape/focus trap/restore focus, badge trạng thái `Dự kiến/Thực tế`, drill-down nhóm `Khác`, và URL filter được giữ khi quay lại danh sách.
+- Đợt hai đã làm Dashboard trước: giảm payload bằng select cột cần dùng, gom trend/category theo một lượt, tách query giao dịch dự kiến đến hạn khỏi filter danh sách; import có giới hạn 10 MB/1.000 dòng và duplicate detection bằng Set. Chưa thêm RPC aggregate sâu; chỉ làm tiếp khi baseline cho thấy cần.
+- Đợt ba đã bổ sung dự báo bốn kỳ sắp tới và lịch sử kỳ chạy trên trang `/chi-phi-dinh-ky`. Migration `202609050003_recurring_hardening.sql` giữ anchor lịch khi chỉ sửa nội dung mẫu và coi occurrence `skipped` là terminal; migration `202609050004_recurring_delete.sql` giữ xóa mềm template và không chạm giao dịch đã tạo. `supabase/tests/recurring_expenses.sql` có assertion kiểm tra hai quy tắc hardening.
+- Theo dõi lỗi đã sẵn sàng qua `src/lib/telemetry.ts`; khi cấu hình `VITE_ERROR_REPORTING_ENDPOINT`, payload chỉ gồm mã lỗi, route, trạng thái online và thời điểm. Backup/restore drill, synthetic staging với tài khoản riêng và kiểm tra RTO/RPO vẫn là việc vận hành cần thực hiện trước khi mở rộng Phase 5.
+- CI bổ sung job Playwright Chromium, gồm smoke flow demo không cần credential; test cloud vẫn cần `E2E_EMAIL`/`E2E_PASSWORD` của tài khoản staging riêng. Cách đo FCP/LCP/CLS, payload và thời gian import nằm trong [docs/PERFORMANCE_BASELINE.md](docs/PERFORMANCE_BASELINE.md).
+- Trạng thái workspace: thay đổi chưa commit/deploy; quality gates hiện đã pass sau khi khôi phục dependency links: Vitest 34/34 file, 143/143 test, typecheck, lint, build và `git diff --check`. pgTAP local vẫn chờ PostgreSQL/Docker tại `127.0.0.1:54322`.
+
+### Handoff — AI search hỗ trợ điều kiện loại trừ (05/09/2026)
+
+- AI search hiểu các câu như “tất cả chi tiêu trừ khoản đầu tư”: `transactionType = Chi tiêu`, các mảng bao gồm để trống và `excludePurposeIds` chứa ID mục đích `Đầu tư`. Các câu “trừ danh mục …” hoặc “trừ phương thức …” được đưa vào mảng loại trừ tương ứng.
+- Frontend có state, chip và bộ lọc chi tiết cho `excludePurposeIds`, `excludeExpenseTypeIds`, `excludePaymentMethodIds`; khi không có điều kiện bao gồm, truy vấn vẫn lấy mọi mục còn lại rồi loại trừ đúng nhóm được chỉ định.
+- Backend thêm migration `supabase/migrations/202609050002_transaction_search_exclusions.sql` với RPC `list_family_transactions_v2` và `list_deleted_transactions_v2`; RPC cũ không bị thay đổi. Cả hai RPC đều kiểm tra membership và giữ scope theo `family_id`.
+- Edge Function `search-transactions` đã mở rộng schema/prompt/validation; quick path xử lý ngay các câu cấu trúc rõ ràng để giảm độ trễ và không cần gọi Gemini.
+- Trạng thái triển khai thực tế: PR [#128](https://github.com/nhan0805/family-expense/pull/128) đã merge với merge commit `af1cc76ac4eb70df5500b65c4d978f908569e031`; CI [run 33962996389](https://github.com/nhan0805/family-expense/actions/runs/33962996389), Supabase Production Deploy [run 33962996428](https://github.com/nhan0805/family-expense/actions/runs/33962996428) và Cloudflare Pages [check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/67960011-9d47-4090-86f6-e47a9eec2eb4) đều pass. Production smoke test HTTP 200.
+
 ### Handoff — tự động tạo giao dịch chi phí định kỳ khi đến hạn (05/09/2026)
 
 - Owner có thể quản lý mẫu chi định kỳ theo tuần/tháng/năm tại route `/chi-phi-dinh-ky`; member chỉ xem. Mỗi mẫu lưu nội dung, số tiền VND, mục đích, danh mục, phương thức thanh toán, ngày chạy tiếp theo và ngày kết thúc tùy chọn.
@@ -22,12 +47,12 @@
 - Frontend chính: `src/lib/recurringExpense.ts`, `src/lib/recurringExpensesApi.ts`, `src/pages/RecurringExpenses.tsx`, `src/App.tsx`, `src/components/Layout.tsx`, `src/context/LanguageContext.tsx`, `src/lib/domain.ts`, `src/lib/transactionDraft.ts`, `src/lib/transactionsApi.ts`, `src/components/TransactionRow.tsx`.
 - Demo fallback dùng localStorage và tự sinh giao dịch dự kiến khi mở màn hình. Giao dịch recurring có badge `Định kỳ`; chỉnh sửa giao dịch hiện tại không làm thay đổi mẫu.
 - Validation local: typecheck, lint, full Vitest đạt 33/33 file, 134/134 test, build và `git diff --check` pass; pgTAP local chưa chạy được vì PostgreSQL tại `127.0.0.1:54322` từ chối kết nối.
-- Trạng thái triển khai: Chưa deploy production; chờ PR, CI/db-security, Supabase Production Deploy và Cloudflare Pages Git deployment.
+- Trạng thái triển khai thực tế: Đã merge PR [#125](https://github.com/nhan0805/family-expense/pull/125) với merge commit `827626d752285dd52b8a27c2fe4a628b61fded52`; migration recurring đã apply production. Sau đó PR [#126](https://github.com/nhan0805/family-expense/pull/126) sửa cleanup workflow và merge với commit `8165d040062a40cf40c4303576eb7e13825c9aa1`. Supabase Production Deploy [run 33942519577](https://github.com/nhan0805/family-expense/actions/runs/33942519577) và Cloudflare Pages deployment check pass; production smoke test trả HTTP 200 lúc `05/09/2026 10:43` (`Asia/Ho_Chi_Minh`).
 
 ### Handoff — làm idempotent bước dọn Edge Function khi deploy (05/09/2026)
 
 - Lần chạy Supabase Production Deploy của merge commit đã apply migration recurring và deploy các function còn dùng, nhưng dừng ở bước xóa `process-transaction-embeddings` vì function này đã không tồn tại trên production.
-- Đã cập nhật `.github/workflows/supabase-deploy.yml` để bỏ qua đúng lỗi function không tồn tại; các lỗi khác vẫn làm workflow fail. Cần rerun qua một PR mới để hoàn tất trạng thái deploy xanh.
+- Đã cập nhật `.github/workflows/supabase-deploy.yml` để bỏ qua đúng lỗi function không tồn tại; các lỗi khác vẫn làm workflow fail. PR [#126](https://github.com/nhan0805/family-expense/pull/126) đã merge và lần rerun production [33942519577](https://github.com/nhan0805/family-expense/actions/runs/33942519577) đã pass.
 
 ### Handoff — tăng tốc AI search (04/09/2026)
 
@@ -506,20 +531,15 @@ flowchart LR
   U --> A[Supabase Auth]
   U --> P[PostgREST/RPC]
   P --> D[(PostgreSQL + RLS)]
-  U --> E[parse-expense Edge Function]
+  U --> E[parse-expense / search-transactions Edge Functions]
   E --> D
   E --> G[Google Gemini API]
-  U --> ES[Embedding worker]
-  ES --> D
-  U --> SS[Semantic search Edge Function]
-  SS --> D
-  SS --> M[Supabase AI gte-small]
 ```
 
 - Frontend: React 19, TypeScript strict, Vite, React Router, Tailwind CSS, TanStack Query, React Hook Form, Zod, Recharts và vite-plugin-pwa.
 - Backend: Supabase Auth, PostgreSQL, RLS, RPC và Edge Functions.
 - Hosting: Cloudflare Pages.
-- AI: `parse-expense` gọi Gemini bằng secret server-side, validate structured output và chỉ trả đề xuất; người dùng phải xác nhận trước khi lưu. `search-transactions` vẫn dùng Gemini để tách câu tự nhiên thành bộ lọc, còn embedding và semantic ranking dùng `gte-small` built-in trong Supabase Edge Functions, không gửi nội dung giao dịch sang Gemini ở bước đó.
+- AI: `parse-expense` gọi Gemini bằng secret server-side, validate structured output và chỉ trả đề xuất; người dùng phải xác nhận trước khi lưu. `search-transactions` dùng Gemini để tách câu tự nhiên thành bộ lọc rồi truy vấn keyword/RPC family-scoped; semantic embedding/ranking đã được loại bỏ khỏi luồng production.
 - Tenant boundary: mọi dữ liệu nghiệp vụ được scope theo `family_id`; RLS là lớp phân quyền bắt buộc.
 - Chi tiết: [Solution Architecture Document](docs/Solution_Architecture_Document_Family_Expense.docx).
 
@@ -533,9 +553,7 @@ flowchart LR
 | `src/lib/` | Domain, Supabase client/API, AI và import/export |
 | `supabase/migrations/` | Schema, RLS, RPC, indexes và migration dữ liệu |
 | `supabase/functions/parse-expense/` | Edge Function tích hợp Gemini |
-| `supabase/functions/process-transaction-embeddings/` | Backfill embedding lazy theo family |
-| `supabase/functions/search-transactions-semantic/` | Tạo query embedding và gọi semantic search RPC |
-| `supabase/functions/_shared/transactionEmbedding.ts` | Model `gte-small`, text `description` + `note` |
+| `supabase/functions/search-transactions/` | Phân tích câu tự nhiên thành bộ lọc giao dịch |
 | `scripts/` | Import Excel và các script hỗ trợ vận hành |
 | `docs/` | SAD và runbook deploy/vận hành |
 | `README.md` | Cài đặt, cấu hình và triển khai |
@@ -583,7 +601,7 @@ pnpm test:e2e
 8. Smoke test đăng nhập, tải danh sách, tạo/sửa giao dịch, import/export và AI.
 9. Cập nhật `CHANGELOG.md` với kết quả kiểm thử và deployment URL.
 
-> **Đã xác nhận gần nhất:** PR #31, merge commit `4682364870797aeb6b5b29e4bbe3bd61f2e97e09`. CI quality/db-security và Cloudflare Pages production check đã pass; Supabase Production Deploy không có migration mới cần áp dụng.
+> **Đã xác nhận gần nhất:** PR [#128](https://github.com/nhan0805/family-expense/pull/128), merge commit `af1cc76ac4eb70df5500b65c4d978f908569e031`. CI, Supabase Production Deploy và Cloudflare Pages production check đã pass; các thay đổi workspace mới hơn đang chờ PR.
 
 ### Rollback
 
@@ -632,7 +650,7 @@ Plan, billing owner và renewal date: **TBD — xác minh trong tài khoản nh�
 | Tenant/Auth | `families`, `family_members` | Membership active, role owner/member |
 | Phân loại | `purposes`, `expense_types`, `payment_methods`, `accounts`, `events`, `beneficiaries` | Không hard-delete danh mục đã được dùng |
 | Giao dịch | `transactions` | `amount > 0`, soft delete bằng `deleted_at`, lưu nguồn/audit AI |
-| Semantic index | `transaction_embeddings` | Vector 384 chiều, hash nội dung, family-scoped RLS, HNSW cosine index |
+| Tìm kiếm | `list_family_transactions` và `list_deleted_transactions` | Bộ lọc cấu trúc/keyword, family-scoped RPC; không còn bảng semantic index |
 | Kế hoạch | `budgets`, `recurring_transactions`, `recurring_transaction_runs` | Ngân sách V1 và tự tạo chi phí định kỳ đã có; cần theo dõi job Cron |
 | AI audit | `ai_usage_logs` | Chỉ metadata tối thiểu, không token/API key |
 | Import | `import_batches` và RPC liên quan | Atomic batch, chống trùng và audit |
@@ -660,8 +678,8 @@ Mục tiêu kiến trúc đề xuất cho MVP: **RPO 24 giờ, RTO 4 giờ**; ch
 | Cloudflare | Build/deploy, availability, Web Vitals | TBD | Cần cấu hình alert |
 | Supabase | Auth, DB, slow query, Edge Function errors | TBD | Có log nền tảng |
 | `ai_usage_logs` | Success/error, latency, rate limit | TBD | Có dữ liệu cơ bản |
-| Client/PWA | JS errors, offline, JWT refresh failure | TBD | Chưa có error tracking chuẩn |
-| Synthetic | Login/health/smoke URL | TBD | Chưa có |
+| Client/PWA | JS errors, offline, JWT refresh failure | TBD | Có hook tùy chọn qua `VITE_ERROR_REPORTING_ENDPOINT`; cần nối endpoint/alert |
+| Synthetic | Login/health/smoke URL | TBD | Có Playwright smoke demo trong CI; cần chạy staging credential định kỳ |
 
 Không log token, secret, email đầy đủ, nội dung AI hoặc chi tiết tài chính.
 

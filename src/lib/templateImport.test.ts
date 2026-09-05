@@ -75,4 +75,26 @@ describe('template import', () => {
     expect(result.valid[0]?.id).toBe('11111111-1111-4111-8111-111111111111');
     expect(result.valid[0]?.duplicate).toBe(false);
   });
+
+  it('phát hiện dòng trùng ngay trong cùng file mà không quét lại lịch sử', async () => {
+    const ws = XLSX.utils.aoa_to_sheet([
+      [...templateHeaders],
+      ['2026-08-26', 100000, 'Tiền ra', 'Thực tế', 'Ăn trưa', 'Chuyển khoản', 'Sinh hoạt', 'Ăn uống', '', ''],
+      ['2026-08-26', 100000, 'Tiền ra', 'Thực tế', 'Ăn trưa', 'Chuyển khoản', 'Sinh hoạt', 'Ăn uống', '', ''],
+    ]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Giao dịch');
+    const result = await parseTemplate(XLSX.write(wb, { type: 'array', bookType: 'xlsx' }), purposes, types, methods, []);
+    expect(result.valid.map((row) => row.duplicate)).toEqual([false, true]);
+  });
+
+  it('từ chối file vượt quá 1.000 dòng dữ liệu', async () => {
+    const ws = XLSX.utils.aoa_to_sheet([
+      [...templateHeaders],
+      ...Array.from({ length: 1001 }, () => ['2026-08-26', 100000, 'Tiền ra', 'Thực tế', 'Ăn trưa', 'Chuyển khoản', 'Sinh hoạt', 'Ăn uống', '', '']),
+    ]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Giao dịch');
+    await expect(parseTemplate(XLSX.write(wb, { type: 'array', bookType: 'xlsx' }), purposes, types, methods, [])).rejects.toThrow('FILE_ROW_LIMIT_EXCEEDED');
+  });
 });

@@ -32,6 +32,7 @@ const relationName = (value: unknown, language: CatalogLanguage) => {
     ? String(item.name_en || item.name || '')
     : String(item.name || '');
 };
+const maxImportFileBytes = 10 * 1024 * 1024;
 
 export function ImportExport() {
   const { language } = useOptionalLanguage();
@@ -95,6 +96,13 @@ export function ImportExport() {
       setFileError(
         en ? 'Invalid file format. Choose an .xlsx file downloaded from the app.' : 'File không đúng định dạng. Vui lòng chọn file .xlsx được tải từ ứng dụng.',
       );
+      setMessage('');
+      if (input) input.value = '';
+      return;
+    }
+    if (file.size > maxImportFileBytes) {
+      setFileName('');
+      setFileError(en ? 'This file is larger than 10 MB. Split it into smaller files before importing.' : 'File lớn hơn 10 MB. Hãy tách thành các file nhỏ hơn trước khi import.');
       setMessage('');
       if (input) input.value = '';
       return;
@@ -163,8 +171,11 @@ export function ImportExport() {
       const detail = e instanceof Error ? e.message : '';
       const wrongTemplate =
         detail.includes('sheet') || detail.includes('Tiêu đề cột');
+      const rowLimit = detail.includes('FILE_ROW_LIMIT_EXCEEDED');
       setFileError(
-        wrongTemplate
+        rowLimit
+          ? (en ? 'This file contains more than 1,000 data rows. Split it into smaller files.' : 'File có hơn 1.000 dòng dữ liệu. Hãy tách thành các file nhỏ hơn.')
+          : wrongTemplate
           ? (en ? 'This file does not use the Family Expense template. Download a new template and do not rename the “Giao dịch” sheet or column headers.' : 'File không đúng template Family Expense. Hãy tải template mới từ ứng dụng và không đổi tên sheet “Giao dịch” hoặc tiêu đề cột.')
           : detail
             ? (en ? `Could not read Excel file: ${detail}` : `Không thể đọc file Excel: ${detail}`)

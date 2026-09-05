@@ -15,7 +15,7 @@ import {
 } from 'recharts';
 import type { PieLabelRenderProps } from 'recharts';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMemo, useState, type ChangeEvent, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   ArrowDownToLine,
@@ -38,6 +38,7 @@ import { buildLocalBudgetSummary, formatBudgetInput, type BudgetSummary } from '
 import { fetchBudgetSummary } from '../lib/budgetsApi';
 import { formatCompactVnd, formatVnd, getCatalogDisplayName, type CatalogItem, type CatalogLanguage, type Transaction } from '../lib/domain';
 import { isSupabaseConfigured } from '../lib/supabase';
+import { reportClientError } from '../lib/telemetry';
 import {
   fetchDashboardTransactions,
   fetchTransactionYears,
@@ -200,13 +201,13 @@ function groupTransactions(
   language: CatalogLanguage,
 ) {
   const grouped = new Map<string, { id: string; name: string; value: number }>();
+  const itemNames = new Map(items.map((item) => [item.id, getCatalogDisplayName(item, language)]));
   transactions.forEach((transaction) => {
     const value = valueFor(transaction);
     if (!value) return;
     const id = transaction[key];
-    const catalog = items.find((item) => item.id === id);
     const itemId = id || 'uncategorized';
-    const current = grouped.get(itemId) || { id: itemId, name: getCatalogDisplayName(catalog, language) || (language === 'en' ? 'Uncategorized' : 'Chưa phân loại'), value: 0 };
+    const current = grouped.get(itemId) || { id: itemId, name: itemNames.get(itemId) || (language === 'en' ? 'Uncategorized' : 'Chưa phân loại'), value: 0 };
     current.value += value;
     grouped.set(itemId, current);
   });
@@ -277,6 +278,9 @@ export function Dashboard() {
     queryFn: () => fetchDashboardTransactions(familyId, queryFrom, queryTo),
     enabled: isSupabaseConfigured && Boolean(familyId) && validRange,
   });
+  useEffect(() => {
+    if (dashboardQuery.error) reportClientError(dashboardQuery.error, 'query');
+  }, [dashboardQuery.error]);
   const budgetQuery = useQuery({
     queryKey: ['budgets', familyId, Number(selectedYear), Number(selectedMonth)],
     queryFn: () => fetchBudgetSummary(familyId, Number(selectedYear), Number(selectedMonth)),
@@ -287,11 +291,29 @@ export function Dashboard() {
   const availableYears = isSupabaseConfigured
     ? Array.from(new Set([currentYear, ...(yearsQuery.data || [])])).sort((a, b) => Number(b) - Number(a))
     : localAvailableYears;
-  const sourceTransactions = isSupabaseConfigured
+  const sourceTransactions = useMemo(() => isSupabaseConfigured
     ? dashboardQuery.data || []
-    : transactions.filter((transaction) => !transaction.deletedAt && transaction.status === 'Thực tế' && transactionInRange(transaction, { from: queryFrom, to: queryTo }));
+    : transactions.filter((transaction) => !transaction.deletedAt && transaction.status === 'Thực tế' && transactionInRange(transaction, { from: queryFrom, to: queryTo })),
+  [dashboardQuery.data, queryFrom, queryTo, transactions]);
   const selectedTransactions = sourceTransactions.filter((transaction) => transactionInRange(transaction, selectedRange));
   const comparisonTransactions = sourceTransactions.filter((transaction) => transactionInRange(transaction, compareRange));
+  const monthlyAggregates = useMemo(() => {
+    const byMonth = new Map<string, { expense: number; income: number }>();
+    const categoryByMonth = new Map<string, Map<string, number>>();
+    sourceTransactions.forEach((transaction) => {
+      const monthKey = transaction.transactionDate.slice(0, 7);
+      const month = byMonth.get(monthKey) || { expense: 0, income: 0 };
+      if (isExpense(transaction.transactionType)) month.expense += transaction.amount;
+      if (isIncome(transaction.transactionType)) month.income += transaction.amount;
+      byMonth.set(monthKey, month);
+      if (isExpense(transaction.transactionType)) {
+        const category = categoryByMonth.get(monthKey) || new Map<string, number>();
+        category.set(transaction.expenseTypeId, (category.get(transaction.expenseTypeId) || 0) + transaction.amount);
+        categoryByMonth.set(monthKey, category);
+      }
+    });
+    return { byMonth, categoryByMonth };
+  }, [sourceTransactions]);
   const selectedExpense = sumExpense(selectedTransactions);
   const selectedIncome = sumIncome(selectedTransactions);
   const comparisonExpense = sumExpense(comparisonTransactions);
@@ -303,6 +325,10 @@ export function Dashboard() {
   const incomeByPurpose = groupTransactions(selectedTransactions, purposes, 'purposeId', incomeValue, language);
   const incomeByExpenseType = groupTransactions(selectedTransactions, expenseTypes, 'expenseTypeId', incomeValue, language);
   const trend = chartPeriods.map((period) => {
+    if (mode !== 'custom') {
+      const totals = monthlyAggregates.byMonth.get(period.key) || { expense: 0, income: 0 };
+      return { ...period, ...totals, net: totals.income - totals.expense };
+    }
     const periodRange = rangeForPeriod(period, mode, customFrom, customTo);
     const periodTransactions = sourceTransactions.filter((transaction) => transactionInRange(transaction, periodRange));
     const expense = sumExpense(periodTransactions);
@@ -337,6 +363,7 @@ export function Dashboard() {
   const topCategories = byExpenseType.slice(0, 5).map((item) => ({
     ...item,
     trend: chartPeriods.map((period) => {
+      if (mode !== 'custom') return monthlyAggregates.categoryByMonth.get(period.key)?.get(item.id) || 0;
       const periodRange = rangeForPeriod(period, mode, customFrom, customTo);
       return sourceTransactions
         .filter((transaction) => transactionInRange(transaction, periodRange) && transaction.expenseTypeId === item.id)
@@ -408,6 +435,20 @@ export function Dashboard() {
   };
   if (isSupabaseConfigured && dashboardQuery.isPending)
     return <PageSkeleton label={en ? 'Loading financial overview…' : 'Đang tải tổng quan tài chính…'} />;
+  if (isSupabaseConfigured && dashboardQuery.isError && !dashboardQuery.data)
+    return (
+      <div className="dashboard-page space-y-5">
+        <header className="page-header">
+          <p className="page-kicker"><BarChart3 size={16} aria-hidden="true" />{en ? 'Family spending analytics' : 'Phân tích chi tiêu gia đình'}</p>
+          <h2 className="page-title">{en ? 'Financial overview' : 'Tổng quan tài chính'}</h2>
+        </header>
+        <div role="alert" className="card border-red-200 bg-red-50 p-5 text-sm text-red-800 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-200">
+          <p className="font-semibold">{en ? 'Could not load dashboard data.' : 'Không thể tải dữ liệu Dashboard.'}</p>
+          <p className="mt-1">{en ? 'No financial values are shown until the request succeeds.' : 'Chưa hiển thị số liệu tài chính cho đến khi tải dữ liệu thành công.'}</p>
+          <button type="button" className="btn-secondary mt-3" onClick={() => void dashboardQuery.refetch()}>{en ? 'Retry' : 'Thử lại'}</button>
+        </div>
+      </div>
+    );
 
   return (
     <div className="dashboard-page space-y-5">
@@ -433,8 +474,9 @@ export function Dashboard() {
         <div className="period-context flex flex-wrap items-center gap-2 text-sm text-gray-500 dark:text-gray-400"><CalendarDays size={16} aria-hidden="true" /><span className="font-semibold text-gray-700 dark:text-gray-200">{periodLabel}</span><span aria-hidden="true">·</span><span>{en ? 'Actual transactions only' : 'Chỉ giao dịch thực tế'}</span></div>
       </section>
 
-      {(!validRange || error) && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300">{!validRange ? (en ? 'Choose a valid date range.' : 'Vui lòng chọn khoảng ngày hợp lệ.') : (en ? 'Could not load part of the dashboard. Please try again.' : 'Không thể tải một phần Dashboard. Vui lòng thử lại.')}</p>}
+      {(!validRange || error) && <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300"><span>{!validRange ? (en ? 'Choose a valid date range.' : 'Vui lòng chọn khoảng ngày hợp lệ.') : (dashboardQuery.data ? (en ? 'Showing the last loaded dashboard data. Refresh failed.' : 'Đang hiển thị dữ liệu Dashboard đã tải trước đó. Lần làm mới vừa thất bại.') : (en ? 'Could not load part of the dashboard.' : 'Không thể tải một phần Dashboard.'))}</span>{validRange && <button type="button" className="btn-secondary px-3 py-1.5 text-xs" onClick={() => { void dashboardQuery.refetch(); void yearsQuery.refetch(); }}>{en ? 'Retry' : 'Thử lại'}</button>}</div>}
 
+      {budgetQuery.isError && <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/20 dark:text-amber-200"><span>{en ? 'Budget data could not be loaded.' : 'Không thể tải dữ liệu ngân sách.'}</span><button type="button" className="btn-secondary px-3 py-1.5 text-xs" onClick={() => void budgetQuery.refetch()}>{en ? 'Retry' : 'Thử lại'}</button></div>}
       {!budgetQuery.isError && <BudgetSnapshot summary={budgetSummary} en={en} month={selectedMonth} year={selectedYear} />}
 
       <section className={`ui-stagger dashboard-kpi-grid grid grid-cols-2 gap-3 sm:gap-4 ${hasMultiMonthView ? 'xl:grid-cols-6' : 'xl:grid-cols-3'}`} aria-label={en ? 'Financial summary' : 'Tóm tắt tài chính'}>
@@ -542,8 +584,15 @@ function ExpensePieChart({ title, data, to, filterKey, en, income = false }: { t
   const navigate = useNavigate();
   const pieData = summarizePieData(data, en ? 'en' : 'vi');
   const otherItem = pieData.find((item) => item.isOther);
-  const openItem = (item: PieChartItem) => { if (item.id && item.id !== 'uncategorized' && !item.isOther) navigate(`${to}&${filterKey}=${encodeURIComponent(item.id)}`); };
-  return <><h3 className="font-bold">{title}</h3><div className="min-h-72 min-w-0 max-w-full pt-3">{pieData.length ? <><div className="h-56 sm:h-64"><ResponsiveContainer><PieChart margin={{ top: 18, right: 18, left: 18, bottom: 0 }}><Pie data={pieData} dataKey="value" nameKey="name" innerRadius={45} outerRadius={75} labelLine={false} label={formatPieLabel}>{pieData.map((item) => <Cell key={item.id || item.name} fill={item.fill} cursor={item.id !== 'uncategorized' && !item.isOther ? 'pointer' : undefined} role={item.id !== 'uncategorized' ? 'button' : undefined} tabIndex={item.id !== 'uncategorized' && !item.isOther ? 0 : undefined} aria-label={item.isOther ? `${item.name}: ${formatVnd(item.value)} (${item.hiddenItems?.length || 0} danh mục)` : `${item.name}: ${formatVnd(item.value)}`} onClick={() => openItem(item)} onKeyDown={(event) => { if (item.id !== 'uncategorized' && !item.isOther && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); openItem(item); } }} />)}</Pie><Tooltip content={<PieTooltip />} /></PieChart></ResponsiveContainer></div><ul className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs sm:grid-cols-3" aria-label={`${title} legend`}>{pieData.map((item) => <li key={item.id || item.name} className="flex min-w-0 items-center gap-1.5"><span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: item.fill }} aria-hidden="true" /><span className="truncate" title={`${item.name}: ${formatVnd(item.value)}`}>{item.name}</span></li>)}</ul>{otherItem && <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{en ? `${otherItem.hiddenItems?.length || 0} smaller categories grouped into “Other”; tap or click “Other” to see details.` : `${otherItem.hiddenItems?.length || 0} danh mục nhỏ được gộp vào “Khác”; nhấn hoặc bấm “Khác” để xem chi tiết.`}</p>}</> : <EmptyState title={en ? 'No chart data' : 'Chưa có dữ liệu biểu đồ'} description={en ? `No actual ${income ? 'income' : 'expense'} transactions in this period.` : `Chưa có giao dịch thực tế ${income ? 'thu nhập' : 'chi tiêu'} trong kỳ này.`} />}</div></>;
+  const openItem = (item: PieChartItem) => {
+    if (item.isOther) {
+      const hiddenIds = item.hiddenItems?.map((hiddenItem) => hiddenItem.id).filter(Boolean) || [];
+      if (hiddenIds.length) navigate(`${to}&${hiddenIds.map((id) => `${filterKey}=${encodeURIComponent(id)}`).join('&')}`);
+      return;
+    }
+    if (item.id && item.id !== 'uncategorized') navigate(`${to}&${filterKey}=${encodeURIComponent(item.id)}`);
+  };
+  return <><h3 className="font-bold">{title}</h3><div className="min-h-72 min-w-0 max-w-full pt-3">{pieData.length ? <><div className="h-56 sm:h-64"><ResponsiveContainer><PieChart margin={{ top: 18, right: 18, left: 18, bottom: 0 }}><Pie data={pieData} dataKey="value" nameKey="name" innerRadius={45} outerRadius={75} labelLine={false} label={formatPieLabel}>{pieData.map((item) => { const interactive = item.id !== 'uncategorized' && (item.isOther ? Boolean(item.hiddenItems?.length) : true); return <Cell key={item.id || item.name} fill={item.fill} cursor={interactive ? 'pointer' : undefined} role={interactive ? 'button' : undefined} tabIndex={interactive ? 0 : undefined} aria-label={item.isOther ? `${item.name}: ${formatVnd(item.value)} (${item.hiddenItems?.length || 0} danh mục)` : `${item.name}: ${formatVnd(item.value)}`} onClick={() => openItem(item)} onKeyDown={(event) => { if (interactive && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); openItem(item); } }} />; })}</Pie><Tooltip content={<PieTooltip />} /></PieChart></ResponsiveContainer></div><ul className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs sm:grid-cols-3" aria-label={`${title} legend`}>{pieData.map((item) => <li key={item.id || item.name} className="flex min-w-0 items-center gap-1.5"><span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: item.fill }} aria-hidden="true" /><span className="truncate" title={`${item.name}: ${formatVnd(item.value)}`}>{item.name}</span></li>)}</ul>{otherItem && <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{en ? `${otherItem.hiddenItems?.length || 0} smaller categories grouped into “Other”; tap, click, or focus “Other” to see details.` : `${otherItem.hiddenItems?.length || 0} danh mục nhỏ được gộp vào “Khác”; nhấn, bấm hoặc dùng phím Enter trên “Khác” để xem chi tiết.`}</p>}</> : <EmptyState title={en ? 'No chart data' : 'Chưa có dữ liệu biểu đồ'} description={en ? `No actual ${income ? 'income' : 'expense'} transactions in this period.` : `Chưa có giao dịch thực tế ${income ? 'thu nhập' : 'chi tiêu'} trong kỳ này.`} />}</div></>;
 }
 
 function PieTooltip({ active, payload }: { active?: boolean; payload?: Array<{ payload?: PieChartItem; value?: number }> }) {

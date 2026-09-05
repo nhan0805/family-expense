@@ -49,8 +49,10 @@ import {
   type Transaction,
 } from '../lib/domain';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
+import { reportClientError } from '../lib/telemetry';
 import {
   fetchDeletedTransactionPage,
+  fetchDashboardDueTransactions,
   fetchTransactionPage,
   fetchTransactionYears,
 } from '../lib/transactionsApi';
@@ -91,6 +93,10 @@ type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const getInitialFilterIds = (searchParams: URLSearchParams, key: string) =>
   Array.from(new Set(searchParams.getAll(key).filter((value) => uuidPattern.test(value))));
+const getInitialSort = (value: string | null): SortOption =>
+  value === 'date-asc' || value === 'amount-desc' || value === 'amount-asc' || value === 'description-asc'
+    ? value
+    : 'date-desc';
 
 export function sanitizeAiSearchExplanation(explanation: string) {
   return explanation
@@ -309,7 +315,7 @@ export function Transactions() {
     currentUserId,
     currentUserRole,
   } = useApp();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const initialPeriod = getInitialTransactionPeriod(
     searchParams.get('month'),
     searchParams.get('year'),
@@ -321,8 +327,8 @@ export function Transactions() {
   const hasInitialDateRange = Boolean(initialDateRange.dateFrom || initialDateRange.dateTo);
   const initialMonth = hasInitialDateRange ? '' : initialPeriod.month;
   const initialYear = hasInitialDateRange ? '' : initialPeriod.year;
-  const [query, setQuery] = useState('');
-  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [query, setQuery] = useState(() => searchParams.get('query') || '');
+  const [debouncedQuery, setDebouncedQuery] = useState(() => searchParams.get('query') || '');
   const [transactionType, setTransactionType] = useState(() =>
     getInitialTransactionType(searchParams.get('transactionType')),
   );
@@ -338,13 +344,13 @@ export function Transactions() {
   const [paymentMethodIds, setPaymentMethodIds] = useState(() =>
     getInitialFilterIds(searchParams, 'paymentMethodId'),
   );
-  const [amountMin, setAmountMin] = useState('');
-  const [amountMax, setAmountMax] = useState('');
+  const [amountMin, setAmountMin] = useState(() => /^\d+$/.test(searchParams.get('amountMin') || '') ? searchParams.get('amountMin') || '' : '');
+  const [amountMax, setAmountMax] = useState(() => /^\d+$/.test(searchParams.get('amountMax') || '') ? searchParams.get('amountMax') || '' : '');
   const [month, setMonth] = useState(initialMonth);
   const [year, setYear] = useState(initialYear);
   const [dateFrom, setDateFrom] = useState(initialDateRange.dateFrom);
   const [dateTo, setDateTo] = useState(initialDateRange.dateTo);
-  const [sort, setSort] = useState<SortOption>('date-desc');
+  const [sort, setSort] = useState<SortOption>(() => getInitialSort(searchParams.get('sort')));
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState('');
@@ -368,6 +374,26 @@ export function Transactions() {
     const timeout = window.setTimeout(() => setDebouncedQuery(query), 300);
     return () => window.clearTimeout(timeout);
   }, [query]);
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (debouncedQuery) params.set('query', debouncedQuery);
+    if (transactionType) params.set('transactionType', transactionType);
+    if (status) params.set('status', status);
+    purposeIds.forEach((id) => params.append('purposeId', id));
+    expenseTypeIds.forEach((id) => params.append('expenseTypeId', id));
+    paymentMethodIds.forEach((id) => params.append('paymentMethodId', id));
+    if (amountMin) params.set('amountMin', amountMin);
+    if (amountMax) params.set('amountMax', amountMax);
+    if (dateFrom || dateTo) {
+      if (dateFrom) params.set('dateFrom', dateFrom);
+      if (dateTo) params.set('dateTo', dateTo);
+    } else {
+      if (month) params.set('month', month);
+      if (year) params.set('year', year);
+    }
+    if (sort !== 'date-desc') params.set('sort', sort);
+    setSearchParams(params, { replace: true });
+  }, [amountMax, amountMin, dateFrom, dateTo, debouncedQuery, expenseTypeIds, month, paymentMethodIds, purposeIds, setSearchParams, sort, status, transactionType, year]);
   useEffect(() => {
     if (bulkEditOpen) {
       setBulkEditMounted(true);
@@ -472,6 +498,23 @@ export function Transactions() {
     enabled: isSupabaseConfigured && Boolean(familyId),
     staleTime: 5 * 60_000,
   });
+  const localDuePlannedTransactions = useMemo(
+    () => transactions
+      .filter((item) => !item.deletedAt && item.status === 'Dự kiến' && item.transactionDate <= today)
+      .sort((a, b) => a.transactionDate.localeCompare(b.transactionDate)),
+    [today, transactions],
+  );
+  const duePlannedQuery = useQuery({
+    queryKey: ['dashboard-due', familyId],
+    queryFn: () => fetchDashboardDueTransactions(familyId, today),
+    enabled: isSupabaseConfigured && Boolean(familyId),
+    retry: false,
+  });
+  useEffect(() => {
+    if (transactionQuery.error) reportClientError(transactionQuery.error, 'query');
+    if (trashQuery.error) reportClientError(trashQuery.error, 'query');
+    if (duePlannedQuery.error) reportClientError(duePlannedQuery.error, 'query');
+  }, [duePlannedQuery.error, trashQuery.error, transactionQuery.error]);
   const aiCatalogVersion = useMemo(
     () => JSON.stringify(
       [purposes, expenseTypes, paymentMethods].map((items) =>
@@ -594,7 +637,7 @@ export function Transactions() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['trash', familyId] }),
         queryClient.invalidateQueries({ queryKey: ['transactions', familyId] }),
-        queryClient.invalidateQueries({ queryKey: ['dashboard', familyId] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-data', familyId] }),
         queryClient.invalidateQueries({ queryKey: ['budgets', familyId] }),
       ]);
     } else {
@@ -621,7 +664,7 @@ export function Transactions() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['trash', familyId] }),
         queryClient.invalidateQueries({ queryKey: ['transactions', familyId] }),
-        queryClient.invalidateQueries({ queryKey: ['dashboard', familyId] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-data', familyId] }),
         queryClient.invalidateQueries({ queryKey: ['budgets', familyId] }),
       ]);
     } else {
@@ -673,7 +716,8 @@ export function Transactions() {
       }
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['transactions', familyId] }),
-        queryClient.invalidateQueries({ queryKey: ['dashboard', familyId] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-due', familyId] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-data', familyId] }),
         queryClient.invalidateQueries({ queryKey: ['budgets', familyId] }),
       ]);
     } else {
@@ -717,7 +761,8 @@ export function Transactions() {
       }
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['transactions', familyId] }),
-        queryClient.invalidateQueries({ queryKey: ['dashboard', familyId] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-due', familyId] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-data', familyId] }),
         queryClient.invalidateQueries({ queryKey: ['budgets', familyId] }),
       ]);
     } else {
@@ -728,7 +773,9 @@ export function Transactions() {
     closeSelectMode();
     notify(`Đã cập nhật ${updatedCount} giao dịch.`);
   };
-  const duePlannedTransactions = rows.filter((item) => !showTrash && item.status === 'Dự kiến' && item.transactionDate <= today);
+  const duePlannedTransactions = showTrash
+    ? []
+    : (isSupabaseConfigured ? duePlannedQuery.data || [] : localDuePlannedTransactions);
   const confirmPlannedTransactions = async (items: Transaction[]) => {
     if (!items.length) return;
     if (!await askConfirm({ title: 'Xác nhận giao dịch dự kiến?', description: `${items.length} giao dịch đến hạn sẽ chuyển sang Thực tế.`, confirmLabel: 'Xác nhận' })) return;
@@ -743,7 +790,7 @@ export function Transactions() {
       }
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['transactions', familyId] }),
-        queryClient.invalidateQueries({ queryKey: ['dashboard', familyId] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-data', familyId] }),
         queryClient.invalidateQueries({ queryKey: ['budgets', familyId] }),
       ]);
     } else {
@@ -788,7 +835,7 @@ export function Transactions() {
         queryKey: ['transactions', familyId],
       });
       await queryClient.invalidateQueries({
-        queryKey: ['dashboard', familyId],
+        queryKey: ['dashboard-data', familyId],
       });
       await queryClient.invalidateQueries({
         queryKey: ['transaction-years', familyId],
@@ -848,7 +895,7 @@ export function Transactions() {
         queryKey: ['transactions', familyId],
       });
       await queryClient.invalidateQueries({
-        queryKey: ['dashboard', familyId],
+        queryKey: ['dashboard-data', familyId],
       });
       await queryClient.invalidateQueries({
         queryKey: ['transaction-years', familyId],
@@ -1245,6 +1292,12 @@ export function Transactions() {
         </details>
       </section>
 
+      {isSupabaseConfigured && duePlannedQuery.isError && (
+        <div role="alert" className="attention-card order-2 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50/70 p-4 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/20 dark:text-amber-200">
+          <span>{en ? 'Could not load planned transactions that need confirmation.' : 'Không thể tải các giao dịch dự kiến cần xác nhận.'}</span>
+          <button type="button" className="btn-secondary px-3 py-1.5 text-xs" onClick={() => void duePlannedQuery.refetch()}>{en ? 'Retry' : 'Thử lại'}</button>
+        </div>
+      )}
       {duePlannedTransactions.length > 0 && (
         <section className="attention-card order-2 rounded-2xl border border-amber-200 bg-amber-50/70 p-4 shadow-sm dark:border-amber-900/50 dark:bg-amber-950/20" aria-labelledby="due-planned-title">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1294,7 +1347,7 @@ export function Transactions() {
           const paymentMethodName =
             getCatalogDisplayName(paymentMethod, language) ||
             '—';
-          return <TransactionRow key={transaction.id} transaction={transaction} purposeName={purposeName} purposeIcon={purpose?.icon} expenseTypeName={expenseTypeName} expenseTypeIcon={expenseType?.icon} paymentMethodName={paymentMethodName} paymentMethodIcon={paymentMethod?.icon} recurringLabel={en ? 'Recurring' : 'Định kỳ'} showTrash={showTrash} selectMode={selectMode} selected={selectedIds.has(transaction.id)} openMenu={openMenuId === transaction.id} deleting={deletingId === transaction.id} copying={copyingId === transaction.id} currentUserRole={currentUserRole} currentUserId={currentUserId} onToggleSelected={toggleSelected} onSetSelected={setSelectedIds} onToggleMenu={(id) => setOpenMenuId((value) => value === id ? null : id)} onRestore={() => void restoreSelected()} onPermanentlyDelete={() => void permanentlyDeleteSelected()} onCopy={(item) => void copyTransaction(item)} onRemove={(id) => void remove(id)} />;
+          return <TransactionRow key={transaction.id} transaction={transaction} purposeName={purposeName} purposeIcon={purpose?.icon} expenseTypeName={expenseTypeName} expenseTypeIcon={expenseType?.icon} paymentMethodName={paymentMethodName} paymentMethodIcon={paymentMethod?.icon} recurringLabel={en ? 'Recurring' : 'Định kỳ'} plannedLabel={en ? 'Planned' : 'Dự kiến'} actualLabel={en ? 'Actual' : 'Thực tế'} showTrash={showTrash} selectMode={selectMode} selected={selectedIds.has(transaction.id)} openMenu={openMenuId === transaction.id} deleting={deletingId === transaction.id} copying={copyingId === transaction.id} currentUserRole={currentUserRole} currentUserId={currentUserId} onToggleSelected={toggleSelected} onSetSelected={setSelectedIds} onToggleMenu={(id) => setOpenMenuId((value) => value === id ? null : id)} onRestore={() => void restoreSelected()} onPermanentlyDelete={() => void permanentlyDeleteSelected()} onCopy={(item) => void copyTransaction(item)} onRemove={(id) => void remove(id)} />;
         })}
         {((showTrash ? trashQuery.isPending : transactionQuery.isPending) && isSupabaseConfigured) && <TransactionListSkeleton/>}
         {rows.length === 0 && !transactionQuery.isPending && (
