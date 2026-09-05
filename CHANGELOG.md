@@ -11,6 +11,14 @@
 - Kiểm thử: `tsc -b`, ESLint, full Vitest đạt 33/33 file, 134/134 test, production build và `git diff --check` pass. `supabase test db --local` chưa chạy được vì PostgreSQL local tại `127.0.0.1:54322` chưa hoạt động.
 - Trạng thái triển khai dự kiến: Chưa deploy production; cần PR, required checks/db-security, Supabase Production Deploy rồi Cloudflare Pages Git deployment. Không dùng Wrangler deploy trực tiếp.
 
+### Làm idempotent bước dọn Edge Function khi deploy
+
+- Trước thay đổi: Supabase Production Deploy dừng nếu một Edge Function semantic đã được xóa từ trước, dù migration và các bước deploy khác đã thành công.
+- Sau thay đổi: Workflow chỉ bỏ qua đúng lỗi “function không tồn tại”, nhưng vẫn fail với các lỗi xóa khác để lần chạy sau có thể hoàn tất an toàn.
+- Files: `.github/workflows/supabase-deploy.yml`; không đổi schema hoặc dữ liệu ứng dụng.
+- Kiểm thử: kiểm tra YAML/script bằng CI; cần rerun `db-security`, Supabase Production Deploy và Cloudflare Pages sau khi merge.
+- Trạng thái triển khai dự kiến: Chờ PR sửa workflow và rerun production deployment; migration recurring đã apply thành công trong lần chạy trước.
+
 ## 2026-09-04
 
 ### Tăng tốc AI search
