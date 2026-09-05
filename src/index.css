@@ -422,6 +422,12 @@ body {
   opacity: .55;
 }
 
+.recurring-toolbar-button {
+  min-height: 2.5rem;
+  padding: .55rem .7rem;
+  font-size: .9rem;
+}
+
 .btn-primary:focus-visible,
 .btn-secondary:focus-visible,
 .icon-button:focus-visible,
