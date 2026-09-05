@@ -28,6 +28,7 @@
 
 - Lần chạy Supabase Production Deploy của merge commit đã apply migration recurring và deploy các function còn dùng, nhưng dừng ở bước xóa `process-transaction-embeddings` vì function này đã không tồn tại trên production.
 - Đã cập nhật `.github/workflows/supabase-deploy.yml` để bỏ qua đúng lỗi function không tồn tại; các lỗi khác vẫn làm workflow fail. Cần rerun qua một PR mới để hoàn tất trạng thái deploy xanh.
+
 ### Handoff — tăng tốc AI search (04/09/2026)
 
 - Mục tiêu: giảm thời gian chờ khi người dùng dùng **Gợi ý AI** trên trang Giao dịch.
