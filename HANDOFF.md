@@ -14,6 +14,13 @@
 - [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
 
+### Handoff — hotfix migration aggregate Dashboard (07/09/2026)
+
+- PR [#139](https://github.com/nhan0805/family-expense/pull/139) đã merge vào `main` với các hạng mục 1–10, nhưng db-security phát hiện alias SQL `month` trong `get_dashboard_aggregate` chưa tương thích PostgreSQL.
+- Hotfix đang ở nhánh `codex/fix-dashboard-aggregate`, đổi alias thành `month_key` trong migration `supabase/migrations/202609070001_security_integrity_and_dashboard.sql`; không thay đổi schema nghiệp vụ ngoài migration đã phát hành.
+- Cần chờ PR hotfix pass quality/E2E/db-security, rồi xác minh Supabase Production Deploy và Cloudflare Pages production trên merge commit hotfix. Không dùng Wrangler.
+- Backup/restore drill vẫn chưa chạy vì workflow staging cần `STAGING_DB_URL` và `RESTORE_DB_URL`; không dùng production để thử nghiệm.
+
 ### Handoff — 10 hạng mục bảo mật, toàn vẹn dữ liệu, hiệu năng và vận hành (07/09/2026)
 
 - Migration mới `supabase/migrations/202609070001_security_integrity_and_dashboard.sql` khóa DML trực tiếp trên `family_members`, thêm unique active-family, composite FK cho suggestions, AI cache service-role-only, rate-limit reservation/complete RPC, import key idempotency và `get_dashboard_aggregate`.
