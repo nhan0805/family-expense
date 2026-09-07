@@ -1,5 +1,15 @@
 # Nhật ký thay đổi Family Expense
 
+## 2026-09-07
+
+### Chuẩn bị deploy bản tinh chỉnh tìm kiếm và trạng thái giao dịch
+
+- Trước thay đổi: tìm kiếm nhanh có thể ghép nhãn trùng giữa Mục đích và Danh mục; badge loại giao dịch/trạng thái hiển thị dư; sau khi xác nhận giao dịch dự kiến, khung đến hạn chưa tự làm mới; thanh chọn kỳ ngân sách còn chiếm nhiều chiều cao.
+- Sau thay đổi: phân biệt ngữ cảnh tìm kiếm, chỉ hiển thị badge cần thiết, làm mới truy vấn giao dịch dự kiến tới hạn sau mutation thành công và thu gọn điều khiển kỳ ngân sách.
+- Files: `src/lib/quickTransactionSearch.ts`, `src/lib/quickTransactionSearch.test.ts`, `src/components/TransactionRow.tsx`, `src/components/TransactionRow.test.tsx`, `src/components/Feedback.tsx`, `src/pages/Transactions.tsx`, `src/pages/Transactions.ui.test.tsx`, `src/pages/Budgets.tsx`. Không có migration mới, không đổi schema/RLS/RPC hoặc dữ liệu production.
+- Kiểm thử local trước merge: full Vitest 34/34 file, 151/151 test; ESLint, TypeScript và production build pass; `git diff --check` pass. Build còn cảnh báo chunk ExcelJS/XLSX/charts lớn hiện hữu.
+- Trạng thái triển khai dự kiến: nhánh `codex/theme-pr-update` sẽ tạo PR vào `main`, bật auto-merge sau required checks và chờ Cloudflare Pages Git integration deploy merge commit. Không chạy Wrangler, không chạy migration hoặc Edge Function.
+
 ## 2026-09-06
 
 ### Sửa bộ lọc tìm kiếm khi nhãn trùng giữa Mục đích và Danh mục

@@ -1,6 +1,6 @@
 # Family Expense — Project Handoff
 
-> Cập nhật: **06/09/2026** (`Asia/Ho_Chi_Minh`)
+> Cập nhật: **07/09/2026** (`Asia/Ho_Chi_Minh`)
 > Trạng thái: **Production đang hoạt động; tài liệu này là ngữ cảnh kỹ thuật cho các phiên làm việc tiếp theo**  
 > Production: <https://family-expense-8fo.pages.dev>
 
@@ -13,6 +13,13 @@
 - [x] Supabase production workflow đã kiểm tra thành công bằng `workflow_dispatch` với `dry_run=true`; không thay đổi database hoặc deploy Edge Function.
 - [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
+
+### Handoff — chuẩn bị deploy bản tinh chỉnh tìm kiếm và trạng thái giao dịch (07/09/2026)
+
+- Bản deploy gộp các thay đổi đã kiểm tra: tìm kiếm nhanh phân biệt nhãn trùng theo ngữ cảnh; chỉ hiển thị badge trạng thái cần thiết; khung giao dịch dự kiến tới hạn tự làm mới sau khi xác nhận; điều khiển kỳ ngân sách gọn hơn.
+- Files chính: `src/lib/quickTransactionSearch.ts`, `src/components/TransactionRow.tsx`, `src/components/Feedback.tsx`, `src/pages/Transactions.tsx`, `src/pages/Budgets.tsx` và các regression test liên quan. Không có migration mới, không đổi schema/RLS/RPC hoặc dữ liệu production.
+- Validation local: full Vitest đạt 34/34 file, 151/151 test; ESLint, typecheck, production build và `git diff --check` pass. Build còn cảnh báo chunk ExcelJS/XLSX/charts lớn hiện hữu.
+- Kế hoạch triển khai: đồng bộ với `main`, tạo PR từ `codex/theme-pr-update`, bật auto-merge sau required checks và xác minh Cloudflare Pages production trên merge commit. Không dùng Wrangler; không cần Supabase Production Deploy cho đợt này.
 
 ### Handoff — sửa bộ lọc tìm kiếm khi nhãn trùng giữa Mục đích và Danh mục (06/09/2026)
 
