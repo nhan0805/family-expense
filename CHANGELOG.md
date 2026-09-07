@@ -1,55 +1,66 @@
 # Nhật ký thay đổi Family Expense
 
+## 2026-09-07
+
+### Chuẩn bị deploy bản tinh chỉnh tìm kiếm và trạng thái giao dịch
+
+- Trước thay đổi: tìm kiếm nhanh có thể ghép nhãn trùng giữa Mục đích và Danh mục; badge loại giao dịch/trạng thái hiển thị dư; sau khi xác nhận giao dịch dự kiến, khung đến hạn chưa tự làm mới; thanh chọn kỳ ngân sách còn chiếm nhiều chiều cao.
+- Sau thay đổi: phân biệt ngữ cảnh tìm kiếm, chỉ hiển thị badge cần thiết, làm mới truy vấn giao dịch dự kiến tới hạn sau mutation thành công và thu gọn điều khiển kỳ ngân sách.
+- Files: `src/lib/quickTransactionSearch.ts`, `src/lib/quickTransactionSearch.test.ts`, `src/components/TransactionRow.tsx`, `src/components/TransactionRow.test.tsx`, `src/components/Feedback.tsx`, `src/pages/Transactions.tsx`, `src/pages/Transactions.ui.test.tsx`, `src/pages/Budgets.tsx`. Không có migration mới, không đổi schema/RLS/RPC hoặc dữ liệu production.
+- Kiểm thử local trước merge: full Vitest 34/34 file, 151/151 test; ESLint, TypeScript và production build pass; `git diff --check` pass. Build còn cảnh báo chunk ExcelJS/XLSX/charts lớn hiện hữu.
+- Trạng thái triển khai dự kiến: nhánh `codex/theme-pr-update` sẽ tạo PR vào `main`, bật auto-merge sau required checks và chờ Cloudflare Pages Git integration deploy merge commit. Không chạy Wrangler, không chạy migration hoặc Edge Function.
+
 ## 2026-09-06
 
-### Sửa bộ lọc tìm kiếm khi nhãn mục đích và danh mục bị trùng
+### Sửa bộ lọc tìm kiếm khi nhãn trùng giữa Mục đích và Danh mục
 
-- Trước thay đổi: Câu `chi tiêu cho du lịch và hiếu hỉ` có thể nhận `Du lịch` đồng thời là mục đích và danh mục, khiến truy vấn áp dụng cả hai điều kiện và chỉ trả về rất ít giao dịch.
-- Sau thay đổi: Bộ phân tích ưu tiên `cho/for` cho mục đích, `danh mục/loại chi phí/category` cho danh mục; khi không có ngữ cảnh thì chỉ chọn một nhóm để không tạo bộ lọc AND ngoài ý muốn. Không đổi schema, API, RLS/RPC hay dữ liệu.
-- Files: `src/lib/quickTransactionSearch.ts`, `src/lib/quickTransactionSearch.test.ts`, `src/components/Feedback.tsx`. Kiểm thử regression bao phủ câu tìm kiếm có nhãn trùng; dọn timer khi unmount để CI coverage không còn lỗi async sau teardown.
+- Trước thay đổi: Câu `chi tiêu cho du lịch và hiếu hỉ` có thể nhận `Du lịch` đồng thời là Mục đích và Danh mục, khiến truy vấn dùng cả hai điều kiện và chỉ trả về rất ít giao dịch.
+- Sau thay đổi: Bộ tìm kiếm nhanh nhận biết ngữ cảnh “cho/for” là Mục đích và ngữ cảnh “danh mục/loại chi phí/category” là Danh mục; nhãn trùng không còn bị áp dụng đồng thời khi không được yêu cầu.
+- Files: `src/lib/quickTransactionSearch.ts`, `src/lib/quickTransactionSearch.test.ts`. Không đổi API, migration, RLS/RPC hoặc dữ liệu.
 - Kiểm thử: full Vitest đạt 34/34 file, 151/151 test; typecheck, lint, production build và `git diff --check` pass. Build còn cảnh báo chunk ExcelJS lớn hiện hữu.
-- Trạng thái triển khai dự kiến: tạo PR vào `main`, bật auto-merge và chờ CI cùng Cloudflare Pages Git deployment.
+- Trạng thái triển khai thực tế: PR [#137](https://github.com/nhan0805/family-expense/pull/137) đã merge vào `main` với merge commit `1e3a3395f17bfb2efc40520600af132e51ec7a35`; CI main [run 33982648468](https://github.com/nhan0805/family-expense/actions/runs/33982648468) và Cloudflare Pages production [check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/2c9a0917-ee36-4bef-a7ad-a4e6fb49c3cd) pass. Production trả HTTP 200.
 
 ### Chỉ hiển thị badge Dự kiến trên giao dịch
 
-- Trước thay đổi: Danh sách hiển thị thêm badge `Thực tế` trên các giao dịch đã thành thực tế, dù trạng thái này đã được thể hiện qua dữ liệu/màu giao diện.
-- Sau thay đổi: Chỉ giao dịch có trạng thái `Dự kiến` hiển thị badge; giao dịch `Thực tế` không hiện badge trạng thái. Badge `Định kỳ`, màu thu/chi và hành vi xác nhận vẫn giữ nguyên.
+- Trước thay đổi: Danh sách hiển thị thêm badge `Thực tế` trên giao dịch đã thành thực tế dù trạng thái đã có trong dữ liệu/màu giao diện.
+- Sau thay đổi: Chỉ giao dịch `Dự kiến` hiển thị badge trạng thái; giao dịch `Thực tế` không hiện badge. Badge `Định kỳ`, màu thu/chi và dữ liệu trạng thái giữ nguyên. Cleanup timer Feedback khi unmount giúp coverage CI không còn lỗi async sau teardown.
 - Files: `src/components/TransactionRow.tsx`, `src/components/TransactionRow.test.tsx`, `src/components/Feedback.tsx`. Không đổi schema, API, RLS/RPC hoặc dữ liệu.
-- Kiểm thử: đã bổ sung regression test cho cả giao dịch `Dự kiến` và `Thực tế` trong mobile/desktop.
-- Trạng thái triển khai dự kiến: cùng PR với bản sửa bộ lọc tìm kiếm.
+- Kiểm thử: regression test cho mobile/desktop; full Vitest 34/34 file, 151/151 test, coverage pass; typecheck, lint, production build và `git diff --check` pass.
+- Trạng thái triển khai thực tế: đã deploy cùng PR [#137](https://github.com/nhan0805/family-expense/pull/137); không có migration hoặc thay đổi dữ liệu cần chạy thêm.
 
 ### Tự làm mới khung xác nhận giao dịch dự kiến
 
 - Trước thay đổi: sau khi xác nhận giao dịch dự kiến trên trang Giao dịch, khung `Giao dịch dự kiến tới hạn` vẫn còn hiển thị vì truy vấn riêng của khung chưa được làm mới.
 - Sau thay đổi: sau khi Supabase cập nhật thành công, truy vấn giao dịch dự kiến tới hạn được invalidation cùng danh sách giao dịch, dashboard và ngân sách; khung tự tải lại và biến mất khi không còn giao dịch cần xác nhận.
 - Files: `src/pages/Transactions.tsx`, `src/pages/Transactions.ui.test.tsx`. Không đổi API, migration, RLS/RPC hoặc dữ liệu.
-- Kiểm thử: bổ sung regression test xác nhận khung biến mất ở fallback demo; sẽ chạy full Vitest, lint, typecheck, build và E2E trước PR.
-- Trạng thái triển khai dự kiến: tạo PR vào `main`, bật auto-merge sau required checks rồi chờ Cloudflare Pages Git integration.
+- Kiểm thử: full Vitest đạt 34/34 file, 149/149 test; lint, typecheck, production build và `git diff --check` pass. Regression test xác nhận khung biến mất ở fallback demo. Build còn cảnh báo chunk ExcelJS lớn hiện hữu.
+- Trạng thái triển khai: thay đổi đã kiểm tra tại workspace; chưa deploy production.
 
 ### Gỡ badge Tiền ra/Tiền vào khỏi danh sách giao dịch
 
 - Trước thay đổi: Mỗi dòng giao dịch hiển thị thêm badge `Tiền ra` hoặc `Tiền vào` dù nền dòng và màu số tiền đã thể hiện loại giao dịch.
 - Sau thay đổi: Gỡ badge loại giao dịch khỏi cả card mobile và bảng desktop; giữ màu nền và màu số tiền để phân biệt thu/chi, đồng thời giữ nguyên badge trạng thái và định kỳ.
 - Files: `src/components/TransactionRow.tsx`, `src/components/TransactionRow.test.tsx`. Không đổi API, migration, RLS/RPC hoặc dữ liệu.
-- Kiểm thử: full Vitest đạt 34/34 file, 149/149 test; typecheck, lint, production build và `git diff --check` pass. Build còn cảnh báo chunk ExcelJS lớn hiện hữu.
+- Kiểm thử: TransactionRow regression, full Vitest 34/34 file, 151/151 test; typecheck, lint, production build và `git diff --check` pass. Build còn cảnh báo chunk ExcelJS lớn hiện hữu.
+- Trạng thái triển khai thực tế: PR [#135](https://github.com/nhan0805/family-expense/pull/135) đã merge vào `main` với merge commit `cab572e758286f128d5fc88e3eccff345d2fb186`; CI main [run 33981284729](https://github.com/nhan0805/family-expense/actions/runs/33981284729) và Cloudflare Pages production check [pass](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/7ff9065b-1325-4902-8088-b07135a34448). Production smoke test `https://family-expense-8fo.pages.dev/` trả HTTP 200. Không có migration/Supabase production deploy.
 
-### Thu gọn nút thao tác và bổ sung icon KPI chi phí định kỳ
+## 2026-09-05
 
-- Trước thay đổi: Hai nút chính trên trang Chi phí định kỳ chiếm nhiều diện tích và bố cục chưa cân đối; ba KPI chỉ hiển thị nhãn và số.
-- Sau thay đổi: Hai nút `Tạo giao dịch đến hạn` và `Thêm khoản định kỳ` dùng kích thước gọn, cùng chiều cao và tự xếp phù hợp theo màn hình; KPI có icon màu để nhận diện nhanh hơn.
+### Tinh chỉnh KPI và nút thao tác chi phí định kỳ
+
+- Trước thay đổi: Hai nút `Tạo giao dịch đến hạn` và `Thêm khoản định kỳ` chiếm nhiều chiều rộng và xếp dọc; KPI chỉ có nhãn và số nên bố cục hơi nặng.
+- Sau thay đổi: Hai nút chính chuyển thành nhóm gọn hai cột trên màn hình rộng, cùng chiều cao/căn giữa và tự xếp dọc trên mobile. Ba KPI có icon màu, nhãn và số được căn thành một cụm dễ quét hơn.
 - Files: `src/pages/RecurringExpenses.tsx`, `src/index.css`. Không đổi API, migration, RLS/RPC hoặc dữ liệu.
-- Kiểm thử: full Vitest đạt 34/34 file, 149/149 test; typecheck, lint, production build và `git diff --check` pass. Build còn cảnh báo chunk ExcelJS lớn hiện hữu.
-- Trạng thái triển khai dự kiến: tạo PR vào `main`, bật auto-merge và chờ Cloudflare Pages Git deployment.
+- Kiểm thử: recurring Vitest 15/15; typecheck và lint các file thay đổi pass. Production build và full test cần chạy lại trước deploy tiếp theo.
+- Trạng thái triển khai dự kiến: thay đổi đang ở workspace, chưa deploy production.
 
 ### Thu gọn thanh chọn kỳ ngân sách
 
 - Trước thay đổi: mô tả kỳ ngân sách nằm sát đáy, lệch với cụm chọn tháng/năm có nhãn phía trên; thanh lọc cao và có nhiều khoảng trống.
 - Sau thay đổi: tháng đang xem và ghi chú được tách thành hai dòng cạnh biểu tượng lịch, căn giữa với hai ô chọn. Ẩn nhãn lặp trên giao diện nhưng giữ tên truy cập cho trình đọc màn hình; giảm khoảng đệm trên desktop, xếp ô tháng/năm bên dưới trên mobile và dành thêm chiều rộng cho tên tháng.
-- Files: `src/pages/Budgets.tsx`, `CHANGELOG.md`, `HANDOFF.md`. Không đổi logic ngân sách, API hoặc database.
-- Kiểm thử: full Vitest đạt 34/34 file, 149/149 test; lint không có warning, typecheck, production build và `git diff --check` pass trên nhánh triển khai riêng. Dùng binary local tương đương scripts và Vite `envDir: false`; build còn cảnh báo chunk ExcelJS lớn hiện hữu. Kiểm tra trực quan demo local đạt tại 320, 390, 640 và 1280px, theme sáng/tối, tiếng Việt/Anh; thanh lọc không tràn ngang, ô chọn cao hơn 44px. CI sẽ chạy thêm coverage, E2E và db-security trước khi merge.
-- Trạng thái triển khai dự kiến: nhánh `codex/budget-period-layout-20260905` được tách từ `main` tại `b67c447`; tạo PR vào `main`, bật auto-merge sau required checks và chờ Cloudflare Pages Git integration deploy merge commit. Không có migration hoặc Edge Function cần triển khai.
-
-## 2026-09-05
+- Files: `src/pages/Budgets.tsx`. Không đổi logic ngân sách, API hoặc database.
+- Kiểm thử: Vitest ngân sách đạt 6/6; lint, typecheck và production build pass (build với `envDir: false`, không nạp cấu hình môi trường). Kiểm tra trực quan demo local tại 320, 390, 640 và 1280px, theme sáng/tối, tiếng Việt/Anh; thanh lọc không tràn ngang, ô chọn cao hơn 44px. Build còn cảnh báo chunk ExcelJS lớn hiện hữu.
+- Trạng thái triển khai: đã sửa và kiểm tra tại workspace; chưa deploy production.
 
 ### Bổ sung khôi phục, xóa vĩnh viễn và chỉnh bố cục mẫu định kỳ
 
@@ -57,8 +68,8 @@
 - Sau thay đổi: Owner có khu vực `Mẫu định kỳ đã xóa` với thao tác `Khôi phục` về đúng trạng thái trước khi xóa và `Xóa vĩnh viễn` có xác nhận. Xóa vĩnh viễn chỉ xóa mẫu/lịch sử kỳ chạy, giữ giao dịch đã phát sinh. Cụm thao tác mỗi mẫu và hai nút đầu trang dùng kích thước đồng nhất, responsive theo mobile.
 - Kỹ thuật: thêm `deleted_active_before`, RPC owner-only `restore_recurring_transaction`/`permanently_delete_recurring_transaction`, RLS cho phép owner xem thùng rác mẫu; bổ sung API/local fallback, regression tests và migration mới `supabase/migrations/202609050005_recurring_restore_hard_delete.sql`.
 - Files/DB object: `src/pages/RecurringExpenses.tsx`, `src/lib/recurringExpense.ts`, `src/lib/recurringExpensesApi.ts`, `src/lib/recurringExpense.test.ts`, `src/pages/RecurringExpenses.test.tsx`, `supabase/migrations/202609050005_recurring_restore_hard_delete.sql`, `supabase/tests/recurring_expenses.sql`.
-- Kiểm thử: test tập trung recurring đạt 15/15; typecheck và lint các file thay đổi pass. Full test, build, CI, Supabase production migration và Cloudflare Pages production deployment sẽ chạy theo PR deploy.
-- Trạng thái triển khai dự kiến: cập nhật PR follow-up hiện tại, bật auto-merge và chờ required checks trước khi đưa migration/UI lên production.
+- Kiểm thử: test tập trung recurring đạt 15/15; full Vitest đạt 34/34 file, 149/149 test; typecheck, lint, production build và `git diff --check` pass. CI main [run 33979156739](https://github.com/nhan0805/family-expense/actions/runs/33979156739), gồm E2E và db-security, pass.
+- Trạng thái triển khai thực tế: PR [#132](https://github.com/nhan0805/family-expense/pull/132) đã merge với commit `b67c447780aaac70bf3fe0c646fc6a657c854b68`; Supabase Production Deploy [run 33979156700](https://github.com/nhan0805/family-expense/actions/runs/33979156700) pass và đã apply migration `202609050005_recurring_restore_hard_delete.sql`; Cloudflare Pages production check [pass](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/b0acdfdf-40e9-4450-8635-1974222bddf7); production `https://family-expense-8fo.pages.dev/` smoke HTTP 200. Không dùng Wrangler deploy trực tiếp.
 
 ### Bổ sung xóa mềm mẫu chi phí định kỳ
 
