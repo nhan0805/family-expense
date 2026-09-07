@@ -14,6 +14,16 @@
 - [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
 
+### Handoff — 10 hạng mục bảo mật, toàn vẹn dữ liệu, hiệu năng và vận hành (07/09/2026)
+
+- Migration mới `supabase/migrations/202609070001_security_integrity_and_dashboard.sql` khóa DML trực tiếp trên `family_members`, thêm unique active-family, composite FK cho suggestions, AI cache service-role-only, rate-limit reservation/complete RPC, import key idempotency và `get_dashboard_aggregate`.
+- `parse-expense`, `search-transactions` và `summarize-dashboard` hoàn tất AI reservation qua RPC; summary cache đọc/ghi bằng service role khi Edge secret có sẵn và client không còn quyền ghi bảng cache.
+- Dashboard cloud gọi aggregate RPC cho kỳ chọn, kỳ so sánh và biểu đồ; import Excel tạo SHA-256 key theo file để retry trả batch cũ. Thêm regression test cho API aggregate.
+- CI có performance budget entry JS ≤30 KB gzip và workflow manual `Staging Operations Drill` để chạy backup/restore vào target staging rỗng. [HUONG-DAN-DEPLOY-THU-CONG.md](HUONG-DAN-DEPLOY-THU-CONG.md) đã bỏ hướng dẫn Wrangler production.
+- Privacy AI được ghi tại [docs/AI_PRIVACY.md](docs/AI_PRIVACY.md); runbook yêu cầu review privacy khi thay đổi provider/prompt/trường dữ liệu.
+- Validation local: Vitest 34/34 file, 152/152 test; typecheck, lint, build, performance budget và `git diff --check` pass. pgTAP local chưa chạy do PostgreSQL `127.0.0.1:54322` chưa hoạt động; CI phải xác nhận migration/RLS trước merge.
+- Trạng thái: đang ở nhánh `codex/improvements-1-10`, chưa tạo PR/chưa chạy Supabase production migration. Backup/restore drill thực tế còn cần chạy workflow staging với secrets riêng.
+
 ### Handoff — chuẩn bị deploy bản tinh chỉnh tìm kiếm và trạng thái giao dịch (07/09/2026)
 
 - Bản deploy gộp các thay đổi đã kiểm tra: tìm kiếm nhanh phân biệt nhãn trùng theo ngữ cảnh; chỉ hiển thị badge trạng thái cần thiết; khung giao dịch dự kiến tới hạn tự làm mới sau khi xác nhận; điều khiển kỳ ngân sách gọn hơn.

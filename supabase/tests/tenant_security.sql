@@ -1,7 +1,7 @@
 -- Structural tenant-security tests chạy trong Supabase local/staging có pgTAP.
 -- Fixture-level cross-family negative tests nên dùng dữ liệu test riêng của môi trường.
 begin;
-select plan(26);
+select plan(38);
 select ok(exists (select 1 from pg_constraint where connamespace = 'public'::regnamespace and conrelid = 'public.transactions'::regclass and conname = 'transactions_purpose_same_family_fkey' and contype = 'f'),'transactions có purpose FK cùng family');
 select ok(exists (select 1 from pg_constraint where connamespace = 'public'::regnamespace and conrelid = 'public.transactions'::regclass and conname = 'transactions_expense_type_same_family_fkey' and contype = 'f'),'transactions có expense type FK cùng family');
 select ok(exists (select 1 from pg_constraint where connamespace = 'public'::regnamespace and conrelid = 'public.transactions'::regclass and conname = 'transactions_payment_method_same_family_fkey' and contype = 'f'),'transactions có payment method FK cùng family');
@@ -62,5 +62,17 @@ select ok(exists (select 1 from pg_policies where schemaname = 'public' and tabl
 select has_function('public','get_budget_summary',ARRAY['uuid','integer','integer'],'budget summary RPC có authorization');
 select has_function('public','upsert_budget',ARRAY['uuid','integer','integer','uuid','numeric','numeric'],'upsert budget RPC có authorization');
 select has_function('public','copy_budgets_from_month',ARRAY['uuid','integer','integer','integer','integer'],'copy budgets RPC có authorization');
+select ok(exists(select 1 from pg_indexes where schemaname='public' and indexname='family_members_one_active_family_idx'),'mỗi user chỉ có một family active');
+select ok(not has_table_privilege('authenticated','public.family_members','INSERT'),'authenticated không được insert trực tiếp family_members');
+select ok(not has_table_privilege('authenticated','public.family_members','UPDATE'),'authenticated không được update trực tiếp family_members');
+select ok(not has_table_privilege('authenticated','public.family_members','DELETE'),'authenticated không được delete trực tiếp family_members');
+select has_function('public','consume_ai_request_slot',ARRAY['uuid'],'AI rate limit có bước reserve nguyên tử');
+select has_function('public','complete_ai_request',ARRAY['uuid','text','text','integer','integer','text'],'AI usage có RPC hoàn tất reservation');
+select ok(not has_table_privilege('authenticated','public.ai_summary_cache','INSERT'),'client không được ghi AI summary cache');
+select ok(exists(select 1 from pg_constraint where conname='suggestions_purpose_same_family_fkey'),'gợi ý purpose có FK cùng family');
+select ok(exists(select 1 from pg_constraint where conname='suggestions_expense_type_same_family_fkey'),'gợi ý expense type có FK cùng family');
+select has_function('public','get_dashboard_aggregate',ARRAY['uuid','date','date'],'dashboard có RPC aggregate theo khoảng ngày');
+select ok(exists(select 1 from information_schema.columns where table_schema='public' and table_name='import_batches' and column_name='import_key'),'import batch có khóa retry ổn định');
+select ok(exists(select 1 from pg_indexes where schemaname='public' and indexname='import_batches_family_key_uidx'),'import batch có unique key theo family');
 select * from finish();
 rollback;

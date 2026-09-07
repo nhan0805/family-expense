@@ -171,6 +171,48 @@ export async function fetchDashboardTransactions(
   }));
 }
 
+export type DashboardAggregateGroup = {
+  id: string | null;
+  name: string;
+  name_en?: string | null;
+  value: number | string;
+};
+
+export type DashboardAggregate = {
+  totalIncome: number | string;
+  totalExpense: number | string;
+  byPurpose: DashboardAggregateGroup[];
+  byExpenseType: DashboardAggregateGroup[];
+  incomeByPurpose: DashboardAggregateGroup[];
+  incomeByExpenseType: DashboardAggregateGroup[];
+  monthlyTrend: Array<{ key: string; expense: number | string; income: number | string; net: number | string }>;
+  monthlyCategories: Array<{ month: string; id: string | null; value: number | string }>;
+};
+
+export async function fetchDashboardAggregate(
+  familyId: string,
+  dateFrom: string,
+  dateTo: string,
+): Promise<DashboardAggregate> {
+  const { data, error } = await supabase.rpc('get_dashboard_aggregate', {
+    p_family_id: familyId,
+    p_date_from: dateFrom,
+    p_date_to: dateTo,
+  });
+  if (error) throw error;
+  const result = (data || {}) as DashboardAggregate;
+  return {
+    totalIncome: Number(result.totalIncome || 0),
+    totalExpense: Number(result.totalExpense || 0),
+    byPurpose: (result.byPurpose || []).map((item) => ({ ...item, value: Number(item.value) })),
+    byExpenseType: (result.byExpenseType || []).map((item) => ({ ...item, value: Number(item.value) })),
+    incomeByPurpose: (result.incomeByPurpose || []).map((item) => ({ ...item, value: Number(item.value) })),
+    incomeByExpenseType: (result.incomeByExpenseType || []).map((item) => ({ ...item, value: Number(item.value) })),
+    monthlyTrend: (result.monthlyTrend || []).map((item) => ({ ...item, expense: Number(item.expense), income: Number(item.income), net: Number(item.net) })),
+    monthlyCategories: (result.monthlyCategories || []).map((item) => ({ ...item, value: Number(item.value) })),
+  };
+}
+
 export async function fetchDashboardDueTransactions(
   familyId: string,
   today: string,

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { fetchTransactionPage } from './transactionsApi';
+import { fetchDashboardAggregate, fetchTransactionPage } from './transactionsApi';
 
 const { rpcMock } = vi.hoisted(() => ({ rpcMock: vi.fn() }));
 
@@ -64,5 +64,37 @@ describe('fetchTransactionPage keyword search', () => {
       p_date_to: null,
       p_sort: 'date-desc',
     });
+  });
+});
+
+describe('fetchDashboardAggregate', () => {
+  it('maps server aggregates without loading transaction rows', async () => {
+    rpcMock.mockResolvedValueOnce({
+      data: {
+        totalIncome: '1000000',
+        totalExpense: '250000',
+        byPurpose: [{ id: 'p1', name: 'Gia đình', value: '250000' }],
+        byExpenseType: [],
+        incomeByPurpose: [],
+        incomeByExpenseType: [],
+        monthlyTrend: [{ key: '2026-09', expense: '250000', income: '1000000', net: '750000' }],
+        monthlyCategories: [{ month: '2026-09', id: 'e1', value: '250000' }],
+      },
+      error: null,
+    });
+
+    const result = await fetchDashboardAggregate(
+      '11111111-1111-4111-8111-111111111111',
+      '2026-09-01',
+      '2026-09-30',
+    );
+
+    expect(rpcMock).toHaveBeenCalledWith('get_dashboard_aggregate', {
+      p_family_id: '11111111-1111-4111-8111-111111111111',
+      p_date_from: '2026-09-01',
+      p_date_to: '2026-09-30',
+    });
+    expect(result.totalExpense).toBe(250000);
+    expect(result.monthlyTrend[0]?.net).toBe(750000);
   });
 });

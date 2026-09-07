@@ -10,6 +10,16 @@
 - Kiểm thử local trước merge: full Vitest 34/34 file, 151/151 test; ESLint, TypeScript và production build pass; `git diff --check` pass. Build còn cảnh báo chunk ExcelJS/XLSX/charts lớn hiện hữu.
 - Trạng thái triển khai dự kiến: nhánh `codex/theme-pr-update` sẽ tạo PR vào `main`, bật auto-merge sau required checks và chờ Cloudflare Pages Git integration deploy merge commit. Không chạy Wrangler, không chạy migration hoặc Edge Function.
 
+### Triển khai 10 hạng mục bảo mật, toàn vẹn dữ liệu, hiệu năng và vận hành
+
+- Bảo mật: family member chuyển sang RPC-only cho mutation, thêm unique active-family invariant; AI summary cache chỉ Edge Function/service role ghi; rate limit AI reserve nguyên tử; thêm composite FK cùng family cho suggestions.
+- Toàn vẹn/import: import Excel nhận `import_key` ổn định để retry không tạo batch/giao dịch trùng; Dashboard dùng `get_dashboard_aggregate` thay vì tải toàn bộ giao dịch để tổng hợp trên browser.
+- Kiểm thử/vận hành: mở rộng pgTAP structural checks, thêm test client cho aggregate RPC, performance budget CI và workflow manual backup/restore drill staging. Tài liệu deploy cũ đã chuyển sang Git integration, không còn hướng dẫn Wrangler production.
+- Quyền riêng tư: thêm [docs/AI_PRIVACY.md](docs/AI_PRIVACY.md) mô tả dữ liệu gửi Gemini, retention và nguyên tắc log không chứa PII/tài chính.
+- Files/DB: migration `supabase/migrations/202609070001_security_integrity_and_dashboard.sql`, ba Edge Function AI (`parse-expense`, `search-transactions`, `summarize-dashboard`), `src/pages/Dashboard.tsx`, import API/UI, CI/workflow vận hành và tài liệu runbook. Có thay đổi schema/RLS/RPC; không chạy migration production trong lượt này.
+- Kiểm thử local: Vitest 34/34 file, 152/152 test; typecheck, ESLint, build, performance budget và `git diff --check` pass. pgTAP local chưa chạy vì PostgreSQL tại `127.0.0.1:54322` chưa khởi động; required CI sẽ kiểm tra migration/RLS.
+- Trạng thái triển khai dự kiến: tạo PR riêng từ `codex/improvements-1-10`; Supabase Production Deploy phải apply migration/deploy Edge Functions trước Cloudflare Pages production. Backup/restore drill cần chạy workflow staging với secrets riêng, không dùng production.
+
 ## 2026-09-06
 
 ### Sửa bộ lọc tìm kiếm khi nhãn trùng giữa Mục đích và Danh mục

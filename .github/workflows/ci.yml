@@ -23,6 +23,8 @@ jobs:
       - run: pnpm test
       - run: pnpm test:coverage
       - run: pnpm build
+      - name: Check frontend performance budget
+        run: node scripts/check-performance-budget.mjs
 
   e2e:
     runs-on: ubuntu-latest

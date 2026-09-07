@@ -1,6 +1,6 @@
-# Hướng dẫn deploy thủ công Family Expense
+# Hướng dẫn release Family Expense qua Git integration
 
-> Áp dụng cho Family Expense từ v1.1.0. Tài liệu dành cho người vận hành hoặc developer triển khai thay đổi lên production bằng Terminal.
+> Áp dụng cho Family Expense từ v1.1.0. Production chỉ deploy qua pull request vào `main` và Cloudflare Pages Git integration. Không chạy Wrangler để đẩy production.
 
 ## 1. Kiến trúc triển khai
 
@@ -21,7 +21,6 @@ Chỉ deploy thành phần thực sự thay đổi:
 ## 2. Yêu cầu trên máy deploy
 
 - Node.js và `pnpm`.
-- Cloudflare Wrangler (đã có trong `devDependencies`).
 - Supabase CLI nếu cần deploy database hoặc Edge Function.
 - Quyền truy cập đúng Cloudflare account và Supabase project production.
 
@@ -35,12 +34,6 @@ Chỉ lần đầu hoặc khi lockfile thay đổi:
 
 ```bash
 pnpm install
-```
-
-Đăng nhập Cloudflare lần đầu:
-
-```bash
-pnpm exec wrangler login
 ```
 
 Khi cần làm việc với Supabase:
@@ -92,22 +85,15 @@ pnpm build
 
 Không deploy thư mục `dist` cũ nếu vừa thay đổi code.
 
-### Bước 2 — Deploy production
+### Bước 2 — Tạo PR và chờ Git integration
 
 ```bash
-pnpm exec wrangler pages deploy dist \
-  --project-name family-expense \
-  --branch main
+git push origin <branch>
+gh pr create --base main --head <branch>
+gh pr merge <number> --auto --squash --delete-branch=false
 ```
 
-Kết quả thành công có dạng:
-
-```text
-Deployment complete!
-https://<deployment-id>.family-expense-8fo.pages.dev
-```
-
-URL có `deployment-id` dùng để kiểm tra đúng bản vừa deploy. Domain chính vẫn là <https://family-expense-8fo.pages.dev>.
+Required checks, Cloudflare Pages Preview và Cloudflare Pages production sẽ chạy từ GitHub. Chỉ kết luận release sau khi PR đã merge, check Cloudflare production trên merge commit pass và domain chính trả HTTP 200.
 
 ### Bước 3 — Hậu kiểm frontend
 
@@ -191,17 +177,14 @@ pnpm typecheck
 pnpm build
 
 supabase db push --dry-run
-supabase db push
 
-supabase functions deploy parse-expense
-
-pnpm build
-pnpm exec wrangler pages deploy dist \
-  --project-name family-expense \
-  --branch main
+# Commit/push migration, function và frontend lên branch, sau đó tạo PR vào main.
+git push origin <branch>
+gh pr create --base main --head <branch>
+gh pr merge <number> --auto --squash --delete-branch=false
 ```
 
-Không đảo thứ tự khi frontend phụ thuộc schema/RPC mới.
+Workflow Supabase production và Cloudflare Pages Git integration sẽ xử lý thứ tự deploy sau khi PR merge. Không đảo thứ tự khi frontend phụ thuộc schema/RPC mới.
 
 ## 8. Biến môi trường
 
@@ -225,14 +208,6 @@ Không đọc, in hoặc gửi nội dung `.env`/`.env.*` khi hỗ trợ deploy.
 
 ## 9. Xử lý lỗi thường gặp
 
-### `wrangler` chưa đăng nhập
-
-```bash
-pnpm exec wrangler login
-```
-
-Sau khi trình duyệt xác nhận Cloudflare account, chạy lại lệnh deploy.
-
 ### Build lỗi TypeScript hoặc test
 
 - Không deploy bản lỗi.
@@ -241,7 +216,7 @@ Sau khi trình duyệt xác nhận Cloudflare account, chạy lại lệnh deplo
 
 ### Frontend deploy xong nhưng vẫn thấy giao diện cũ
 
-- Mở deployment URL vừa được Wrangler trả về.
+- Mở deployment URL được Cloudflare Pages ghi ở check của merge commit.
 - Tải lại domain chính.
 - Với PWA, đóng hoàn toàn app rồi mở lại.
 - Kiểm tra service worker đã nhận bundle mới.
@@ -293,5 +268,7 @@ pnpm test
 pnpm lint
 pnpm typecheck
 pnpm build
-pnpm exec wrangler pages deploy dist --project-name family-expense --branch main
+git push origin <branch>
+gh pr create --base main --head <branch>
+gh pr merge <number> --auto --squash --delete-branch=false
 ```
