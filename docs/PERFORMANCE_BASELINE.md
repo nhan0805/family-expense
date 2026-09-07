@@ -28,3 +28,5 @@ Trước khi bật production, endpoint phải có rate limit, retention và ale
 ## Baseline hiện tại
 
 Các số đo thực tế của staging chưa được ghi trong workspace này. Việc cần làm đầu đợt 1 là chạy đủ bảng trên, lưu commit và fixture, sau đó cập nhật ticket/release; không dùng số đo suy đoán làm tiêu chí go/no-go.
+
+CI hiện đã khóa một ngưỡng hồi quy tối thiểu: entry JavaScript sau gzip phải ≤ 30 KB qua `scripts/check-performance-budget.mjs`. Ngưỡng này không thay thế Web Vitals staging; người vận hành vẫn phải chạy bảng đo trên bằng tài khoản staging ẩn danh trước mỗi đợt tối ưu lớn.

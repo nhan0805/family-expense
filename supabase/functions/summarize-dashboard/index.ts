@@ -76,6 +76,7 @@ const responseJsonSchema = {
 };
 type DashboardFactsResponse = {
   userId?: string;
+  slotId?: string;
   facts?: Record<string, unknown>;
 };
 type GeminiResponse = {
@@ -95,6 +96,7 @@ Deno.serve(async (req) => {
   const started = Date.now();
   let familyId = '';
   let userId = '';
+  let slotId = '';
   let model = '';
   let db: ReturnType<typeof createClient> | null = null;
   try {
@@ -132,21 +134,36 @@ Deno.serve(async (req) => {
     }
     const factsResponse = (factsData || {}) as DashboardFactsResponse;
     userId = factsResponse.userId || '';
+    slotId = factsResponse.slotId || '';
     if (!userId) throw new Error('INVALID_AUTH_CONTEXT');
-    const { data: cachedSummary, error: cacheError } = await db
-      .from('ai_summary_cache')
-      .select('summary,highlights')
-      .eq('family_id', familyId)
-      .eq('date_from', parsed.dateFrom)
-      .eq('date_to', parsed.dateTo)
-      .eq('period_label', parsed.periodLabel)
-      .eq('language', parsed.language)
-      .gte('updated_at', new Date(Date.now() - 5 * 60_000).toISOString())
-      .maybeSingle();
-    if (cacheError) throw new Error('SUMMARY_CACHE_QUERY_FAILED');
-    if (cachedSummary) {
-      const cachedResponse = responseSchema.safeParse(cachedSummary);
-      if (cachedResponse.success) return json(cachedResponse.data);
+    const serviceRole = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const cacheDb = serviceRole ? createClient(url, serviceRole) : null;
+    if (cacheDb) {
+      const { data: cachedSummary, error: cacheError } = await cacheDb
+        .from('ai_summary_cache')
+        .select('summary,highlights')
+        .eq('family_id', familyId)
+        .eq('date_from', parsed.dateFrom)
+        .eq('date_to', parsed.dateTo)
+        .eq('period_label', parsed.periodLabel)
+        .eq('language', parsed.language)
+        .gte('updated_at', new Date(Date.now() - 5 * 60_000).toISOString())
+        .maybeSingle();
+      if (cacheError) throw new Error('SUMMARY_CACHE_QUERY_FAILED');
+      if (cachedSummary) {
+        const cachedResponse = responseSchema.safeParse(cachedSummary);
+        if (cachedResponse.success) {
+          if (slotId)
+            await db.rpc('complete_ai_request', {
+              p_slot_id: slotId,
+              p_model: model,
+              p_status: 'success',
+              p_latency_ms: Date.now() - started,
+              p_input_length: 0,
+            });
+          return json(cachedResponse.data);
+        }
+      }
     }
     const facts = factsResponse.facts || {};
     const prompt =
@@ -191,21 +208,23 @@ Deno.serve(async (req) => {
       .join('');
     if (!responseText) throw new Error('EMPTY_AI_RESPONSE');
     const response = responseSchema.parse(JSON.parse(responseText));
-    const { error: cacheWriteError } = await db.from('ai_summary_cache').upsert(
-      {
-        family_id: familyId,
-        date_from: parsed.dateFrom,
-        date_to: parsed.dateTo,
-        period_label: parsed.periodLabel,
-        language: parsed.language,
-        summary: response.summary,
-        highlights: response.highlights,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'family_id,date_from,date_to,period_label,language' },
-    );
-    if (cacheWriteError)
-      console.error('AI_SUMMARY_CACHE_WRITE_FAILED', cacheWriteError.message);
+    if (cacheDb) {
+      const { error: cacheWriteError } = await cacheDb.from('ai_summary_cache').upsert(
+        {
+          family_id: familyId,
+          date_from: parsed.dateFrom,
+          date_to: parsed.dateTo,
+          period_label: parsed.periodLabel,
+          language: parsed.language,
+          summary: response.summary,
+          highlights: response.highlights,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'family_id,date_from,date_to,period_label,language' },
+      );
+      if (cacheWriteError)
+        console.error('AI_SUMMARY_CACHE_WRITE_FAILED', cacheWriteError.message);
+    }
     const latencyMs = Date.now() - started;
     console.log(
       'AI_DASHBOARD_SUMMARY',
@@ -215,24 +234,20 @@ Deno.serve(async (req) => {
         region: Deno.env.get('SB_REGION') || 'unknown',
       }),
     );
-    EdgeRuntime.waitUntil(
-      db
-        .from('ai_usage_logs')
-        .insert({
-          family_id: familyId,
-          user_id: userId,
-          request_date: new Intl.DateTimeFormat('en-CA', {
-            timeZone: parsed.timezone,
-          }).format(new Date()),
-          model,
-          status: 'success',
-          latency_ms: latencyMs,
-          input_length: 0,
-        })
-        .then(({ error }) => {
-          if (error) console.error('AI_USAGE_LOG_FAILED', error.message);
-        }),
-    );
+    if (slotId)
+      EdgeRuntime.waitUntil(
+        db
+          .rpc('complete_ai_request', {
+            p_slot_id: slotId,
+            p_model: model,
+            p_status: 'success',
+            p_latency_ms: latencyMs,
+            p_input_length: 0,
+          })
+          .then(({ error }) => {
+            if (error) console.error('AI_USAGE_LOG_FAILED', error.message);
+          }),
+      );
     return json(response);
   } catch (error) {
     const code =
@@ -254,16 +269,15 @@ Deno.serve(async (req) => {
             : 'INTERNAL_ERROR';
     if (db && familyId && userId) {
       try {
-        await db.from('ai_usage_logs').insert({
-          family_id: familyId,
-          user_id: userId,
-          request_date: new Date().toISOString().slice(0, 10),
-          model: model || 'unset',
-          status: 'error',
-          latency_ms: Date.now() - started,
-          input_length: 0,
-          error_code: code,
-        });
+        if (slotId)
+          await db.rpc('complete_ai_request', {
+            p_slot_id: slotId,
+            p_model: model || 'unset',
+            p_status: 'error',
+            p_latency_ms: Date.now() - started,
+            p_input_length: 0,
+            p_error_code: code,
+          });
       } catch {
         /* Không làm lộ lỗi log */
       }

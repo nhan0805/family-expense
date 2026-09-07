@@ -57,6 +57,7 @@ export function ImportExport() {
   const [checkingFile, setCheckingFile] = useState(false);
   const [importBusy, setImportBusy] = useState(false);
   const [fileName, setFileName] = useState('');
+  const [importKey, setImportKey] = useState('');
   const [fileError, setFileError] = useState('');
   const [validRows, setValidRows] = useState<TemplateRow[]>([]);
   const [importErrors, setImportErrors] = useState<TemplateError[]>([]);
@@ -91,6 +92,7 @@ export function ImportExport() {
     setValidRows([]);
     setImportErrors([]);
     setFileName(file.name);
+    setImportKey('');
     if (!file.name.toLowerCase().endsWith('.xlsx')) {
       setFileName('');
       setFileError(
@@ -110,6 +112,10 @@ export function ImportExport() {
     setCheckingFile(true);
     setMessage(en ? 'Validating file…' : 'Đang kiểm tra file…');
     try {
+      const digestHex = globalThis.crypto?.subtle
+        ? Array.from(new Uint8Array(await globalThis.crypto.subtle.digest('SHA-256', await file.arrayBuffer())), (byte) => byte.toString(16).padStart(2, '0')).join('')
+        : '';
+      setImportKey(`${file.name}:${file.size}:${file.lastModified}:${digestHex}`);
       const { parseTemplate } = await import('../lib/templateImport');
       let duplicateTransactions = transactions;
       if (isSupabaseConfigured && familyId) {
@@ -250,7 +256,7 @@ export function ImportExport() {
         expenseTypeId: row.expenseTypeId,
         note: row.note || null,
         source: 'excel_import' as const,
-        sourceReference: fileName,
+        sourceReference: importKey || fileName,
         aiGenerated: false,
         createdBy: currentUserId,
       }));
@@ -269,6 +275,7 @@ export function ImportExport() {
       setValidRows([]);
       setImportErrors([]);
       setFileName('');
+      setImportKey('');
       window.setTimeout(() => window.location.assign('/giao-dich'), 700);
       return;
     }
@@ -278,6 +285,7 @@ export function ImportExport() {
       p_rows: payload,
       p_issues: importErrors,
       p_mode: importMode,
+      p_import_key: importKey || null,
     });
     setImportBusy(false);
     if (error) {
@@ -290,6 +298,7 @@ export function ImportExport() {
     setValidRows([]);
     setImportErrors([]);
     setFileName('');
+    setImportKey('');
     window.setTimeout(() => window.location.assign('/giao-dich'), 700);
   };
 

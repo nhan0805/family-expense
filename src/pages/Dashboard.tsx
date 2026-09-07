@@ -40,7 +40,7 @@ import { formatCompactVnd, formatVnd, getCatalogDisplayName, type CatalogItem, t
 import { isSupabaseConfigured } from '../lib/supabase';
 import { reportClientError } from '../lib/telemetry';
 import {
-  fetchDashboardTransactions,
+  fetchDashboardAggregate,
   fetchTransactionYears,
 } from '../lib/transactionsApi';
 
@@ -220,6 +220,20 @@ function groupTransactions(
 type ExpenseChartItem = { id: string; name: string; value: number; fill: string };
 type PieChartItem = ExpenseChartItem & { isOther?: boolean; hiddenItems?: ExpenseChartItem[] };
 
+function mapAggregateGroups(
+  groups: Array<{ id: string | null; name: string; name_en?: string | null; value: number | string }>,
+  language: CatalogLanguage,
+): ExpenseChartItem[] {
+  return groups
+    .filter((item) => Number(item.value) > 0)
+    .map((item, index) => ({
+      id: item.id || 'uncategorized',
+      name: language === 'en' ? item.name_en || item.name : item.name,
+      value: Number(item.value),
+      fill: chartColors[index % chartColors.length] || 'var(--chart-1)',
+    }));
+}
+
 const pieLabelMinPercent = 0.05;
 const pieMaxSlices = 6;
 
@@ -275,7 +289,14 @@ export function Dashboard() {
   });
   const dashboardQuery = useQuery({
     queryKey: ['dashboard-data', familyId, queryFrom, queryTo],
-    queryFn: () => fetchDashboardTransactions(familyId, queryFrom, queryTo),
+    queryFn: async () => {
+      const [chart, selected, comparison] = await Promise.all([
+        fetchDashboardAggregate(familyId, queryFrom, queryTo),
+        fetchDashboardAggregate(familyId, selectedRange.from, selectedRange.to),
+        fetchDashboardAggregate(familyId, compareRange.from, compareRange.to),
+      ]);
+      return { chart, selected, comparison };
+    },
     enabled: isSupabaseConfigured && Boolean(familyId) && validRange,
   });
   useEffect(() => {
@@ -292,11 +313,14 @@ export function Dashboard() {
     ? Array.from(new Set([currentYear, ...(yearsQuery.data || [])])).sort((a, b) => Number(b) - Number(a))
     : localAvailableYears;
   const sourceTransactions = useMemo(() => isSupabaseConfigured
-    ? dashboardQuery.data || []
+    ? []
     : transactions.filter((transaction) => !transaction.deletedAt && transaction.status === 'Thực tế' && transactionInRange(transaction, { from: queryFrom, to: queryTo })),
-  [dashboardQuery.data, queryFrom, queryTo, transactions]);
+  [queryFrom, queryTo, transactions]);
   const selectedTransactions = sourceTransactions.filter((transaction) => transactionInRange(transaction, selectedRange));
   const comparisonTransactions = sourceTransactions.filter((transaction) => transactionInRange(transaction, compareRange));
+  const selectedAggregate = dashboardQuery.data?.selected;
+  const comparisonAggregate = dashboardQuery.data?.comparison;
+  const chartAggregate = dashboardQuery.data?.chart;
   const monthlyAggregates = useMemo(() => {
     const byMonth = new Map<string, { expense: number; income: number }>();
     const categoryByMonth = new Map<string, Map<string, number>>();
@@ -314,17 +338,29 @@ export function Dashboard() {
     });
     return { byMonth, categoryByMonth };
   }, [sourceTransactions]);
-  const selectedExpense = sumExpense(selectedTransactions);
-  const selectedIncome = sumIncome(selectedTransactions);
-  const comparisonExpense = sumExpense(comparisonTransactions);
-  const comparisonIncome = sumIncome(comparisonTransactions);
+  const selectedExpense = isSupabaseConfigured && selectedAggregate ? Number(selectedAggregate.totalExpense) : sumExpense(selectedTransactions);
+  const selectedIncome = isSupabaseConfigured && selectedAggregate ? Number(selectedAggregate.totalIncome) : sumIncome(selectedTransactions);
+  const comparisonExpense = isSupabaseConfigured && comparisonAggregate ? Number(comparisonAggregate.totalExpense) : sumExpense(comparisonTransactions);
+  const comparisonIncome = isSupabaseConfigured && comparisonAggregate ? Number(comparisonAggregate.totalIncome) : sumIncome(comparisonTransactions);
   const expenseChange = changePercent(selectedExpense, comparisonExpense);
   const incomeChange = changePercent(selectedIncome, comparisonIncome);
-  const byPurpose = groupTransactions(selectedTransactions, purposes, 'purposeId', expenseValue, language);
-  const byExpenseType = groupTransactions(selectedTransactions, expenseTypes, 'expenseTypeId', expenseValue, language);
-  const incomeByPurpose = groupTransactions(selectedTransactions, purposes, 'purposeId', incomeValue, language);
-  const incomeByExpenseType = groupTransactions(selectedTransactions, expenseTypes, 'expenseTypeId', incomeValue, language);
+  const byPurpose = isSupabaseConfigured && selectedAggregate
+    ? mapAggregateGroups(selectedAggregate.byPurpose, language)
+    : groupTransactions(selectedTransactions, purposes, 'purposeId', expenseValue, language);
+  const byExpenseType = isSupabaseConfigured && selectedAggregate
+    ? mapAggregateGroups(selectedAggregate.byExpenseType, language)
+    : groupTransactions(selectedTransactions, expenseTypes, 'expenseTypeId', expenseValue, language);
+  const incomeByPurpose = isSupabaseConfigured && selectedAggregate
+    ? mapAggregateGroups(selectedAggregate.incomeByPurpose, language)
+    : groupTransactions(selectedTransactions, purposes, 'purposeId', incomeValue, language);
+  const incomeByExpenseType = isSupabaseConfigured && selectedAggregate
+    ? mapAggregateGroups(selectedAggregate.incomeByExpenseType, language)
+    : groupTransactions(selectedTransactions, expenseTypes, 'expenseTypeId', incomeValue, language);
   const trend = chartPeriods.map((period) => {
+    if (isSupabaseConfigured && chartAggregate) {
+      const totals = chartAggregate.monthlyTrend.find((item) => item.key === period.key) || { expense: 0, income: 0, net: 0 };
+      return { ...period, expense: Number(totals.expense), income: Number(totals.income), net: Number(totals.net) };
+    }
     if (mode !== 'custom') {
       const totals = monthlyAggregates.byMonth.get(period.key) || { expense: 0, income: 0 };
       return { ...period, ...totals, net: totals.income - totals.expense };
@@ -363,13 +399,17 @@ export function Dashboard() {
   const topCategories = byExpenseType.slice(0, 5).map((item) => ({
     ...item,
     trend: chartPeriods.map((period) => {
+      if (isSupabaseConfigured && chartAggregate)
+        return Number(chartAggregate.monthlyCategories.find((entry) => entry.month === period.key && (entry.id || 'uncategorized') === item.id)?.value || 0);
       if (mode !== 'custom') return monthlyAggregates.categoryByMonth.get(period.key)?.get(item.id) || 0;
       const periodRange = rangeForPeriod(period, mode, customFrom, customTo);
       return sourceTransactions
         .filter((transaction) => transactionInRange(transaction, periodRange) && transaction.expenseTypeId === item.id)
         .reduce((total, transaction) => total + expenseValue(transaction), 0);
     }),
-    previousValue: comparisonTransactions.filter((transaction) => transaction.expenseTypeId === item.id).reduce((total, transaction) => total + expenseValue(transaction), 0),
+    previousValue: isSupabaseConfigured && comparisonAggregate
+      ? Number(comparisonAggregate.byExpenseType.find((entry) => (entry.id || 'uncategorized') === item.id)?.value || 0)
+      : comparisonTransactions.filter((transaction) => transaction.expenseTypeId === item.id).reduce((total, transaction) => total + expenseValue(transaction), 0),
   }));
   const insightTrend = mode === 'month' ? [] : trend;
   const insights = buildInsights({

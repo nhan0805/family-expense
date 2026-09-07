@@ -83,6 +83,7 @@ const responseSchema = {
 type CatalogItem = { id: string; name: string };
 type Catalog = {
   userId: string;
+  slotId?: string;
   purposes: CatalogItem[];
   expenseTypes: CatalogItem[];
   paymentMethods: CatalogItem[];
@@ -112,6 +113,8 @@ Deno.serve(async (req) => {
   let geminiMs = 0;
   let familyId = '';
   let userId = '';
+  let slotId = '';
+  let inputLength = 0;
   const model = Deno.env.get('GEMINI_MODEL') || '';
   try {
     const apiKey = Deno.env.get('GEMINI_API_KEY'),
@@ -127,6 +130,7 @@ Deno.serve(async (req) => {
     });
     const parsed = requestSchema.parse(await req.json());
     familyId = parsed.familyId;
+    inputLength = parsed.text.length;
     const contextStarted = Date.now();
     const { data: context, error: contextError } = await db.rpc(
       'get_ai_request_context',
@@ -141,6 +145,7 @@ Deno.serve(async (req) => {
       throw new Error('CATALOG_QUERY_FAILED');
     }
     userId = (context as Catalog).userId;
+    slotId = (context as Catalog).slotId || '';
     if (!userId) throw new Error('INVALID_AUTH_CONTEXT');
     const now = new Intl.DateTimeFormat('en-CA', {
       timeZone: parsed.timezone,
@@ -267,22 +272,20 @@ Deno.serve(async (req) => {
         region: Deno.env.get('SB_REGION') || 'unknown',
       }),
     );
-    EdgeRuntime.waitUntil(
-      db
-        .from('ai_usage_logs')
-        .insert({
-          family_id: familyId,
-          user_id: userId,
-          request_date: now,
-          model,
-          status: 'success',
-          latency_ms: logStarted,
-          input_length: parsed.text.length,
-        })
-        .then(({ error: logError }) => {
-          if (logError) console.error('AI_USAGE_LOG_FAILED', logError.message);
-        }),
-    );
+    if (slotId)
+      EdgeRuntime.waitUntil(
+        db
+          .rpc('complete_ai_request', {
+            p_slot_id: slotId,
+            p_model: model,
+            p_status: 'success',
+            p_latency_ms: logStarted,
+            p_input_length: inputLength,
+          })
+          .then(({ error: logError }) => {
+            if (logError) console.error('AI_USAGE_LOG_FAILED', logError.message);
+          }),
+      );
     return json({ suggestion });
   } catch (error) {
     const code = error instanceof Error ? error.message : 'UNKNOWN';
@@ -294,16 +297,13 @@ Deno.serve(async (req) => {
         await createClient(url, anon, {
           global: { headers: { Authorization: auth } },
         })
-          .from('ai_usage_logs')
-          .insert({
-            family_id: familyId,
-            user_id: userId,
-            request_date: new Date().toISOString().slice(0, 10),
-            model: model || 'unset',
-            status: 'error',
-            latency_ms: Date.now() - started,
-            input_length: 0,
-            error_code: code.slice(0, 80),
+          .rpc('complete_ai_request', {
+            p_slot_id: slotId,
+            p_model: model || 'unset',
+            p_status: 'error',
+            p_latency_ms: Date.now() - started,
+            p_input_length: inputLength,
+            p_error_code: code,
           });
       } catch {
         /* Không làm lộ lỗi log */

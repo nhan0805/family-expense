@@ -123,6 +123,7 @@ const responseJsonSchema = {
 type CatalogItem = { id: string; name: string };
 type Catalog = {
   userId: string;
+  slotId?: string;
   purposes: CatalogItem[];
   expenseTypes: CatalogItem[];
   paymentMethods: CatalogItem[];
@@ -152,6 +153,7 @@ Deno.serve(async (req) => {
   const started = Date.now();
   let familyId = '';
   let userId = '';
+  let slotId = '';
   let model = '';
   let inputLength = 0;
   let db: ReturnType<typeof createClient> | null = null;
@@ -184,6 +186,7 @@ Deno.serve(async (req) => {
     }
     const catalog = context as Catalog;
     userId = catalog.userId;
+    slotId = catalog.slotId || '';
     if (!userId) throw new Error('INVALID_AUTH_CONTEXT');
     const now = new Intl.DateTimeFormat('en-CA', {
       timeZone: parsed.timezone,
@@ -285,24 +288,20 @@ Deno.serve(async (req) => {
         region: Deno.env.get('SB_REGION') || 'unknown',
       }),
     );
-    EdgeRuntime.waitUntil(
-      db
-        .from('ai_usage_logs')
-        .insert({
-          family_id: familyId,
-          user_id: userId,
-          request_date: new Intl.DateTimeFormat('en-CA', {
-            timeZone: parsed.timezone,
-          }).format(new Date()),
-          model,
-          status: 'success',
-          latency_ms: latencyMs,
-          input_length: inputLength,
-        })
-        .then(({ error }) => {
-          if (error) console.error('AI_USAGE_LOG_FAILED', error.message);
-        }),
-    );
+    if (slotId)
+      EdgeRuntime.waitUntil(
+        db
+          .rpc('complete_ai_request', {
+            p_slot_id: slotId,
+            p_model: model,
+            p_status: 'success',
+            p_latency_ms: latencyMs,
+            p_input_length: inputLength,
+          })
+          .then(({ error }) => {
+            if (error) console.error('AI_USAGE_LOG_FAILED', error.message);
+          }),
+      );
     return json(response);
   } catch (error) {
     const code =
@@ -327,16 +326,15 @@ Deno.serve(async (req) => {
             : 'INTERNAL_ERROR';
     if (db && familyId && userId) {
       try {
-        await db.from('ai_usage_logs').insert({
-          family_id: familyId,
-          user_id: userId,
-          request_date: new Date().toISOString().slice(0, 10),
-          model: model || 'unset',
-          status: 'error',
-          latency_ms: Date.now() - started,
-          input_length: inputLength,
-          error_code: code,
-        });
+        if (slotId)
+          await db.rpc('complete_ai_request', {
+            p_slot_id: slotId,
+            p_model: model || 'unset',
+            p_status: 'error',
+            p_latency_ms: Date.now() - started,
+            p_input_length: inputLength,
+            p_error_code: code,
+          });
       } catch {
         /* Không làm lộ lỗi log */
       }

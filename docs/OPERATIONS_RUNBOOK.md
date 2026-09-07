@@ -2,6 +2,8 @@
 
 ## Monitoring và PII
 
+Phạm vi dữ liệu AI và hướng dẫn thông báo cho người dùng được ghi tại [AI_PRIVACY.md](./AI_PRIVACY.md). Khi thay đổi prompt, provider hoặc trường gửi đi, phải cập nhật tài liệu này và chạy lại review privacy trước release.
+
 - Chỉ ghi mã lỗi, HTTP status, latency, model và request ID; không ghi email, nội dung giao dịch, prompt, token hoặc response Gemini.
 - Alert ownership: đội vận hành nhận cảnh báo đầu tiên; đội phát triển nhận lỗi ứng dụng; owner dự án quyết định escalation P1.
 - P1 (đăng nhập/ghi dữ liệu lỗi diện rộng): phản hồi 15 phút, cập nhật mỗi 30 phút. P2: phản hồi trong 4 giờ.

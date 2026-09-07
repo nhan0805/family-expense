@@ -1,0 +1,34 @@
+name: Staging Operations Drill
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup-restore:
+    name: Backup/restore drill (staging only)
+    runs-on: ubuntu-latest
+    environment: staging-ops
+    steps:
+      - uses: actions/checkout@v5
+      - uses: supabase/setup-cli@v2
+        with:
+          version: latest
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install --yes postgresql-client
+      - name: Run isolated staging drill
+        env:
+          CONFIRM_STAGING_RESTORE: YES
+          STAGING_DB_URL: ${{ secrets.STAGING_DB_URL }}
+          RESTORE_DB_URL: ${{ secrets.RESTORE_DB_URL }}
+          BACKUP_DIR: artifacts/backup-drill-${{ github.run_id }}
+        run: scripts/staging-backup-restore.sh
+      - name: Upload drill artifact
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-backup-drill-${{ github.run_id }}
+          path: artifacts/
+          if-no-files-found: ignore
