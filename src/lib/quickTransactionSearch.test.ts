@@ -36,4 +36,20 @@ describe('quick transaction search', () => {
       query: '',
     });
   });
+
+  it('không biến nhãn trùng giữa mục đích và danh mục thành hai bộ lọc đồng thời', () => {
+    const response = getQuickTransactionSearch('chi tiêu cho du lịch và hiếu hỉ', 'vi', {
+      ...catalog,
+      purposes: [
+        { id: 'purpose-travel', name: 'Du lịch' },
+        { id: 'purpose-occasions', name: 'Hiếu hỉ' },
+      ],
+      expenseTypes: [{ id: 'expense-travel', name: 'Du lịch' }],
+    });
+    expect(response?.filters).toMatchObject({
+      transactionType: 'Chi tiêu',
+      purposeIds: ['purpose-travel', 'purpose-occasions'],
+      expenseTypeIds: [],
+    });
+  });
 });

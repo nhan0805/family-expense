@@ -10,7 +10,6 @@ import {
   canDeleteTransaction,
   formatDateOnlyVi,
   formatVnd,
-  transactionTypeLabel,
   type Transaction,
 } from '../lib/domain';
 import { getCatalogIcon } from '../lib/catalogIcons';
@@ -53,7 +52,6 @@ export function TransactionRow({
   paymentMethodIcon,
   recurringLabel = 'Định kỳ',
   plannedLabel = 'Dự kiến',
-  actualLabel = 'Thực tế',
   showTrash,
   selectMode,
   selected,
@@ -71,8 +69,8 @@ export function TransactionRow({
   onRemove,
 }: TransactionRowProps) {
   const tone = transaction.transactionType === 'Thu nhập'
-    ? { rowClass: 'bg-gradient-to-r from-emerald-100/90 via-emerald-50/55 to-transparent dark:from-[#50fa7b1f] dark:via-[#50fa7b08] dark:to-transparent', amountClass: 'text-emerald-700 dark:text-[#50fa7b]', badgeClass: 'border border-emerald-300 bg-emerald-200 text-emerald-950 shadow-sm dark:border-[#50fa7b99] dark:bg-[#50fa7b1f] dark:text-[#50fa7b]' }
-        : { rowClass: 'bg-gradient-to-r from-rose-100/90 via-rose-50/55 to-transparent dark:from-[#ff79c61f] dark:via-[#ff79c608] dark:to-transparent', amountClass: 'text-rose-700 dark:text-[#ff79c6]', badgeClass: 'border border-rose-300 bg-rose-200 text-rose-950 shadow-sm dark:border-[#ff79c699] dark:bg-[#ff79c61f] dark:text-[#ff79c6]' };
+    ? { rowClass: 'bg-gradient-to-r from-emerald-100/90 via-emerald-50/55 to-transparent dark:from-[#50fa7b1f] dark:via-[#50fa7b08] dark:to-transparent', amountClass: 'text-emerald-700 dark:text-[#50fa7b]' }
+        : { rowClass: 'bg-gradient-to-r from-rose-100/90 via-rose-50/55 to-transparent dark:from-[#ff79c61f] dark:via-[#ff79c608] dark:to-transparent', amountClass: 'text-rose-700 dark:text-[#ff79c6]' };
   const setOnlySelected = () => onSetSelected(new Set([transaction.id]));
   const date = formatDateOnlyVi(transaction.transactionDate);
   const canDelete = canDeleteTransaction(transaction, currentUserRole, currentUserId);
@@ -84,7 +82,7 @@ export function TransactionRow({
           {selectMode && <input type="checkbox" className="mt-1 size-5 shrink-0 accent-[#155e46]" aria-label={`Chọn giao dịch ${transaction.description}`} checked={selected} onChange={() => onToggleSelected(transaction.id)} />}
           <div className="min-w-0 flex-1">
             {showTrash ? <span className="block truncate text-base font-bold">{transaction.description}</span> : <Link to={`/giao-dich/${transaction.id}`} className="block truncate text-base font-bold active:opacity-70">{transaction.description}</Link>}
-            <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400"><span>{date}</span><span className={`rounded-full px-2 py-0.5 font-semibold ${tone.badgeClass}`}>{transactionTypeLabel(transaction.transactionType)}</span><span className={`rounded-full border px-2 py-0.5 font-semibold ${transaction.status === 'Dự kiến' ? 'border-amber-300 bg-amber-100 text-amber-900 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-200' : 'border-black/10 bg-black/[.03] text-gray-600 dark:border-white/10 dark:bg-white/5 dark:text-gray-300'}`}>{transaction.status === 'Dự kiến' ? plannedLabel : actualLabel}</span>{transaction.source === 'recurring' && <span className="ui-chip">{recurringLabel}</span>}</div>
+            <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400"><span>{date}</span>{transaction.status === 'Dự kiến' && <span className="rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 font-semibold text-amber-900 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-200">{plannedLabel}</span>}{transaction.source === 'recurring' && <span className="ui-chip">{recurringLabel}</span>}</div>
           </div>
           <div className="flex shrink-0 items-start gap-1"><strong className={`pt-1 text-base ${tone.amountClass} ${showTrash ? 'line-through opacity-70' : ''}`}>{formatVnd(transaction.amount)}</strong>{showTrash && <><button type="button" className="rounded-lg p-2 text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-950/30" aria-label={`Khôi phục ${transaction.description}`} title="Khôi phục" onClick={() => { setOnlySelected(); onRestore(); }}><RotateCcw size={18}/></button><button type="button" className="rounded-lg p-2 text-red-600 hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-950/30" aria-label={`Xóa vĩnh viễn ${transaction.description}`} title="Xóa vĩnh viễn" onClick={() => { setOnlySelected(); onPermanentlyDelete(); }}><Trash2 size={18}/></button></>}{!showTrash && <button type="button" className="rounded-lg p-2 hover:bg-black/5 dark:hover:bg-white/5" aria-label={`Thao tác với ${transaction.description}`} aria-expanded={openMenu} onClick={() => onToggleMenu(transaction.id)}><MoreHorizontal size={19}/></button>}</div>
         </div>
@@ -94,7 +92,7 @@ export function TransactionRow({
       <div className={`transaction-table-row hidden w-full gap-1 border-t border-black/5 p-3 transition-colors hover:brightness-[.98] dark:border-white/5 dark:hover:brightness-110 md:grid md:min-w-[1080px] md:items-center ${selectMode ? 'md:grid-cols-[32px_80px_minmax(180px,1fr)_190px_160px_190px_220px]' : 'md:grid-cols-[80px_minmax(180px,1fr)_190px_160px_190px_220px]'} ${tone.rowClass}`}>
         {selectMode && <input type="checkbox" className="size-5 accent-[#155e46]" aria-label={`Chọn giao dịch ${transaction.description} trên bảng`} checked={selected} onChange={() => onToggleSelected(transaction.id)} />}
         <span className="text-sm text-gray-500">{date}</span>
-        <Link to={`/giao-dich/${transaction.id}`} className="min-w-0 truncate text-sm font-semibold hover:underline">{transaction.description}<span className={`ml-2 inline-flex rounded-full px-2 py-0.5 align-middle text-[11px] font-semibold ${tone.badgeClass}`}>{transactionTypeLabel(transaction.transactionType)}</span><span className={`ml-2 inline-flex rounded-full border px-2 py-0.5 align-middle text-[11px] font-semibold ${transaction.status === 'Dự kiến' ? 'border-amber-300 bg-amber-100 text-amber-900 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-200' : 'border-black/10 bg-black/[.03] text-gray-600 dark:border-white/10 dark:bg-white/5 dark:text-gray-300'}`}>{transaction.status === 'Dự kiến' ? plannedLabel : actualLabel}</span>{transaction.source === 'recurring' && <span className="ui-chip ml-2 align-middle text-[11px]">{recurringLabel}</span>}<small className="mt-1 block font-normal text-gray-500 md:hidden">{purposeName} · {expenseTypeName} · {paymentMethodName}</small></Link>
+        <Link to={`/giao-dich/${transaction.id}`} className="min-w-0 truncate text-sm font-semibold hover:underline">{transaction.description}{transaction.status === 'Dự kiến' && <span className="ml-2 inline-flex rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 align-middle text-[11px] font-semibold text-amber-900 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-200">{plannedLabel}</span>}{transaction.source === 'recurring' && <span className="ui-chip ml-2 align-middle text-[11px]">{recurringLabel}</span>}<small className="mt-1 block font-normal text-gray-500 md:hidden">{purposeName} · {expenseTypeName} · {paymentMethodName}</small></Link>
         <CatalogValue name={purposeName} icon={purposeIcon} /><CatalogValue name={expenseTypeName} icon={expenseTypeIcon} /><CatalogValue name={paymentMethodName} icon={paymentMethodIcon} />
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_72px] items-center gap-1">
           <strong className={`transaction-row-amount min-w-0 truncate text-sm font-bold ${tone.amountClass}`}>{formatVnd(transaction.amount)}</strong>

@@ -1,6 +1,6 @@
 # Family Expense — Project Handoff
 
-> Cập nhật: **05/09/2026** (`Asia/Ho_Chi_Minh`)
+> Cập nhật: **06/09/2026** (`Asia/Ho_Chi_Minh`)
 > Trạng thái: **Production đang hoạt động; tài liệu này là ngữ cảnh kỹ thuật cho các phiên làm việc tiếp theo**  
 > Production: <https://family-expense-8fo.pages.dev>
 
@@ -13,6 +13,43 @@
 - [x] Supabase production workflow đã kiểm tra thành công bằng `workflow_dispatch` với `dry_run=true`; không thay đổi database hoặc deploy Edge Function.
 - [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
+
+### Handoff — sửa bộ lọc tìm kiếm khi nhãn trùng giữa Mục đích và Danh mục (06/09/2026)
+
+- Câu `chi tiêu cho du lịch và hiếu hỉ` giờ chỉ áp dụng các Mục đích `Du lịch` và `Hiếu hỉ`; không tự thêm Danh mục `Du lịch` dù cùng tên tồn tại ở hai catalog.
+- Bộ tìm kiếm nhanh ưu tiên catalog theo ngữ cảnh: “cho/for” cho Mục đích, “danh mục/loại chi phí/category” cho Danh mục; trường hợp không có ngữ cảnh cũng không ghép nhãn trùng thành hai điều kiện AND.
+- Files: `src/lib/quickTransactionSearch.ts`, `src/lib/quickTransactionSearch.test.ts`. Không có migration mới, không đổi API/schema/RLS/RPC.
+- Validation hiện tại: full Vitest đạt 34/34 file, 151/151 test; coverage, typecheck, lint, production build và `git diff --check` pass. Build còn cảnh báo chunk ExcelJS lớn hiện hữu.
+- Triển khai thực tế: PR [#137](https://github.com/nhan0805/family-expense/pull/137) đã merge với merge commit `1e3a3395f17bfb2efc40520600af132e51ec7a35`; CI main [run 33982648468](https://github.com/nhan0805/family-expense/actions/runs/33982648468), Cloudflare Pages production [check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/2c9a0917-ee36-4bef-a7ad-a4e6fb49c3cd) và smoke test production HTTP 200 đều pass.
+
+### Handoff — chỉ hiện badge Dự kiến trên giao dịch (06/09/2026)
+
+- Card mobile và bảng desktop chỉ render badge trạng thái khi `transaction.status === 'Dự kiến'`; giao dịch `Thực tế` không còn badge trạng thái. Badge `Định kỳ`, màu thu/chi và trạng thái dữ liệu không đổi.
+- `FeedbackProvider` dọn các timer khi unmount để quality coverage không còn lỗi `window is not defined` sau teardown.
+- Files: `src/components/TransactionRow.tsx`, `src/components/TransactionRow.test.tsx`, `src/components/Feedback.tsx`; không có migration mới, không đổi API/schema/RLS/RPC.
+- Validation: full Vitest/coverage đạt 34/34 file, 151/151 test; typecheck, lint, production build và `git diff --check` pass.
+- Triển khai thực tế: đã deploy trong PR [#137](https://github.com/nhan0805/family-expense/pull/137), cùng merge commit/Cloudflare check được ghi ở entry search ngay phía trên.
+
+### Handoff — tự làm mới khung xác nhận giao dịch dự kiến (06/09/2026)
+
+- Trang `/giao-dịch` làm mới truy vấn `dashboard-due` sau khi xác nhận giao dịch dự kiến thành công, nên khung `Giao dịch dự kiến tới hạn` tự biến mất khi không còn khoản đến hạn.
+- Files: `src/pages/Transactions.tsx`, `src/pages/Transactions.ui.test.tsx`; không đổi API/schema/RLS/RPC hoặc dữ liệu.
+- Validation: full Vitest đạt 34/34 file, 149/149 test; lint, typecheck, production build và `git diff --check` pass. Build còn cảnh báo chunk ExcelJS lớn hiện hữu.
+- Trạng thái triển khai: đã sẵn sàng tạo PR vào `main`; chưa deploy production.
+
+### Handoff — gỡ badge Tiền ra/Tiền vào khỏi danh sách giao dịch (06/09/2026)
+
+- Card mobile và bảng desktop không còn hiển thị badge loại giao dịch `Tiền ra`/`Tiền vào`; màu nền dòng và màu số tiền vẫn phân biệt thu/chi.
+- Badge trạng thái `Dự kiến`/`Thực tế`, badge `Định kỳ`, thao tác và dữ liệu giao dịch không thay đổi.
+- Files: `src/components/TransactionRow.tsx`, `src/components/TransactionRow.test.tsx`. Không có migration mới, không đổi API/schema/RLS/RPC.
+- Validation hiện tại: TransactionRow regression, full Vitest 34/34 file, 151/151 test; typecheck, lint, production build và `git diff --check` pass. Build còn cảnh báo chunk ExcelJS lớn hiện hữu.
+- Trạng thái triển khai thực tế: PR [#135](https://github.com/nhan0805/family-expense/pull/135) đã merge vào `main` với merge commit `cab572e758286f128d5fc88e3eccff345d2fb186`; CI main [run 33981284729](https://github.com/nhan0805/family-expense/actions/runs/33981284729) và Cloudflare Pages production check [pass](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/7ff9065b-1325-4902-8088-b07135a34448). Production smoke test trả HTTP 200. Không có migration/Supabase production deploy.
+
+### Handoff — tinh chỉnh KPI và nút thao tác chi phí định kỳ (05/09/2026)
+
+- Hai nút `Tạo giao dịch đến hạn` và `Thêm khoản định kỳ` giờ nằm trong nhóm hai cột gọn trên desktop, cùng chiều cao/căn giữa; trên mobile tự xếp dọc. Ba KPI có icon màu riêng và bố cục nhãn/số gọn hơn.
+- Files: `src/pages/RecurringExpenses.tsx`, `src/index.css`. Không đổi API, migration, RLS/RPC hoặc dữ liệu.
+- Validation hiện tại: recurring Vitest 15/15; typecheck và lint các file thay đổi pass. Chưa deploy production; cần chạy full test/build và tạo PR nếu muốn phát hành.
 
 ### Handoff — khôi phục, xóa vĩnh viễn và bố cục mẫu định kỳ (05/09/2026)
 

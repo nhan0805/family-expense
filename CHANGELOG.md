@@ -1,6 +1,56 @@
 # Nhật ký thay đổi Family Expense
 
+## 2026-09-06
+
+### Sửa bộ lọc tìm kiếm khi nhãn trùng giữa Mục đích và Danh mục
+
+- Trước thay đổi: Câu `chi tiêu cho du lịch và hiếu hỉ` có thể nhận `Du lịch` đồng thời là Mục đích và Danh mục, khiến truy vấn dùng cả hai điều kiện và chỉ trả về rất ít giao dịch.
+- Sau thay đổi: Bộ tìm kiếm nhanh nhận biết ngữ cảnh “cho/for” là Mục đích và ngữ cảnh “danh mục/loại chi phí/category” là Danh mục; nhãn trùng không còn bị áp dụng đồng thời khi không được yêu cầu.
+- Files: `src/lib/quickTransactionSearch.ts`, `src/lib/quickTransactionSearch.test.ts`. Không đổi API, migration, RLS/RPC hoặc dữ liệu.
+- Kiểm thử: full Vitest đạt 34/34 file, 151/151 test; typecheck, lint, production build và `git diff --check` pass. Build còn cảnh báo chunk ExcelJS lớn hiện hữu.
+- Trạng thái triển khai thực tế: PR [#137](https://github.com/nhan0805/family-expense/pull/137) đã merge vào `main` với merge commit `1e3a3395f17bfb2efc40520600af132e51ec7a35`; CI main [run 33982648468](https://github.com/nhan0805/family-expense/actions/runs/33982648468) và Cloudflare Pages production [check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/2c9a0917-ee36-4bef-a7ad-a4e6fb49c3cd) pass. Production trả HTTP 200.
+
+### Chỉ hiển thị badge Dự kiến trên giao dịch
+
+- Trước thay đổi: Danh sách hiển thị thêm badge `Thực tế` trên giao dịch đã thành thực tế dù trạng thái đã có trong dữ liệu/màu giao diện.
+- Sau thay đổi: Chỉ giao dịch `Dự kiến` hiển thị badge trạng thái; giao dịch `Thực tế` không hiện badge. Badge `Định kỳ`, màu thu/chi và dữ liệu trạng thái giữ nguyên. Cleanup timer Feedback khi unmount giúp coverage CI không còn lỗi async sau teardown.
+- Files: `src/components/TransactionRow.tsx`, `src/components/TransactionRow.test.tsx`, `src/components/Feedback.tsx`. Không đổi schema, API, RLS/RPC hoặc dữ liệu.
+- Kiểm thử: regression test cho mobile/desktop; full Vitest 34/34 file, 151/151 test, coverage pass; typecheck, lint, production build và `git diff --check` pass.
+- Trạng thái triển khai thực tế: đã deploy cùng PR [#137](https://github.com/nhan0805/family-expense/pull/137); không có migration hoặc thay đổi dữ liệu cần chạy thêm.
+
+### Tự làm mới khung xác nhận giao dịch dự kiến
+
+- Trước thay đổi: sau khi xác nhận giao dịch dự kiến trên trang Giao dịch, khung `Giao dịch dự kiến tới hạn` vẫn còn hiển thị vì truy vấn riêng của khung chưa được làm mới.
+- Sau thay đổi: sau khi Supabase cập nhật thành công, truy vấn giao dịch dự kiến tới hạn được invalidation cùng danh sách giao dịch, dashboard và ngân sách; khung tự tải lại và biến mất khi không còn giao dịch cần xác nhận.
+- Files: `src/pages/Transactions.tsx`, `src/pages/Transactions.ui.test.tsx`. Không đổi API, migration, RLS/RPC hoặc dữ liệu.
+- Kiểm thử: full Vitest đạt 34/34 file, 149/149 test; lint, typecheck, production build và `git diff --check` pass. Regression test xác nhận khung biến mất ở fallback demo. Build còn cảnh báo chunk ExcelJS lớn hiện hữu.
+- Trạng thái triển khai: thay đổi đã kiểm tra tại workspace; chưa deploy production.
+
+### Gỡ badge Tiền ra/Tiền vào khỏi danh sách giao dịch
+
+- Trước thay đổi: Mỗi dòng giao dịch hiển thị thêm badge `Tiền ra` hoặc `Tiền vào` dù nền dòng và màu số tiền đã thể hiện loại giao dịch.
+- Sau thay đổi: Gỡ badge loại giao dịch khỏi cả card mobile và bảng desktop; giữ màu nền và màu số tiền để phân biệt thu/chi, đồng thời giữ nguyên badge trạng thái và định kỳ.
+- Files: `src/components/TransactionRow.tsx`, `src/components/TransactionRow.test.tsx`. Không đổi API, migration, RLS/RPC hoặc dữ liệu.
+- Kiểm thử: TransactionRow regression, full Vitest 34/34 file, 151/151 test; typecheck, lint, production build và `git diff --check` pass. Build còn cảnh báo chunk ExcelJS lớn hiện hữu.
+- Trạng thái triển khai thực tế: PR [#135](https://github.com/nhan0805/family-expense/pull/135) đã merge vào `main` với merge commit `cab572e758286f128d5fc88e3eccff345d2fb186`; CI main [run 33981284729](https://github.com/nhan0805/family-expense/actions/runs/33981284729) và Cloudflare Pages production check [pass](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/7ff9065b-1325-4902-8088-b07135a34448). Production smoke test `https://family-expense-8fo.pages.dev/` trả HTTP 200. Không có migration/Supabase production deploy.
+
 ## 2026-09-05
+
+### Tinh chỉnh KPI và nút thao tác chi phí định kỳ
+
+- Trước thay đổi: Hai nút `Tạo giao dịch đến hạn` và `Thêm khoản định kỳ` chiếm nhiều chiều rộng và xếp dọc; KPI chỉ có nhãn và số nên bố cục hơi nặng.
+- Sau thay đổi: Hai nút chính chuyển thành nhóm gọn hai cột trên màn hình rộng, cùng chiều cao/căn giữa và tự xếp dọc trên mobile. Ba KPI có icon màu, nhãn và số được căn thành một cụm dễ quét hơn.
+- Files: `src/pages/RecurringExpenses.tsx`, `src/index.css`. Không đổi API, migration, RLS/RPC hoặc dữ liệu.
+- Kiểm thử: recurring Vitest 15/15; typecheck và lint các file thay đổi pass. Production build và full test cần chạy lại trước deploy tiếp theo.
+- Trạng thái triển khai dự kiến: thay đổi đang ở workspace, chưa deploy production.
+
+### Thu gọn thanh chọn kỳ ngân sách
+
+- Trước thay đổi: mô tả kỳ ngân sách nằm sát đáy, lệch với cụm chọn tháng/năm có nhãn phía trên; thanh lọc cao và có nhiều khoảng trống.
+- Sau thay đổi: tháng đang xem và ghi chú được tách thành hai dòng cạnh biểu tượng lịch, căn giữa với hai ô chọn. Ẩn nhãn lặp trên giao diện nhưng giữ tên truy cập cho trình đọc màn hình; giảm khoảng đệm trên desktop, xếp ô tháng/năm bên dưới trên mobile và dành thêm chiều rộng cho tên tháng.
+- Files: `src/pages/Budgets.tsx`. Không đổi logic ngân sách, API hoặc database.
+- Kiểm thử: Vitest ngân sách đạt 6/6; lint, typecheck và production build pass (build với `envDir: false`, không nạp cấu hình môi trường). Kiểm tra trực quan demo local tại 320, 390, 640 và 1280px, theme sáng/tối, tiếng Việt/Anh; thanh lọc không tràn ngang, ô chọn cao hơn 44px. Build còn cảnh báo chunk ExcelJS lớn hiện hữu.
+- Trạng thái triển khai: đã sửa và kiểm tra tại workspace; chưa deploy production.
 
 ### Bổ sung khôi phục, xóa vĩnh viễn và chỉnh bố cục mẫu định kỳ
 
