@@ -2,6 +2,14 @@
 
 ## 2026-09-07
 
+### Hotfix migration aggregate Dashboard sau merge PR #139
+
+- Phát hiện: kiểm tra db-security sau khi PR [#139](https://github.com/nhan0805/family-expense/pull/139) merge bắt lỗi alias `month` trong `get_dashboard_aggregate`, khiến migration chưa thể apply trên PostgreSQL.
+- Sửa: đổi alias nội bộ thành `month_key`, giữ nguyên payload JSON `monthlyCategories`; không đổi nghiệp vụ hoặc dữ liệu.
+- File: `supabase/migrations/202609070001_security_integrity_and_dashboard.sql`.
+- Kiểm tra: `git diff --check` pass; PR hotfix sẽ chạy lại quality, E2E và db-security trước khi auto-merge. Local pgTAP vẫn cần PostgreSQL tại `127.0.0.1:54322`.
+- Trạng thái triển khai: chờ PR hotfix vào `main`; sau đó phải xác minh Supabase Production Deploy và Cloudflare Pages trên đúng merge commit.
+
 ### Chuẩn bị deploy bản tinh chỉnh tìm kiếm và trạng thái giao dịch
 
 - Trước thay đổi: tìm kiếm nhanh có thể ghép nhãn trùng giữa Mục đích và Danh mục; badge loại giao dịch/trạng thái hiển thị dư; sau khi xác nhận giao dịch dự kiến, khung đến hạn chưa tự làm mới; thanh chọn kỳ ngân sách còn chiếm nhiều chiều cao.
