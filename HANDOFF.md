@@ -20,7 +20,7 @@
 - Sau thay đổi: các query danh sách giao dịch, giao dịch dự kiến tới hạn, chuông Thông báo và Dashboard tự refetch mỗi 30 giây khi app ở foreground; quay lại app vẫn refetch theo focus.
 - Files: `src/lib/transactionsApi.ts`, `src/pages/Transactions.tsx`, `src/components/BudgetNotifications.tsx`, `src/pages/Dashboard.tsx`, `src/lib/transactionsApi.test.ts`. Không đổi schema, RLS/RPC hoặc dữ liệu.
 - Validation local: full Vitest 34/34 file, 153/153 test; typecheck, lint, production build và `git diff --check` pass. Build còn cảnh báo chunk XLSX/ExcelJS/charts lớn hiện hữu.
-- Trạng thái triển khai: đang ở workspace, chưa deploy production; khi phát hành phải qua PR/Git integration Cloudflare Pages.
+- Trạng thái triển khai thực tế: PR [#141](https://github.com/nhan0805/family-expense/pull/141) đã merge vào `main` với merge commit `30b02bca1871d0901f68bfbc5e8859befe4ca424`; CI main [run 34495301005](https://github.com/nhan0805/family-expense/actions/runs/34495301005) pass với quality, E2E và db-security; Cloudflare Pages production [check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/dae47679-b81e-4f21-a87a-f748742a44c6) pass và smoke production trả HTTP 200. Không có migration/function thay đổi nên không chạy Supabase Production Deploy và không dùng Wrangler.
 
 ### Handoff — hotfix migration aggregate Dashboard (07/09/2026)
 
