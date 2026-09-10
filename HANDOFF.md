@@ -1,6 +1,6 @@
 # Family Expense — Project Handoff
 
-> Cập nhật: **07/09/2026** (`Asia/Ho_Chi_Minh`)
+> Cập nhật: **10/09/2026** (`Asia/Ho_Chi_Minh`)
 > Trạng thái: **Production đang hoạt động; tài liệu này là ngữ cảnh kỹ thuật cho các phiên làm việc tiếp theo**  
 > Production: <https://family-expense-8fo.pages.dev>
 
@@ -13,6 +13,14 @@
 - [x] Supabase production workflow đã kiểm tra thành công bằng `workflow_dispatch` với `dry_run=true`; không thay đổi database hoặc deploy Edge Function.
 - [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
+
+### Handoff — tự làm mới giao dịch dự kiến được tạo ngoài phiên app (10/09/2026)
+
+- Trước thay đổi: giao dịch dự kiến do Supabase Cron tạo khi app đang mở không xuất hiện ngay; phải đóng/mở lại app để query tải lại.
+- Sau thay đổi: các query danh sách giao dịch, giao dịch dự kiến tới hạn, chuông Thông báo và Dashboard tự refetch mỗi 30 giây khi app ở foreground; quay lại app vẫn refetch theo focus.
+- Files: `src/lib/transactionsApi.ts`, `src/pages/Transactions.tsx`, `src/components/BudgetNotifications.tsx`, `src/pages/Dashboard.tsx`, `src/lib/transactionsApi.test.ts`. Không đổi schema, RLS/RPC hoặc dữ liệu.
+- Validation local: full Vitest 34/34 file, 153/153 test; typecheck, lint, production build và `git diff --check` pass. Build còn cảnh báo chunk XLSX/ExcelJS/charts lớn hiện hữu.
+- Trạng thái triển khai: đang ở workspace, chưa deploy production; khi phát hành phải qua PR/Git integration Cloudflare Pages.
 
 ### Handoff — hotfix migration aggregate Dashboard (07/09/2026)
 

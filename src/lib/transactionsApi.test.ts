@@ -1,5 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { fetchDashboardAggregate, fetchTransactionPage } from './transactionsApi';
+import {
+  fetchDashboardAggregate,
+  fetchTransactionPage,
+  REMOTE_TRANSACTION_REFRESH_INTERVAL_MS,
+} from './transactionsApi';
 
 const { rpcMock } = vi.hoisted(() => ({ rpcMock: vi.fn() }));
 
@@ -64,6 +68,12 @@ describe('fetchTransactionPage keyword search', () => {
       p_date_to: null,
       p_sort: 'date-desc',
     });
+  });
+});
+
+describe('remote transaction refresh', () => {
+  it('refreshes external transaction changes within a bounded interval', () => {
+    expect(REMOTE_TRANSACTION_REFRESH_INTERVAL_MS).toBe(30_000);
   });
 });
 

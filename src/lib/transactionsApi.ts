@@ -1,6 +1,10 @@
 import type { Transaction } from './domain';
 import { supabase } from './supabase';
 
+// Recurring transactions are created by Supabase Cron outside the current
+// browser session, so active screens need a bounded refresh interval.
+export const REMOTE_TRANSACTION_REFRESH_INTERVAL_MS = 30_000;
+
 export type ServerTransactionFilters = {
   query: string;
   transactionType: string;

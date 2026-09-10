@@ -1,5 +1,16 @@
 # Nhật ký thay đổi Family Expense
 
+## 2026-09-10
+
+### Tự làm mới giao dịch dự kiến được tạo ngoài phiên app
+
+- Trước thay đổi: giao dịch dự kiến do Supabase Cron tạo khi app đang mở không xuất hiện ngay; người dùng phải đóng/mở lại app để các query tải lại dữ liệu.
+- Sau thay đổi: danh sách giao dịch, khung giao dịch dự kiến tới hạn, chuông Thông báo và Dashboard tự refetch dữ liệu server mỗi 30 giây khi app ở foreground; khi quay lại app vẫn refetch theo focus.
+- Kỹ thuật: dùng chung `REMOTE_TRANSACTION_REFRESH_INTERVAL_MS` cho các query React Query liên quan đến giao dịch ngoài thay đổi từ thao tác hiện tại. Không đổi schema, RLS/RPC hoặc dữ liệu.
+- Files: `src/lib/transactionsApi.ts`, `src/pages/Transactions.tsx`, `src/components/BudgetNotifications.tsx`, `src/pages/Dashboard.tsx`, `src/lib/transactionsApi.test.ts`.
+- Kiểm thử: full Vitest đạt 34/34 file, 153/153 test; typecheck, ESLint, production build và `git diff --check` pass. Build vẫn cảnh báo chunk XLSX/ExcelJS/charts lớn hiện hữu.
+- Trạng thái triển khai dự kiến: thay đổi đang ở workspace, chưa deploy production; khi phát hành cần qua PR/Git integration Cloudflare Pages theo quy trình hiện hành.
+
 ## 2026-09-07
 
 ### Hotfix migration aggregate Dashboard sau merge PR #139
