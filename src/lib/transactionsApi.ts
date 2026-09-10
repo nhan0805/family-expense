@@ -235,26 +235,6 @@ export async function fetchDashboardDueTransactions(
   return ((data || []) as TransactionRow[]).map(mapTransactionRow);
 }
 
-export async function fetchDashboardRecentTransactions(
-  familyId: string,
-  dateFrom: string,
-  dateTo: string,
-): Promise<Transaction[]> {
-  const { data, error } = await supabase
-    .from('transactions')
-    .select('*')
-    .eq('family_id', familyId)
-    .eq('status', 'Thực tế')
-    .is('deleted_at', null)
-    .gte('transaction_date', dateFrom)
-    .lte('transaction_date', dateTo)
-    .order('transaction_date', { ascending: false })
-    .order('created_at', { ascending: false })
-    .limit(5);
-  if (error) throw error;
-  return ((data || []) as TransactionRow[]).map(mapTransactionRow);
-}
-
 export async function fetchDeletedTransactionPage(familyId: string, filters: ServerTransactionFilters, page: number, pageSize = 50) {
   const { data, error } = await supabase.rpc('list_deleted_transactions_v2', { p_family_id: familyId, p_limit: pageSize, p_offset: page * pageSize, p_query: filters.query, p_transaction_type: filters.transactionType, p_purpose_ids: filters.purposeIds, p_expense_type_ids: filters.expenseTypeIds, p_payment_method_ids: filters.paymentMethodIds, p_exclude_purpose_ids: filters.excludePurposeIds, p_exclude_expense_type_ids: filters.excludeExpenseTypeIds, p_exclude_payment_method_ids: filters.excludePaymentMethodIds, p_amount_min: filters.amountMin ? Number(filters.amountMin) : null, p_amount_max: filters.amountMax ? Number(filters.amountMax) : null, p_month: filters.month ? Number(filters.month) : null, p_year: filters.year ? Number(filters.year) : null, p_date_from: filters.dateFrom || null, p_date_to: filters.dateTo || null });
   if (error) throw error;

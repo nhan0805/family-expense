@@ -58,7 +58,7 @@
 
 ## Current work
 
-UI/UX roadmap đã hoàn tất quality gate, merge qua PR #144 và deploy production thành công. Branch workspace hiện còn các commit follow-up workflow/test chưa đưa vào `main`; không claim chúng đã deploy và không tạo deploy lần hai chỉ để cập nhật handoff.
+UI/UX roadmap release #144 đã hoàn tất quality gate, merge vào `main` và deploy production thành công. Workspace hiện có follow-up UI chưa deploy gồm bỏ “Giao dịch gần đây” khỏi Dashboard và đưa dark mode về palette Dracula; quality gate local đã pass. Release dự kiến đi qua PR mới vào `main`, required checks và Cloudflare Pages Git integration; không chạy migration/Edge Function và không dùng Wrangler. Branch workspace cũng còn các commit follow-up workflow/test chưa đưa vào `main`; chúng sẽ đi cùng release này nếu PR được merge.
 
 ## Pending tasks
 

@@ -2,6 +2,14 @@
 
 ## 2026-09-11
 
+### Tinh gọn Dashboard và đổi dark mode sang Dracula
+
+- Trước thay đổi: Dashboard tải và hiển thị thêm block “Giao dịch gần đây”, trong khi người dùng cần tập trung vào tổng quan, ngân sách và xu hướng; dark mode dùng bảng màu xanh slate.
+- Sau thay đổi: bỏ truy vấn, component và API riêng cho “Giao dịch gần đây”; dark mode chuyển sang nền/surface Dracula với tím, hồng, cyan, xanh lá, cam, vàng và đỏ semantic, vẫn giữ text/focus tương phản cho accessibility.
+- Files: `src/pages/Dashboard.tsx`, `src/pages/Dashboard.test.tsx`, `src/lib/transactionsApi.ts`, `src/index.css`, `src/context/ThemeContext.tsx`. Không đổi schema, migration, RLS/RPC hoặc dữ liệu.
+- Kiểm thử: full Vitest 34/34 file với 153/153 test, TypeScript, ESLint, `git diff --check` và production build pass; build vẫn có cảnh báo chunk lớn hiện hữu của ExcelJS/XLSX/charts.
+- Trạng thái triển khai dự kiến: branch `codex/fix-dashboard-aggregate` sẽ tạo PR vào `main`, bật auto-merge sau required checks và chờ Cloudflare Pages Git integration deploy merge commit. Không chạy migration/Edge Function và không dùng Wrangler deploy trực tiếp.
+
 ### Giảm conflict trước auto-merge
 
 - CI và Cloudflare preview lắng nghe event `merge_group` để có thể chạy required checks trên Merge Queue.

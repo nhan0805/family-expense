@@ -36,35 +36,35 @@
 }
 
 .dark {
-  --app-bg: #0f172a;
-  --surface: #192134;
-  --surface-muted: #1e293b;
-  --surface-subtle: #172033;
-  --border: rgba(255, 255, 255, .1);
-  --border-strong: #334155;
-  --text: #f8fafc;
-  --muted: #cbd5e1;
-  --primary: #60a5fa;
-  --primary-strong: #93c5fd;
-  --primary-soft: #1e3a5f;
-  --primary-contrast: #0f172a;
-  --success: #34d399;
-  --warning: #fbbf24;
-  --danger: #f87171;
-  --info: #60a5fa;
-  --focus-ring: #93c5fd;
-  --chart-1: #60a5fa;
-  --chart-2: #34d399;
-  --chart-3: #fbbf24;
-  --chart-4: #fb923c;
-  --chart-5: #a78bfa;
-  --chart-6: #22d3ee;
-  --chart-expense: #fb923c;
-  --chart-income: #34d399;
-  --chart-net: #60a5fa;
-  --chart-grid: #334155;
-  --chart-axis: #cbd5e1;
-  --chart-cursor: #1e293b;
+  --app-bg: #282a36;
+  --surface: #343746;
+  --surface-muted: #44475a;
+  --surface-subtle: #2f3140;
+  --border: rgba(248, 248, 242, .14);
+  --border-strong: #6272a4;
+  --text: #f8f8f2;
+  --muted: #c6c8d3;
+  --primary: #bd93f9;
+  --primary-strong: #caa9fa;
+  --primary-soft: #443750;
+  --primary-contrast: #282a36;
+  --success: #50fa7b;
+  --warning: #ffb86c;
+  --danger: #ff5555;
+  --info: #8be9fd;
+  --focus-ring: #8be9fd;
+  --chart-1: #bd93f9;
+  --chart-2: #50fa7b;
+  --chart-3: #ffb86c;
+  --chart-4: #ff79c6;
+  --chart-5: #8be9fd;
+  --chart-6: #f1fa8c;
+  --chart-expense: #ffb86c;
+  --chart-income: #50fa7b;
+  --chart-net: #8be9fd;
+  --chart-grid: #44475a;
+  --chart-axis: #f8f8f2;
+  --chart-cursor: #44475a;
   --shadow-card: 0 1px 2px #191a2140, 0 8px 24px #191a2130;
   --shadow-card-hover: 0 10px 28px #191a2150;
   color-scheme: dark;
@@ -106,7 +106,7 @@ body {
 }
 
 .dark ::selection {
-  background: #6272a4;
+  background: #44475a;
   color: #f8f8f2;
 }
 
@@ -143,8 +143,8 @@ body {
 }
 
 .dark .brand-mark {
-  background: linear-gradient(145deg, #2563eb, #60a5fa);
-  box-shadow: 0 6px 14px #2563eb40;
+  background: linear-gradient(145deg, #ff79c6, #bd93f9);
+  box-shadow: 0 6px 14px #bd93f940;
 }
 
 .brand-wordmark {
@@ -325,23 +325,23 @@ body {
 }
 
 .dark .kpi-tone-emerald {
-  background: #064e3b;
-  color: #6ee7b7;
+  background: #174c34;
+  color: #50fa7b;
 }
 
 .dark .kpi-tone-rose {
-  background: #4c0519;
-  color: #fda4af;
+  background: #4d2834;
+  color: #ff5555;
 }
 
 .dark .kpi-tone-sky {
-  background: #172554;
-  color: #93c5fd;
+  background: #24394a;
+  color: #8be9fd;
 }
 
 .dark .kpi-tone-violet {
-  background: #2e1065;
-  color: #c4b5fd;
+  background: #443750;
+  color: #bd93f9;
 }
 
 .budget-snapshot {
@@ -433,7 +433,7 @@ body {
 .btn-primary {
   border: 1px solid var(--primary);
   background: var(--primary);
-  color: #fff;
+  color: var(--primary-contrast);
   padding: .72rem 1rem;
   box-shadow: 0 5px 12px #1e40af26;
 }
@@ -445,11 +445,11 @@ body {
 }
 
 .dark .btn-primary {
-  box-shadow: 0 5px 12px #2563eb33;
+  box-shadow: 0 5px 12px #bd93f933;
 }
 
 .dark .btn-primary:hover:not(:disabled) {
-  box-shadow: 0 8px 18px #2563eb44;
+  box-shadow: 0 8px 18px #bd93f944;
 }
 
 .btn-primary:disabled {
@@ -517,8 +517,9 @@ summary:focus-visible {
 }
 
 .dark .fab {
-  background: linear-gradient(145deg, #2563eb, #60a5fa);
-  box-shadow: 0 10px 22px #2563eb44;
+  background: linear-gradient(145deg, #ff79c6, #bd93f9);
+  color: #282a36;
+  box-shadow: 0 10px 22px #bd93f944;
 }
 
 .dashboard-controls,

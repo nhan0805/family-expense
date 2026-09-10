@@ -106,8 +106,8 @@ describe('Dashboard', () => {
     expect(netKpi).toHaveClass('block', 'h-full', 'kpi-card');
     expect(netKpi.querySelector('span')).toHaveClass('kpi-tone-rose');
     expect(screen.queryByText('Giao dịch thực tế trong tháng')).not.toBeInTheDocument();
-    expect(screen.getByText('Giao dịch gần đây')).toBeInTheDocument();
-    expect(screen.getByText('Chi tháng 2')).toBeInTheDocument();
+    expect(screen.queryByText('Giao dịch gần đây')).not.toBeInTheDocument();
+    expect(screen.queryByText('Chi tháng 2')).not.toBeInTheDocument();
     expect(screen.queryByText('Chi tháng 1')).not.toBeInTheDocument();
   });
 
