@@ -5,12 +5,11 @@
 ## Current state
 
 - Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages.
-- Code production gần nhất: PR [#144](https://github.com/nhan0805/family-expense/pull/144), merge commit `d46c9563c1fed3fc3b6d62d7a092d820c568f026`.
+- Code production gần nhất: PR [#145](https://github.com/nhan0805/family-expense/pull/145), merge commit `8249ab6fee31d40eb33cbaba83a866934d25425f`.
 - Release tài liệu/rule gần nhất: PR [#143](https://github.com/nhan0805/family-expense/pull/143), merge commit `67a391967862cd4d6bd95747d4115774c6b7be5b`.
-- CI main [run 34508232306](https://github.com/nhan0805/family-expense/actions/runs/34508232306) pass với quality, E2E và db-security; Cloudflare Pages production [check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/63079390-123f-467d-bfea-ea52e450001d) báo deploy thành công; smoke production trả HTTP 200.
+- CI main [run 34512620013](https://github.com/nhan0805/family-expense/actions/runs/34512620013) pass với quality, E2E và db-security; Cloudflare Pages production [check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/3b325e2c-fb23-46ca-a607-d446cb70d43d) báo `Deployed successfully`; smoke production trả HTTP 200.
 - Nhánh workspace hiện tại: `codex/fix-dashboard-aggregate`.
-- UI/UX release PR #144 đã merge vào `main` và deploy production qua Cloudflare Pages Git integration. Không có migration, Edge Function hoặc thay đổi dữ liệu cần deploy Supabase.
-- Nhánh workspace còn các commit follow-up về workflow/test ở trên `origin/main`; các commit này chưa nằm trong production release #144 và được giữ nguyên để xử lý release riêng nếu cần.
+- UI/UX release PR #145 đã merge vào `main` và deploy production qua Cloudflare Pages Git integration. Không có migration, Edge Function hoặc thay đổi dữ liệu cần deploy Supabase.
 - Đã cập nhật CI/preview cho `merge_group`, thu hẹp trigger Supabase và chuẩn hóa single-writer cho tài liệu release; chưa bật Merge Queue/branch protection trên GitHub.
 - Bản đồ kiến trúc ổn định nằm trong [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md); quy tắc phân loại tài liệu nằm trong [`docs/AI_CONTEXT_GUIDE.md`](docs/AI_CONTEXT_GUIDE.md).
 
@@ -58,7 +57,7 @@
 
 ## Current work
 
-UI/UX roadmap release #144 đã hoàn tất quality gate, merge vào `main` và deploy production thành công. Workspace hiện có follow-up UI chưa deploy gồm bỏ “Giao dịch gần đây” khỏi Dashboard và đưa dark mode về palette Dracula; quality gate local đã pass. Release dự kiến đi qua PR mới vào `main`, required checks và Cloudflare Pages Git integration; không chạy migration/Edge Function và không dùng Wrangler. Branch workspace cũng còn các commit follow-up workflow/test chưa đưa vào `main`; chúng sẽ đi cùng release này nếu PR được merge.
+UI/UX roadmap release #145 đã hoàn tất quality gate, merge vào `main` và deploy production thành công. Dashboard đã bỏ block “Giao dịch gần đây”; dark mode dùng palette Dracula; không có thay đổi schema, migration, RLS/RPC, Edge Function hoặc dữ liệu cần triển khai Supabase.
 
 ## Pending tasks
 

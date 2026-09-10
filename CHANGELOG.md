@@ -8,7 +8,7 @@
 - Sau thay đổi: bỏ truy vấn, component và API riêng cho “Giao dịch gần đây”; dark mode chuyển sang nền/surface Dracula với tím, hồng, cyan, xanh lá, cam, vàng và đỏ semantic, vẫn giữ text/focus tương phản cho accessibility.
 - Files: `src/pages/Dashboard.tsx`, `src/pages/Dashboard.test.tsx`, `src/lib/transactionsApi.ts`, `src/index.css`, `src/context/ThemeContext.tsx`. Không đổi schema, migration, RLS/RPC hoặc dữ liệu.
 - Kiểm thử: full Vitest 34/34 file với 153/153 test, TypeScript, ESLint, `git diff --check` và production build pass; build vẫn có cảnh báo chunk lớn hiện hữu của ExcelJS/XLSX/charts.
-- Trạng thái triển khai dự kiến: branch `codex/fix-dashboard-aggregate` sẽ tạo PR vào `main`, bật auto-merge sau required checks và chờ Cloudflare Pages Git integration deploy merge commit. Không chạy migration/Edge Function và không dùng Wrangler deploy trực tiếp.
+- Trạng thái triển khai thực tế: PR [#145](https://github.com/nhan0805/family-expense/pull/145) đã merge vào `main` với merge commit `8249ab6fee31d40eb33cbaba83a866934d25425f`; CI main [run 34512620013](https://github.com/nhan0805/family-expense/actions/runs/34512620013) pass với quality, E2E và db-security; Cloudflare Pages production [check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/3b325e2c-fb23-46ca-a607-d446cb70d43d) báo `Deployed successfully`; smoke `https://family-expense-8fo.pages.dev/` trả HTTP 200. Không có migration, Edge Function hoặc thay đổi dữ liệu cần deploy Supabase; không dùng Wrangler deploy trực tiếp.
 
 ### Giảm conflict trước auto-merge
 
