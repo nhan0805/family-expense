@@ -41,6 +41,7 @@ import { isSupabaseConfigured } from '../lib/supabase';
 import { reportClientError } from '../lib/telemetry';
 import {
   fetchDashboardAggregate,
+  fetchDashboardRecentTransactions,
   fetchTransactionYears,
   REMOTE_TRANSACTION_REFRESH_INTERVAL_MS,
 } from '../lib/transactionsApi';
@@ -238,7 +239,7 @@ function mapAggregateGroups(
 const pieLabelMinPercent = 0.05;
 const pieMaxSlices = 6;
 
-export const formatPieLabel = ({ percent, value }: Pick<PieLabelRenderProps, 'percent' | 'value'>) => Number(percent) >= pieLabelMinPercent ? formatCompactVnd(Number(value)).replace(' ₫', '') : null;
+export const formatPieLabel = ({ percent, value }: Pick<PieLabelRenderProps, 'percent' | 'value'>) => Number(percent) >= pieLabelMinPercent ? `${formatCompactVnd(Number(value)).replace(' ₫', '')} · ${Math.round(Number(percent) * 100)}%` : null;
 
 export const summarizePieData = (data: ExpenseChartItem[], language: CatalogLanguage = 'vi'): PieChartItem[] => {
   const sorted = data.filter((item) => item.value > 0).sort((a, b) => b.value - a.value);
@@ -304,6 +305,16 @@ export function Dashboard() {
       : false,
     refetchOnWindowFocus: true,
   });
+  const recentTransactionsQuery = useQuery({
+    queryKey: ['dashboard-recent-transactions', familyId, selectedRange.from, selectedRange.to],
+    queryFn: () => fetchDashboardRecentTransactions(familyId, selectedRange.from, selectedRange.to),
+    enabled: isSupabaseConfigured && Boolean(familyId) && validRange,
+    refetchInterval: isSupabaseConfigured && Boolean(familyId) && validRange
+      ? REMOTE_TRANSACTION_REFRESH_INTERVAL_MS
+      : false,
+    refetchOnWindowFocus: true,
+    retry: false,
+  });
   useEffect(() => {
     if (dashboardQuery.error) reportClientError(dashboardQuery.error, 'query');
   }, [dashboardQuery.error]);
@@ -323,6 +334,10 @@ export function Dashboard() {
   [queryFrom, queryTo, transactions]);
   const selectedTransactions = sourceTransactions.filter((transaction) => transactionInRange(transaction, selectedRange));
   const comparisonTransactions = sourceTransactions.filter((transaction) => transactionInRange(transaction, compareRange));
+  const recentTransactions = useMemo(() => (isSupabaseConfigured
+    ? recentTransactionsQuery.data || []
+    : selectedTransactions
+  ).slice().sort((a, b) => b.transactionDate.localeCompare(a.transactionDate)).slice(0, 5), [recentTransactionsQuery.data, selectedTransactions]);
   const selectedAggregate = dashboardQuery.data?.selected;
   const comparisonAggregate = dashboardQuery.data?.comparison;
   const chartAggregate = dashboardQuery.data?.chart;
@@ -508,7 +523,7 @@ export function Dashboard() {
       <section className="card dashboard-controls space-y-4 p-4 sm:p-5" aria-label={en ? 'Dashboard period controls' : 'Bộ lọc kỳ Dashboard'}>
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <div className="period-switcher flex min-w-0 max-w-full flex-nowrap gap-1 overflow-x-auto overscroll-x-contain rounded-xl p-1" role="group" aria-label={en ? 'View periods' : 'Kỳ xem'}>
-            {(Object.keys(modeLabels) as DashboardMode[]).map((item) => <button key={item} type="button" aria-pressed={mode === item} className={`shrink-0 whitespace-nowrap rounded-lg px-2.5 py-2 text-sm font-semibold transition sm:px-3 ${mode === item ? 'bg-[#155e46] text-white shadow-sm hover:bg-[#0f4b38] dark:bg-[#bd93f9] dark:text-[#282a36] dark:hover:bg-[#a779ed]' : 'text-gray-600 hover:text-[#155e46] dark:text-gray-300 dark:hover:text-[#bd93f9]'}`} onClick={() => chooseMode(item)}>{modeLabels[item][en ? 'en' : 'vi']}</button>)}
+            {(Object.keys(modeLabels) as DashboardMode[]).map((item) => <button key={item} type="button" aria-pressed={mode === item} className={`shrink-0 whitespace-nowrap rounded-lg px-2.5 py-2 text-sm font-semibold transition sm:px-3 ${mode === item ? 'bg-[var(--primary)] text-[var(--primary-contrast)] shadow-sm hover:bg-[var(--primary-strong)]' : 'text-[var(--muted)] hover:text-[var(--primary)]'}`} onClick={() => chooseMode(item)}>{modeLabels[item][en ? 'en' : 'vi']}</button>)}
           </div>
           <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
             <label className="min-w-0"><span className="label">{en ? 'Month' : 'Tháng'}</span><select id="dashboard-month" aria-label={en ? 'Month' : 'Tháng'} className="field px-2 sm:min-w-32" value={selectedMonth} onChange={changeMonth}>{monthOptions.map((option) => <option key={option.value} value={option.value}>{en ? englishMonthNames[Number(option.value) - 1] : option.label}</option>)}</select></label>
@@ -521,9 +536,6 @@ export function Dashboard() {
 
       {(!validRange || error) && <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300"><span>{!validRange ? (en ? 'Choose a valid date range.' : 'Vui lòng chọn khoảng ngày hợp lệ.') : (dashboardQuery.data ? (en ? 'Showing the last loaded dashboard data. Refresh failed.' : 'Đang hiển thị dữ liệu Dashboard đã tải trước đó. Lần làm mới vừa thất bại.') : (en ? 'Could not load part of the dashboard.' : 'Không thể tải một phần Dashboard.'))}</span>{validRange && <button type="button" className="btn-secondary px-3 py-1.5 text-xs" onClick={() => { void dashboardQuery.refetch(); void yearsQuery.refetch(); }}>{en ? 'Retry' : 'Thử lại'}</button>}</div>}
 
-      {budgetQuery.isError && <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/20 dark:text-amber-200"><span>{en ? 'Budget data could not be loaded.' : 'Không thể tải dữ liệu ngân sách.'}</span><button type="button" className="btn-secondary px-3 py-1.5 text-xs" onClick={() => void budgetQuery.refetch()}>{en ? 'Retry' : 'Thử lại'}</button></div>}
-      {!budgetQuery.isError && <BudgetSnapshot summary={budgetSummary} en={en} month={selectedMonth} year={selectedYear} />}
-
       <section className={`ui-stagger dashboard-kpi-grid grid grid-cols-2 gap-3 sm:gap-4 ${hasMultiMonthView ? 'xl:grid-cols-6' : 'xl:grid-cols-3'}`} aria-label={en ? 'Financial summary' : 'Tóm tắt tài chính'}>
         <Kpi label={en ? 'Total income' : 'Tổng thu'} value={selectedIncome} icon={ArrowDownToLine} tone="emerald" meta={renderChange(incomeChange, en, 'vs previous period')} to={periodFilterLink('Thu nhập')} />
         <Kpi label={en ? 'Total expenses' : 'Tổng chi'} value={selectedExpense} icon={ArrowUpFromLine} tone="rose" meta={renderChange(expenseChange, en, 'vs previous period')} to={periodFilterLink('Chi tiêu')} />
@@ -534,6 +546,21 @@ export function Dashboard() {
           <Kpi label={en ? 'Lowest month' : 'Tháng thấp nhất'} value={lowestMonth.expense} icon={TrendingDown} tone="sky" meta={lowestMonth.expense > 0 ? `T${lowestMonth.key.slice(5, 7)}/${lowestMonth.key.slice(0, 4)}` : (en ? 'No data' : 'Chưa có dữ liệu')} to={periodFilterLink('Chi tiêu', lowestMonth.expense > 0 ? rangeForPeriods([{ key: lowestMonth.key, label: lowestMonth.label }]) : selectedRange)} />
         </>}
       </section>
+
+      {budgetQuery.isError && <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/20 dark:text-amber-200"><span>{en ? 'Budget data could not be loaded.' : 'Không thể tải dữ liệu ngân sách.'}</span><button type="button" className="btn-secondary px-3 py-1.5 text-xs" onClick={() => void budgetQuery.refetch()}>{en ? 'Retry' : 'Thử lại'}</button></div>}
+      {!budgetQuery.isError && <BudgetSnapshot summary={budgetSummary} en={en} month={selectedMonth} year={selectedYear} />}
+
+      <RecentTransactions
+        transactions={recentTransactions}
+        purposes={purposes}
+        expenseTypes={expenseTypes}
+        language={language}
+        en={en}
+        to={periodFilterLink()}
+        loading={isSupabaseConfigured && recentTransactionsQuery.isPending}
+        error={isSupabaseConfigured && recentTransactionsQuery.isError}
+        onRetry={() => void recentTransactionsQuery.refetch()}
+      />
 
 
       <section className="card dashboard-chart-card min-w-0 overflow-hidden p-4 sm:p-5" aria-labelledby="dashboard-trend-title"><div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between"><div><h3 id="dashboard-trend-title" className="text-lg font-bold">{en ? 'Spending and income trend' : 'Xu hướng thu chi'}</h3><p className="text-sm text-gray-500 dark:text-gray-400">{mode === 'month' ? (en ? 'Six months ending in the selected month' : 'Sáu tháng kết thúc tại tháng đang chọn') : (en ? 'Monthly breakdown for this view' : 'Phân bổ theo từng tháng trong kỳ xem')}</p></div><div className="text-right text-sm"><p className="font-bold text-[#d96f4f]">{formatVnd(selectedExpense)}</p><p className="text-gray-500">{en ? 'expenses in view' : 'chi trong kỳ xem'}</p></div></div><div className="h-80 min-w-0 max-w-full">{trend.some((item) => item.expense || item.income) ? <ResponsiveContainer><ComposedChart data={trend} margin={{ top: 20, right: 12, left: 4, bottom: 6 }}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="label" /><YAxis tickFormatter={(value) => formatCompactVnd(Number(value)).replace(' ₫', '')} width={54} /><Tooltip labelFormatter={(label) => formatPeriodKey(String(trend.find((item) => item.label === label)?.key || ''), en)} formatter={(value) => formatVnd(Number(value))} /><Legend verticalAlign="top" align="right" /><Bar name={en ? 'Expenses' : 'Chi tiêu'} dataKey="expense" fill="#d96f4f" radius={[8, 8, 0, 0]} cursor="pointer" onClick={(_, index) => { const period = trend[index]; if (period) navigate(`/giao-dich?transactionType=Chi tiêu&month=${period.key.slice(5, 7)}&year=${period.key.slice(0, 4)}`); }}><LabelList dataKey="expense" position="top" formatter={(value) => Number(value) > 0 ? formatCompactVnd(Number(value)).replace(' ₫', '') : ''} /></Bar><Line name={en ? 'Income' : 'Thu nhập'} type="monotone" dataKey="income" stroke="#155e46" strokeWidth={3} dot={{ r: 4 }} /><Line name={en ? 'Net value' : 'Thu ròng'} type="monotone" dataKey="net" stroke="#247df2" strokeWidth={2} strokeDasharray="5 5" dot={false} /></ComposedChart></ResponsiveContainer> : <EmptyState title={en ? 'No trend data' : 'Chưa có dữ liệu xu hướng'} description={en ? 'The trend will appear when the selected period has actual transactions.' : 'Xu hướng sẽ xuất hiện khi kỳ đang chọn có giao dịch thực tế.'} />}</div></section>
@@ -577,7 +604,19 @@ function BudgetSnapshot({ summary, en, month, year }: { summary?: BudgetSummary;
     : summary.warningCount > 0
       ? (en ? `${summary.warningCount} near the limit` : `${summary.warningCount} mục sắp vượt`)
       : (en ? 'All set budgets are within limits' : 'Các mục đã đặt đều trong hạn mức');
-  return <section className="card budget-snapshot border-[#bd93f966] bg-[#bd93f90d] p-4 dark:bg-[#bd93f90d] sm:p-5" aria-labelledby="dashboard-budget-title"><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div className="flex min-w-0 items-start gap-3"><span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-violet-100 text-violet-700 dark:bg-[#bd93f91f] dark:text-[#bd93f9]"><PiggyBank size={20} aria-hidden="true" /></span><div className="min-w-0"><h3 id="dashboard-budget-title" className="font-extrabold">{en ? 'Monthly budget' : 'Ngân sách tháng'}</h3><p className="mt-1 text-sm text-gray-600 dark:text-gray-300">{hasBudgets ? `${formatBudgetInput(summary.budgetedSpent)} ₫ / ${formatBudgetInput(summary.totalBudget)} ₫` : (en ? 'No budget set for this month.' : 'Tháng này chưa đặt ngân sách.')}</p></div></div><Link className="btn-secondary inline-flex items-center justify-center text-sm" to="/ngan-sach">{en ? 'View budgets' : 'Xem ngân sách'}</Link></div>{hasBudgets && <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-600 dark:text-gray-300"><span>{statusText}</span>{summary.unbudgetedSpent > 0 && <span>{en ? `${formatBudgetInput(summary.unbudgetedSpent)} ₫ without a budget` : `${formatBudgetInput(summary.unbudgetedSpent)} ₫ chưa có ngân sách`}</span>}<span>{en ? `for ${month}/${year}` : `tháng ${month}/${year}`}</span></div>}</section>;
+  return <section className="card budget-snapshot p-4 sm:p-5" aria-labelledby="dashboard-budget-title"><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div className="flex min-w-0 items-start gap-3"><span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-[var(--primary-soft)] text-[var(--primary)]"><PiggyBank size={20} aria-hidden="true" /></span><div className="min-w-0"><h3 id="dashboard-budget-title" className="font-extrabold">{en ? 'Monthly budget' : 'Ngân sách tháng'}</h3><p className="mt-1 text-sm text-gray-600 dark:text-gray-300">{hasBudgets ? `${formatBudgetInput(summary.budgetedSpent)} ₫ / ${formatBudgetInput(summary.totalBudget)} ₫` : (en ? 'No budget set for this month.' : 'Tháng này chưa đặt ngân sách.')}</p></div></div><Link className="btn-secondary inline-flex items-center justify-center text-sm" to="/ngan-sach">{en ? 'View budgets' : 'Xem ngân sách'}</Link></div>{hasBudgets && <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-600 dark:text-gray-300"><span>{statusText}</span>{summary.unbudgetedSpent > 0 && <span>{en ? `${formatBudgetInput(summary.unbudgetedSpent)} ₫ without a budget` : `${formatBudgetInput(summary.unbudgetedSpent)} ₫ chưa có ngân sách`}</span>}<span>{en ? `for ${month}/${year}` : `tháng ${month}/${year}`}</span></div>}</section>;
+}
+
+function RecentTransactions({ transactions, purposes, expenseTypes, language, en, to, loading, error, onRetry }: { transactions: Transaction[]; purposes: CatalogItem[]; expenseTypes: CatalogItem[]; language: CatalogLanguage; en: boolean; to: string; loading: boolean; error: boolean; onRetry: () => void }) {
+  const purposeNames = useMemo(() => new Map(purposes.map((item) => [item.id, getCatalogDisplayName(item, language)])), [language, purposes]);
+  const expenseTypeNames = useMemo(() => new Map(expenseTypes.map((item) => [item.id, getCatalogDisplayName(item, language)])), [expenseTypes, language]);
+  return <section className="card dashboard-recent-card min-w-0 overflow-hidden p-4 sm:p-5" aria-labelledby="dashboard-recent-title">
+    <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+      <div><h3 id="dashboard-recent-title" className="text-lg font-bold">{en ? 'Recent transactions' : 'Giao dịch gần đây'}</h3><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{en ? 'The latest actual transactions in this view.' : 'Các giao dịch thực tế mới nhất trong kỳ xem.'}</p></div>
+      <Link className="btn-secondary inline-flex items-center text-sm" to={to}>{en ? 'View all' : 'Xem tất cả'}</Link>
+    </div>
+    {loading ? <div className="grid gap-2" aria-label={en ? 'Loading recent transactions' : 'Đang tải giao dịch gần đây'} aria-busy="true"><div className="h-12 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" /><div className="h-12 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" /></div> : error ? <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300"><span>{en ? 'Could not load recent transactions.' : 'Không thể tải giao dịch gần đây.'}</span><button type="button" className="btn-secondary px-3 py-1.5 text-xs" onClick={onRetry}>{en ? 'Retry' : 'Thử lại'}</button></div> : transactions.length ? <ul className="divide-y divide-black/10 dark:divide-white/10">{transactions.map((transaction) => { const income = transaction.transactionType === 'Thu nhập'; return <li key={transaction.id}><Link to={`/giao-dịch/${transaction.id}`} title={transaction.description} className="flex min-w-0 items-center justify-between gap-3 py-3 first:pt-1 last:pb-1 hover:bg-black/[.02] dark:hover:bg-white/[.03]"><span className="min-w-0"><span className="block break-words font-semibold [overflow-wrap:anywhere] line-clamp-2">{transaction.description || (en ? 'Untitled transaction' : 'Giao dịch chưa có nội dung')}</span><span className="mt-1 block truncate text-xs text-gray-500 dark:text-gray-400">{formatDate(transaction.transactionDate)} · {purposeNames.get(transaction.purposeId) || (en ? 'Uncategorized' : 'Chưa phân loại')} · {expenseTypeNames.get(transaction.expenseTypeId) || (en ? 'Uncategorized' : 'Chưa phân loại')}</span></span><span className={`shrink-0 text-sm font-bold tabular-nums ${income ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'}`}>{income ? '+' : '−'}{formatVnd(transaction.amount)}</span></Link></li>; })}</ul> : <EmptyState title={en ? 'No recent transactions' : 'Chưa có giao dịch gần đây'} description={en ? 'Add an actual transaction to see it here.' : 'Thêm giao dịch thực tế để xem tại đây.'} />}
+  </section>;
 }
 
 function buildInsights({
@@ -629,6 +668,8 @@ function ExpensePieChart({ title, data, to, filterKey, en, income = false }: { t
   const navigate = useNavigate();
   const pieData = summarizePieData(data, en ? 'en' : 'vi');
   const otherItem = pieData.find((item) => item.isOther);
+  const [showTable, setShowTable] = useState(false);
+  const total = pieData.reduce((sum, item) => sum + item.value, 0);
   const openItem = (item: PieChartItem) => {
     if (item.isOther) {
       const hiddenIds = item.hiddenItems?.map((hiddenItem) => hiddenItem.id).filter(Boolean) || [];
@@ -637,17 +678,27 @@ function ExpensePieChart({ title, data, to, filterKey, en, income = false }: { t
     }
     if (item.id && item.id !== 'uncategorized') navigate(`${to}&${filterKey}=${encodeURIComponent(item.id)}`);
   };
-  return <><h3 className="font-bold">{title}</h3><div className="min-h-72 min-w-0 max-w-full pt-3">{pieData.length ? <><div className="h-56 sm:h-64"><ResponsiveContainer><PieChart margin={{ top: 18, right: 18, left: 18, bottom: 0 }}><Pie data={pieData} dataKey="value" nameKey="name" innerRadius={45} outerRadius={75} labelLine={false} label={formatPieLabel}>{pieData.map((item) => { const interactive = item.id !== 'uncategorized' && (item.isOther ? Boolean(item.hiddenItems?.length) : true); return <Cell key={item.id || item.name} fill={item.fill} cursor={interactive ? 'pointer' : undefined} role={interactive ? 'button' : undefined} tabIndex={interactive ? 0 : undefined} aria-label={item.isOther ? `${item.name}: ${formatVnd(item.value)} (${item.hiddenItems?.length || 0} danh mục)` : `${item.name}: ${formatVnd(item.value)}`} onClick={() => openItem(item)} onKeyDown={(event) => { if (interactive && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); openItem(item); } }} />; })}</Pie><Tooltip content={<PieTooltip />} /></PieChart></ResponsiveContainer></div><ul className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs sm:grid-cols-3" aria-label={`${title} legend`}>{pieData.map((item) => <li key={item.id || item.name} className="flex min-w-0 items-center gap-1.5"><span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: item.fill }} aria-hidden="true" /><span className="truncate" title={`${item.name}: ${formatVnd(item.value)}`}>{item.name}</span></li>)}</ul>{otherItem && <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{en ? `${otherItem.hiddenItems?.length || 0} smaller categories grouped into “Other”; tap, click, or focus “Other” to see details.` : `${otherItem.hiddenItems?.length || 0} danh mục nhỏ được gộp vào “Khác”; nhấn, bấm hoặc dùng phím Enter trên “Khác” để xem chi tiết.`}</p>}</> : <EmptyState title={en ? 'No chart data' : 'Chưa có dữ liệu biểu đồ'} description={en ? `No actual ${income ? 'income' : 'expense'} transactions in this period.` : `Chưa có giao dịch thực tế ${income ? 'thu nhập' : 'chi tiêu'} trong kỳ này.`} />}</div></>;
+  return <>
+    <div className="flex items-start justify-between gap-3"><h3 className="font-bold">{title}</h3>{pieData.length > 0 && <button type="button" className="btn-secondary shrink-0 px-2.5 py-1.5 text-xs" aria-expanded={showTable} onClick={() => setShowTable((value) => !value)}>{showTable ? (en ? 'Hide table' : 'Ẩn bảng') : (en ? 'View table' : 'Xem dạng bảng')}</button>}</div>
+    <div className="min-h-72 min-w-0 max-w-full pt-3">
+      {pieData.length ? <>
+        <div className="h-56 sm:h-64"><ResponsiveContainer><PieChart margin={{ top: 18, right: 18, left: 18, bottom: 0 }}><Pie data={pieData} dataKey="value" nameKey="name" innerRadius={45} outerRadius={75} labelLine={false} label={formatPieLabel}>{pieData.map((item) => { const interactive = item.id !== 'uncategorized' && (item.isOther ? Boolean(item.hiddenItems?.length) : true); return <Cell key={item.id || item.name} fill={item.fill} cursor={interactive ? 'pointer' : undefined} role={interactive ? 'button' : undefined} tabIndex={interactive ? 0 : undefined} aria-label={item.isOther ? `${item.name}: ${formatVnd(item.value)} (${item.hiddenItems?.length || 0} danh mục)` : `${item.name}: ${formatVnd(item.value)}`} onClick={() => openItem(item)} onKeyDown={(event) => { if (interactive && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); openItem(item); } }} />; })}</Pie><Tooltip content={<PieTooltip />} /></PieChart></ResponsiveContainer></div>
+        <ul className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs sm:grid-cols-3" aria-label={`${title} legend`}>{pieData.map((item) => <li key={item.id || item.name} className="flex min-w-0 items-center gap-1.5"><span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: item.fill }} aria-hidden="true" /><span className="truncate" title={`${item.name}: ${formatVnd(item.value)}`}>{item.name}</span></li>)}</ul>
+        {otherItem && <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{en ? `${otherItem.hiddenItems?.length || 0} smaller categories grouped into “Other”; tap, click, or focus “Other” to see details.` : `${otherItem.hiddenItems?.length || 0} danh mục nhỏ được gộp vào “Khác”; nhấn, bấm hoặc dùng phím Enter trên “Khác” để xem chi tiết.`}</p>}
+        {showTable && <div className="mt-3 overflow-x-auto rounded-xl border border-black/10 dark:border-white/10"><table className="w-full min-w-[18rem] text-left text-xs"><caption className="sr-only">{title}</caption><thead className="bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-300"><tr><th scope="col" className="px-3 py-2 font-semibold">{en ? 'Category' : 'Danh mục'}</th><th scope="col" className="px-3 py-2 text-right font-semibold">{en ? 'Amount' : 'Số tiền'}</th><th scope="col" className="px-3 py-2 text-right font-semibold">%</th></tr></thead><tbody className="divide-y divide-black/10 dark:divide-white/10">{pieData.map((item) => <tr key={item.id || item.name}><th scope="row" className="max-w-[12rem] px-3 py-2 font-medium">{item.name}</th><td className="px-3 py-2 text-right tabular-nums">{formatVnd(item.value)}</td><td className="px-3 py-2 text-right tabular-nums">{total ? `${Math.round((item.value / total) * 100)}%` : '0%'}</td></tr>)}</tbody></table></div>}
+      </> : <EmptyState title={en ? 'No chart data' : 'Chưa có dữ liệu biểu đồ'} description={en ? `No actual ${income ? 'income' : 'expense'} transactions in this period.` : `Chưa có giao dịch thực tế ${income ? 'thu nhập' : 'chi tiêu'} trong kỳ này.`} />}
+    </div>
+  </>;
 }
 
 function PieTooltip({ active, payload }: { active?: boolean; payload?: Array<{ payload?: PieChartItem; value?: number }> }) {
   if (!active || !payload?.length) return null;
   const item = payload[0]?.payload;
   if (!item) return null;
-  return <div className="rounded-xl border border-black/10 bg-white px-3 py-2 text-xs shadow-lg dark:border-white/10 dark:bg-[#343746]"><p className="font-bold">{item.name}: {formatVnd(item.value)}</p>{item.hiddenItems?.length ? <ul className="mt-1 space-y-0.5 text-gray-600 dark:text-gray-300">{item.hiddenItems.map((hiddenItem) => <li key={hiddenItem.id}>{hiddenItem.name}: {formatVnd(hiddenItem.value)}</li>)}</ul> : null}</div>;
+  return <div className="rounded-xl border border-black/10 bg-white px-3 py-2 text-xs shadow-lg dark:border-white/10 dark:bg-[var(--surface)]"><p className="font-bold">{item.name}: {formatVnd(item.value)}</p>{item.hiddenItems?.length ? <ul className="mt-1 space-y-0.5 text-gray-600 dark:text-gray-300">{item.hiddenItems.map((hiddenItem) => <li key={hiddenItem.id}>{hiddenItem.name}: {formatVnd(hiddenItem.value)}</li>)}</ul> : null}</div>;
 }
 
 function Kpi({ label, value, icon: Icon, tone, meta, to }: { label: string; value: number; icon: LucideIcon; tone: Tone; meta: ReactNode; to: string }) {
-  const toneClass = tone === 'emerald' ? 'bg-emerald-100 text-emerald-700 dark:bg-[#50fa7b1f] dark:text-[#50fa7b]' : tone === 'rose' ? 'bg-rose-100 text-rose-700 dark:bg-[#ff79c61f] dark:text-[#ff79c6]' : tone === 'violet' ? 'bg-violet-100 text-violet-700 dark:bg-[#bd93f91f] dark:text-[#bd93f9]' : 'bg-sky-100 text-sky-700 dark:bg-[#8be9fd1f] dark:text-[#8be9fd]';
-  return <Link to={to} className="card card-interactive kpi-card group block h-full min-w-0 p-3 transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137050] dark:focus-visible:ring-[#bd93f9] sm:p-4" aria-label={`Mở giao dịch theo ${label}`}><div className="min-w-0"><div className="flex items-center gap-2"><span className={`kpi-icon grid size-9 shrink-0 place-items-center rounded-xl ${toneClass}`}><Icon size={18} aria-hidden="true" /></span><p className="min-h-8 min-w-0 flex-1 text-xs font-semibold leading-4 text-gray-500 dark:text-gray-400">{label}</p></div><p className="kpi-value mt-2 max-w-full break-words whitespace-normal text-lg font-extrabold leading-tight sm:text-xl" title={formatVnd(value)} aria-label={`${label}: ${formatVnd(value)}`}>{formatCompactVnd(value)}</p></div><p className="kpi-meta mt-3 flex min-w-0 items-center gap-1 truncate text-xs leading-4">{meta}</p></Link>;
+  const toneClass = `kpi-tone-${tone}`;
+  return <Link to={to} className="card card-interactive kpi-card group block h-full min-w-0 p-3 transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] sm:p-4" aria-label={`Mở giao dịch theo ${label}`}><div className="min-w-0"><div className="flex items-center gap-2"><span className={`kpi-icon grid size-9 shrink-0 place-items-center rounded-xl ${toneClass}`}><Icon size={18} aria-hidden="true" /></span><p className="min-h-8 min-w-0 flex-1 text-xs font-semibold leading-4 text-gray-500 dark:text-gray-400">{label}</p></div><p className="kpi-value mt-2 max-w-full break-words whitespace-normal text-lg font-extrabold leading-tight sm:text-xl" title={formatVnd(value)} aria-label={`${label}: ${formatVnd(value)}`}>{formatCompactVnd(value)}</p></div><p className="kpi-meta mt-3 flex min-w-0 items-center gap-1 truncate text-xs leading-4">{meta}</p></Link>;
 }

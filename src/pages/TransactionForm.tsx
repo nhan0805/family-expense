@@ -525,6 +525,35 @@ export function TransactionForm() {
             {en ? 'Fields marked with ' : 'Các trường có '}<span className="font-bold text-red-600">*</span>{en ? ' are required.' : ' là bắt buộc.'}
           </p>
           <div className="form-section-heading form-section-heading-primary md:col-span-3"><h3 className="font-bold">{en ? 'Basic information' : 'Thông tin chính'}</h3><p className="text-xs text-gray-500 dark:text-gray-400">{en ? 'Enter the information needed to record this transaction.' : 'Nhập các thông tin cần thiết để ghi nhận giao dịch.'}</p></div>
+          <Field label={en ? 'Amount (VND)' : 'Số tiền (VND)'} required error={errors.amount?.message} {...aiFieldProps('amount')}>
+            <Controller
+              name="amount"
+              control={control}
+              render={({ field }) => (
+                <input
+                  ref={field.ref}
+                  name={field.name}
+                  onBlur={field.onBlur}
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  autoFocus={!id}
+                  className={`field text-right text-lg font-bold ${aiFieldClass(aiFieldProps('amount'))}`}
+                  required
+                  value={
+                    typeof field.value === 'number' && field.value > 0
+                      ? field.value.toLocaleString('vi-VN')
+                      : ''
+                  }
+                  onChange={(e) => {
+                    const digits = e.target.value.replace(/\D/g, '');
+                    field.onChange(digits ? Number(digits) : undefined);
+                  }}
+                />
+              )}
+            />
+            <span className="mt-1 block text-xs text-gray-500 dark:text-gray-400">{en ? 'Enter the amount first, then add the context below.' : 'Nhập số tiền trước, sau đó bổ sung nội dung bên dưới.'}</span>
+          </Field>
           <div className="md:col-span-3">
             <label className="label flex items-center gap-2" htmlFor="transaction-description">
               <span>{en ? 'Description' : 'Nội dung'} <span className="text-red-600" aria-hidden="true">*</span></span>
@@ -553,7 +582,7 @@ export function TransactionForm() {
               </div>
               <button
                 type="button"
-                className={`ai-action flex h-[46px] shrink-0 items-center justify-center gap-2 rounded-xl px-3 font-bold text-white shadow-sm transition-all focus:outline-none focus:ring-4 focus:ring-violet-300/40 disabled:cursor-not-allowed disabled:bg-none disabled:bg-gray-300 disabled:text-gray-500 disabled:shadow-none dark:disabled:bg-gray-700 dark:disabled:text-gray-400 ${aiCompleted ? 'bg-emerald-600' : 'bg-gradient-to-r from-violet-600 to-sky-500 hover:from-violet-700 hover:to-sky-600'}`}
+                className={`ai-action btn-secondary flex h-[46px] shrink-0 items-center justify-center gap-2 px-3 focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)] disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500 disabled:shadow-none dark:disabled:bg-gray-700 dark:disabled:text-gray-400 ${aiCompleted ? 'border-emerald-600 bg-emerald-50 text-emerald-800 dark:border-emerald-400 dark:bg-emerald-950/40 dark:text-emerald-200' : 'text-[var(--primary)]'}`}
                 aria-label={en ? 'Analyze description with AI' : 'Phân tích nội dung bằng AI'}
                 title={en ? 'Analyze description with AI' : 'Phân tích nội dung bằng AI'}
                 disabled={aiBusy || !description.trim()}
@@ -568,7 +597,7 @@ export function TransactionForm() {
             {aiError && <div role="alert" className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-red-50 p-2 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300"><span>{aiError}</span><button type="button" className="btn-secondary px-3 py-1.5 text-xs" onClick={() => void parseAi()}>{en ? 'Retry' : 'Thử lại'}</button></div>}
           </div>
           {aiResult && aiResultVisible && (
-            <section className={`form-ai-summary ui-enter rounded-xl border p-4 md:col-span-3 ${aiTone === 'warning' ? 'border-amber-300 bg-amber-50 text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100' : 'border-violet-200 bg-gradient-to-r from-violet-50 to-sky-50 text-violet-950 dark:border-violet-800 dark:from-violet-950/35 dark:to-sky-950/25 dark:text-violet-100'}`} aria-label={en ? 'AI suggestion summary' : 'Tóm tắt gợi ý AI'}>
+            <section className={`form-ai-summary ui-enter rounded-xl border p-4 md:col-span-3 ${aiTone === 'warning' ? 'border-amber-300 bg-amber-50 text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100' : 'border-[color-mix(in_srgb,var(--primary)_25%,var(--border))] bg-[color-mix(in_srgb,var(--primary-soft)_65%,var(--surface))] text-[var(--text)]'}`} aria-label={en ? 'AI suggestion summary' : 'Tóm tắt gợi ý AI'}>
               <div className="flex items-start gap-3">
                 <Sparkles className="mt-0.5 shrink-0" size={19} />
                 <div className="min-w-0 flex-1">
@@ -589,38 +618,12 @@ export function TransactionForm() {
               {...register('transactionDate')}
             />
           </Field>
-          <Field label={en ? 'Amount (VND)' : 'Số tiền (VND)'} required error={errors.amount?.message} {...aiFieldProps('amount')}>
-            <Controller
-              name="amount"
-              control={control}
-              render={({ field }) => (
-                <input
-                  ref={field.ref}
-                  name={field.name}
-                  onBlur={field.onBlur}
-                  type="text"
-                  inputMode="numeric"
-                  autoComplete="off"
-                  className={`field text-right font-semibold ${aiFieldClass(aiFieldProps('amount'))}`}
-                  required
-                  value={
-                    typeof field.value === 'number' && field.value > 0
-                      ? field.value.toLocaleString('vi-VN')
-                      : ''
-                  }
-                  onChange={(e) => {
-                    const digits = e.target.value.replace(/\D/g, '');
-                    field.onChange(digits ? Number(digits) : undefined);
-                  }}
-                />
-              )}
-            />
-          </Field>
           <Field label={en ? 'Transaction type' : 'Loại giao dịch'} required {...aiFieldProps('transactionType')}>
-            <select className={`field ${aiFieldClass(aiFieldProps('transactionType'))}`} required {...register('transactionType')}>
-              <option value="Chi tiêu">{en ? 'Money out' : 'Tiền ra'}</option>
-              <option value="Thu nhập">{en ? 'Money in' : 'Tiền vào'}</option>
-            </select>
+            <Controller
+              name="transactionType"
+              control={control}
+              render={({ field }) => <div className={`grid grid-cols-2 gap-1 rounded-xl border border-[var(--border-strong)] bg-[var(--surface-muted)] p-1 ${aiFieldClass(aiFieldProps('transactionType'))}`} role="group" aria-label={en ? 'Transaction type' : 'Loại giao dịch'}>{(['Chi tiêu', 'Thu nhập'] as const).map((type) => <button key={type} type="button" aria-pressed={field.value === type} className={`min-h-11 rounded-lg px-3 text-sm font-bold transition ${field.value === type ? 'bg-[var(--surface)] text-[var(--primary)] shadow-sm' : 'text-[var(--muted)]'}`} onClick={() => field.onChange(type)}>{type === 'Chi tiêu' ? (en ? 'Money out' : 'Tiền ra') : (en ? 'Money in' : 'Tiền vào')}</button>)}</div>}
+            />
           </Field>
           <div className="form-section-heading md:col-span-3"><h3 className="font-bold">{en ? 'Classification' : 'Phân loại'}</h3><p className="text-xs text-gray-500 dark:text-gray-400">{en ? 'Helps keep the dashboard and reports accurate.' : 'Giúp Dashboard và báo cáo tổng hợp chính xác.'}</p></div>
           <Field
@@ -771,7 +774,7 @@ function aiFieldClass({ aiSuggested, aiTone }: AiFieldVisualProps) {
   if (!aiSuggested) return '';
   return aiTone === 'warning'
     ? 'border-amber-400 bg-amber-50/70 ring-4 ring-amber-200/40 dark:border-amber-600 dark:bg-amber-950/20'
-    : 'border-violet-400 bg-gradient-to-r from-violet-50/80 to-sky-50/70 ring-4 ring-violet-200/40 dark:border-violet-600 dark:from-violet-950/25 dark:to-sky-950/20';
+    : 'border-blue-400 bg-blue-50/70 ring-4 ring-blue-200/40 dark:border-blue-600 dark:bg-blue-950/20';
 }
 
 function AiBadge({ aiSuggested, aiTone }: AiFieldVisualProps) {
@@ -779,7 +782,7 @@ function AiBadge({ aiSuggested, aiTone }: AiFieldVisualProps) {
   const en = language === 'en';
   if (!aiSuggested) return null;
   return (
-    <span className={`inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-bold ${aiTone === 'warning' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200' : 'bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-200'}`}>
+    <span className={`inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-bold ${aiTone === 'warning' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200' : 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200'}`}>
       <Sparkles size={10} aria-hidden="true" /> {en ? 'AI suggested' : 'AI đề xuất'}
     </span>
   );

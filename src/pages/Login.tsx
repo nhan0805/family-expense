@@ -1,3 +1,4 @@
+import { Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
@@ -13,11 +14,13 @@ export function Login() {
   const [mode, setMode] = useState<Mode>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
 
   const changeMode = (nextMode: Mode) => {
     setMessage('');
+    setShowPassword(false);
     setMode(nextMode);
   };
 
@@ -83,22 +86,20 @@ export function Login() {
 
   const title = en ? (mode === 'login' ? 'Log in' : mode === 'signup' ? 'Create account' : mode === 'magic' ? 'Magic link' : 'Forgot password') : (mode === 'login' ? 'Đăng nhập' : mode === 'signup' ? 'Tạo tài khoản' : mode === 'magic' ? 'Liên kết đăng nhập' : 'Quên mật khẩu');
 
-  return <main className="grid min-h-screen place-items-center bg-[#f6f7f2] p-4 dark:bg-[#282a36]">
+  return <main className="grid min-h-dvh place-items-center bg-[var(--app-bg)] p-4">
     <form className="card w-full max-w-md space-y-4 p-7" onSubmit={submit}>
-      <p className="text-xs font-bold tracking-widest text-[#137050] dark:text-[#bd93f9]">FAMILY EXPENSE</p>
+      <p className="text-xs font-bold tracking-widest text-[var(--primary)]">FAMILY EXPENSE</p>
       <h1 className="text-2xl font-extrabold">{title}</h1>
+      {(mode === 'login' || mode === 'signup') && <p className="text-sm text-[var(--muted)]">{en ? 'A clear view of your family’s money, one transaction at a time.' : 'Theo dõi tài chính gia đình rõ ràng, từng giao dịch một.'}</p>}
+      {(mode === 'login' || mode === 'signup') && <div className="grid grid-cols-2 gap-1 rounded-xl bg-[var(--surface-muted)] p-1" role="tablist" aria-label={en ? 'Authentication mode' : 'Chế độ xác thực'}><button type="button" role="tab" aria-selected={mode === 'login'} className={`min-h-11 rounded-lg px-3 text-sm font-bold transition ${mode === 'login' ? 'bg-[var(--surface)] text-[var(--primary)] shadow-sm' : 'text-[var(--muted)]'}`} onClick={() => changeMode('login')}>{en ? 'Log in' : 'Đăng nhập'}</button><button type="button" role="tab" aria-selected={mode === 'signup'} className={`min-h-11 rounded-lg px-3 text-sm font-bold transition ${mode === 'signup' ? 'bg-[var(--surface)] text-[var(--primary)] shadow-sm' : 'text-[var(--muted)]'}`} onClick={() => changeMode('signup')}>{en ? 'Create account' : 'Tạo tài khoản'}</button></div>}
       {mode === 'forgot' && <p className="text-sm text-gray-500 dark:text-gray-400">{en ? 'Enter your account email to receive a password reset link.' : 'Nhập email tài khoản để nhận liên kết đặt lại mật khẩu.'}</p>}
       <label><span className="label">Email</span><input className="field" type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} /></label>
-      {mode !== 'magic' && mode !== 'forgot' && <label><span className="label">{en ? 'Password' : 'Mật khẩu'}</span><input className="field" type="password" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} minLength={6} required value={password} onChange={(event) => setPassword(event.target.value)} /></label>}
+      {mode !== 'magic' && mode !== 'forgot' && <label><span className="label">{en ? 'Password' : 'Mật khẩu'}</span><span className="relative block"><input className="field pr-12" type={showPassword ? 'text' : 'password'} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} minLength={6} required value={password} onChange={(event) => setPassword(event.target.value)} /><button type="button" className="icon-button absolute inset-y-0 right-1" aria-label={showPassword ? (en ? 'Hide password' : 'Ẩn mật khẩu') : (en ? 'Show password' : 'Hiện mật khẩu')} aria-pressed={showPassword} onClick={() => setShowPassword((value) => !value)}>{showPassword ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}</button></span></label>}
       <div className="pt-2">
         <button className="btn-primary w-full" disabled={busy}>{busy ? (en ? 'Processing…' : 'Đang xử lý…') : mode === 'forgot' ? (en ? 'Send reset link' : 'Gửi liên kết đặt lại') : (en ? 'Continue' : 'Tiếp tục')}</button>
       </div>
       {message && <p role="status" className="text-sm">{message}</p>}
-      <div className="flex flex-wrap justify-between gap-3 text-sm">
-        <button type="button" onClick={() => changeMode(mode === 'signup' ? 'login' : 'signup')}>{mode === 'signup' ? (en ? 'Already have an account' : 'Đã có tài khoản') : (en ? 'Sign up' : 'Đăng ký')}</button>
-        {mode === 'login' ? <button type="button" onClick={() => changeMode('forgot')}>{en ? 'Forgot password?' : 'Quên mật khẩu?'}</button> : <button type="button" onClick={() => changeMode('login')}>{en ? 'Log in' : 'Đăng nhập'}</button>}
-        {mode === 'login' && <button type="button" onClick={() => changeMode('magic')}>Magic link</button>}
-      </div>
+      <div className="flex flex-wrap justify-between gap-3 text-sm">{mode === 'login' && <><button type="button" onClick={() => changeMode('forgot')}>{en ? 'Forgot password?' : 'Quên mật khẩu?'}</button><button type="button" onClick={() => changeMode('magic')}>Magic link</button></>}{mode === 'signup' && <button type="button" onClick={() => changeMode('login')}>{en ? 'Back to log in' : 'Về đăng nhập'}</button>}{(mode === 'magic' || mode === 'forgot') && <button type="button" onClick={() => changeMode('login')}>{en ? 'Back to log in' : 'Về đăng nhập'}</button>}</div>
     </form>
   </main>;
 }

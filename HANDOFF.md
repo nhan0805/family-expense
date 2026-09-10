@@ -6,9 +6,10 @@
 
 - Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages.
 - Code production gần nhất: PR [#141](https://github.com/nhan0805/family-expense/pull/141), merge commit `30b02bca1871d0901f68bfbc5e8859befe4ca424`.
-- Release tài liệu/rule gần nhất: PR [#142](https://github.com/nhan0805/family-expense/pull/142), merge commit `57a7a612f97772593e5f5996c30aa22017c42ed0`.
-- CI main của PR #142: [run 34497005250](https://github.com/nhan0805/family-expense/actions/runs/34497005250) pass; Cloudflare Pages production check pass; smoke production trả HTTP 200.
+- Release tài liệu/rule gần nhất: PR [#143](https://github.com/nhan0805/family-expense/pull/143), merge commit `67a391967862cd4d6bd95747d4115774c6b7be5b`.
+- CI main [run 34500122665](https://github.com/nhan0805/family-expense/actions/runs/34500122665), Supabase Production Deploy [run 34500122541](https://github.com/nhan0805/family-expense/actions/runs/34500122541) và Cloudflare Pages production [check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/3bb0fd5a-273d-411e-9df8-4629d4ff233e) pass; smoke production trả HTTP 200.
 - Nhánh workspace hiện tại: `codex/fix-dashboard-aggregate`.
+- Release candidate hiện tại: cải thiện UI/UX theo roadmap UI UX Pro Max; quality gate local đã pass, chưa commit/PR/deploy production.
 - Bản đồ kiến trúc ổn định nằm trong [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md); quy tắc phân loại tài liệu nằm trong [`docs/AI_CONTEXT_GUIDE.md`](docs/AI_CONTEXT_GUIDE.md).
 
 ## Current system state
@@ -35,11 +36,21 @@
 - `AGENTS.md` được mở rộng thành rule ngắn gọn về context loading, architecture, security, testing, documentation impact và Git release.
 - Thêm `docs/PROJECT_MAP.md`, `docs/AI_CONTEXT_GUIDE.md` và các workflow trong `.agent/skills/`.
 - `HANDOFF.md` được rút gọn thành tài liệu trạng thái hiện tại; lịch sử giữ ở `CHANGELOG.md`.
-- Các lệnh và tài liệu deploy đang được chuẩn hóa theo pnpm và Git/Cloudflare Pages integration.
+- Các lệnh và tài liệu deploy đã được chuẩn hóa theo pnpm và Git/Cloudflare Pages integration.
+- PR #143 đã merge; Supabase workflow cũng pass do thay đổi scoped rule trong `supabase/functions/AGENTS.md` khớp path trigger, dù không có migration/runtime code mới.
+
+### Cải thiện UI/UX theo roadmap UI UX Pro Max
+
+- Mobile bottom navigation tập trung vào Tổng quan, Giao dịch, Ngân sách, Định kỳ và gom mục phụ vào Thêm.
+- Dashboard có thứ tự KPI → ngân sách → giao dịch gần đây → biểu đồ; thêm truy vấn 5 giao dịch mới nhất và fallback demo.
+- Chuẩn hóa design token theo xanh tin cậy, success/warning/danger và dark navy; loại bỏ palette Dracula khỏi các vùng UI đã chỉnh.
+- Donut chart có phần trăm trực tiếp và bảng dữ liệu thay thế; filter chip tự xuống dòng; mô tả giao dịch wrap; budget progress có semantics `progressbar`.
+- Form ưu tiên số tiền với segmented Chi/Thu; auth có tab Login/Đăng ký và hiện/ẩn mật khẩu; AI action dùng secondary button.
+- Không đổi schema, migration, RLS/RPC hoặc dữ liệu; release candidate đang chờ PR và Cloudflare Pages Git integration deploy.
 
 ## Current work
 
-Không có thay đổi logic ứng dụng đang triển khai. Bộ tài liệu/context đã được rà soát và quality gate đã pass; đang chuẩn bị commit/push qua PR để đưa lên `main`.
+Đang chuẩn bị release thay đổi UI/UX theo roadmap. Code và test đã hoàn tất; full Vitest, TypeScript, ESLint, production build và `git diff --check` đều pass. Cần commit/push nhánh, tạo PR vào `main`, chờ required checks/auto-merge và xác minh Cloudflare Pages production sau merge.
 
 ## Pending tasks
 
@@ -86,6 +97,10 @@ Không có thay đổi logic ứng dụng đang triển khai. Bộ tài liệu/c
 - `.agent/skills/` — feature, database-change and release-handoff workflows.
 - `.gitignore` — generated Python cache exclusions.
 - `README.md`, `docs/DEPLOY_RUNBOOK.md`, `docs/RELEASE_GOVERNANCE.md`, `HUONG-DAN-DEPLOY-THU-CONG.md` — command/deployment documentation alignment.
+- `src/components/Layout.tsx`, `src/components/TransactionRow.tsx`, `src/context/ThemeContext.tsx`, `src/index.css` — mobile navigation, transaction cards và design tokens.
+- `src/lib/transactionsApi.ts`, `src/pages/Dashboard.tsx`, `src/pages/Budgets.tsx`, `src/pages/Transactions.tsx` — dashboard hierarchy, charts, budget semantics và transaction responsive UI.
+- `src/pages/TransactionForm.tsx`, `src/pages/Login.tsx`, `src/pages/ResetPassword.tsx`, `src/pages/CreateFamily.tsx` — form/auth/onboarding UI.
+- Các test liên quan đến Layout, Dashboard, Budgets, Transactions, TransactionRow, TransactionForm và Login.
 
 ## Database state
 
@@ -104,7 +119,7 @@ Không có thay đổi logic ứng dụng đang triển khai. Bộ tài liệu/c
 
 ## Testing status
 
-Latest application release validation:
+Latest application/release validation:
 
 - Vitest: 34 files, 153 tests passed.
 - TypeScript typecheck: passed.
@@ -117,7 +132,7 @@ For a new change, rerun only the relevant focused tests during iteration, then t
 
 ## Next recommended step
 
-Review the current documentation diff, then commit/push the context files in a documentation PR. If a production deploy is requested, follow `.agent/skills/release-handoff/SKILL.md` and include the latest release documents in that same PR.
+Hoàn tất release qua GitHub PR vào `main`, bật auto-merge, theo dõi required checks và xác minh Cloudflare Pages production deploy; sau đó mới quay lại backup/restore và rollback drill trên staging bằng secrets riêng.
 
 ## Session start instructions
 
