@@ -41,7 +41,6 @@ import { isSupabaseConfigured } from '../lib/supabase';
 import { reportClientError } from '../lib/telemetry';
 import {
   fetchDashboardAggregate,
-  fetchDashboardRecentTransactions,
   fetchTransactionYears,
   REMOTE_TRANSACTION_REFRESH_INTERVAL_MS,
 } from '../lib/transactionsApi';
@@ -305,16 +304,6 @@ export function Dashboard() {
       : false,
     refetchOnWindowFocus: true,
   });
-  const recentTransactionsQuery = useQuery({
-    queryKey: ['dashboard-recent-transactions', familyId, selectedRange.from, selectedRange.to],
-    queryFn: () => fetchDashboardRecentTransactions(familyId, selectedRange.from, selectedRange.to),
-    enabled: isSupabaseConfigured && Boolean(familyId) && validRange,
-    refetchInterval: isSupabaseConfigured && Boolean(familyId) && validRange
-      ? REMOTE_TRANSACTION_REFRESH_INTERVAL_MS
-      : false,
-    refetchOnWindowFocus: true,
-    retry: false,
-  });
   useEffect(() => {
     if (dashboardQuery.error) reportClientError(dashboardQuery.error, 'query');
   }, [dashboardQuery.error]);
@@ -334,10 +323,6 @@ export function Dashboard() {
   [queryFrom, queryTo, transactions]);
   const selectedTransactions = sourceTransactions.filter((transaction) => transactionInRange(transaction, selectedRange));
   const comparisonTransactions = sourceTransactions.filter((transaction) => transactionInRange(transaction, compareRange));
-  const recentTransactions = useMemo(() => (isSupabaseConfigured
-    ? recentTransactionsQuery.data || []
-    : selectedTransactions
-  ).slice().sort((a, b) => b.transactionDate.localeCompare(a.transactionDate)).slice(0, 5), [recentTransactionsQuery.data, selectedTransactions]);
   const selectedAggregate = dashboardQuery.data?.selected;
   const comparisonAggregate = dashboardQuery.data?.comparison;
   const chartAggregate = dashboardQuery.data?.chart;
@@ -549,20 +534,6 @@ export function Dashboard() {
 
       {budgetQuery.isError && <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/20 dark:text-amber-200"><span>{en ? 'Budget data could not be loaded.' : 'Không thể tải dữ liệu ngân sách.'}</span><button type="button" className="btn-secondary px-3 py-1.5 text-xs" onClick={() => void budgetQuery.refetch()}>{en ? 'Retry' : 'Thử lại'}</button></div>}
       {!budgetQuery.isError && <BudgetSnapshot summary={budgetSummary} en={en} month={selectedMonth} year={selectedYear} />}
-
-      <RecentTransactions
-        transactions={recentTransactions}
-        purposes={purposes}
-        expenseTypes={expenseTypes}
-        language={language}
-        en={en}
-        to={periodFilterLink()}
-        loading={isSupabaseConfigured && recentTransactionsQuery.isPending}
-        error={isSupabaseConfigured && recentTransactionsQuery.isError}
-        onRetry={() => void recentTransactionsQuery.refetch()}
-      />
-
-
       <section className="card dashboard-chart-card min-w-0 overflow-hidden p-4 sm:p-5" aria-labelledby="dashboard-trend-title"><div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between"><div><h3 id="dashboard-trend-title" className="text-lg font-bold">{en ? 'Spending and income trend' : 'Xu hướng thu chi'}</h3><p className="text-sm text-gray-500 dark:text-gray-400">{mode === 'month' ? (en ? 'Six months ending in the selected month' : 'Sáu tháng kết thúc tại tháng đang chọn') : (en ? 'Monthly breakdown for this view' : 'Phân bổ theo từng tháng trong kỳ xem')}</p></div><div className="text-right text-sm"><p className="font-bold text-[#d96f4f]">{formatVnd(selectedExpense)}</p><p className="text-gray-500">{en ? 'expenses in view' : 'chi trong kỳ xem'}</p></div></div><div className="h-80 min-w-0 max-w-full">{trend.some((item) => item.expense || item.income) ? <ResponsiveContainer><ComposedChart data={trend} margin={{ top: 20, right: 12, left: 4, bottom: 6 }}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="label" /><YAxis tickFormatter={(value) => formatCompactVnd(Number(value)).replace(' ₫', '')} width={54} /><Tooltip labelFormatter={(label) => formatPeriodKey(String(trend.find((item) => item.label === label)?.key || ''), en)} formatter={(value) => formatVnd(Number(value))} /><Legend verticalAlign="top" align="right" /><Bar name={en ? 'Expenses' : 'Chi tiêu'} dataKey="expense" fill="#d96f4f" radius={[8, 8, 0, 0]} cursor="pointer" onClick={(_, index) => { const period = trend[index]; if (period) navigate(`/giao-dich?transactionType=Chi tiêu&month=${period.key.slice(5, 7)}&year=${period.key.slice(0, 4)}`); }}><LabelList dataKey="expense" position="top" formatter={(value) => Number(value) > 0 ? formatCompactVnd(Number(value)).replace(' ₫', '') : ''} /></Bar><Line name={en ? 'Income' : 'Thu nhập'} type="monotone" dataKey="income" stroke="#155e46" strokeWidth={3} dot={{ r: 4 }} /><Line name={en ? 'Net value' : 'Thu ròng'} type="monotone" dataKey="net" stroke="#247df2" strokeWidth={2} strokeDasharray="5 5" dot={false} /></ComposedChart></ResponsiveContainer> : <EmptyState title={en ? 'No trend data' : 'Chưa có dữ liệu xu hướng'} description={en ? 'The trend will appear when the selected period has actual transactions.' : 'Xu hướng sẽ xuất hiện khi kỳ đang chọn có giao dịch thực tế.'} />}</div></section>
 
       <section className="ui-stagger grid gap-4 lg:grid-cols-2"><div className="card dashboard-pie-card min-w-0 overflow-hidden p-4 sm:p-5"><ExpensePieChart title={en ? 'Expenses by purpose' : 'Chi tiêu theo mục đích'} data={byPurpose} to={periodFilterLink()} filterKey="purposeId" en={en} /></div><div className="card dashboard-pie-card min-w-0 overflow-hidden p-4 sm:p-5"><ExpensePieChart title={en ? 'Expenses by category' : 'Chi tiêu theo danh mục'} data={byExpenseType} to={periodFilterLink()} filterKey="expenseTypeId" en={en} /></div></section>
@@ -605,18 +576,6 @@ function BudgetSnapshot({ summary, en, month, year }: { summary?: BudgetSummary;
       ? (en ? `${summary.warningCount} near the limit` : `${summary.warningCount} mục sắp vượt`)
       : (en ? 'All set budgets are within limits' : 'Các mục đã đặt đều trong hạn mức');
   return <section className="card budget-snapshot p-4 sm:p-5" aria-labelledby="dashboard-budget-title"><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div className="flex min-w-0 items-start gap-3"><span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-[var(--primary-soft)] text-[var(--primary)]"><PiggyBank size={20} aria-hidden="true" /></span><div className="min-w-0"><h3 id="dashboard-budget-title" className="font-extrabold">{en ? 'Monthly budget' : 'Ngân sách tháng'}</h3><p className="mt-1 text-sm text-gray-600 dark:text-gray-300">{hasBudgets ? `${formatBudgetInput(summary.budgetedSpent)} ₫ / ${formatBudgetInput(summary.totalBudget)} ₫` : (en ? 'No budget set for this month.' : 'Tháng này chưa đặt ngân sách.')}</p></div></div><Link className="btn-secondary inline-flex items-center justify-center text-sm" to="/ngan-sach">{en ? 'View budgets' : 'Xem ngân sách'}</Link></div>{hasBudgets && <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-600 dark:text-gray-300"><span>{statusText}</span>{summary.unbudgetedSpent > 0 && <span>{en ? `${formatBudgetInput(summary.unbudgetedSpent)} ₫ without a budget` : `${formatBudgetInput(summary.unbudgetedSpent)} ₫ chưa có ngân sách`}</span>}<span>{en ? `for ${month}/${year}` : `tháng ${month}/${year}`}</span></div>}</section>;
-}
-
-function RecentTransactions({ transactions, purposes, expenseTypes, language, en, to, loading, error, onRetry }: { transactions: Transaction[]; purposes: CatalogItem[]; expenseTypes: CatalogItem[]; language: CatalogLanguage; en: boolean; to: string; loading: boolean; error: boolean; onRetry: () => void }) {
-  const purposeNames = useMemo(() => new Map(purposes.map((item) => [item.id, getCatalogDisplayName(item, language)])), [language, purposes]);
-  const expenseTypeNames = useMemo(() => new Map(expenseTypes.map((item) => [item.id, getCatalogDisplayName(item, language)])), [expenseTypes, language]);
-  return <section className="card dashboard-recent-card min-w-0 overflow-hidden p-4 sm:p-5" aria-labelledby="dashboard-recent-title">
-    <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
-      <div><h3 id="dashboard-recent-title" className="text-lg font-bold">{en ? 'Recent transactions' : 'Giao dịch gần đây'}</h3><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{en ? 'The latest actual transactions in this view.' : 'Các giao dịch thực tế mới nhất trong kỳ xem.'}</p></div>
-      <Link className="btn-secondary inline-flex items-center text-sm" to={to}>{en ? 'View all' : 'Xem tất cả'}</Link>
-    </div>
-    {loading ? <div className="grid gap-2" aria-label={en ? 'Loading recent transactions' : 'Đang tải giao dịch gần đây'} aria-busy="true"><div className="h-12 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" /><div className="h-12 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" /></div> : error ? <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300"><span>{en ? 'Could not load recent transactions.' : 'Không thể tải giao dịch gần đây.'}</span><button type="button" className="btn-secondary px-3 py-1.5 text-xs" onClick={onRetry}>{en ? 'Retry' : 'Thử lại'}</button></div> : transactions.length ? <ul className="divide-y divide-black/10 dark:divide-white/10">{transactions.map((transaction) => { const income = transaction.transactionType === 'Thu nhập'; return <li key={transaction.id}><Link to={`/giao-dịch/${transaction.id}`} title={transaction.description} className="flex min-w-0 items-center justify-between gap-3 py-3 first:pt-1 last:pb-1 hover:bg-black/[.02] dark:hover:bg-white/[.03]"><span className="min-w-0"><span className="block break-words font-semibold [overflow-wrap:anywhere] line-clamp-2">{transaction.description || (en ? 'Untitled transaction' : 'Giao dịch chưa có nội dung')}</span><span className="mt-1 block truncate text-xs text-gray-500 dark:text-gray-400">{formatDate(transaction.transactionDate)} · {purposeNames.get(transaction.purposeId) || (en ? 'Uncategorized' : 'Chưa phân loại')} · {expenseTypeNames.get(transaction.expenseTypeId) || (en ? 'Uncategorized' : 'Chưa phân loại')}</span></span><span className={`shrink-0 text-sm font-bold tabular-nums ${income ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'}`}>{income ? '+' : '−'}{formatVnd(transaction.amount)}</span></Link></li>; })}</ul> : <EmptyState title={en ? 'No recent transactions' : 'Chưa có giao dịch gần đây'} description={en ? 'Add an actual transaction to see it here.' : 'Thêm giao dịch thực tế để xem tại đây.'} />}
-  </section>;
 }
 
 function buildInsights({
