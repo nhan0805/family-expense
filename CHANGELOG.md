@@ -2,6 +2,15 @@
 
 ## 2026-09-10
 
+### Chuẩn hóa hệ thống AI context của repository
+
+- Trước thay đổi: project có `AGENTS.md`, `HANDOFF.md` và `CHANGELOG.md`, nhưng chưa có project map/context guide/skill workflow; `HANDOFF.md` chứa cả trạng thái hiện tại lẫn lịch sử dài.
+- Sau thay đổi: bổ sung `docs/PROJECT_MAP.md`, `docs/AI_CONTEXT_GUIDE.md`, ba workflow `.agent/skills/`; rút gọn `HANDOFF.md` thành snapshot hiện tại; mở rộng `AGENTS.md` với context loading, architecture, security, testing, documentation impact và release rules.
+- Đồng bộ tài liệu onboarding/deploy theo `pnpm`, Cloudflare Pages Git integration, Supabase workflow và các Edge Function hiện có; không đổi code ứng dụng, schema, RLS/RPC hoặc dữ liệu.
+- Files: `AGENTS.md`, `supabase/functions/AGENTS.md`, `HANDOFF.md`, `docs/PROJECT_MAP.md`, `docs/AI_CONTEXT_GUIDE.md`, `.agent/skills/`, `.gitignore`, `README.md`, `docs/DEPLOY_RUNBOOK.md`, `docs/RELEASE_GOVERNANCE.md`, `HUONG-DAN-DEPLOY-THU-CONG.md`.
+- Kiểm thử: `git diff --check`, Vitest 34/34 file với 153/153 test, typecheck, ESLint và production build đều pass; không chạy riêng E2E/DB vì không đổi code, schema hoặc workflow thực thi.
+- Trạng thái triển khai: chưa deploy; cần review và commit/push tài liệu/context qua PR nếu muốn đưa lên `main`. Không có migration hoặc Edge Function cần chạy.
+
 ### Tự làm mới giao dịch dự kiến được tạo ngoài phiên app
 
 - Trước thay đổi: giao dịch dự kiến do Supabase Cron tạo khi app đang mở không xuất hiện ngay; người dùng phải đóng/mở lại app để các query tải lại dữ liệu.
@@ -17,7 +26,7 @@
 - Sau thay đổi: `AGENTS.md` yêu cầu `HANDOFF.md` và `CHANGELOG.md` được stage, commit, push cùng PR/nhánh release và kiểm tra không còn bản latest chỉ ở local.
 - File: `AGENTS.md`. Không đổi code, schema, RLS/RPC hoặc dữ liệu.
 - Kiểm thử: `git diff --check`; không cần chạy test chức năng.
-- Trạng thái: đã cập nhật rule tại workspace; áp dụng bắt buộc cho các lần deploy tiếp theo.
+- Trạng thái triển khai thực tế: rule đã được commit/push trong PR [#142](https://github.com/nhan0805/family-expense/pull/142), merge vào `main` với merge commit `57a7a612f97772593e5f5996c30aa22017c42ed0`; CI main [run 34497005250](https://github.com/nhan0805/family-expense/actions/runs/34497005250) và Cloudflare Pages production [check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/d98b6ccf-7d30-42cc-b973-746cf4bc3a21) pass, smoke `https://family-expense-8fo.pages.dev/` trả HTTP 200. Không chạy Supabase Production Deploy vì docs-only.
 
 ## 2026-09-07
 

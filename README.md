@@ -29,7 +29,8 @@ Clone/cài thư viện và cấu hình frontend:
 ```bash
 git clone <repository-url> family-expense
 cd family-expense
-npm install
+corepack enable
+pnpm install
 cp .env.example .env.local
 ```
 
@@ -59,8 +60,9 @@ Lưu secret ở Supabase, không lưu vào Git:
 ```bash
 supabase secrets set GEMINI_API_KEY=<key> GEMINI_MODEL=gemini-3.1-flash-lite
 supabase secrets set SUPABASE_URL=https://<project-ref>.supabase.co SUPABASE_ANON_KEY=<anon-key>
-supabase functions deploy parse-expense
 ```
+
+Production migration/function deployment chạy qua GitHub workflow sau khi thay đổi được merge vào `main`; không chạy `supabase functions deploy` trực tiếp cho production trừ quy trình khẩn cấp đã được phê duyệt.
 
 Function kiểm tra JWT, membership theo `family_id`, validate request/response bằng Zod, giới hạn 10 request/user/phút, không retry vô hạn khi 429 và không log token/API key. Log chỉ chứa metadata tối thiểu. Gemini Free Tier có quota/rate limit và dữ liệu có thể được dùng để cải thiện sản phẩm theo chính sách Google; xem pricing hiện hành trước khi đưa dữ liệu thật vào.
 
@@ -79,7 +81,7 @@ Production deploy `email-transactions` chạy qua workflow Supabase sau khi thay
 ## Chạy local
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 Nếu chưa cấu hình Supabase, app vẫn mở với dữ liệu demo để kiểm tra UI; đăng nhập, lưu cloud và AI cần project Supabase thật.
@@ -132,12 +134,12 @@ Owner có thể xóa gia đình tại cuối màn hình **Thành viên**, nhưng
 ## Kiểm thử và chất lượng
 
 ```bash
-npm run lint
-npm run typecheck
-npm run test
-npm run test:e2e
-npm run build
-npm run preview
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm test:e2e
+pnpm build
+pnpm preview
 ```
 
 Vitest kiểm tra định dạng VND, giá trị ròng, validation, duplicate, import và schema Gemini. React Testing Library kiểm tra dashboard. Playwright có flow thêm giao dịch trên desktop và mobile. Test RLS đầy đủ nên chạy với Supabase local (`supabase start`, `supabase db reset`) hoặc một project test riêng.
@@ -150,7 +152,7 @@ Manifest, icon, service worker, app-shell caching và trang offline được c�
 
 Kết nối repository trong Cloudflare Pages:
 
-- Build command: `npm run build`
+- Build command: `pnpm build`
 - Output directory: `dist`
 - Node version: 20+
 - Environment: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
