@@ -42,6 +42,7 @@ import { reportClientError } from '../lib/telemetry';
 import {
   fetchDashboardAggregate,
   fetchTransactionYears,
+  REMOTE_TRANSACTION_REFRESH_INTERVAL_MS,
 } from '../lib/transactionsApi';
 
 type DashboardMode = 'month' | '6m' | '12m' | 'year' | 'custom';
@@ -298,6 +299,10 @@ export function Dashboard() {
       return { chart, selected, comparison };
     },
     enabled: isSupabaseConfigured && Boolean(familyId) && validRange,
+    refetchInterval: isSupabaseConfigured && Boolean(familyId) && validRange
+      ? REMOTE_TRANSACTION_REFRESH_INTERVAL_MS
+      : false,
+    refetchOnWindowFocus: true,
   });
   useEffect(() => {
     if (dashboardQuery.error) reportClientError(dashboardQuery.error, 'query');

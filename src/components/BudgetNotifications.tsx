@@ -14,7 +14,10 @@ import {
   buildBudgetFilterLink,
   fetchBudgetSummary,
 } from '../lib/budgetsApi';
-import { fetchDashboardDueTransactions } from '../lib/transactionsApi';
+import {
+  fetchDashboardDueTransactions,
+  REMOTE_TRANSACTION_REFRESH_INTERVAL_MS,
+} from '../lib/transactionsApi';
 import {
   deleteReadBudgetNotifications,
   getBudgetNotifications,
@@ -143,6 +146,10 @@ export function BudgetNotifications() {
     queryFn: () => fetchDashboardDueTransactions(familyId, todayKey()),
     enabled: isSupabaseConfigured && Boolean(familyId),
     retry: false,
+    refetchInterval: isSupabaseConfigured && Boolean(familyId)
+      ? REMOTE_TRANSACTION_REFRESH_INTERVAL_MS
+      : false,
+    refetchOnWindowFocus: true,
   });
   const dueTransactions = isSupabaseConfigured ? dueTransactionsData || [] : localDueTransactions;
 

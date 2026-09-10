@@ -39,6 +39,7 @@ import {
   invokeAiFunction,
 } from '../lib/aiClient';
 import { getQuickTransactionSearch } from '../lib/quickTransactionSearch';
+import { todayInVietnam } from '../lib/recurringExpense';
 import {
   canDeleteTransaction,
   formatDateOnlyVi,
@@ -55,6 +56,7 @@ import {
   fetchDashboardDueTransactions,
   fetchTransactionPage,
   fetchTransactionYears,
+  REMOTE_TRANSACTION_REFRESH_INTERVAL_MS,
 } from '../lib/transactionsApi';
 
 type SortOption =
@@ -513,6 +515,10 @@ export function Transactions() {
     getNextPageParam: (lastPage) =>
       lastPage.hasMore ? lastPage.page + 1 : undefined,
     enabled: isSupabaseConfigured && Boolean(familyId) && !showTrash,
+    refetchInterval: isSupabaseConfigured && Boolean(familyId) && !showTrash
+      ? REMOTE_TRANSACTION_REFRESH_INTERVAL_MS
+      : false,
+    refetchOnWindowFocus: true,
   });
   const trashQuery = useQuery({
     queryKey: ['trash', familyId, serverFilters],
@@ -533,9 +539,13 @@ export function Transactions() {
   );
   const duePlannedQuery = useQuery({
     queryKey: ['dashboard-due', familyId],
-    queryFn: () => fetchDashboardDueTransactions(familyId, today),
+    queryFn: () => fetchDashboardDueTransactions(familyId, todayInVietnam()),
     enabled: isSupabaseConfigured && Boolean(familyId),
     retry: false,
+    refetchInterval: isSupabaseConfigured && Boolean(familyId)
+      ? REMOTE_TRANSACTION_REFRESH_INTERVAL_MS
+      : false,
+    refetchOnWindowFocus: true,
   });
   useEffect(() => {
     if (transactionQuery.error) reportClientError(transactionQuery.error, 'query');

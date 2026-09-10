@@ -1,6 +1,6 @@
 # Family Expense — Project Handoff
 
-> Cập nhật: **07/09/2026** (`Asia/Ho_Chi_Minh`)
+> Cập nhật: **10/09/2026** (`Asia/Ho_Chi_Minh`)
 > Trạng thái: **Production đang hoạt động; tài liệu này là ngữ cảnh kỹ thuật cho các phiên làm việc tiếp theo**  
 > Production: <https://family-expense-8fo.pages.dev>
 
@@ -14,11 +14,19 @@
 - [x] Supabase staging tách biệt đã thiết lập.
 - [ ] Thực hiện backup/restore và rollback drill.
 
+### Handoff — tự làm mới giao dịch dự kiến được tạo ngoài phiên app (10/09/2026)
+
+- Trước thay đổi: giao dịch dự kiến do Supabase Cron tạo khi app đang mở không xuất hiện ngay; phải đóng/mở lại app để query tải lại.
+- Sau thay đổi: các query danh sách giao dịch, giao dịch dự kiến tới hạn, chuông Thông báo và Dashboard tự refetch mỗi 30 giây khi app ở foreground; quay lại app vẫn refetch theo focus.
+- Files: `src/lib/transactionsApi.ts`, `src/pages/Transactions.tsx`, `src/components/BudgetNotifications.tsx`, `src/pages/Dashboard.tsx`, `src/lib/transactionsApi.test.ts`. Không đổi schema, RLS/RPC hoặc dữ liệu.
+- Validation local: full Vitest 34/34 file, 153/153 test; typecheck, lint, production build và `git diff --check` pass. Build còn cảnh báo chunk XLSX/ExcelJS/charts lớn hiện hữu.
+- Trạng thái triển khai: đang ở workspace, chưa deploy production; khi phát hành phải qua PR/Git integration Cloudflare Pages.
+
 ### Handoff — hotfix migration aggregate Dashboard (07/09/2026)
 
 - PR [#139](https://github.com/nhan0805/family-expense/pull/139) đã merge vào `main` với các hạng mục 1–10, nhưng db-security phát hiện alias SQL `month` trong `get_dashboard_aggregate` chưa tương thích PostgreSQL.
 - Hotfix đang ở nhánh `codex/fix-dashboard-aggregate`, đổi alias thành `month_key` trong migration `supabase/migrations/202609070001_security_integrity_and_dashboard.sql`; không thay đổi schema nghiệp vụ ngoài migration đã phát hành.
-- Cần chờ PR hotfix pass quality/E2E/db-security, rồi xác minh Supabase Production Deploy và Cloudflare Pages production trên merge commit hotfix. Không dùng Wrangler.
+- Đã hoàn tất: PR hotfix [#140](https://github.com/nhan0805/family-expense/pull/140) pass quality/E2E/db-security, Supabase Production Deploy và Cloudflare Pages production trên merge commit `23f4e6803c41ee3d0d5203e78bfedc2e71ae7f52`. Không dùng Wrangler.
 - Backup/restore drill vẫn chưa chạy vì workflow staging cần `STAGING_DB_URL` và `RESTORE_DB_URL`; không dùng production để thử nghiệm.
 
 ### Handoff — 10 hạng mục bảo mật, toàn vẹn dữ liệu, hiệu năng và vận hành (07/09/2026)
@@ -29,7 +37,7 @@
 - CI có performance budget entry JS ≤30 KB gzip và workflow manual `Staging Operations Drill` để chạy backup/restore vào target staging rỗng. [HUONG-DAN-DEPLOY-THU-CONG.md](HUONG-DAN-DEPLOY-THU-CONG.md) đã bỏ hướng dẫn Wrangler production.
 - Privacy AI được ghi tại [docs/AI_PRIVACY.md](docs/AI_PRIVACY.md); runbook yêu cầu review privacy khi thay đổi provider/prompt/trường dữ liệu.
 - Validation local: Vitest 34/34 file, 152/152 test; typecheck, lint, build, performance budget và `git diff --check` pass. pgTAP local chưa chạy do PostgreSQL `127.0.0.1:54322` chưa hoạt động; CI phải xác nhận migration/RLS trước merge.
-- Trạng thái: đang ở nhánh `codex/improvements-1-10`, chưa tạo PR/chưa chạy Supabase production migration. Backup/restore drill thực tế còn cần chạy workflow staging với secrets riêng.
+- Trạng thái triển khai thực tế: PR [#139](https://github.com/nhan0805/family-expense/pull/139) đã merge với commit `9a7d6aab8ff3a1719076297fd85f8d69435191a7`; migration/Edge Functions hoàn tất sau hotfix PR [#140](https://github.com/nhan0805/family-expense/pull/140) với commit `23f4e6803c41ee3d0d5203e78bfedc2e71ae7f52`. CI main [run 34131586570](https://github.com/nhan0805/family-expense/actions/runs/34131586570), Supabase Production Deploy [run 34131586543](https://github.com/nhan0805/family-expense/actions/runs/34131586543), Cloudflare Pages production [check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/947da5db-9af6-4f61-a975-6e5ac1aeb29c) và smoke HTTP 200 đều pass. Backup/restore drill thực tế còn cần chạy workflow staging với secrets riêng.
 
 ### Handoff — chuẩn bị deploy bản tinh chỉnh tìm kiếm và trạng thái giao dịch (07/09/2026)
 

@@ -1,5 +1,16 @@
 # Nhật ký thay đổi Family Expense
 
+## 2026-09-10
+
+### Tự làm mới giao dịch dự kiến được tạo ngoài phiên app
+
+- Trước thay đổi: giao dịch dự kiến do Supabase Cron tạo khi app đang mở không xuất hiện ngay; người dùng phải đóng/mở lại app để các query tải lại dữ liệu.
+- Sau thay đổi: danh sách giao dịch, khung giao dịch dự kiến tới hạn, chuông Thông báo và Dashboard tự refetch dữ liệu server mỗi 30 giây khi app ở foreground; khi quay lại app vẫn refetch theo focus.
+- Kỹ thuật: dùng chung `REMOTE_TRANSACTION_REFRESH_INTERVAL_MS` cho các query React Query liên quan đến giao dịch ngoài thay đổi từ thao tác hiện tại. Không đổi schema, RLS/RPC hoặc dữ liệu.
+- Files: `src/lib/transactionsApi.ts`, `src/pages/Transactions.tsx`, `src/components/BudgetNotifications.tsx`, `src/pages/Dashboard.tsx`, `src/lib/transactionsApi.test.ts`.
+- Kiểm thử: full Vitest đạt 34/34 file, 153/153 test; typecheck, ESLint, production build và `git diff --check` pass. Build vẫn cảnh báo chunk XLSX/ExcelJS/charts lớn hiện hữu.
+- Trạng thái triển khai dự kiến: thay đổi đang ở workspace, chưa deploy production; khi phát hành cần qua PR/Git integration Cloudflare Pages theo quy trình hiện hành.
+
 ## 2026-09-07
 
 ### Hotfix migration aggregate Dashboard sau merge PR #139
@@ -8,7 +19,7 @@
 - Sửa: đổi alias nội bộ thành `month_key`, giữ nguyên payload JSON `monthlyCategories`; không đổi nghiệp vụ hoặc dữ liệu.
 - File: `supabase/migrations/202609070001_security_integrity_and_dashboard.sql`.
 - Kiểm tra: `git diff --check` pass; PR hotfix sẽ chạy lại quality, E2E và db-security trước khi auto-merge. Local pgTAP vẫn cần PostgreSQL tại `127.0.0.1:54322`.
-- Trạng thái triển khai: chờ PR hotfix vào `main`; sau đó phải xác minh Supabase Production Deploy và Cloudflare Pages trên đúng merge commit.
+- Trạng thái triển khai thực tế: PR [#140](https://github.com/nhan0805/family-expense/pull/140) đã merge với commit `23f4e6803c41ee3d0d5203e78bfedc2e71ae7f52`; CI main [run 34131586570](https://github.com/nhan0805/family-expense/actions/runs/34131586570), Supabase Production Deploy [run 34131586543](https://github.com/nhan0805/family-expense/actions/runs/34131586543) và Cloudflare Pages production [check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/947da5db-9af6-4f61-a975-6e5ac1aeb29c) đều pass. Smoke `https://family-expense-8fo.pages.dev/` trả HTTP 200.
 
 ### Chuẩn bị deploy bản tinh chỉnh tìm kiếm và trạng thái giao dịch
 
@@ -26,7 +37,7 @@
 - Quyền riêng tư: thêm [docs/AI_PRIVACY.md](docs/AI_PRIVACY.md) mô tả dữ liệu gửi Gemini, retention và nguyên tắc log không chứa PII/tài chính.
 - Files/DB: migration `supabase/migrations/202609070001_security_integrity_and_dashboard.sql`, ba Edge Function AI (`parse-expense`, `search-transactions`, `summarize-dashboard`), `src/pages/Dashboard.tsx`, import API/UI, CI/workflow vận hành và tài liệu runbook. Có thay đổi schema/RLS/RPC; không chạy migration production trong lượt này.
 - Kiểm thử local: Vitest 34/34 file, 152/152 test; typecheck, ESLint, build, performance budget và `git diff --check` pass. pgTAP local chưa chạy vì PostgreSQL tại `127.0.0.1:54322` chưa khởi động; required CI sẽ kiểm tra migration/RLS.
-- Trạng thái triển khai dự kiến: tạo PR riêng từ `codex/improvements-1-10`; Supabase Production Deploy phải apply migration/deploy Edge Functions trước Cloudflare Pages production. Backup/restore drill cần chạy workflow staging với secrets riêng, không dùng production.
+- Trạng thái triển khai thực tế: PR [#139](https://github.com/nhan0805/family-expense/pull/139) đã merge với commit `9a7d6aab8ff3a1719076297fd85f8d69435191a7`; migration/Edge Functions được hoàn tất sau hotfix PR [#140](https://github.com/nhan0805/family-expense/pull/140) và đã xác minh production ở entry hotfix phía trên. Backup/restore drill cần chạy workflow staging với secrets riêng, không dùng production.
 
 ## 2026-09-06
 
