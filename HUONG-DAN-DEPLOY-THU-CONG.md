@@ -6,7 +6,7 @@
 
 - Frontend React/Vite/PWA: Cloudflare Pages, project `family-expense`.
 - Database, Authentication và RPC: Supabase.
-- AI: Supabase Edge Function `parse-expense` gọi Gemini.
+- AI/email: Supabase Edge Functions `parse-expense`, `search-transactions`, `summarize-dashboard` và `email-transactions`.
 - Domain production: <https://family-expense-8fo.pages.dev>.
 
 Chỉ deploy thành phần thực sự thay đổi:
@@ -15,7 +15,8 @@ Chỉ deploy thành phần thực sự thay đổi:
 | --- | --- |
 | Giao diện hoặc logic frontend | Cloudflare Pages |
 | Bảng, index, trigger, RLS hoặc RPC | Supabase migration |
-| Logic phân tích AI | Edge Function `parse-expense` |
+| Logic phân tích AI/tóm tắt | Edge Functions `parse-expense`, `search-transactions`, `summarize-dashboard` |
+| Gửi email export | Edge Function `email-transactions` |
 | Cả database và frontend | Migration trước, frontend sau |
 
 ## 2. Yêu cầu trên máy deploy
@@ -52,7 +53,7 @@ Lấy `SUPABASE_PROJECT_REF` trong Supabase Dashboard. Không ghi access token, 
 - Ghi thay đổi mới nhất vào đầu ngày hiện tại trong `CHANGELOG.md`.
 - Ghi rõ yêu cầu, trước/sau, file hoặc database object, kiểm thử và trạng thái triển khai.
 - Cập nhật `version` trong `package.json` khi bắt đầu release mới.
-- Không sửa đè `HANDOFF-v1.0.md`; đây là baseline cố định.
+- Không sửa đè lịch sử trong `CHANGELOG.md`; `HANDOFF.md` là snapshot hiện tại và phải được viết lại để bỏ trạng thái cũ.
 
 ### 3.2. Chạy quality gate
 
@@ -143,15 +144,13 @@ Không chạy `supabase db reset`, `drop database` hoặc lệnh phá hoại tr�
 
 Nếu frontend gọi RPC hoặc field mới, luôn deploy migration thành công trước rồi mới deploy frontend.
 
-## 6. Deploy Edge Function AI
+## 6. Deploy Edge Functions
 
-Áp dụng khi thay đổi `supabase/functions/parse-expense/`.
+Áp dụng khi thay đổi bất kỳ thư mục nào trong `supabase/functions/`.
 
-Chạy quality gate của frontend trước nếu thay đổi dùng chung type/helper, sau đó:
+Production deploy các function `parse-expense`, `email-transactions`, `summarize-dashboard` và `search-transactions` chạy qua `.github/workflows/supabase-deploy.yml` sau khi thay đổi được merge vào `main`. Không chạy `supabase functions deploy` trực tiếp cho production trong quy trình thông thường.
 
-```bash
-supabase functions deploy parse-expense
-```
+Khi cần kiểm tra cục bộ, dùng Supabase local/project cô lập. Nếu có quy trình khẩn cấp được phê duyệt để chạy CLI, ghi rõ lý do, function, project đích và kết quả vào changelog; không dùng production data để thử nghiệm.
 
 Secret production được quản lý bằng Supabase Secrets, không đặt ở frontend:
 
@@ -160,9 +159,9 @@ supabase secrets set GEMINI_API_KEY=<key>
 supabase secrets set GEMINI_MODEL=gemini-3.1-flash-lite
 ```
 
-Chỉ chạy lệnh cập nhật secret khi thực sự cần và không ghi giá trị secret vào log/changelog. Sau deploy, kiểm tra function đang active và thử một yêu cầu AI không chứa dữ liệu nhạy cảm.
+Chỉ chạy lệnh cập nhật secret khi thực sự cần và không ghi giá trị secret vào log/changelog. Sau deploy, kiểm tra function đang active qua workflow/Supabase Dashboard và thử một yêu cầu không chứa dữ liệu nhạy cảm bằng tài khoản test phù hợp.
 
-Nếu chỉ sửa Edge Function thì không cần deploy lại Cloudflare Pages, trừ khi giao diện hoặc contract frontend cũng đổi.
+Nếu chỉ sửa Edge Function thì Cloudflare Pages không cần build lại về mặt kỹ thuật, nhưng PR vẫn phải chạy CI/preview build; chỉ production Cloudflare deploy khi frontend hoặc artifact frontend thay đổi.
 
 ## 7. Deploy thay đổi đầy đủ
 

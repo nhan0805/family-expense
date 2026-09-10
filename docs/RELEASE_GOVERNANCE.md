@@ -16,4 +16,4 @@
 
 ## Secrets bắt buộc trong GitHub
 
-`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, cùng các biến Supabase staging/production được quản lý ở Environment secrets; tuyệt đối không commit giá trị thật.
+Các secret/variable Supabase staging/production được quản lý ở GitHub Environments; tuyệt đối không commit giá trị thật. Cloudflare production hiện dùng Pages Git integration nên không cần đưa Cloudflare API token/account ID vào workflow của repository. Nếu sau này đổi sang Cloudflare API deployment, phải cập nhật runbook và thiết kế secret riêng trước khi triển khai.
