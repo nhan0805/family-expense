@@ -98,8 +98,8 @@ Use `node scripts/import-excel.mjs "/path/file.xlsx"` only for the documented Ex
 After a meaningful change, decide explicitly:
 
 - Architecture or boundary changed → update `docs/PROJECT_MAP.md`.
-- User-visible or important internal behavior changed → update `CHANGELOG.md`.
-- Current status, pending task or known issue changed → update `HANDOFF.md` and remove stale status.
+- User-visible or important internal behavior changed → record it in `CHANGELOG.md` through the release/status update; do not make every parallel feature branch edit the canonical file.
+- Current status, pending task or known issue changed → update `HANDOFF.md` in the release/status update and remove stale status.
 - Permanent rule/convention changed → update this file or the scoped `AGENTS.md`.
 - Repeatable workflow changed → update the relevant `.agent/skills/*/SKILL.md`.
 
@@ -108,8 +108,8 @@ Do not update every document mechanically. Keep `HANDOFF.md` as a current snapsh
 ## 12. Git and release workflow
 
 - Preserve unrelated working-tree changes. Keep commits logically scoped and never force-push, reset destructively or overwrite user work.
-- For a deploy request: inspect current docs/status, run the quality gate, update release docs before committing, and stage/push code plus the latest `HANDOFF.md`/`CHANGELOG.md` together.
-- Push a feature branch and open a PR to `main`. Keep the branch current with `main`, enable auto-merge, and wait for required checks.
+- For a deploy request: inspect current docs/status, run the quality gate, and keep canonical release-document updates in one release/status PR after the feature branch is synchronized; do not create parallel edits to `HANDOFF.md`/`CHANGELOG.md`.
+- Push a feature branch and open a PR to `main`. Sync it with the latest `origin/main` before enabling auto-merge; when repository settings support it, use the merge queue so auto-merge tests the PR against the current base.
 - Production frontend deploy is only Cloudflare Pages Git integration from the merged `main` commit. Do not use `wrangler pages deploy` for production.
 - Supabase migrations/functions deploy from the GitHub workflow when matching `supabase/` paths reach `main`; preview is not production.
 - Conclude a deploy only after the PR is merged, checks pass, the Cloudflare production deployment for that merge commit succeeds, and the production URL is smoke-tested.

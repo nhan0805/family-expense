@@ -69,9 +69,9 @@ export function ResetPassword() {
     }
   };
 
-  return <main className="grid min-h-screen place-items-center bg-[#f6f7f2] p-4 dark:bg-[#282a36]">
+  return <main className="grid min-h-dvh place-items-center bg-[var(--app-bg)] p-4">
     <form className="card w-full max-w-md space-y-4 p-7" onSubmit={submit}>
-      <p className="text-xs font-bold tracking-widest text-[#137050] dark:text-[#bd93f9]">FAMILY EXPENSE</p>
+      <p className="text-xs font-bold tracking-widest text-[var(--primary)]">FAMILY EXPENSE</p>
       <h1 className="text-2xl font-extrabold">{en ? 'Reset password' : 'Đặt lại mật khẩu'}</h1>
       {ready && <>
         <label><span className="label">Mật khẩu mới</span><input className="field" type="password" autoComplete="new-password" minLength={8} required value={password} onChange={(event) => setPassword(event.target.value)} /></label>
@@ -79,7 +79,7 @@ export function ResetPassword() {
         <button className="btn-primary w-full" disabled={busy}>{busy ? 'Đang cập nhật…' : 'Lưu mật khẩu mới'}</button>
       </>}
       {message && <p role="status" className="text-sm">{message}</p>}
-      {!ready && <Link className="text-sm font-semibold text-[#137050] dark:text-[#bd93f9]" to="/dang-nhap">Quay lại đăng nhập</Link>}
+      {!ready && <Link className="text-sm font-semibold text-[var(--primary)]" to="/dang-nhap">Quay lại đăng nhập</Link>}
     </form>
   </main>;
 }

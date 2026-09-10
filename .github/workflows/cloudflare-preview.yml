@@ -2,6 +2,7 @@ name: Cloudflare Pages Preview Build
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+  merge_group:
 jobs:
   preview:
     runs-on: ubuntu-latest

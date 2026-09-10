@@ -1,5 +1,15 @@
 # Nhật ký thay đổi Family Expense
 
+## 2026-09-11
+
+### Giảm conflict trước auto-merge
+
+- CI và Cloudflare preview lắng nghe event `merge_group` để có thể chạy required checks trên Merge Queue.
+- Supabase Production Deploy chỉ trigger khi migration, config hoặc mã nguồn Edge Function thay đổi; sửa `supabase/functions/AGENTS.md` không còn tự kích hoạt deploy backend.
+- Quy trình release chuyển sang single-writer cho `HANDOFF.md`/`CHANGELOG.md`: feature PR ghi tóm tắt trong PR body, release/status PR mới cập nhật canonical documents sau khi đồng bộ với `main`.
+- Files: `.github/workflows/ci.yml`, `.github/workflows/cloudflare-preview.yml`, `.github/workflows/supabase-deploy.yml`, `AGENTS.md`, `.agent/skills/`, `docs/AI_CONTEXT_GUIDE.md`, `docs/DEPLOY_RUNBOOK.md`, `docs/RELEASE_GOVERNANCE.md`, `README.md`, `HUONG-DAN-DEPLOY-THU-CONG.md`.
+- Trạng thái: thay đổi mới chỉ ở repository; chưa bật Merge Queue/branch protection trên GitHub và chưa deploy production.
+
 ## 2026-09-10
 
 ### Chuẩn hóa hệ thống AI context của repository
@@ -9,7 +19,7 @@
 - Đồng bộ tài liệu onboarding/deploy theo `pnpm`, Cloudflare Pages Git integration, Supabase workflow và các Edge Function hiện có; không đổi code ứng dụng, schema, RLS/RPC hoặc dữ liệu.
 - Files: `AGENTS.md`, `supabase/functions/AGENTS.md`, `HANDOFF.md`, `docs/PROJECT_MAP.md`, `docs/AI_CONTEXT_GUIDE.md`, `.agent/skills/`, `.gitignore`, `README.md`, `docs/DEPLOY_RUNBOOK.md`, `docs/RELEASE_GOVERNANCE.md`, `HUONG-DAN-DEPLOY-THU-CONG.md`.
 - Kiểm thử: `git diff --check`, Vitest 34/34 file với 153/153 test, typecheck, ESLint và production build đều pass; không chạy riêng E2E/DB vì không đổi code, schema hoặc workflow thực thi.
-- Trạng thái triển khai: chưa deploy; cần review và commit/push tài liệu/context qua PR nếu muốn đưa lên `main`. Không có migration hoặc Edge Function cần chạy.
+- Trạng thái triển khai thực tế: PR [#143](https://github.com/nhan0805/family-expense/pull/143) đã merge vào `main` với merge commit `67a391967862cd4d6bd95747d4115774c6b7be5b`; CI main [run 34500122665](https://github.com/nhan0805/family-expense/actions/runs/34500122665), Supabase Production Deploy [run 34500122541](https://github.com/nhan0805/family-expense/actions/runs/34500122541) và Cloudflare Pages production [check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/3bb0fd5a-273d-411e-9df8-4629d4ff233e) đều pass; smoke `https://family-expense-8fo.pages.dev/` trả HTTP 200. Không có migration mới; workflow Supabase được kích hoạt do `supabase/functions/AGENTS.md` nằm trong path và hoàn tất thành công.
 
 ### Tự làm mới giao dịch dự kiến được tạo ngoài phiên app
 
@@ -27,6 +37,14 @@
 - File: `AGENTS.md`. Không đổi code, schema, RLS/RPC hoặc dữ liệu.
 - Kiểm thử: `git diff --check`; không cần chạy test chức năng.
 - Trạng thái triển khai thực tế: rule đã được commit/push trong PR [#142](https://github.com/nhan0805/family-expense/pull/142), merge vào `main` với merge commit `57a7a612f97772593e5f5996c30aa22017c42ed0`; CI main [run 34497005250](https://github.com/nhan0805/family-expense/actions/runs/34497005250) và Cloudflare Pages production [check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/d98b6ccf-7d30-42cc-b973-746cf4bc3a21) pass, smoke `https://family-expense-8fo.pages.dev/` trả HTTP 200. Không chạy Supabase Production Deploy vì docs-only.
+
+### Cải thiện UI/UX theo roadmap UI UX Pro Max
+
+- Trước thay đổi: taskbar mobile đưa Danh mục lên thanh chính; Dashboard thiếu danh sách giao dịch gần đây; dark theme và nhiều trạng thái còn dùng palette Dracula; donut chart thiếu bảng dữ liệu thay thế; filter, form, auth và progress budget chưa tối ưu cho responsive/accessibility.
+- Sau thay đổi: taskbar mobile tập trung vào Tổng quan, Giao dịch, Ngân sách, Định kỳ và gom mục phụ vào Thêm; Dashboard sắp xếp KPI → ngân sách → giao dịch gần đây → biểu đồ, có truy vấn 5 giao dịch mới nhất và fallback demo; áp dụng token màu xanh tin cậy cùng success/warning/danger và dark navy trung tính; donut hiển thị phần trăm trực tiếp và có chế độ xem bảng; filter chip tự xuống dòng, mô tả giao dịch tự wrap; progress ngân sách có semantics progressbar; form đặt số tiền lên trước với segmented Chi/Thu; đăng nhập có tab Login/Đăng ký và nút hiện/ẩn mật khẩu; AI action chuyển thành secondary action rõ ngữ nghĩa.
+- Files: `src/components/Layout.tsx`, `src/lib/transactionsApi.ts`, `src/pages/Dashboard.tsx`, `src/pages/Transactions.tsx`, `src/components/TransactionRow.tsx`, `src/pages/Budgets.tsx`, `src/pages/TransactionForm.tsx`, `src/pages/Login.tsx`, `src/pages/ResetPassword.tsx`, `src/pages/CreateFamily.tsx`, `src/context/ThemeContext.tsx`, `src/index.css` và các test liên quan. Không đổi schema, migration, RLS/RPC hoặc dữ liệu.
+- Kiểm thử: full Vitest 34/34 file với 153/153 test, TypeScript, ESLint, `git diff --check` pass; production build pass và vẫn có cảnh báo chunk lớn hiện hữu của ExcelJS/XLSX/charts.
+- Trạng thái triển khai: đã kiểm tra local; chưa deploy production, chưa commit/push/PR.
 
 ## 2026-09-07
 

@@ -57,7 +57,8 @@ describe('Giao dịch mobile', () => {
     fireEvent.change(minAmountInput, { target: { value: '' } });
     const aiSearchButton = screen.getByRole('button', { name: 'Tìm kiếm bằng AI' });
     expect(aiSearchButton).toBeDisabled();
-    expect(aiSearchButton.className).toContain('bg-gradient-to-r');
+    expect(aiSearchButton.className).toContain('btn-secondary');
+    expect(aiSearchButton.className).not.toContain('bg-gradient-to-r');
     expect(aiSearchButton.className).toContain('active:scale-[.98]');
     const transactionCard = screen.getByRole('article', { name: 'Giao dịch Đi chợ' });
     expect(transactionCard).toHaveClass('rounded-2xl', 'shadow-sm', 'transaction-card');

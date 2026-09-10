@@ -6,6 +6,13 @@
 - `staging`: Supabase project riêng, dùng `.env.staging` và dữ liệu test đã ẩn danh.
 - `production`: Supabase/Cloudflare hiện hành; chỉ deploy từ `main` sau CI và approval.
 
+## PR, merge queue và release documents
+
+- `main` chỉ nhận thay đổi qua Pull Request; bật required checks, auto-merge và Merge Queue nếu repository plan hỗ trợ.
+- Workflow CI phải có trigger `merge_group` để required checks chạy trên commit tạm của queue.
+- Feature PR không rewrite đồng thời `HANDOFF.md` và `CHANGELOG.md`. Release summary nằm trong PR body; canonical documents được cập nhật một lần trong release/status PR sau khi branch đã đồng bộ với `main`.
+- Trước khi bật auto-merge, feature branch phải được cập nhật từ `origin/main`. Merge Queue xử lý việc xếp hàng và kiểm tra lại khi `main` thay đổi, nhưng không thay thế việc giải quyết conflict nội dung thật.
+
 ## Migration rehearsal
 
 1. Tạo backup/điểm khôi phục staging.

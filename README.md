@@ -1,6 +1,6 @@
 # Family Expense
 
-> Trước khi thay đổi project, đọc `AGENTS.md` và mục mới nhất trong `CHANGELOG.md`. Mọi thay đổi phải được ghi vào changelog trong cùng lượt làm việc.
+> Trước khi thay đổi project, đọc `AGENTS.md` và mục mới nhất trong `CHANGELOG.md`. Thay đổi quan trọng được ghi vào changelog trong release/status update; feature PR dùng PR body để tránh nhiều branch cùng sửa tài liệu canonical.
 
 Web app quản lý chi tiêu gia đình bằng tiếng Việt, mobile-first, có PWA và luồng nhập giao dịch bằng Gemini. AI chỉ điền đề xuất vào form; người dùng luôn phải kiểm tra và bấm **Xác nhận và lưu**.
 

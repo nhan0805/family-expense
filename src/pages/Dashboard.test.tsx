@@ -104,9 +104,10 @@ describe('Dashboard', () => {
     );
     const netKpi = screen.getByRole('link', { name: 'Mở giao dịch theo Giá trị ròng' });
     expect(netKpi).toHaveClass('block', 'h-full', 'kpi-card');
-    expect(netKpi.querySelector('span')).toHaveClass('bg-rose-100', 'dark:bg-[#ff79c61f]', 'dark:text-[#ff79c6]');
+    expect(netKpi.querySelector('span')).toHaveClass('kpi-tone-rose');
     expect(screen.queryByText('Giao dịch thực tế trong tháng')).not.toBeInTheDocument();
-    expect(screen.queryByText('Chi tháng 2')).not.toBeInTheDocument();
+    expect(screen.getByText('Giao dịch gần đây')).toBeInTheDocument();
+    expect(screen.getByText('Chi tháng 2')).toBeInTheDocument();
     expect(screen.queryByText('Chi tháng 1')).not.toBeInTheDocument();
   });
 
@@ -157,7 +158,7 @@ describe('Dashboard', () => {
     renderDashboard();
 
     expect(screen.getByText('Chi tiêu theo danh mục')).toBeInTheDocument();
-    expect(formatPieLabel({ percent: 0.95, value: 1_000_000 })).toBe('1M');
+    expect(formatPieLabel({ percent: 0.95, value: 1_000_000 })).toBe('1M · 95%');
     expect(formatPieLabel({ percent: 0.01, value: 10_000 })).toBeNull();
     const summarized = summarizePieData(expenseTypes.map((item, index) => ({
       ...item,
@@ -191,7 +192,7 @@ describe('Dashboard', () => {
     fireEvent.change(screen.getByLabelText('Tháng'), { target: { value: '02' } });
     fireEvent.click(screen.getByRole('button', { name: '6 tháng' }));
 
-    expect(screen.getByRole('button', { name: '6 tháng' })).toHaveClass('dark:bg-[#bd93f9]', 'dark:text-[#282a36]');
+    expect(screen.getByRole('button', { name: '6 tháng' })).toHaveClass('bg-[var(--primary)]', 'text-[var(--primary-contrast)]');
     expect(screen.getByText('6 tháng đến T02/2026')).toBeInTheDocument();
     expect(screen.getByText('Trung bình / tháng')).toBeInTheDocument();
     expect(screen.getByText('Tháng cao nhất')).toBeInTheDocument();

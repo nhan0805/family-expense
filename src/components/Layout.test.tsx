@@ -76,7 +76,7 @@ describe('Layout mobile navigation', () => {
     expect(bottomNav).toBeInTheDocument();
     expect(within(bottomNav!).getAllByRole('link')).toHaveLength(4);
     expect(within(bottomNav!).queryByRole('link', { name: 'Thành viên' })).not.toBeInTheDocument();
-    expect(within(bottomNav!).getByRole('link', { name: 'Danh mục' })).toHaveAttribute('href', '/danh-muc');
+    expect(within(bottomNav!).getByRole('link', { name: 'Chi phí định kỳ' })).toHaveAttribute('href', '/chi-phi-dinh-ky');
 
     const memberLinks = screen.getAllByRole('link', { name: 'Mở màn hình thành viên của Chủ gia đình' });
     expect(memberLinks).toHaveLength(2);
@@ -85,6 +85,7 @@ describe('Layout mobile navigation', () => {
 
     fireEvent.click(within(bottomNav!).getByRole('button', { name: 'Thêm' }));
     expect(screen.getByRole('link', { name: 'Thành viên' })).toHaveAttribute('href', '/thanh-vien');
-    expect(screen.getByRole('link', { name: 'Chi phí định kỳ' })).toHaveAttribute('href', '/chi-phi-dinh-ky');
+    expect(screen.getAllByRole('link', { name: 'Chi phí định kỳ' })).toHaveLength(2);
+    expect(screen.getAllByRole('link', { name: 'Chi phí định kỳ' })[1]).toHaveAttribute('href', '/chi-phi-dinh-ky');
   });
 });
