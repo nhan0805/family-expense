@@ -7,7 +7,7 @@
 - Backend: Supabase Auth/PostgreSQL/RLS/RPC/Edge Functions; Gemini chỉ đề xuất dữ liệu, user phải xác nhận trước khi lưu.
 - Production: Cloudflare Pages; đọc mục mới nhất trong `CHANGELOG.md` trước khi sửa vì mới hơn README.
 - Quy trình deploy bắt buộc: production chỉ deploy qua Git bằng Cloudflare Pages Git integration sau khi thay đổi được push/merge vào `main`; PR dùng preview deployment. Không chạy `wrangler pages deploy` trực tiếp cho production.
-- Quy trình tự động đầy đủ khi người dùng yêu cầu deploy: (1) đọc handoff/changelog và kiểm tra working tree; (2) chạy test, typecheck, lint, build; (3) cập nhật handoff/changelog đầy đủ trước khi commit, gồm thay đổi, kiểm thử, trạng thái triển khai dự kiến và thông tin release nếu đã biết; (4) commit và push branch; (5) nếu chưa có PR thì dùng GitHub CLI/API đã đăng nhập để tự tạo PR vào `main`; (6) nếu branch behind thì cập nhật branch với `main`; (7) bật auto-merge; (8) theo dõi required checks, sửa lỗi và push bổ sung nếu cần; (9) chỉ kết luận hoàn tất sau khi PR merge và Cloudflare Pages production deployment của merge commit thành công; (10) sau deploy chỉ xác minh và cập nhật handoff trạng thái thực tế nếu thay đổi đó không làm ảnh hưởng artifact đã deploy, không tạo deploy lần hai chỉ để cập nhật handoff. Báo blocker cụ thể nếu thiếu quyền GitHub.
+- Quy trình tự động đầy đủ khi người dùng yêu cầu deploy: (1) đọc handoff/changelog và kiểm tra working tree; (2) chạy test, typecheck, lint, build; (3) cập nhật handoff/changelog đầy đủ trước khi commit, gồm thay đổi, kiểm thử, trạng thái triển khai dự kiến và thông tin release nếu đã biết; bắt buộc stage và push cả hai tài liệu release, không để bản latest chỉ ở local; (4) commit và push branch; (5) nếu chưa có PR thì dùng GitHub CLI/API đã đăng nhập để tự tạo PR vào `main`; (6) nếu branch behind thì cập nhật branch với `main`; (7) bật auto-merge; (8) theo dõi required checks, sửa lỗi và push bổ sung nếu cần; (9) chỉ kết luận hoàn tất sau khi PR merge và Cloudflare Pages production deployment của merge commit thành công; (10) sau deploy chỉ xác minh và cập nhật handoff trạng thái thực tế nếu thay đổi đó không làm ảnh hưởng artifact đã deploy, không tạo deploy lần hai chỉ để cập nhật handoff. Báo blocker cụ thể nếu thiếu quyền GitHub.
 
 ## Commands
 
@@ -27,6 +27,7 @@
 - Mutation cloud phải ghi Supabase thành công rồi mới cập nhật state/điều hướng; luôn scope theo `family_id`; giữ demo fallback khi Supabase chưa cấu hình.
 - Khi sửa bug/logic, thêm hoặc cập nhật Vitest/RTL; luồng người dùng quan trọng dùng Playwright. Chạy test phù hợp + lint + typecheck + build.
 - Mọi thay đổi project phải thêm mục mới nhất dưới ngày hiện tại (`Asia/Ho_Chi_Minh`) trong `CHANGELOG.md`: trước/sau, file/DB object, kiểm thử và trạng thái triển khai. Chẩn đoán read-only không cần log.
+- Khi deploy, `HANDOFF.md` và `CHANGELOG.md` là một phần của release artifact trên Git: phải cập nhật, commit và push cùng PR/nhánh release; trước khi kết luận phải kiểm tra không còn bản tài liệu release mới hơn chỉ nằm ở working tree.
 - Theo pattern sẵn có; không thêm dependency, đổi public API, schema/database hay quy tắc nghiệp vụ nếu chưa được yêu cầu/xác nhận.
 - Không sửa migration đã áp dụng; thêm migration timestamp mới. Không đưa secret/service-role/Gemini key vào frontend.
 
