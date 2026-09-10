@@ -8,8 +8,8 @@
 | `supabase/AGENTS.md` | Database migration, RLS, RPC and production DB rules | Database conventions change |
 | `supabase/functions/AGENTS.md` | Deno Edge Function, AI, secret and error rules | Function conventions change |
 | `docs/PROJECT_MAP.md` | Stable architecture, modules, data flow and source-of-truth boundaries | Architecture, module ownership or integrations change |
-| `HANDOFF.md` | Current state, pending work, known issues and latest validation | Every meaningful session changes status |
-| `CHANGELOG.md` | Historical record of meaningful changes and releases | User-visible or important internal behavior changes |
+| `HANDOFF.md` | Current state, pending work, known issues and latest validation | Release/status state changes, recorded in one synchronized update |
+| `CHANGELOG.md` | Historical record of meaningful changes and releases | User-visible or important internal behavior changes, recorded in the release/status update |
 | `.agent/skills/*/SKILL.md` | Repeatable task workflow and validation | A recurring workflow changes |
 | `README.md` | Human onboarding, setup and feature behavior | Setup, commands or user-facing product behavior changes |
 | `docs/*RUNBOOK*.md` | Operational procedures and incident/release steps | Operations or deployment procedure changes |
@@ -44,12 +44,12 @@ Use the full repository only when documentation is stale, the change is cross-cu
 After implementation and validation, ask:
 
 1. Did the architecture, data flow, boundary or integration change? Update `docs/PROJECT_MAP.md`.
-2. Did user-visible behavior or important internal behavior change? Add a concise entry to `CHANGELOG.md`.
-3. Did current work, pending tasks, known issues or deployment status change? Rewrite `HANDOFF.md` so it remains current.
+2. Did user-visible behavior or important internal behavior change? Add a concise entry to `CHANGELOG.md` in the release/status update; the feature PR can describe the change in its PR body while it is waiting to merge.
+3. Did current work, pending tasks, known issues or deployment status change? Rewrite `HANDOFF.md` in the same release/status update so it remains current.
 4. Did a permanent rule or convention change? Update the relevant `AGENTS.md`.
 5. Did a repeatable workflow change? Update the relevant project skill.
 
-Do not update documents merely because a file changed. Do not leave a newer release handoff/changelog only in the working tree when deploying: stage, commit and push them with the release branch/PR.
+Do not update documents merely because a file changed. Do not leave a newer release handoff/changelog only in the working tree when deploying: stage, commit and push them in the single release/status PR after the feature branch is synchronized.
 
 ## Handoff policy
 
@@ -68,6 +68,10 @@ Move historical detail to `CHANGELOG.md` or stable architecture/runbook document
 ## Changelog policy
 
 `CHANGELOG.md` is chronological. Each meaningful entry should say what changed, the relevant files/DB objects, validation and deployment state. It should not become an active task list or a duplicate architecture guide.
+
+## Parallel PR and auto-merge policy
+
+Feature PRs should not rewrite the root `HANDOFF.md` or the top of `CHANGELOG.md` while other release work is in flight. Keep the release summary in the PR description, then update the canonical files once in a release/status PR after the feature branch is merged or queued. This keeps the files authoritative without making them merge-conflict hotspots.
 
 ## Skills policy
 

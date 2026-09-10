@@ -1,6 +1,6 @@
 # Family Expense — Development Handoff
 
-> Cập nhật: **10/09/2026** (`Asia/Ho_Chi_Minh`)
+> Cập nhật: **11/09/2026** (`Asia/Ho_Chi_Minh`)
 
 ## Current state
 
@@ -10,6 +10,7 @@
 - CI main [run 34500122665](https://github.com/nhan0805/family-expense/actions/runs/34500122665), Supabase Production Deploy [run 34500122541](https://github.com/nhan0805/family-expense/actions/runs/34500122541) và Cloudflare Pages production [check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/3bb0fd5a-273d-411e-9df8-4629d4ff233e) pass; smoke production trả HTTP 200.
 - Nhánh workspace hiện tại: `codex/fix-dashboard-aggregate`.
 - Release candidate hiện tại: cải thiện UI/UX theo roadmap UI UX Pro Max; quality gate local đã pass, chưa commit/PR/deploy production.
+- Đã cập nhật CI/preview cho `merge_group`, thu hẹp trigger Supabase và chuẩn hóa single-writer cho tài liệu release; chưa bật Merge Queue/branch protection trên GitHub.
 - Bản đồ kiến trúc ổn định nằm trong [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md); quy tắc phân loại tài liệu nằm trong [`docs/AI_CONTEXT_GUIDE.md`](docs/AI_CONTEXT_GUIDE.md).
 
 ## Current system state
@@ -24,6 +25,12 @@
 - Semantic embedding/search production path đã bị loại bỏ; không đưa lại nếu chưa có quyết định kiến trúc mới.
 
 ## Recently completed
+
+### Giảm conflict trước auto-merge
+
+- CI và Cloudflare preview có thể chạy trên GitHub Merge Queue qua event `merge_group`.
+- Supabase workflow không còn bị kích hoạt bởi `supabase/functions/AGENTS.md` hoặc tài liệu tương tự; chỉ các thư mục function runtime, migration và config mới trigger production workflow.
+- Feature branch không cần rewrite song song `HANDOFF.md`/`CHANGELOG.md`; release/status update đồng bộ với `main` là nơi cập nhật hai file canonical.
 
 ### Làm mới giao dịch định kỳ khi app đang mở
 
@@ -50,7 +57,7 @@
 
 ## Current work
 
-Đang chuẩn bị release thay đổi UI/UX theo roadmap. Code và test đã hoàn tất; full Vitest, TypeScript, ESLint, production build và `git diff --check` đều pass. Cần commit/push nhánh, tạo PR vào `main`, chờ required checks/auto-merge và xác minh Cloudflare Pages production sau merge.
+Đang chuẩn bị release thay đổi UI/UX theo roadmap và workflow auto-merge mới. Code UI và test đã hoàn tất; các thay đổi workflow/tài liệu cần được kiểm tra YAML, `git diff --check`, sau đó commit/push. Cần bật Merge Queue/branch protection trên GitHub trước khi tạo PR và xác minh required checks trên `merge_group`.
 
 ## Pending tasks
 
@@ -82,9 +89,9 @@
 
 ### Release documentation
 
-- **Decision:** Code thay đổi và bản latest của `HANDOFF.md`/`CHANGELOG.md` phải được commit/push cùng release PR.
-- **Reason:** Git phải chứa đúng context của artifact đã phát hành.
-- **Impact:** Status-only update sau deploy có thể ghi nhận mà không tạo production deploy lần hai.
+- **Decision:** Feature PR ghi tóm tắt trong PR body; `HANDOFF.md` và `CHANGELOG.md` được cập nhật một lần trong release/status PR đã đồng bộ với `main`.
+- **Reason:** Tránh nhiều branch song song cùng sửa hai file canonical và làm PR mất khả năng auto-merge.
+- **Impact:** Git vẫn chứa context của release, nhưng canonical documents không còn là điểm nóng conflict của mọi feature branch.
 
 ## Files recently changed
 
@@ -95,8 +102,9 @@
 - `docs/PROJECT_MAP.md` — stable architecture map.
 - `docs/AI_CONTEXT_GUIDE.md` — document responsibility and context loading.
 - `.agent/skills/` — feature, database-change and release-handoff workflows.
+- `.github/workflows/ci.yml`, `.github/workflows/cloudflare-preview.yml`, `.github/workflows/supabase-deploy.yml` — merge queue checks và trigger backend chính xác hơn.
 - `.gitignore` — generated Python cache exclusions.
-- `README.md`, `docs/DEPLOY_RUNBOOK.md`, `docs/RELEASE_GOVERNANCE.md`, `HUONG-DAN-DEPLOY-THU-CONG.md` — command/deployment documentation alignment.
+- `README.md`, `docs/AI_CONTEXT_GUIDE.md`, `docs/DEPLOY_RUNBOOK.md`, `docs/RELEASE_GOVERNANCE.md`, `HUONG-DAN-DEPLOY-THU-CONG.md` — auto-merge/release-document policy.
 - `src/components/Layout.tsx`, `src/components/TransactionRow.tsx`, `src/context/ThemeContext.tsx`, `src/index.css` — mobile navigation, transaction cards và design tokens.
 - `src/lib/transactionsApi.ts`, `src/pages/Dashboard.tsx`, `src/pages/Budgets.tsx`, `src/pages/Transactions.tsx` — dashboard hierarchy, charts, budget semantics và transaction responsive UI.
 - `src/pages/TransactionForm.tsx`, `src/pages/Login.tsx`, `src/pages/ResetPassword.tsx`, `src/pages/CreateFamily.tsx` — form/auth/onboarding UI.

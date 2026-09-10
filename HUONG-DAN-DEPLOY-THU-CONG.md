@@ -50,7 +50,7 @@ Lấy `SUPABASE_PROJECT_REF` trong Supabase Dashboard. Không ghi access token, 
 
 ### 3.1. Kiểm tra changelog và version
 
-- Ghi thay đổi mới nhất vào đầu ngày hiện tại trong `CHANGELOG.md`.
+- Ghi tóm tắt thay đổi trong PR body; cập nhật `CHANGELOG.md` và `HANDOFF.md` một lần trong release/status PR sau khi branch đã đồng bộ với `main`.
 - Ghi rõ yêu cầu, trước/sau, file hoặc database object, kiểm thử và trạng thái triển khai.
 - Cập nhật `version` trong `package.json` khi bắt đầu release mới.
 - Không sửa đè lịch sử trong `CHANGELOG.md`; `HANDOFF.md` là snapshot hiện tại và phải được viết lại để bỏ trạng thái cũ.
@@ -89,12 +89,14 @@ Không deploy thư mục `dist` cũ nếu vừa thay đổi code.
 ### Bước 2 — Tạo PR và chờ Git integration
 
 ```bash
-git push origin <branch>
+git fetch origin
+git rebase origin/main
+git push --force-with-lease origin <branch>
 gh pr create --base main --head <branch>
 gh pr merge <number> --auto --squash --delete-branch=false
 ```
 
-Required checks, Cloudflare Pages Preview và Cloudflare Pages production sẽ chạy từ GitHub. Chỉ kết luận release sau khi PR đã merge, check Cloudflare production trên merge commit pass và domain chính trả HTTP 200.
+Required checks, Cloudflare Pages Preview và Cloudflare Pages production sẽ chạy từ GitHub. Nếu repository bật Merge Queue, queue sẽ kiểm tra PR trên `main` mới nhất; `.github/workflows/ci.yml` phải có event `merge_group`. Chỉ kết luận release sau khi PR đã merge, check Cloudflare production trên merge commit pass và domain chính trả HTTP 200.
 
 ### Bước 3 — Hậu kiểm frontend
 

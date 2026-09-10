@@ -1,5 +1,15 @@
 # Nhật ký thay đổi Family Expense
 
+## 2026-09-11
+
+### Giảm conflict trước auto-merge
+
+- CI và Cloudflare preview lắng nghe event `merge_group` để có thể chạy required checks trên Merge Queue.
+- Supabase Production Deploy chỉ trigger khi migration, config hoặc mã nguồn Edge Function thay đổi; sửa `supabase/functions/AGENTS.md` không còn tự kích hoạt deploy backend.
+- Quy trình release chuyển sang single-writer cho `HANDOFF.md`/`CHANGELOG.md`: feature PR ghi tóm tắt trong PR body, release/status PR mới cập nhật canonical documents sau khi đồng bộ với `main`.
+- Files: `.github/workflows/ci.yml`, `.github/workflows/cloudflare-preview.yml`, `.github/workflows/supabase-deploy.yml`, `AGENTS.md`, `.agent/skills/`, `docs/AI_CONTEXT_GUIDE.md`, `docs/DEPLOY_RUNBOOK.md`, `docs/RELEASE_GOVERNANCE.md`, `README.md`, `HUONG-DAN-DEPLOY-THU-CONG.md`.
+- Trạng thái: thay đổi mới chỉ ở repository; chưa bật Merge Queue/branch protection trên GitHub và chưa deploy production.
+
 ## 2026-09-10
 
 ### Chuẩn hóa hệ thống AI context của repository

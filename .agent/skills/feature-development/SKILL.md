@@ -18,7 +18,7 @@ Use for a normal frontend, domain, import/export or non-schema feature in Family
 3. Implement the smallest change in the existing pattern. Preserve demo fallback, family scoping, loading/error/empty states and mobile/accessibility behavior.
 4. Add or update Vitest/RTL regression tests. Update Playwright only when an important user flow changes.
 5. Run the relevant tests, then `pnpm typecheck`, `pnpm lint`, `pnpm build` and `git diff --check` as appropriate.
-6. Complete the documentation impact check. Update `CHANGELOG.md` and `HANDOFF.md` when the behavior/current state warrants it; update `PROJECT_MAP.md` only for architecture changes.
+6. Complete the documentation impact check. Describe the change in the PR body and update `CHANGELOG.md`/`HANDOFF.md` in the synchronized release/status update when behavior or current state warrants it; update `PROJECT_MAP.md` only for architecture changes.
 
 ## Do not
 
