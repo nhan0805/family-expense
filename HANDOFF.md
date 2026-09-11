@@ -8,7 +8,7 @@
 - Code production gần nhất: PR [#149](https://github.com/nhan0805/family-expense/pull/149), merge commit `93fd69cf6be9205987b750a50bf7f74498b273ad`.
 - Release tài liệu/rule gần nhất: PR [#143](https://github.com/nhan0805/family-expense/pull/143), merge commit `67a391967862cd4d6bd95747d4115774c6b7be5b`.
 - CI main [run 34624390764](https://github.com/nhan0805/family-expense/actions/runs/34624390764) pass với quality, E2E và db-security; Cloudflare Pages production [check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/91053e44-e6ab-4f0c-bfaa-3749daef7f40) báo deploy thành công; smoke production trả HTTP 200.
-- Nhánh workspace hiện tại: `codex/release-status-149`.
+- Nhánh workspace hiện tại: `codex/loading-error-recovery`.
 - PR #149 đã merge vào `main` và deploy production qua Cloudflare Pages Git integration. Không có migration, Edge Function hoặc thay đổi dữ liệu cần deploy Supabase.
 - Đã cập nhật CI/preview cho `merge_group`, thu hẹp trigger Supabase và chuẩn hóa single-writer cho tài liệu release; chưa bật Merge Queue/branch protection trên GitHub.
 - Bản đồ kiến trúc ổn định nằm trong [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md); quy tắc phân loại tài liệu nằm trong [`docs/AI_CONTEXT_GUIDE.md`](docs/AI_CONTEXT_GUIDE.md).
@@ -57,7 +57,7 @@
 
 ## Current work
 
-Release #149 đã hoàn tất quality gate, merge vào `main` và deploy production thành công. Dashboard tách các truy vấn aggregate theo từng khoảng để chế độ 12 tháng/năm không vượt giới hạn RPC; khoảng Tùy chỉnh dài hơn 366 ngày được báo lỗi rõ ràng và không gọi dữ liệu. Tab Giao dịch chỉ còn danh sách giao dịch; giao dịch dự kiến tới hạn được hiển thị đầy đủ bằng thanh cuộn trong phần Thông báo. Không có thay đổi schema, migration, RLS/RPC, Edge Function hoặc dữ liệu.
+Release #149 đã hoàn tất quality gate, merge vào `main` và deploy production thành công. Dashboard tách các truy vấn aggregate theo từng khoảng để chế độ 12 tháng/năm không vượt giới hạn RPC; khoảng Tùy chỉnh dài hơn 366 ngày được báo lỗi rõ ràng và không gọi dữ liệu. Tab Giao dịch chỉ còn danh sách giao dịch; giao dịch dự kiến tới hạn được hiển thị đầy đủ bằng thanh cuộn trong phần Thông báo. Nhánh hiện tại bổ sung xử lý lỗi/loading: lỗi tải Thùng rác có retry, các màn hình không có `familyId` không giữ skeleton vô hạn, và Supabase request có timeout 15 giây. Không có thay đổi schema, migration, RLS/RPC, Edge Function hoặc dữ liệu.
 
 ## Pending tasks
 
@@ -106,7 +106,7 @@ Release #149 đã hoàn tất quality gate, merge vào `main` và deploy product
 - `.gitignore` — generated Python cache exclusions.
 - `README.md`, `docs/AI_CONTEXT_GUIDE.md`, `docs/DEPLOY_RUNBOOK.md`, `docs/RELEASE_GOVERNANCE.md`, `HUONG-DAN-DEPLOY-THU-CONG.md` — auto-merge/release-document policy.
 - `src/components/Layout.tsx`, `src/components/TransactionRow.tsx`, `src/context/ThemeContext.tsx`, `src/index.css` — mobile navigation, transaction cards và design tokens.
-- `src/lib/transactionsApi.ts`, `src/pages/Dashboard.tsx`, `src/pages/Budgets.tsx`, `src/pages/Transactions.tsx`, `src/components/BudgetNotifications.tsx` — dashboard hierarchy, charts, budget semantics, transaction responsive UI và due-transaction notifications.
+- `src/lib/transactionsApi.ts`, `src/lib/errorRecovery.ts`, `src/lib/supabase.ts`, `src/pages/Dashboard.tsx`, `src/pages/Budgets.tsx`, `src/pages/Transactions.tsx`, `src/pages/Members.tsx`, `src/pages/RecurringExpenses.tsx`, `src/pages/TransactionForm.tsx`, `src/components/BudgetNotifications.tsx` — dashboard hierarchy, lỗi/loading recovery, charts, budget semantics, transaction responsive UI và due-transaction notifications.
 - `src/pages/TransactionForm.tsx`, `src/pages/Login.tsx`, `src/pages/ResetPassword.tsx`, `src/pages/CreateFamily.tsx` — form/auth/onboarding UI.
 - Các test liên quan đến Layout, Dashboard, Budgets, Transactions, TransactionRow, TransactionForm và Login.
 
@@ -129,18 +129,18 @@ Release #149 đã hoàn tất quality gate, merge vào `main` và deploy product
 
 Latest application/release validation:
 
-- Vitest: 34 files, 153 tests passed.
+- Vitest: 37 files, 164 tests passed.
 - TypeScript typecheck: passed.
 - ESLint: passed.
 - Production build: passed; only known large-chunk warnings remain.
-- Playwright/DB security: required CI checks for the latest release passed.
-- Production smoke: `https://family-expense-8fo.pages.dev/` returned HTTP 200.
+- Playwright/DB security: sẽ xác nhận lại trong CI của PR loading recovery.
+- Production smoke của release hiện tại: `https://family-expense-8fo.pages.dev/` returned HTTP 200; bản sửa mới chưa deploy.
 
 For a new change, rerun only the relevant focused tests during iteration, then the full release gate before deploy: `pnpm test`, `pnpm typecheck`, `pnpm lint`, `pnpm build`, `git diff --check`, plus E2E/DB tests when applicable.
 
 ## Next recommended step
 
-Tiếp theo thực hiện backup/restore và rollback drill trên staging bằng secrets riêng.
+Tiếp theo push branch, mở PR vào `main`, chờ CI/Cloudflare Pages và smoke test production cho bản sửa loading recovery.
 
 ## Session start instructions
 

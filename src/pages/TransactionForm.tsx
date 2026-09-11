@@ -497,13 +497,16 @@ export function TransactionForm() {
     aiSuggested: Boolean(aiResultVisible && aiResult?.fields.includes(field)),
     aiTone,
   });
-  if (id && isSupabaseConfigured && existingQuery.isPending)
+  if (id && isSupabaseConfigured && !familyId)
+    return <p role="alert" className="rounded-xl bg-red-50 p-4 text-red-700 dark:bg-red-950/30 dark:text-red-300">{en ? 'No active family was found. Please reload and try again.' : 'Không tìm thấy gia đình đang hoạt động. Vui lòng tải lại rồi thử lại.'}</p>;
+  if (id && isSupabaseConfigured && existingQuery.isPending && Boolean(familyId))
     return <PageSkeleton label={en ? 'Loading transaction…' : 'Đang tải thông tin giao dịch…'}/>;
   if (id && isSupabaseConfigured && (existingQuery.isError || !existing))
     return (
-      <p role="alert" className="rounded-xl bg-red-50 p-4 text-red-700 dark:bg-red-950/30 dark:text-red-300">
-        {en ? 'Transaction not found or you do not have access.' : 'Không tìm thấy giao dịch hoặc bạn không có quyền truy cập.'}
-      </p>
+      <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-red-50 p-4 text-red-700 dark:bg-red-950/30 dark:text-red-300">
+        <span>{en ? 'Transaction not found or you do not have access.' : 'Không tìm thấy giao dịch hoặc bạn không có quyền truy cập.'}</span>
+        {existingQuery.isError && <button type="button" className="btn-secondary px-3 py-1.5 text-xs" onClick={() => void existingQuery.refetch()}>{en ? 'Retry' : 'Thử lại'}</button>}
+      </div>
     );
   return (
     <div className="transaction-form-page mx-auto max-w-3xl space-y-5">

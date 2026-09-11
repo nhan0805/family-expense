@@ -53,34 +53,49 @@ export function Members() {
   const [canDeleteFamily, setCanDeleteFamily] = useState<boolean | null>(null);
 
   const loadMembers = useCallback(async () => {
-    if (!familyId) return;
     setLoadingMembers(true);
-    if (!isSupabaseConfigured) {
-      setMembers([
-        {
-          id: 'local',
-          user_id: 'local-user',
-          display_name: 'Chủ gia đình',
-          email: currentUserEmail || 'demo@family.local',
-          role: 'owner',
-          status: 'active',
-          created_at: new Date().toISOString(),
-        },
-      ]);
+    if (!familyId) {
+      setMembers([]);
+      setCanDeleteFamily(null);
+      setMessage(en ? 'No active family was found. Please reload and try again.' : 'Không tìm thấy gia đình đang hoạt động. Vui lòng tải lại rồi thử lại.');
       setLoadingMembers(false);
       return;
     }
-    const { data, error } = await supabase.rpc('get_family_members', {
-      p_family_id: familyId,
-    });
-    if (error) setMessage(friendlyError(error.message));
-    else setMembers((data || []) as Member[]);
-    if (isOwner) {
-      const eligibility = await supabase.rpc('can_delete_family', { p_family_id: familyId });
-      if (!eligibility.error) setCanDeleteFamily(Boolean(eligibility.data));
+    setMessage('');
+    try {
+      if (!isSupabaseConfigured) {
+        setMembers([
+          {
+            id: 'local',
+            user_id: 'local-user',
+            display_name: 'Chủ gia đình',
+            email: currentUserEmail || 'demo@family.local',
+            role: 'owner',
+            status: 'active',
+            created_at: new Date().toISOString(),
+          },
+        ]);
+        return;
+      }
+      const { data, error } = await supabase.rpc('get_family_members', {
+        p_family_id: familyId,
+      });
+      if (error) {
+        setMessage(friendlyError(error.message));
+        return;
+      }
+      setMembers((data || []) as Member[]);
+      if (isOwner) {
+        const eligibility = await supabase.rpc('can_delete_family', { p_family_id: familyId });
+        if (eligibility.error) setMessage(friendlyError(eligibility.error.message));
+        else setCanDeleteFamily(Boolean(eligibility.data));
+      }
+    } catch (error) {
+      setMessage(friendlyError(error instanceof Error ? error.message : ''));
+    } finally {
+      setLoadingMembers(false);
     }
-    setLoadingMembers(false);
-  }, [familyId, currentUserEmail, isOwner]);
+  }, [currentUserEmail, en, familyId, isOwner]);
 
   useEffect(() => {
     void loadMembers();
@@ -297,7 +312,7 @@ export function Members() {
       </div>
       {message && (
         <p
-          role="status"
+          role="alert"
           className="inline-feedback"
         >
           {message}

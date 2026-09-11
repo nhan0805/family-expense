@@ -10,6 +10,8 @@ export function authErrorMessage(error: unknown, english = false) {
   const message = (vi: string, en: string) => english ? en : vi;
   if (
     isOffline() ||
+    normalized.includes('supabase_request_timeout') ||
+    normalized.includes('timed out') ||
     normalized.includes('failed to fetch') ||
     normalized.includes('networkerror') ||
     normalized.includes('network request failed') ||
@@ -49,6 +51,12 @@ export function userFacingError(
 ) {
   const message = messageOf(error);
   const normalized = message.toLowerCase();
+  if (
+    normalized.includes('supabase_request_timeout') ||
+    normalized.includes('timed out') ||
+    normalized.includes('request timeout')
+  )
+    return 'Hệ thống phản hồi quá lâu. Vui lòng kiểm tra kết nối mạng rồi thử lại.';
   if (
     isOffline() ||
     normalized.includes('failed to fetch') ||

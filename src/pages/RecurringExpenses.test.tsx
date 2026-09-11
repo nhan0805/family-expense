@@ -80,6 +80,14 @@ describe('Chi phí định kỳ', () => {
     expect(screen.getByText('Chủ gia đình chưa thiết lập khoản chi định kỳ nào.')).toBeInTheDocument();
   });
 
+  it('không giữ loading vô hạn khi chưa có familyId', async () => {
+    mockedUseApp.mockReturnValue({ ...appState('member'), familyId: '' } as unknown as ReturnType<typeof useApp>);
+    renderPage();
+
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Không tìm thấy gia đình đang hoạt động.'));
+    expect(screen.queryByLabelText('Đang tải khoản chi định kỳ…')).not.toBeInTheDocument();
+  });
+
   it('không hiển thị nút xóa cho member dù đã có mẫu', async () => {
     mockedUseApp.mockReturnValue(appState('member'));
     upsertLocalRecurringExpense('local-family', {

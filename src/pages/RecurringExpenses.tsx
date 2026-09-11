@@ -112,9 +112,15 @@ export function RecurringExpenses() {
   const defaultPaymentMethodId = paymentMethods.find((item) => item.name === 'Chuyển khoản')?.id || paymentMethods[0]?.id || '';
 
   const loadItems = useCallback(async () => {
-    if (!familyId) return;
     setLoading(true);
     setPageError('');
+    if (!familyId) {
+      setItems([]);
+      setDeletedItems([]);
+      setPageError(en ? 'No active family was found. Please reload and try again.' : 'Không tìm thấy gia đình đang hoạt động. Vui lòng tải lại rồi thử lại.');
+      setLoading(false);
+      return;
+    }
     try {
       if (isSupabaseConfigured) {
         const loaded = await fetchRecurringExpenses(familyId, canManage);

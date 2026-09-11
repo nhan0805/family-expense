@@ -256,4 +256,23 @@ describe('Dashboard', () => {
     expect(screen.getByLabelText('Đến ngày')).toHaveAttribute('aria-describedby', 'dashboard-custom-range-error');
     expect(screen.queryByText('Chi dài hạn')).not.toBeInTheDocument();
   });
+
+  it('không bị loading vô hạn khi ngày bắt đầu sau ngày kết thúc', () => {
+    vi.mocked(useApp).mockReturnValue({
+      transactions: [],
+      purposes: [],
+      expenseTypes: [],
+      confirmPlannedTransaction,
+    } as unknown as ReturnType<typeof useApp>);
+    renderDashboard();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Tùy chỉnh' }));
+    fireEvent.input(screen.getByLabelText('Từ ngày'), { target: { value: '2026-09-10' } });
+    fireEvent.input(screen.getByLabelText('Đến ngày'), { target: { value: '2026-09-01' } });
+
+    const message = 'Ngày bắt đầu phải trước hoặc bằng ngày kết thúc. Vui lòng chọn lại khoảng ngày.';
+    expect(screen.getAllByText(message)).toHaveLength(2);
+    expect(screen.getByLabelText('Từ ngày')).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.queryByText('Đang tải tổng quan tài chính…')).not.toBeInTheDocument();
+  });
 });

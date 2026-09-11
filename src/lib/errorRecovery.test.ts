@@ -6,6 +6,10 @@ describe('xử lý lỗi và retry', () => {
     expect(userFacingError(new Error('Failed to fetch'))).toContain('kết nối mạng');
   });
 
+  it('đổi timeout Supabase thành hướng dẫn thử lại rõ ràng', () => {
+    expect(userFacingError(new Error('SUPABASE_REQUEST_TIMEOUT'))).toContain('phản hồi quá lâu');
+  });
+
   it('phân biệt lỗi quyền và phiên đăng nhập', () => {
     expect(userFacingError(new Error('42501 permission denied'))).toContain('quyền');
     expect(userFacingError(new Error('JWT expired'))).toContain('Phiên đăng nhập');
