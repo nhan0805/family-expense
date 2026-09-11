@@ -287,11 +287,16 @@ export function Dashboard() {
   const compareRange = useMemo(() => previousRange(selectedPeriods, mode, customFrom, customTo), [selectedPeriods, mode, customFrom, customTo]);
   const chartPeriods = useMemo(() => mode === 'month' ? periodsForMode(anchorKey, '6m', '', '') : selectedPeriods, [anchorKey, mode, selectedPeriods]);
   const chartRange = useMemo(() => rangeForPeriods(chartPeriods, mode === 'custom' ? customFrom : '', mode === 'custom' ? customTo : ''), [chartPeriods, mode, customFrom, customTo]);
+  const customRangeReversed = mode === 'custom' && Boolean(customFrom && customTo && customFrom > customTo);
   const customRangeTooLong = mode === 'custom' && exceedsDashboardRangeLimit(selectedRange);
+  const customRangeInvalid = mode === 'custom' && selectedPeriods.length === 0;
+  const customRangeError = customRangeReversed || customRangeTooLong || customRangeInvalid;
   const validRange = selectedPeriods.length > 0 && !customRangeTooLong;
-  const customRangeErrorMessage = en
-    ? `Dashboard supports custom ranges up to ${MAX_DASHBOARD_RANGE_DAYS} days. Please choose a shorter range.`
-    : `Dashboard chỉ hỗ trợ khoảng tùy chỉnh tối đa ${MAX_DASHBOARD_RANGE_DAYS} ngày. Vui lòng chọn khoảng ngắn hơn.`;
+  const customRangeErrorMessage = customRangeReversed
+    ? (en ? 'The start date must be on or before the end date. Please choose a valid range.' : 'Ngày bắt đầu phải trước hoặc bằng ngày kết thúc. Vui lòng chọn lại khoảng ngày.')
+    : customRangeTooLong
+      ? (en ? `Dashboard supports custom ranges up to ${MAX_DASHBOARD_RANGE_DAYS} days. Please choose a shorter range.` : `Dashboard chỉ hỗ trợ khoảng tùy chỉnh tối đa ${MAX_DASHBOARD_RANGE_DAYS} ngày. Vui lòng chọn khoảng ngắn hơn.`)
+      : (en ? 'Choose a valid date range.' : 'Vui lòng chọn khoảng ngày hợp lệ.');
   const hasMultiMonthView = selectedPeriods.length > 1;
   const queryFrom = [selectedRange.from, compareRange.from, chartRange.from].filter(Boolean).sort()[0] || '';
   const queryTo = selectedRange.to || '';
@@ -505,7 +510,9 @@ export function Dashboard() {
       // The query keeps the error so the UI can offer an explicit retry.
     }
   };
-  if (isSupabaseConfigured && dashboardQuery.isPending)
+  if (isSupabaseConfigured && !familyId)
+    return <p role="alert" className="rounded-xl bg-red-50 p-4 text-red-700 dark:bg-red-950/30 dark:text-red-300">{en ? 'No active family was found. Please reload and try again.' : 'Không tìm thấy gia đình đang hoạt động. Vui lòng tải lại rồi thử lại.'}</p>;
+  if (isSupabaseConfigured && dashboardQuery.isPending && validRange && Boolean(familyId))
     return <PageSkeleton label={en ? 'Loading financial overview…' : 'Đang tải tổng quan tài chính…'} />;
   if (isSupabaseConfigured && dashboardQuery.isError && !dashboardQuery.data)
     return (
@@ -542,11 +549,11 @@ export function Dashboard() {
             <label className="min-w-0"><span className="label">{en ? 'Year' : 'Năm'}</span><select id="dashboard-year" aria-label={en ? 'Year' : 'Năm'} className="field px-2 sm:min-w-28" value={selectedYear} onChange={changeYear}>{availableYears.map((year) => <option key={year} value={year}>{year}</option>)}</select></label>
           </div>
         </div>
-        {mode === 'custom' && <div className="ui-enter grid gap-3 sm:grid-cols-2"><label htmlFor="dashboard-custom-from"><span className="label">{en ? 'From date' : 'Từ ngày'}</span><input id="dashboard-custom-from" className="field" type="date" value={customFrom} aria-describedby={customRangeTooLong ? 'dashboard-custom-range-error' : undefined} aria-invalid={customRangeTooLong} onInput={(event) => setCustomFrom(event.currentTarget.value)} onChange={(event) => setCustomFrom(event.currentTarget.value)} /></label><label htmlFor="dashboard-custom-to"><span className="label">{en ? 'To date' : 'Đến ngày'}</span><input id="dashboard-custom-to" className="field" type="date" value={customTo} aria-describedby={customRangeTooLong ? 'dashboard-custom-range-error' : undefined} aria-invalid={customRangeTooLong} onInput={(event) => setCustomTo(event.currentTarget.value)} onChange={(event) => setCustomTo(event.currentTarget.value)} /></label>{customRangeTooLong && <p id="dashboard-custom-range-error" className="sm:col-span-2 text-sm text-red-700 dark:text-red-300">{customRangeErrorMessage}</p>}</div>}
+        {mode === 'custom' && <div className="ui-enter grid gap-3 sm:grid-cols-2"><label htmlFor="dashboard-custom-from"><span className="label">{en ? 'From date' : 'Từ ngày'}</span><input id="dashboard-custom-from" className="field" type="date" value={customFrom} aria-describedby={customRangeError ? 'dashboard-custom-range-error' : undefined} aria-invalid={customRangeError} onInput={(event) => setCustomFrom(event.currentTarget.value)} onChange={(event) => setCustomFrom(event.currentTarget.value)} /></label><label htmlFor="dashboard-custom-to"><span className="label">{en ? 'To date' : 'Đến ngày'}</span><input id="dashboard-custom-to" className="field" type="date" value={customTo} aria-describedby={customRangeError ? 'dashboard-custom-range-error' : undefined} aria-invalid={customRangeError} onInput={(event) => setCustomTo(event.currentTarget.value)} onChange={(event) => setCustomTo(event.currentTarget.value)} /></label>{customRangeError && <p id="dashboard-custom-range-error" className="sm:col-span-2 text-sm text-red-700 dark:text-red-300">{customRangeErrorMessage}</p>}</div>}
         <div className="period-context flex flex-wrap items-center gap-2 text-sm text-gray-500 dark:text-gray-400"><CalendarDays size={16} aria-hidden="true" /><span className="font-semibold text-gray-700 dark:text-gray-200">{periodLabel}</span><span aria-hidden="true">·</span><span>{en ? 'Actual transactions only' : 'Chỉ giao dịch thực tế'}</span></div>
       </section>
 
-      {(!validRange || error) && <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300"><span>{customRangeTooLong ? customRangeErrorMessage : !validRange ? (en ? 'Choose a valid date range.' : 'Vui lòng chọn khoảng ngày hợp lệ.') : (dashboardQuery.data ? (en ? 'Showing the last loaded dashboard data. Refresh failed.' : 'Đang hiển thị dữ liệu Dashboard đã tải trước đó. Lần làm mới vừa thất bại.') : (en ? 'Could not load part of the dashboard.' : 'Không thể tải một phần Dashboard.'))}</span>{validRange && <button type="button" className="btn-secondary px-3 py-1.5 text-xs" onClick={() => { void dashboardQuery.refetch(); void yearsQuery.refetch(); }}>{en ? 'Retry' : 'Thử lại'}</button>}</div>}
+      {(!validRange || error) && <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300"><span>{customRangeError ? customRangeErrorMessage : !validRange ? (en ? 'Choose a valid date range.' : 'Vui lòng chọn khoảng ngày hợp lệ.') : (dashboardQuery.data ? (en ? 'Showing the last loaded dashboard data. Refresh failed.' : 'Đang hiển thị dữ liệu Dashboard đã tải trước đó. Lần làm mới vừa thất bại.') : (en ? 'Could not load part of the dashboard.' : 'Không thể tải một phần Dashboard.'))}</span>{validRange && <button type="button" className="btn-secondary px-3 py-1.5 text-xs" onClick={() => { void dashboardQuery.refetch(); void yearsQuery.refetch(); }}>{en ? 'Retry' : 'Thử lại'}</button>}</div>}
 
       <section className={`ui-stagger dashboard-kpi-grid grid grid-cols-2 gap-3 sm:gap-4 ${hasMultiMonthView ? 'xl:grid-cols-6' : 'xl:grid-cols-3'}`} aria-label={en ? 'Financial summary' : 'Tóm tắt tài chính'}>
         <Kpi label={en ? 'Total income' : 'Tổng thu'} value={selectedIncome} icon={ArrowDownToLine} tone="emerald" meta={renderChange(incomeChange, en, 'vs previous period')} to={periodFilterLink('Thu nhập')} />

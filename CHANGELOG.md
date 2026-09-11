@@ -1,5 +1,15 @@
 # Nhật ký thay đổi Family Expense
 
+## 2026-09-12
+
+### Hiển thị lỗi thay vì loading vô hạn
+
+- Tab Giao dịch hiển thị lỗi và nút thử lại khi tải Thùng rác thất bại; trạng thái rỗng chỉ hiện sau khi query đang dùng đã hoàn tất thành công.
+- Dashboard, Ngân sách, Form giao dịch, Giao dịch, Thành viên và Chi phí định kỳ đều có guard khi chưa có `familyId`, tránh skeleton chờ vô hạn; Members luôn dọn loading trong `finally`.
+- Supabase client tự timeout request sau 15 giây và chuyển lỗi timeout thành hướng dẫn kiểm tra mạng/thử lại bằng tiếng Việt.
+- Files: `src/lib/errorRecovery.ts`, `src/lib/supabase.ts`, `src/pages/Dashboard.tsx`, `src/pages/Budgets.tsx`, `src/pages/TransactionForm.tsx`, `src/pages/Transactions.tsx`, `src/pages/Members.tsx`, `src/pages/RecurringExpenses.tsx` cùng regression tests. Không đổi schema, migration, RLS/RPC, Edge Function hoặc dữ liệu.
+- Kiểm thử local: Vitest 37 file/164 test, TypeScript, ESLint, production build và `git diff --check` pass; build chỉ còn cảnh báo chunk lớn hiện hữu. Đang chờ PR merge để Cloudflare Pages deploy production.
+
 ## 2026-09-11
 
 ### Sửa tải Dashboard theo kỳ dài và cảnh báo khoảng tùy chỉnh

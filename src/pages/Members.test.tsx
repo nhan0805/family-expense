@@ -102,4 +102,39 @@ describe('Members', () => {
     expect(currentUserRow).toHaveClass('member-row-current');
     expect(within(currentUserRow).getByText('Bạn')).toBeInTheDocument();
   });
+
+  it('không giữ loading vô hạn khi chưa có familyId', async () => {
+    vi.mocked(useApp).mockReturnValue({
+      familyId: '',
+      familyName: 'Gia đình của tôi',
+      currentUserEmail: 'owner@example.com',
+      currentUserId: 'owner-1',
+      currentUserRole: 'owner',
+      updateFamilyName: vi.fn(),
+      deleteFamily: vi.fn(),
+    } as unknown as ReturnType<typeof useApp>);
+
+    render(<Members />);
+
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Không tìm thấy gia đình đang hoạt động.'));
+    expect(screen.queryByLabelText('Đang tải thành viên')).not.toBeInTheDocument();
+  });
+
+  it('hiển thị lỗi khi RPC tải thành viên bị reject', async () => {
+    vi.mocked(useApp).mockReturnValue({
+      familyId: 'family-1',
+      familyName: 'Gia đình của tôi',
+      currentUserEmail: 'owner@example.com',
+      currentUserId: 'owner-1',
+      currentUserRole: 'owner',
+      updateFamilyName: vi.fn(),
+      deleteFamily: vi.fn(),
+    } as unknown as ReturnType<typeof useApp>);
+    vi.mocked(supabase.rpc).mockRejectedValueOnce(new Error('network request failed'));
+
+    render(<Members />);
+
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Không thể hoàn tất thao tác thành viên.'));
+    expect(screen.queryByLabelText('Đang tải thành viên')).not.toBeInTheDocument();
+  });
 });

@@ -47,6 +47,7 @@ import {
   normalizeText,
   type Transaction,
 } from '../lib/domain';
+import { userFacingError } from '../lib/errorRecovery';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { reportClientError } from '../lib/telemetry';
 import {
@@ -544,6 +545,12 @@ export function Transactions() {
   const rows = showTrash
     ? (isSupabaseConfigured ? trashQuery.data?.rows || [] : localTrashRows)
     : (isSupabaseConfigured ? transactionQuery.data?.pages.flatMap((page) => page.rows) || [] : localRows);
+  const activeQueryIsPending = showTrash ? trashQuery.isPending : transactionQuery.isPending;
+  const activeQueryIsError = showTrash ? trashQuery.isError : transactionQuery.isError;
+  const activeQueryError = showTrash ? trashQuery.error : transactionQuery.error;
+  const refetchActiveQuery = () => {
+    void (showTrash ? trashQuery.refetch() : transactionQuery.refetch());
+  };
   const availableYearsFromData = isSupabaseConfigured
     ? yearsQuery.data || []
     : localAvailableYears;
@@ -603,6 +610,13 @@ export function Transactions() {
     dateFrom,
     dateTo,
   ].filter(Boolean).length;
+
+  if (isSupabaseConfigured && !familyId)
+    return (
+      <p role="alert" className="rounded-xl bg-red-50 p-4 text-red-700 dark:bg-red-950/30 dark:text-red-300">
+        {en ? 'No active family was found. Please reload and try again.' : 'Không tìm thấy gia đình đang hoạt động. Vui lòng tải lại rồi thử lại.'}
+      </p>
+    );
   const filterChips = [
     transactionType && { key: 'transactionType', label: transactionType, clear: () => setTransactionType('') },
     status && { key: 'status', label: status, clear: () => setStatus('') },
@@ -1099,13 +1113,14 @@ export function Transactions() {
           {deleteError}
         </p>
       )}
-      {transactionQuery.isError && (
-        <p
+      {activeQueryIsError && (
+        <div
           role="alert"
-          className="rounded-xl bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300"
         >
-          {en ? 'Could not load transactions. Please try again.' : 'Không thể tải danh sách giao dịch. Vui lòng thử lại.'}
-        </p>
+          <span>{userFacingError(activeQueryError, showTrash ? (en ? 'Could not load deleted transactions.' : 'Không thể tải giao dịch đã xóa.') : (en ? 'Could not load transactions.' : 'Không thể tải danh sách giao dịch.'))}</span>
+          <button type="button" className="btn-secondary px-3 py-1.5 text-xs" onClick={refetchActiveQuery}>{en ? 'Retry' : 'Thử lại'}</button>
+        </div>
       )}
 
       <section aria-label={en ? 'Transaction search and filters' : 'Tìm kiếm và bộ lọc giao dịch'} className="filter-panel order-1 card space-y-3 p-3 sm:p-4">
@@ -1370,8 +1385,8 @@ export function Transactions() {
             '—';
           return <TransactionRow key={transaction.id} transaction={transaction} purposeName={purposeName} purposeIcon={purpose?.icon} expenseTypeName={expenseTypeName} expenseTypeIcon={expenseType?.icon} paymentMethodName={paymentMethodName} paymentMethodIcon={paymentMethod?.icon} recurringLabel={en ? 'Recurring' : 'Định kỳ'} plannedLabel={en ? 'Planned' : 'Dự kiến'} actualLabel={en ? 'Actual' : 'Thực tế'} showTrash={showTrash} selectMode={selectMode} selected={selectedIds.has(transaction.id)} openMenu={openMenuId === transaction.id} deleting={deletingId === transaction.id} copying={copyingId === transaction.id} currentUserRole={currentUserRole} currentUserId={currentUserId} onToggleSelected={toggleSelected} onSetSelected={setSelectedIds} onToggleMenu={(id) => setOpenMenuId((value) => value === id ? null : id)} onRestore={() => void restoreSelected()} onPermanentlyDelete={() => void permanentlyDeleteSelected()} onCopy={(item) => void copyTransaction(item)} onRemove={(id) => void remove(id)} />;
         })}
-        {((showTrash ? trashQuery.isPending : transactionQuery.isPending) && isSupabaseConfigured) && <TransactionListSkeleton/>}
-        {rows.length === 0 && !transactionQuery.isPending && (
+        {(activeQueryIsPending && isSupabaseConfigured && Boolean(familyId)) && <TransactionListSkeleton/>}
+        {rows.length === 0 && !activeQueryIsPending && !activeQueryIsError && (
           hasFilters
             ? <EmptyState title={en ? 'No matching transactions' : 'Không tìm thấy giao dịch phù hợp'} description={en ? 'Try changing the search term, date range or category filter.' : 'Hãy thử thay đổi từ khóa, thời gian hoặc danh mục lọc.'} action={<button className="btn-secondary" onClick={resetFilters}>{en ? 'Clear filters' : 'Xóa bộ lọc'}</button>}/>
             : <EmptyState title={en ? 'No transactions yet' : 'Chưa có giao dịch'} description={en ? 'Add your first transaction to start managing family finances.' : 'Thêm giao dịch đầu tiên để bắt đầu quản lý thu chi gia đình.'} action={<Link className="btn-primary inline-flex items-center gap-2" to="/giao-dich/moi"><Plus size={17}/>{en ? 'Add transaction' : 'Thêm giao dịch'}</Link>}/>

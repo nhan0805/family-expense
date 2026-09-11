@@ -251,11 +251,14 @@ export function Budgets() {
     }
   };
 
-  if (isSupabaseConfigured && summaryQuery.isPending)
+  if (isSupabaseConfigured && !familyId)
+    return <p role="alert" className="rounded-xl bg-red-50 p-4 text-red-700 dark:bg-red-950/30 dark:text-red-300">{en ? 'No active family was found. Please reload and try again.' : 'Không tìm thấy gia đình đang hoạt động. Vui lòng tải lại rồi thử lại.'}</p>;
+
+  if (isSupabaseConfigured && summaryQuery.isPending && Boolean(familyId))
     return <PageSkeleton label={en ? 'Loading budgets…' : 'Đang tải ngân sách…'} />;
 
   if (isSupabaseConfigured && summaryQuery.isError)
-    return <div className="space-y-5"><header className="page-header"><p className="page-kicker"><PiggyBank size={16} aria-hidden="true" />{en ? 'Family planning' : 'Lập kế hoạch gia đình'}</p><h2 className="page-title">{en ? 'Budgets' : 'Ngân sách'}</h2></header><div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300">{errorMessage(summaryQuery.error, en, en ? 'Could not load budgets.' : 'Không thể tải ngân sách.')}</div></div>;
+    return <div className="space-y-5"><header className="page-header"><p className="page-kicker"><PiggyBank size={16} aria-hidden="true" />{en ? 'Family planning' : 'Lập kế hoạch gia đình'}</p><h2 className="page-title">{en ? 'Budgets' : 'Ngân sách'}</h2></header><div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300"><span>{errorMessage(summaryQuery.error, en, en ? 'Could not load budgets.' : 'Không thể tải ngân sách.')}</span><button type="button" className="btn-secondary px-3 py-1.5 text-xs" onClick={() => void summaryQuery.refetch()}>{en ? 'Retry' : 'Thử lại'}</button></div></div>;
 
   return <div className="budgets-page space-y-5">
     <header className="page-header flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
