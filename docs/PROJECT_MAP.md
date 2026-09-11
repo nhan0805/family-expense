@@ -65,7 +65,7 @@ Generated/dependency output such as `node_modules/`, `dist/`, `coverage/`, Playw
 
 ### Transactions
 
-- `src/pages/Transactions.tsx` handles filters, pagination, due planned transactions, bulk actions, deletion and confirmation.
+- `src/pages/Transactions.tsx` handles filters, pagination, bulk actions, deletion and confirmation. Due planned transactions are surfaced and confirmed from `src/components/BudgetNotifications.tsx`.
 - `src/pages/TransactionForm.tsx` handles create/edit/copy and AI-assisted entry.
 - `src/components/TransactionRow.tsx` renders responsive desktop/mobile transaction rows.
 - `src/lib/transactionsApi.ts` maps rows and calls family-scoped RPC/table queries. `src/lib/transactionDraft.ts`, `src/lib/quickTransactionSearch.ts` and `src/lib/domain.ts` hold reusable transaction logic.
