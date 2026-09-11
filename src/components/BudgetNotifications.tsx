@@ -292,12 +292,12 @@ export function BudgetNotifications() {
             </div>}
           </div>
           {dueTransactions.length > 0 && <div className="border-b border-amber-200 bg-amber-50/70 p-3 dark:border-[#f1fa8c44] dark:bg-[#f1fa8c14]">
-            <div className="flex items-start justify-between gap-3">
+            <div className="flex flex-col gap-2">
               <div className="min-w-0">
-                <h3 className="font-bold">{en ? 'Planned transactions due' : 'Giao dịch dự kiến tới hạn'}</h3>
+                <h3 className="whitespace-nowrap font-bold">{en ? 'Planned transactions due' : 'Giao dịch dự kiến tới hạn'}</h3>
                 <p className="mt-0.5 text-xs text-amber-900/75 dark:text-amber-100/75">{en ? `${dueTransactions.length} transaction(s) need confirmation.` : `${dueTransactions.length} giao dịch cần xác nhận.`}</p>
               </div>
-              {dueTransactions.length > 1 && <button type="button" className="btn-primary shrink-0 px-3 py-2 text-xs" disabled={Boolean(confirmingId)} onClick={() => void confirmDueTransactions(dueTransactions)}>
+              {dueTransactions.length > 1 && <button type="button" className="btn-primary self-start px-3 py-2 text-xs" disabled={Boolean(confirmingId)} onClick={() => void confirmDueTransactions(dueTransactions)}>
                 {en ? 'Confirm all' : 'Xác nhận tất cả'}
               </button>}
             </div>

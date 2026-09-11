@@ -1,6 +1,5 @@
 import {
   ChevronDown,
-  CheckCheck,
   RotateCcw,
   Search,
   Trash2,
@@ -39,7 +38,6 @@ import {
   invokeAiFunction,
 } from '../lib/aiClient';
 import { getQuickTransactionSearch } from '../lib/quickTransactionSearch';
-import { todayInVietnam } from '../lib/recurringExpense';
 import {
   canDeleteTransaction,
   formatDateOnlyVi,
@@ -53,7 +51,6 @@ import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { reportClientError } from '../lib/telemetry';
 import {
   fetchDeletedTransactionPage,
-  fetchDashboardDueTransactions,
   fetchTransactionPage,
   fetchTransactionYears,
   REMOTE_TRANSACTION_REFRESH_INTERVAL_MS,
@@ -386,7 +383,6 @@ export function Transactions() {
   const [voiceListening, setVoiceListening] = useState(false);
   const [voiceSupported] = useState(() => Boolean(getSpeechRecognition()));
   const speechRecognitionRef = useRef<SpeechRecognitionLike | null>(null);
-  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
   useEffect(() => {
     const timeout = window.setTimeout(() => setDebouncedQuery(query), 300);
     return () => window.clearTimeout(timeout);
@@ -531,27 +527,10 @@ export function Transactions() {
     enabled: isSupabaseConfigured && Boolean(familyId),
     staleTime: 5 * 60_000,
   });
-  const localDuePlannedTransactions = useMemo(
-    () => transactions
-      .filter((item) => !item.deletedAt && item.status === 'Dự kiến' && item.transactionDate <= today)
-      .sort((a, b) => a.transactionDate.localeCompare(b.transactionDate)),
-    [today, transactions],
-  );
-  const duePlannedQuery = useQuery({
-    queryKey: ['dashboard-due', familyId],
-    queryFn: () => fetchDashboardDueTransactions(familyId, todayInVietnam()),
-    enabled: isSupabaseConfigured && Boolean(familyId),
-    retry: false,
-    refetchInterval: isSupabaseConfigured && Boolean(familyId)
-      ? REMOTE_TRANSACTION_REFRESH_INTERVAL_MS
-      : false,
-    refetchOnWindowFocus: true,
-  });
   useEffect(() => {
     if (transactionQuery.error) reportClientError(transactionQuery.error, 'query');
     if (trashQuery.error) reportClientError(trashQuery.error, 'query');
-    if (duePlannedQuery.error) reportClientError(duePlannedQuery.error, 'query');
-  }, [duePlannedQuery.error, trashQuery.error, transactionQuery.error]);
+  }, [trashQuery.error, transactionQuery.error]);
   const aiCatalogVersion = useMemo(
     () => JSON.stringify(
       [purposes, expenseTypes, paymentMethods].map((items) =>
@@ -824,33 +803,6 @@ export function Transactions() {
     setBulkEditBusy(false);
     closeSelectMode();
     notify(`Đã cập nhật ${updatedCount} giao dịch.`);
-  };
-  const duePlannedTransactions = showTrash
-    ? []
-    : (isSupabaseConfigured ? duePlannedQuery.data || [] : localDuePlannedTransactions);
-  const confirmPlannedTransactions = async (items: Transaction[]) => {
-    if (!items.length) return;
-    if (!await askConfirm({ title: 'Xác nhận giao dịch dự kiến?', description: `${items.length} giao dịch đến hạn sẽ chuyển sang Thực tế.`, confirmLabel: 'Xác nhận' })) return;
-    setBulkEditBusy(true);
-    setDeleteError('');
-    if (isSupabaseConfigured) {
-      const { data, error } = await supabase.from('transactions').update({ status: 'Thực tế', updated_by: currentUserId }).eq('family_id', familyId).in('id', items.map((item) => item.id)).eq('status', 'Dự kiến').is('deleted_at', null).select('id');
-      if (error || data?.length !== items.length) {
-        setDeleteError(error?.message || 'Một số giao dịch không thể xác nhận.');
-        setBulkEditBusy(false);
-        return;
-      }
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['transactions', familyId] }),
-        queryClient.invalidateQueries({ queryKey: ['dashboard-due', familyId] }),
-        queryClient.invalidateQueries({ queryKey: ['dashboard-data', familyId] }),
-        queryClient.invalidateQueries({ queryKey: ['budgets', familyId] }),
-      ]);
-    } else {
-      setTransactions((current) => current.map((item) => items.some((planned) => planned.id === item.id) ? { ...item, status: 'Thực tế' } : item));
-    }
-    setBulkEditBusy(false);
-    notify(`Đã xác nhận ${items.length} giao dịch.`);
   };
   const remove = async (id: string) => {
     const transaction = rows.find((item) => item.id === id);
@@ -1377,23 +1329,6 @@ export function Transactions() {
           </div>
         </details>
       </section>
-
-      {isSupabaseConfigured && duePlannedQuery.isError && (
-        <div role="alert" className="attention-card order-2 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50/70 p-4 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/20 dark:text-amber-200">
-          <span>{en ? 'Could not load planned transactions that need confirmation.' : 'Không thể tải các giao dịch dự kiến cần xác nhận.'}</span>
-          <button type="button" className="btn-secondary px-3 py-1.5 text-xs" onClick={() => void duePlannedQuery.refetch()}>{en ? 'Retry' : 'Thử lại'}</button>
-        </div>
-      )}
-      {duePlannedTransactions.length > 0 && (
-        <section className="attention-card order-2 rounded-2xl border border-amber-200 bg-amber-50/70 p-4 shadow-sm dark:border-amber-900/50 dark:bg-amber-950/20" aria-labelledby="due-planned-title">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-start gap-3"><span className="grid size-10 shrink-0 place-items-center rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300"><CheckCheck size={20} /></span><div><h2 id="due-planned-title" className="font-extrabold">{en ? 'Planned transactions due' : 'Giao dịch dự kiến tới hạn'}</h2><p className="mt-1 text-sm text-amber-900/75 dark:text-amber-100/75">{en ? `${duePlannedTransactions.length} transaction(s) are due for confirmation.` : `${duePlannedTransactions.length} giao dịch cần xác nhận đã thực hiện.`}</p></div></div>
-            <button type="button" className="btn-primary shrink-0 text-sm" disabled={bulkEditBusy} onClick={() => void confirmPlannedTransactions(duePlannedTransactions)}>{en ? 'Confirm all' : 'Xác nhận tất cả'}</button>
-          </div>
-          <div className="mt-3 space-y-2">{duePlannedTransactions.slice(0, 5).map((item) => <div key={item.id} className="flex items-center justify-between gap-3 rounded-xl bg-white/75 px-3 py-2 text-sm dark:bg-white/5"><span className="min-w-0 truncate font-semibold">{item.description}</span><button type="button" className="shrink-0 rounded-lg px-2 py-1 text-xs font-bold text-amber-800 hover:bg-amber-100 dark:text-amber-200 dark:hover:bg-amber-950/50" disabled={bulkEditBusy} onClick={() => void confirmPlannedTransactions([item])}>{en ? 'Confirm' : 'Xác nhận'}</button></div>)}</div>
-          {duePlannedTransactions.length > 5 && <p className="mt-2 text-xs text-amber-900/70 dark:text-amber-100/70">{en ? `Showing 5 of ${duePlannedTransactions.length}.` : `Đang hiển thị 5/${duePlannedTransactions.length} giao dịch.`}</p>}
-        </section>
-      )}
 
       <div className="list-toolbar order-3 flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 shadow-sm">
         <p className="text-base font-semibold text-gray-600 dark:text-gray-300">{showTrash ? (en ? 'Trash' : 'Thùng rác') : (en ? 'Transaction list' : 'Danh sách giao dịch')}</p>
