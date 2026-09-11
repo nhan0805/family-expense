@@ -236,4 +236,24 @@ describe('Dashboard', () => {
     expect(screen.getByRole('link', { name: 'Mở giao dịch theo Tổng chi' })).toHaveTextContent('200K');
     expect(screen.getByText('10/02/2026 – 28/02/2026')).toBeInTheDocument();
   });
+
+  it('báo lỗi rõ ràng khi kỳ tùy chỉnh vượt quá 366 ngày', () => {
+    vi.mocked(useApp).mockReturnValue({
+      transactions: [transaction('Chi dài hạn', '2025-06-01', 200_000)],
+      purposes: [{ id: 'p1', name: 'Sinh hoạt' }],
+      expenseTypes: [{ id: 'e1', name: 'Thực phẩm' }],
+      confirmPlannedTransaction,
+    } as unknown as ReturnType<typeof useApp>);
+    renderDashboard();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Tùy chỉnh' }));
+    fireEvent.input(screen.getByLabelText('Từ ngày'), { target: { value: '2025-01-01' } });
+    fireEvent.input(screen.getByLabelText('Đến ngày'), { target: { value: '2026-12-31' } });
+
+    const message = 'Dashboard chỉ hỗ trợ khoảng tùy chỉnh tối đa 366 ngày. Vui lòng chọn khoảng ngắn hơn.';
+    expect(screen.getAllByText(message)).toHaveLength(2);
+    expect(screen.getByLabelText('Từ ngày')).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByLabelText('Đến ngày')).toHaveAttribute('aria-describedby', 'dashboard-custom-range-error');
+    expect(screen.queryByText('Chi dài hạn')).not.toBeInTheDocument();
+  });
 });

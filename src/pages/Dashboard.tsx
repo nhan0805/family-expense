@@ -40,7 +40,7 @@ import { formatCompactVnd, formatVnd, getCatalogDisplayName, type CatalogItem, t
 import { isSupabaseConfigured } from '../lib/supabase';
 import { reportClientError } from '../lib/telemetry';
 import {
-  fetchDashboardAggregate,
+  fetchDashboardAggregates,
   fetchTransactionYears,
   REMOTE_TRANSACTION_REFRESH_INTERVAL_MS,
 } from '../lib/transactionsApi';
@@ -114,6 +114,19 @@ const dateFromDaysBefore = (dateValue: string, days: number) => {
   return date.toISOString().slice(0, 10);
 };
 
+const MAX_DASHBOARD_RANGE_DAYS = 366;
+
+const dateRangeDuration = (range: DateRange) => {
+  if (!range.from || !range.to) return null;
+  const from = new Date(`${range.from}T00:00:00Z`).getTime();
+  const to = new Date(`${range.to}T00:00:00Z`).getTime();
+  if (!Number.isFinite(from) || !Number.isFinite(to)) return null;
+  return Math.round((to - from) / 86_400_000);
+};
+
+const exceedsDashboardRangeLimit = (range: DateRange) =>
+  (dateRangeDuration(range) ?? 0) > MAX_DASHBOARD_RANGE_DAYS;
+
 const monthPeriods = (fromKey: string, toKey: string): Period[] => {
   if (fromKey > toKey) return [];
   const periods: Period[] = [];
@@ -158,7 +171,7 @@ const rangeForPeriod = (period: Period, mode: DashboardMode, customFrom: string,
 
 const previousRange = (periods: Period[], mode: DashboardMode, customFrom: string, customTo: string): DateRange => {
   if (mode === 'custom' && customFrom && customTo) {
-    const duration = Math.round((new Date(`${customTo}T00:00:00Z`).getTime() - new Date(`${customFrom}T00:00:00Z`).getTime()) / 86_400_000);
+    const duration = dateRangeDuration({ from: customFrom, to: customTo }) ?? 0;
     const to = dateFromDaysBefore(customFrom, 1);
     return { from: dateFromDaysBefore(to, duration), to };
   }
@@ -274,7 +287,11 @@ export function Dashboard() {
   const compareRange = useMemo(() => previousRange(selectedPeriods, mode, customFrom, customTo), [selectedPeriods, mode, customFrom, customTo]);
   const chartPeriods = useMemo(() => mode === 'month' ? periodsForMode(anchorKey, '6m', '', '') : selectedPeriods, [anchorKey, mode, selectedPeriods]);
   const chartRange = useMemo(() => rangeForPeriods(chartPeriods, mode === 'custom' ? customFrom : '', mode === 'custom' ? customTo : ''), [chartPeriods, mode, customFrom, customTo]);
-  const validRange = selectedPeriods.length > 0;
+  const customRangeTooLong = mode === 'custom' && exceedsDashboardRangeLimit(selectedRange);
+  const validRange = selectedPeriods.length > 0 && !customRangeTooLong;
+  const customRangeErrorMessage = en
+    ? `Dashboard supports custom ranges up to ${MAX_DASHBOARD_RANGE_DAYS} days. Please choose a shorter range.`
+    : `Dashboard chỉ hỗ trợ khoảng tùy chỉnh tối đa ${MAX_DASHBOARD_RANGE_DAYS} ngày. Vui lòng chọn khoảng ngắn hơn.`;
   const hasMultiMonthView = selectedPeriods.length > 1;
   const queryFrom = [selectedRange.from, compareRange.from, chartRange.from].filter(Boolean).sort()[0] || '';
   const queryTo = selectedRange.to || '';
@@ -289,14 +306,22 @@ export function Dashboard() {
     staleTime: 5 * 60_000,
   });
   const dashboardQuery = useQuery({
-    queryKey: ['dashboard-data', familyId, queryFrom, queryTo],
+    queryKey: [
+      'dashboard-data',
+      familyId,
+      chartRange.from,
+      chartRange.to,
+      selectedRange.from,
+      selectedRange.to,
+      compareRange.from,
+      compareRange.to,
+    ],
     queryFn: async () => {
-      const [chart, selected, comparison] = await Promise.all([
-        fetchDashboardAggregate(familyId, queryFrom, queryTo),
-        fetchDashboardAggregate(familyId, selectedRange.from, selectedRange.to),
-        fetchDashboardAggregate(familyId, compareRange.from, compareRange.to),
-      ]);
-      return { chart, selected, comparison };
+      return fetchDashboardAggregates(familyId, {
+        chart: chartRange,
+        selected: selectedRange,
+        comparison: compareRange,
+      });
     },
     enabled: isSupabaseConfigured && Boolean(familyId) && validRange,
     refetchInterval: isSupabaseConfigured && Boolean(familyId) && validRange
@@ -319,8 +344,10 @@ export function Dashboard() {
     : localAvailableYears;
   const sourceTransactions = useMemo(() => isSupabaseConfigured
     ? []
-    : transactions.filter((transaction) => !transaction.deletedAt && transaction.status === 'Thực tế' && transactionInRange(transaction, { from: queryFrom, to: queryTo })),
-  [queryFrom, queryTo, transactions]);
+    : validRange
+      ? transactions.filter((transaction) => !transaction.deletedAt && transaction.status === 'Thực tế' && transactionInRange(transaction, { from: queryFrom, to: queryTo }))
+      : [],
+  [queryFrom, queryTo, transactions, validRange]);
   const selectedTransactions = sourceTransactions.filter((transaction) => transactionInRange(transaction, selectedRange));
   const comparisonTransactions = sourceTransactions.filter((transaction) => transactionInRange(transaction, compareRange));
   const selectedAggregate = dashboardQuery.data?.selected;
@@ -515,11 +542,11 @@ export function Dashboard() {
             <label className="min-w-0"><span className="label">{en ? 'Year' : 'Năm'}</span><select id="dashboard-year" aria-label={en ? 'Year' : 'Năm'} className="field px-2 sm:min-w-28" value={selectedYear} onChange={changeYear}>{availableYears.map((year) => <option key={year} value={year}>{year}</option>)}</select></label>
           </div>
         </div>
-        {mode === 'custom' && <div className="ui-enter grid gap-3 sm:grid-cols-2"><label htmlFor="dashboard-custom-from"><span className="label">{en ? 'From date' : 'Từ ngày'}</span><input id="dashboard-custom-from" className="field" type="date" value={customFrom} onInput={(event) => setCustomFrom(event.currentTarget.value)} onChange={(event) => setCustomFrom(event.currentTarget.value)} /></label><label htmlFor="dashboard-custom-to"><span className="label">{en ? 'To date' : 'Đến ngày'}</span><input id="dashboard-custom-to" className="field" type="date" value={customTo} onInput={(event) => setCustomTo(event.currentTarget.value)} onChange={(event) => setCustomTo(event.currentTarget.value)} /></label></div>}
+        {mode === 'custom' && <div className="ui-enter grid gap-3 sm:grid-cols-2"><label htmlFor="dashboard-custom-from"><span className="label">{en ? 'From date' : 'Từ ngày'}</span><input id="dashboard-custom-from" className="field" type="date" value={customFrom} aria-describedby={customRangeTooLong ? 'dashboard-custom-range-error' : undefined} aria-invalid={customRangeTooLong} onInput={(event) => setCustomFrom(event.currentTarget.value)} onChange={(event) => setCustomFrom(event.currentTarget.value)} /></label><label htmlFor="dashboard-custom-to"><span className="label">{en ? 'To date' : 'Đến ngày'}</span><input id="dashboard-custom-to" className="field" type="date" value={customTo} aria-describedby={customRangeTooLong ? 'dashboard-custom-range-error' : undefined} aria-invalid={customRangeTooLong} onInput={(event) => setCustomTo(event.currentTarget.value)} onChange={(event) => setCustomTo(event.currentTarget.value)} /></label>{customRangeTooLong && <p id="dashboard-custom-range-error" className="sm:col-span-2 text-sm text-red-700 dark:text-red-300">{customRangeErrorMessage}</p>}</div>}
         <div className="period-context flex flex-wrap items-center gap-2 text-sm text-gray-500 dark:text-gray-400"><CalendarDays size={16} aria-hidden="true" /><span className="font-semibold text-gray-700 dark:text-gray-200">{periodLabel}</span><span aria-hidden="true">·</span><span>{en ? 'Actual transactions only' : 'Chỉ giao dịch thực tế'}</span></div>
       </section>
 
-      {(!validRange || error) && <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300"><span>{!validRange ? (en ? 'Choose a valid date range.' : 'Vui lòng chọn khoảng ngày hợp lệ.') : (dashboardQuery.data ? (en ? 'Showing the last loaded dashboard data. Refresh failed.' : 'Đang hiển thị dữ liệu Dashboard đã tải trước đó. Lần làm mới vừa thất bại.') : (en ? 'Could not load part of the dashboard.' : 'Không thể tải một phần Dashboard.'))}</span>{validRange && <button type="button" className="btn-secondary px-3 py-1.5 text-xs" onClick={() => { void dashboardQuery.refetch(); void yearsQuery.refetch(); }}>{en ? 'Retry' : 'Thử lại'}</button>}</div>}
+      {(!validRange || error) && <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300"><span>{customRangeTooLong ? customRangeErrorMessage : !validRange ? (en ? 'Choose a valid date range.' : 'Vui lòng chọn khoảng ngày hợp lệ.') : (dashboardQuery.data ? (en ? 'Showing the last loaded dashboard data. Refresh failed.' : 'Đang hiển thị dữ liệu Dashboard đã tải trước đó. Lần làm mới vừa thất bại.') : (en ? 'Could not load part of the dashboard.' : 'Không thể tải một phần Dashboard.'))}</span>{validRange && <button type="button" className="btn-secondary px-3 py-1.5 text-xs" onClick={() => { void dashboardQuery.refetch(); void yearsQuery.refetch(); }}>{en ? 'Retry' : 'Thử lại'}</button>}</div>}
 
       <section className={`ui-stagger dashboard-kpi-grid grid grid-cols-2 gap-3 sm:gap-4 ${hasMultiMonthView ? 'xl:grid-cols-6' : 'xl:grid-cols-3'}`} aria-label={en ? 'Financial summary' : 'Tóm tắt tài chính'}>
         <Kpi label={en ? 'Total income' : 'Tổng thu'} value={selectedIncome} icon={ArrowDownToLine} tone="emerald" meta={renderChange(incomeChange, en, 'vs previous period')} to={periodFilterLink('Thu nhập')} />

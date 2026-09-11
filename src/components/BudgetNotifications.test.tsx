@@ -149,4 +149,27 @@ describe('BudgetNotifications', () => {
 
     await waitFor(() => expect(confirmPlannedTransaction).toHaveBeenCalledWith('planned-1'));
   });
+
+  it('cho phép cuộn để xem toàn bộ giao dịch dự kiến tới hạn', () => {
+    const plannedTransactions = Array.from({ length: 8 }, (_, index) => ({
+      ...transaction,
+      id: `planned-${index + 1}`,
+      transactionDate: '2020-01-10',
+      status: 'Dự kiến' as const,
+      description: `Khoản dự kiến ${index + 1}`,
+    }));
+    mockedUseApp.mockReturnValue({
+      familyId: 'family-1',
+      purposes: [{ id: 'p1', name: 'Sinh hoạt', nameEn: 'Family living' }],
+      transactions: plannedTransactions,
+      confirmPlannedTransaction,
+    } as unknown as ReturnType<typeof useApp>);
+    renderNotifications();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Thông báo' }));
+    const dueList = screen.getByRole('list', { name: 'Danh sách giao dịch dự kiến tới hạn' });
+    expect(dueList).toHaveClass('max-h-64', 'overflow-y-auto', 'overscroll-contain');
+    plannedTransactions.forEach(({ description }) => expect(screen.getByText(description)).toBeInTheDocument());
+    expect(screen.getByText('Cuộn để xem tất cả 8 giao dịch.')).toBeInTheDocument();
+  });
 });

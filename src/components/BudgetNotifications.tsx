@@ -302,8 +302,8 @@ export function BudgetNotifications() {
               </button>}
             </div>
             {dueError && <p role="alert" className="mt-2 rounded-lg border border-red-200 bg-red-50 p-2 text-xs text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300">{dueError}</p>}
-            <ul className="mt-2 divide-y divide-amber-200/70 dark:divide-[#f1fa8c33]">
-              {dueTransactions.slice(0, 5).map((transaction) => <li key={transaction.id} className="flex items-center justify-between gap-3 py-2">
+            <ul aria-label={en ? 'Due planned transactions' : 'Danh sách giao dịch dự kiến tới hạn'} className="mt-2 max-h-64 overflow-y-auto overscroll-contain pr-1 divide-y divide-amber-200/70 dark:divide-[#f1fa8c33]">
+              {dueTransactions.map((transaction) => <li key={transaction.id} className="flex items-center justify-between gap-3 py-2">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold">{transaction.description}</p>
                   <p className="text-[11px] text-amber-900/70 dark:text-amber-100/70">{formatDueDate(transaction.transactionDate, language)} · {formatMoney(transaction.amount, language)}</p>
@@ -313,7 +313,7 @@ export function BudgetNotifications() {
                 </button>
               </li>)}
             </ul>
-            {dueTransactions.length > 5 && <p className="mt-2 text-[11px] text-amber-900/70 dark:text-amber-100/70">{en ? `Showing 5 of ${dueTransactions.length}.` : `Đang hiển thị 5/${dueTransactions.length} giao dịch.`}</p>}
+            {dueTransactions.length > 5 && <p className="mt-2 text-[11px] text-amber-900/70 dark:text-amber-100/70">{en ? `Scroll to view all ${dueTransactions.length} transactions.` : `Cuộn để xem tất cả ${dueTransactions.length} giao dịch.`}</p>}
           </div>}
           {visibleNotifications.length > 0 ? (
             <ul className="max-h-[min(28rem,calc(100vh-10rem))] overflow-y-auto p-2">

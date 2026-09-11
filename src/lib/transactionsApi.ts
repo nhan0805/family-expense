@@ -193,6 +193,11 @@ export type DashboardAggregate = {
   monthlyCategories: Array<{ month: string; id: string | null; value: number | string }>;
 };
 
+export type DashboardAggregateRange = {
+  from: string;
+  to: string;
+};
+
 export async function fetchDashboardAggregate(
   familyId: string,
   dateFrom: string,
@@ -215,6 +220,22 @@ export async function fetchDashboardAggregate(
     monthlyTrend: (result.monthlyTrend || []).map((item) => ({ ...item, expense: Number(item.expense), income: Number(item.income), net: Number(item.net) })),
     monthlyCategories: (result.monthlyCategories || []).map((item) => ({ ...item, value: Number(item.value) })),
   };
+}
+
+export async function fetchDashboardAggregates(
+  familyId: string,
+  ranges: {
+    chart: DashboardAggregateRange;
+    selected: DashboardAggregateRange;
+    comparison: DashboardAggregateRange;
+  },
+) {
+  const [chart, selected, comparison] = await Promise.all([
+    fetchDashboardAggregate(familyId, ranges.chart.from, ranges.chart.to),
+    fetchDashboardAggregate(familyId, ranges.selected.from, ranges.selected.to),
+    fetchDashboardAggregate(familyId, ranges.comparison.from, ranges.comparison.to),
+  ]);
+  return { chart, selected, comparison };
 }
 
 export async function fetchDashboardDueTransactions(
