@@ -2,6 +2,14 @@
 
 ## 2026-09-11
 
+### Sửa tải Dashboard theo kỳ dài và cảnh báo khoảng tùy chỉnh
+
+- Trước thay đổi: Dashboard gộp biểu đồ, kỳ đang chọn và kỳ so sánh thành request có thể dài hơn giới hạn 366 ngày của RPC; Tùy chỉnh trên 366 ngày có thể trả lỗi khó hiểu.
+- Sau thay đổi: tách ba truy vấn aggregate theo từng khoảng cho chế độ 12 tháng/năm; Tùy chỉnh dài hơn 366 ngày hiển thị cảnh báo ngay dưới ô ngày, đánh dấu trường không hợp lệ và không gọi dữ liệu. Danh sách giao dịch dự kiến tới hạn trong Thông báo hiển thị toàn bộ trong vùng cuộn.
+- Files: `src/pages/Dashboard.tsx`, `src/pages/Dashboard.test.tsx`, `src/lib/transactionsApi.ts`, `src/lib/transactionsApi.test.ts`, `src/components/BudgetNotifications.tsx`, `src/components/BudgetNotifications.test.tsx`. Không đổi schema, migration, RLS/RPC, Edge Function hoặc dữ liệu.
+- Kiểm thử: Vitest 34/34 file với 156/156 test, TypeScript, ESLint, production build, E2E, db-security và performance budget đều pass; build chỉ còn cảnh báo chunk lớn hiện hữu.
+- Trạng thái triển khai thực tế: PR [#149](https://github.com/nhan0805/family-expense/pull/149) đã merge vào `main` với merge commit `93fd69cf6be9205987b750a50bf7f74498b273ad`; CI main [run 34624390764](https://github.com/nhan0805/family-expense/actions/runs/34624390764) và Cloudflare Pages production [check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/91053e44-e6ab-4f0c-bfaa-3749daef7f40) pass; smoke `https://family-expense-8fo.pages.dev/` trả HTTP 200. Không chạy Supabase Production Deploy vì không có thay đổi backend.
+
 ### Chỉ giữ giao dịch dự kiến tới hạn trong Thông báo
 
 - Yêu cầu: Bỏ phần “Giao dịch dự kiến tới hạn” khỏi tab Giao dịch, chỉ giữ trong phần Thông báo và giữ tiêu đề trên một dòng.

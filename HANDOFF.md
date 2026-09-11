@@ -5,11 +5,11 @@
 ## Current state
 
 - Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages.
-- Code production gần nhất: PR [#147](https://github.com/nhan0805/family-expense/pull/147), merge commit `9674e281f943199af3e7848443624c3fd75562e6`.
+- Code production gần nhất: PR [#149](https://github.com/nhan0805/family-expense/pull/149), merge commit `93fd69cf6be9205987b750a50bf7f74498b273ad`.
 - Release tài liệu/rule gần nhất: PR [#143](https://github.com/nhan0805/family-expense/pull/143), merge commit `67a391967862cd4d6bd95747d4115774c6b7be5b`.
-- CI main [run 34621238155](https://github.com/nhan0805/family-expense/actions/runs/34621238155) pass với quality, E2E và db-security; Cloudflare Pages production [check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/4c2dacd1-cc74-4b66-bf4d-ae4dc232124f) báo deploy thành công; smoke production trả HTTP 200.
-- Nhánh workspace hiện tại: `codex/release-status-147`.
-- UI/UX release PR #147 đã merge vào `main` và deploy production qua Cloudflare Pages Git integration. Không có migration, Edge Function hoặc thay đổi dữ liệu cần deploy Supabase.
+- CI main [run 34624390764](https://github.com/nhan0805/family-expense/actions/runs/34624390764) pass với quality, E2E và db-security; Cloudflare Pages production [check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/91053e44-e6ab-4f0c-bfaa-3749daef7f40) báo deploy thành công; smoke production trả HTTP 200.
+- Nhánh workspace hiện tại: `codex/release-status-149`.
+- PR #149 đã merge vào `main` và deploy production qua Cloudflare Pages Git integration. Không có migration, Edge Function hoặc thay đổi dữ liệu cần deploy Supabase.
 - Đã cập nhật CI/preview cho `merge_group`, thu hẹp trigger Supabase và chuẩn hóa single-writer cho tài liệu release; chưa bật Merge Queue/branch protection trên GitHub.
 - Bản đồ kiến trúc ổn định nằm trong [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md); quy tắc phân loại tài liệu nằm trong [`docs/AI_CONTEXT_GUIDE.md`](docs/AI_CONTEXT_GUIDE.md).
 
@@ -57,7 +57,7 @@
 
 ## Current work
 
-Release #147 đã hoàn tất quality gate, merge vào `main` và deploy production thành công. Tab Giao dịch chỉ còn danh sách giao dịch; giao dịch dự kiến tới hạn được hiển thị và xác nhận từ phần Thông báo. Không có thay đổi schema, migration, RLS/RPC, Edge Function hoặc dữ liệu.
+Release #149 đã hoàn tất quality gate, merge vào `main` và deploy production thành công. Dashboard tách các truy vấn aggregate theo từng khoảng để chế độ 12 tháng/năm không vượt giới hạn RPC; khoảng Tùy chỉnh dài hơn 366 ngày được báo lỗi rõ ràng và không gọi dữ liệu. Tab Giao dịch chỉ còn danh sách giao dịch; giao dịch dự kiến tới hạn được hiển thị đầy đủ bằng thanh cuộn trong phần Thông báo. Không có thay đổi schema, migration, RLS/RPC, Edge Function hoặc dữ liệu.
 
 ## Pending tasks
 
