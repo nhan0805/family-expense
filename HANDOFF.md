@@ -57,7 +57,7 @@
 
 ## Current work
 
-Release #149 đã hoàn tất quality gate, merge vào `main` và deploy production thành công. Nhánh hiện tại bổ sung xử lý lỗi/loading: lỗi tải Thùng rác có retry, các màn hình không có `familyId` không giữ skeleton vô hạn, và Supabase request có timeout 15 giây. Dashboard tiếp tục báo rõ khoảng ngày đảo chiều hoặc dài hơn 366 ngày. Không có thay đổi schema, migration, RLS/RPC, Edge Function hoặc dữ liệu.
+Release #149 đã hoàn tất quality gate, merge vào `main` và deploy production thành công. Dashboard tách các truy vấn aggregate theo từng khoảng để chế độ 12 tháng/năm không vượt giới hạn RPC; khoảng Tùy chỉnh dài hơn 366 ngày được báo lỗi rõ ràng và không gọi dữ liệu. Tab Giao dịch chỉ còn danh sách giao dịch; giao dịch dự kiến tới hạn được hiển thị đầy đủ bằng thanh cuộn trong phần Thông báo. Nhánh hiện tại bổ sung xử lý lỗi/loading: lỗi tải Thùng rác có retry, các màn hình không có `familyId` không giữ skeleton vô hạn, và Supabase request có timeout 15 giây. Không có thay đổi schema, migration, RLS/RPC, Edge Function hoặc dữ liệu.
 
 ## Pending tasks
 
