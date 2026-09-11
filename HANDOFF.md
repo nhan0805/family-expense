@@ -5,12 +5,11 @@
 ## Current state
 
 - Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages.
-- Code production gần nhất: PR [#144](https://github.com/nhan0805/family-expense/pull/144), merge commit `d46c9563c1fed3fc3b6d62d7a092d820c568f026`.
+- Code production gần nhất: PR [#147](https://github.com/nhan0805/family-expense/pull/147), merge commit `9674e281f943199af3e7848443624c3fd75562e6`.
 - Release tài liệu/rule gần nhất: PR [#143](https://github.com/nhan0805/family-expense/pull/143), merge commit `67a391967862cd4d6bd95747d4115774c6b7be5b`.
-- CI main [run 34508232306](https://github.com/nhan0805/family-expense/actions/runs/34508232306) pass với quality, E2E và db-security; Cloudflare Pages production [check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/63079390-123f-467d-bfea-ea52e450001d) báo deploy thành công; smoke production trả HTTP 200.
-- Nhánh workspace hiện tại: `codex/fix-dashboard-aggregate`.
-- UI/UX release PR #144 đã merge vào `main` và deploy production qua Cloudflare Pages Git integration. Không có migration, Edge Function hoặc thay đổi dữ liệu cần deploy Supabase.
-- Nhánh workspace còn các commit follow-up về workflow/test ở trên `origin/main`; các commit này chưa nằm trong production release #144 và được giữ nguyên để xử lý release riêng nếu cần.
+- CI main [run 34621238155](https://github.com/nhan0805/family-expense/actions/runs/34621238155) pass với quality, E2E và db-security; Cloudflare Pages production [check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/4c2dacd1-cc74-4b66-bf4d-ae4dc232124f) báo deploy thành công; smoke production trả HTTP 200.
+- Nhánh workspace hiện tại: `codex/release-status-147`.
+- UI/UX release PR #147 đã merge vào `main` và deploy production qua Cloudflare Pages Git integration. Không có migration, Edge Function hoặc thay đổi dữ liệu cần deploy Supabase.
 - Đã cập nhật CI/preview cho `merge_group`, thu hẹp trigger Supabase và chuẩn hóa single-writer cho tài liệu release; chưa bật Merge Queue/branch protection trên GitHub.
 - Bản đồ kiến trúc ổn định nằm trong [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md); quy tắc phân loại tài liệu nằm trong [`docs/AI_CONTEXT_GUIDE.md`](docs/AI_CONTEXT_GUIDE.md).
 
@@ -58,7 +57,7 @@
 
 ## Current work
 
-UI/UX roadmap release #144 đã hoàn tất quality gate, merge vào `main` và deploy production thành công. Workspace hiện có follow-up UI chưa deploy gồm bỏ “Giao dịch gần đây” khỏi Dashboard và đưa dark mode về palette Dracula; quality gate local đã pass. Release dự kiến đi qua PR mới vào `main`, required checks và Cloudflare Pages Git integration; không chạy migration/Edge Function và không dùng Wrangler. Branch workspace cũng còn các commit follow-up workflow/test chưa đưa vào `main`; chúng sẽ đi cùng release này nếu PR được merge.
+Release #147 đã hoàn tất quality gate, merge vào `main` và deploy production thành công. Tab Giao dịch chỉ còn danh sách giao dịch; giao dịch dự kiến tới hạn được hiển thị và xác nhận từ phần Thông báo. Không có thay đổi schema, migration, RLS/RPC, Edge Function hoặc dữ liệu.
 
 ## Pending tasks
 
@@ -107,7 +106,7 @@ UI/UX roadmap release #144 đã hoàn tất quality gate, merge vào `main` và 
 - `.gitignore` — generated Python cache exclusions.
 - `README.md`, `docs/AI_CONTEXT_GUIDE.md`, `docs/DEPLOY_RUNBOOK.md`, `docs/RELEASE_GOVERNANCE.md`, `HUONG-DAN-DEPLOY-THU-CONG.md` — auto-merge/release-document policy.
 - `src/components/Layout.tsx`, `src/components/TransactionRow.tsx`, `src/context/ThemeContext.tsx`, `src/index.css` — mobile navigation, transaction cards và design tokens.
-- `src/lib/transactionsApi.ts`, `src/pages/Dashboard.tsx`, `src/pages/Budgets.tsx`, `src/pages/Transactions.tsx` — dashboard hierarchy, charts, budget semantics và transaction responsive UI.
+- `src/lib/transactionsApi.ts`, `src/pages/Dashboard.tsx`, `src/pages/Budgets.tsx`, `src/pages/Transactions.tsx`, `src/components/BudgetNotifications.tsx` — dashboard hierarchy, charts, budget semantics, transaction responsive UI và due-transaction notifications.
 - `src/pages/TransactionForm.tsx`, `src/pages/Login.tsx`, `src/pages/ResetPassword.tsx`, `src/pages/CreateFamily.tsx` — form/auth/onboarding UI.
 - Các test liên quan đến Layout, Dashboard, Budgets, Transactions, TransactionRow, TransactionForm và Login.
 
@@ -141,7 +140,7 @@ For a new change, rerun only the relevant focused tests during iteration, then t
 
 ## Next recommended step
 
-Hoàn tất release qua GitHub PR vào `main`, bật auto-merge, theo dõi required checks và xác minh Cloudflare Pages production deploy; sau đó mới quay lại backup/restore và rollback drill trên staging bằng secrets riêng.
+Tiếp theo thực hiện backup/restore và rollback drill trên staging bằng secrets riêng.
 
 ## Session start instructions
 
