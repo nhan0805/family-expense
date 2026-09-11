@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   fetchDashboardAggregate,
+  fetchDashboardAggregates,
   fetchTransactionPage,
   REMOTE_TRANSACTION_REFRESH_INTERVAL_MS,
 } from './transactionsApi';
@@ -10,6 +11,10 @@ const { rpcMock } = vi.hoisted(() => ({ rpcMock: vi.fn() }));
 vi.mock('./supabase', () => ({
   supabase: { rpc: rpcMock },
 }));
+
+afterEach(() => {
+  rpcMock.mockReset();
+});
 
 const filters = {
   query: 'quần áo',
@@ -31,10 +36,6 @@ const filters = {
 };
 
 describe('fetchTransactionPage keyword search', () => {
-  afterEach(() => {
-    rpcMock.mockReset();
-  });
-
   it('uses the exclusion-aware family RPC without invoking semantic search', async () => {
     rpcMock.mockResolvedValueOnce({
       data: { rows: [], hasMore: false, totalAmount: 0, totalCount: 0 },
@@ -106,5 +107,25 @@ describe('fetchDashboardAggregate', () => {
     });
     expect(result.totalExpense).toBe(250000);
     expect(result.monthlyTrend[0]?.net).toBe(750000);
+  });
+
+  it('loads chart, selected and comparison ranges independently', async () => {
+    rpcMock.mockResolvedValue({ data: {}, error: null });
+
+    await fetchDashboardAggregates(
+      '11111111-1111-4111-8111-111111111111',
+      {
+        chart: { from: '2025-10-01', to: '2026-09-30' },
+        selected: { from: '2026-01-01', to: '2026-12-31' },
+        comparison: { from: '2025-01-01', to: '2025-12-31' },
+      },
+    );
+
+    expect(rpcMock).toHaveBeenCalledTimes(3);
+    expect(rpcMock.mock.calls.map(([, args]) => [args.p_date_from, args.p_date_to])).toEqual([
+      ['2025-10-01', '2026-09-30'],
+      ['2026-01-01', '2026-12-31'],
+      ['2025-01-01', '2025-12-31'],
+    ]);
   });
 });
