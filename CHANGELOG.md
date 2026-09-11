@@ -2,13 +2,21 @@
 
 ## 2026-09-11
 
+### Chỉ giữ giao dịch dự kiến tới hạn trong Thông báo
+
+- Yêu cầu: Bỏ phần “Giao dịch dự kiến tới hạn” khỏi tab Giao dịch, chỉ giữ trong phần Thông báo và giữ tiêu đề trên một dòng.
+- Sau thay đổi: `Transactions.tsx` không còn tải/render/điều khiển block đến hạn; `BudgetNotifications.tsx` tiếp tục hiển thị và xác nhận các giao dịch này, với bố cục responsive để tiêu đề tiếng Việt không bị xuống dòng.
+- Files: `src/pages/Transactions.tsx`, `src/pages/Transactions.ui.test.tsx`, `src/components/BudgetNotifications.tsx`, `src/components/BudgetNotifications.test.tsx`, `docs/PROJECT_MAP.md`. Không đổi schema, migration, RLS/RPC, Edge Function hoặc dữ liệu.
+- Kiểm thử: Vitest 34/34 file với 153/153 test, TypeScript, ESLint, production build, E2E, db-security và performance budget đều pass; build chỉ còn cảnh báo chunk lớn hiện hữu.
+- Trạng thái triển khai thực tế: PR [#147](https://github.com/nhan0805/family-expense/pull/147) đã merge vào `main` với merge commit `9674e281f943199af3e7848443624c3fd75562e6`; CI main [run 34621238155](https://github.com/nhan0805/family-expense/actions/runs/34621238155) và Cloudflare Pages production [check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/4c2dacd1-cc74-4b66-bf4d-ae4dc232124f) pass; smoke `https://family-expense-8fo.pages.dev/` trả HTTP 200. Không chạy Supabase Production Deploy vì không có thay đổi backend.
+
 ### Tinh gọn Dashboard và đổi dark mode sang Dracula
 
 - Trước thay đổi: Dashboard tải và hiển thị thêm block “Giao dịch gần đây”, trong khi người dùng cần tập trung vào tổng quan, ngân sách và xu hướng; dark mode dùng bảng màu xanh slate.
 - Sau thay đổi: bỏ truy vấn, component và API riêng cho “Giao dịch gần đây”; dark mode chuyển sang nền/surface Dracula với tím, hồng, cyan, xanh lá, cam, vàng và đỏ semantic, vẫn giữ text/focus tương phản cho accessibility.
 - Files: `src/pages/Dashboard.tsx`, `src/pages/Dashboard.test.tsx`, `src/lib/transactionsApi.ts`, `src/index.css`, `src/context/ThemeContext.tsx`. Không đổi schema, migration, RLS/RPC hoặc dữ liệu.
 - Kiểm thử: full Vitest 34/34 file với 153/153 test, TypeScript, ESLint, `git diff --check` và production build pass; build vẫn có cảnh báo chunk lớn hiện hữu của ExcelJS/XLSX/charts.
-- Trạng thái triển khai dự kiến: branch `codex/fix-dashboard-aggregate` sẽ tạo PR vào `main`, bật auto-merge sau required checks và chờ Cloudflare Pages Git integration deploy merge commit. Không chạy migration/Edge Function và không dùng Wrangler deploy trực tiếp.
+- Trạng thái triển khai thực tế: PR [#145](https://github.com/nhan0805/family-expense/pull/145) đã merge vào `main` với merge commit `8249ab6fee31d40eb33cbaba83a866934d25425f`; CI main [run 34512620013](https://github.com/nhan0805/family-expense/actions/runs/34512620013) và Cloudflare Pages production [check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/3b325e2c-fb23-46ca-a607-d446cb70d43d) pass; smoke `https://family-expense-8fo.pages.dev/` trả HTTP 200. Không chạy migration/Edge Function và không dùng Wrangler deploy trực tiếp.
 
 ### Giảm conflict trước auto-merge
 
