@@ -61,10 +61,10 @@ select ok(
     join pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public'
       and p.proname = 'list_family_transactions_v3'
-      and p.proargtypes[2] = 'int'::regtype
-      and p.proargtypes[3] = 'date'::regtype
-      and p.proargtypes[4] = 'timestamptz'::regtype
-      and p.proargtypes[5] = 'uuid'::regtype
+      and p.proargtypes[1] = 'int'::regtype
+      and p.proargtypes[2] = 'date'::regtype
+      and p.proargtypes[3] = 'timestamptz'::regtype
+      and p.proargtypes[4] = 'uuid'::regtype
   ),
   'list_family_transactions_v3 supports date cursor pagination'
 );
