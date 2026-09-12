@@ -36,9 +36,9 @@ const filters = {
 };
 
 describe('fetchTransactionPage keyword search', () => {
-  it('uses the exclusion-aware family RPC without invoking semantic search', async () => {
+  it('uses cursor pagination for the common date-sorted list', async () => {
     rpcMock.mockResolvedValueOnce({
-      data: { rows: [], hasMore: false, totalAmount: 0, totalCount: 0 },
+      data: { rows: [], hasMore: false, nextCursor: null, totalAmount: 0, totalCount: 0 },
       error: null,
     });
 
@@ -48,10 +48,13 @@ describe('fetchTransactionPage keyword search', () => {
       0,
     );
 
-    expect(rpcMock).toHaveBeenCalledWith('list_family_transactions_v2', {
+    expect(rpcMock).toHaveBeenCalledWith('list_family_transactions_v3', {
       p_family_id: '11111111-1111-4111-8111-111111111111',
       p_limit: 50,
-      p_offset: 0,
+      p_cursor_date: null,
+      p_cursor_created_at: null,
+      p_cursor_id: null,
+      p_include_totals: true,
       p_query: 'quần áo',
       p_transaction_type: 'Chi tiêu',
       p_status: 'Thực tế',
@@ -69,6 +72,24 @@ describe('fetchTransactionPage keyword search', () => {
       p_date_to: null,
       p_sort: 'date-desc',
     });
+  });
+
+  it('keeps the offset RPC for non-date sorting', async () => {
+    rpcMock.mockResolvedValueOnce({
+      data: { rows: [], hasMore: false, totalAmount: 0, totalCount: 0 },
+      error: null,
+    });
+
+    await fetchTransactionPage(
+      '11111111-1111-4111-8111-111111111111',
+      { ...filters, sort: 'amount-desc' },
+      2,
+    );
+
+    expect(rpcMock).toHaveBeenCalledWith('list_family_transactions_v2', expect.objectContaining({
+      p_offset: 100,
+      p_sort: 'amount-desc',
+    }));
   });
 });
 
@@ -127,5 +148,20 @@ describe('fetchDashboardAggregate', () => {
       ['2026-01-01', '2026-12-31'],
       ['2025-01-01', '2025-12-31'],
     ]);
+  });
+
+  it('deduplicates identical dashboard ranges', async () => {
+    rpcMock.mockResolvedValue({ data: {}, error: null });
+
+    await fetchDashboardAggregates(
+      '11111111-1111-4111-8111-111111111111',
+      {
+        chart: { from: '2026-01-01', to: '2026-12-31' },
+        selected: { from: '2026-01-01', to: '2026-12-31' },
+        comparison: { from: '2025-01-01', to: '2025-12-31' },
+      },
+    );
+
+    expect(rpcMock).toHaveBeenCalledTimes(2);
   });
 });

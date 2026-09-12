@@ -13,7 +13,8 @@ const ThemeContext = createContext<ThemeState | null>(null);
 
 const readPreference = (): ThemePreference => {
   const value = window.localStorage.getItem(STORAGE_KEY);
-  return value === 'dark' ? 'dark' : 'light';
+  if (value === 'dark' || value === 'light') return value;
+  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 };
 
 export function ThemeProvider({ children }: { children: ReactNode }) {

@@ -125,6 +125,9 @@ describe('Chi phí định kỳ', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Lưu mẫu' }));
 
     expect(await screen.findByText('Tiền điện')).toBeInTheDocument();
+    const moreActions = document.querySelector('summary[aria-label="Thao tác khác"]');
+    expect(moreActions).toBeInTheDocument();
+    fireEvent.click(moreActions!);
     fireEvent.click(screen.getByRole('button', { name: 'Xóa' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Xóa mẫu' }));
 

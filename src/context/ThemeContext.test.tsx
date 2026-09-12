@@ -35,4 +35,32 @@ describe('ThemeProvider', () => {
     fireEvent.click(screen.getByRole('switch', { name: 'Giao diện' }));
     expect(window.localStorage.getItem('family-expense-theme')).toBe('light');
   });
+
+  it('theo dark mode của hệ điều hành khi người dùng chưa chọn theme', () => {
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      value: vi.fn().mockImplementation(() => ({
+        matches: true,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })),
+    });
+
+    render(<ThemeProvider><ThemeSelect/></ThemeProvider>);
+
+    expect(document.documentElement).toHaveClass('dark');
+    expect(window.localStorage.getItem('family-expense-theme')).toBeNull();
+  });
+
+  it('dùng nền Dracula cho màu thanh hệ thống', () => {
+    const meta = document.createElement('meta');
+    meta.name = 'theme-color';
+    document.head.append(meta);
+    window.localStorage.setItem('family-expense-theme', 'dark');
+
+    render(<ThemeProvider><ThemeSelect/></ThemeProvider>);
+
+    expect(meta.content).toBe('#282a36');
+    meta.remove();
+  });
 });

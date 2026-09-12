@@ -115,8 +115,10 @@ export function TransactionForm() {
   const [voiceListening, setVoiceListening] = useState(false);
   const [voiceSupported] = useState(() => Boolean(getSpeechRecognition()));
   const speechRecognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const errorSummaryRef = useRef<HTMLDivElement>(null);
   const [saveBusy, setSaveBusy] = useState(false);
   const [saveError, setSaveError] = useState('');
+  const [draftStatus, setDraftStatus] = useState<'idle' | 'saving' | 'saved' | 'unavailable'>('idle');
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [extrasOpen, setExtrasOpen] = useState(Boolean(localExisting?.note));
   const {
@@ -149,6 +151,9 @@ export function TransactionForm() {
       aiGenerated: false,
     },
   });
+  const onInvalid = () => {
+    window.requestAnimationFrame(() => errorSummaryRef.current?.focus());
+  };
   const watchedForm = useWatch({ control });
   const [draftRestored, setDraftRestored] = useState(false);
   const draftCheckedFamilyRef = useRef('');
@@ -165,17 +170,21 @@ export function TransactionForm() {
   }, [existing, familyId, id, reset]);
   useEffect(() => {
     if (!familyId || !isDirty || (id && !existing)) return;
-    saveTransactionDraft(familyId, watchedForm, id);
+    setDraftStatus('saving');
+    const timeout = window.setTimeout(() => {
+      setDraftStatus(saveTransactionDraft(familyId, watchedForm, id) ? 'saved' : 'unavailable');
+    }, 350);
+    return () => window.clearTimeout(timeout);
   }, [existing, familyId, id, isDirty, watchedForm]);
   useEffect(() => {
-    if (!isDirty) return;
+    if (!isDirty || draftStatus === 'saved') return;
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
       event.preventDefault();
       event.returnValue = '';
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [isDirty]);
+  }, [draftStatus, isDirty]);
   useEffect(() => {
     if (existing) {
       const today = new Intl.DateTimeFormat('en-CA', {
@@ -497,6 +506,16 @@ export function TransactionForm() {
     aiSuggested: Boolean(aiResultVisible && aiResult?.fields.includes(field)),
     aiTone,
   });
+  const validationErrors = [
+    { id: 'transaction-amount', label: en ? 'Amount' : 'Số tiền', message: errors.amount?.message },
+    { id: 'transaction-description', label: en ? 'Description' : 'Nội dung', message: errors.description?.message },
+    { id: 'transaction-date', label: en ? 'Date' : 'Ngày', message: errors.transactionDate?.message },
+    { id: 'transaction-type', label: en ? 'Transaction type' : 'Loại giao dịch', message: errors.transactionType?.message },
+    { id: 'transaction-payment-method', label: en ? 'Payment method' : 'Phương thức thanh toán', message: errors.paymentMethodId?.message },
+    { id: 'transaction-purpose', label: en ? 'Purpose' : 'Mục đích', message: errors.purposeId?.message },
+    { id: 'transaction-expense-type', label: en ? 'Category' : 'Danh mục', message: errors.expenseTypeId?.message },
+    { id: 'transaction-status', label: en ? 'Status' : 'Trạng thái', message: errors.status?.message },
+  ].filter((item): item is { id: string; label: string; message: string } => Boolean(item.message));
   if (id && isSupabaseConfigured && !familyId)
     return <p role="alert" className="rounded-xl bg-red-50 p-4 text-red-700 dark:bg-red-950/30 dark:text-red-300">{en ? 'No active family was found. Please reload and try again.' : 'Không tìm thấy gia đình đang hoạt động. Vui lòng tải lại rồi thử lại.'}</p>;
   if (id && isSupabaseConfigured && existingQuery.isPending && Boolean(familyId))
@@ -522,13 +541,14 @@ export function TransactionForm() {
       <form
         className="form-panel card grid gap-5 p-4 sm:p-6 md:grid-cols-3"
         aria-label={en ? 'Transaction details' : 'Thông tin giao dịch'}
-        onSubmit={handleSubmit(onSubmit)}
+        onSubmit={handleSubmit(onSubmit, onInvalid)}
       >
           <p className="form-hint text-xs md:col-span-3">
             {en ? 'Fields marked with ' : 'Các trường có '}<span className="font-bold text-red-600">*</span>{en ? ' are required.' : ' là bắt buộc.'}
           </p>
+          {validationErrors.length > 0 && <div ref={errorSummaryRef} tabIndex={-1} role="alert" aria-labelledby="transaction-form-errors-title" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800 outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-200 md:col-span-3"><h3 id="transaction-form-errors-title" className="font-bold">{en ? 'Please fix these fields' : 'Vui lòng kiểm tra các trường sau'}</h3><ul className="mt-2 list-disc space-y-1 pl-5">{validationErrors.map((item) => <li key={item.id}><a className="underline underline-offset-2" href={`#${item.id}`}>{item.label}: {item.message}</a></li>)}</ul></div>}
           <div className="form-section-heading form-section-heading-primary md:col-span-3"><h3 className="font-bold">{en ? 'Basic information' : 'Thông tin chính'}</h3><p className="text-xs text-gray-500 dark:text-gray-400">{en ? 'Enter the information needed to record this transaction.' : 'Nhập các thông tin cần thiết để ghi nhận giao dịch.'}</p></div>
-          <Field label={en ? 'Amount (VND)' : 'Số tiền (VND)'} required error={errors.amount?.message} {...aiFieldProps('amount')}>
+          <Field fieldId="transaction-amount" label={en ? 'Amount (VND)' : 'Số tiền (VND)'} required error={errors.amount?.message} {...aiFieldProps('amount')}>
             <Controller
               name="amount"
               control={control}
@@ -538,7 +558,10 @@ export function TransactionForm() {
                   name={field.name}
                   onBlur={field.onBlur}
                   type="text"
+                  id="transaction-amount"
                   inputMode="numeric"
+                  aria-invalid={Boolean(errors.amount)}
+                  aria-describedby={errors.amount ? 'transaction-amount-error' : undefined}
                   autoComplete="off"
                   autoFocus={!id}
                   className={`field text-right text-lg font-bold ${aiFieldClass(aiFieldProps('amount'))}`}
@@ -568,6 +591,8 @@ export function TransactionForm() {
                   id="transaction-description"
                   className={`field field-with-trailing-action min-w-0 ${aiFieldClass(aiFieldProps('description'))}`}
                   required
+                  aria-invalid={Boolean(errors.description)}
+                  aria-describedby={errors.description ? 'transaction-description-error' : undefined}
                   {...register('description')}
                 />
                 {voiceSupported && (
@@ -595,7 +620,7 @@ export function TransactionForm() {
                 <span className="hidden sm:inline">{aiBusy ? (en ? 'Analyzing…' : 'Đang phân tích…') : aiCompleted ? (en ? 'Filled' : 'Đã điền') : (en ? 'AI suggest' : 'Gợi ý AI')}</span>
               </button>
             </div>
-            {errors.description?.message && <span className="mt-1 block text-xs text-red-600 dark:text-red-300">{errors.description.message}</span>}
+            {errors.description?.message && <span id="transaction-description-error" role="alert" className="mt-1 block text-xs text-red-600 dark:text-red-300">{errors.description.message}</span>}
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{en ? 'Type or use the microphone to convert speech to text, then select AI if needed. AI can use your family’s confirmed history to suggest categories. The app does not store audio and suggestions are never saved automatically.' : 'Nhập tay hoặc dùng micro để chuyển giọng nói thành chữ, sau đó nhấn AI nếu cần. AI có thể tham khảo lịch sử đã xác nhận của gia đình để gợi ý danh mục. App không lưu audio và gợi ý không được tự động lưu.'}</p>
             {aiError && <div role="alert" className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-red-50 p-2 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300"><span>{aiError}</span><button type="button" className="btn-secondary px-3 py-1.5 text-xs" onClick={() => void parseAi()}>{en ? 'Retry' : 'Thử lại'}</button></div>}
           </div>
@@ -613,29 +638,33 @@ export function TransactionForm() {
               </div>
             </section>
           )}
-          <Field label={en ? 'Date' : 'Ngày'} required error={errors.transactionDate?.message} {...aiFieldProps('transactionDate')}>
+          <Field fieldId="transaction-date" label={en ? 'Date' : 'Ngày'} required error={errors.transactionDate?.message} {...aiFieldProps('transactionDate')}>
             <input
+              id="transaction-date"
               type="date"
               className={`field ${aiFieldClass(aiFieldProps('transactionDate'))}`}
               required
+              aria-invalid={Boolean(errors.transactionDate)}
+              aria-describedby={errors.transactionDate ? 'transaction-date-error' : undefined}
               {...register('transactionDate')}
             />
           </Field>
-          <Field label={en ? 'Transaction type' : 'Loại giao dịch'} required {...aiFieldProps('transactionType')}>
+          <Field errorId="transaction-type-error" label={en ? 'Transaction type' : 'Loại giao dịch'} required error={errors.transactionType?.message} {...aiFieldProps('transactionType')}>
             <Controller
               name="transactionType"
               control={control}
-              render={({ field }) => <div className={`grid grid-cols-2 gap-1 rounded-xl border border-[var(--border-strong)] bg-[var(--surface-muted)] p-1 ${aiFieldClass(aiFieldProps('transactionType'))}`} role="group" aria-label={en ? 'Transaction type' : 'Loại giao dịch'}>{(['Chi tiêu', 'Thu nhập'] as const).map((type) => <button key={type} type="button" aria-pressed={field.value === type} className={`min-h-11 rounded-lg px-3 text-sm font-bold transition ${field.value === type ? 'bg-[var(--surface)] text-[var(--primary)] shadow-sm' : 'text-[var(--muted)]'}`} onClick={() => field.onChange(type)}>{type === 'Chi tiêu' ? (en ? 'Money out' : 'Tiền ra') : (en ? 'Money in' : 'Tiền vào')}</button>)}</div>}
+              render={({ field }) => <div id="transaction-type" className={`grid grid-cols-2 gap-1 rounded-xl border border-[var(--border-strong)] bg-[var(--surface-muted)] p-1 ${aiFieldClass(aiFieldProps('transactionType'))}`} role="group" aria-label={en ? 'Transaction type' : 'Loại giao dịch'} aria-invalid={Boolean(errors.transactionType)} aria-describedby={errors.transactionType ? 'transaction-type-error' : undefined}>{(['Chi tiêu', 'Thu nhập'] as const).map((type) => <button key={type} type="button" aria-pressed={field.value === type} className={`min-h-11 rounded-lg px-3 text-sm font-bold transition ${field.value === type ? 'bg-[var(--surface)] text-[var(--primary)] shadow-sm' : 'text-[var(--muted)]'}`} onClick={() => field.onChange(type)}>{type === 'Chi tiêu' ? (en ? 'Money out' : 'Tiền ra') : (en ? 'Money in' : 'Tiền vào')}</button>)}</div>}
             />
           </Field>
           <div className="form-section-heading md:col-span-3"><h3 className="font-bold">{en ? 'Classification' : 'Phân loại'}</h3><p className="text-xs text-gray-500 dark:text-gray-400">{en ? 'Helps keep the dashboard and reports accurate.' : 'Giúp Dashboard và báo cáo tổng hợp chính xác.'}</p></div>
           <Field
+            fieldId="transaction-payment-method"
             label={en ? 'Payment method' : 'Phương thức thanh toán'}
             required
             error={errors.paymentMethodId?.message}
             {...aiFieldProps('paymentMethodId')}
           >
-            <select className={`field ${aiFieldClass(aiFieldProps('paymentMethodId'))}`} required {...register('paymentMethodId')}>
+            <select id="transaction-payment-method" className={`field ${aiFieldClass(aiFieldProps('paymentMethodId'))}`} required aria-invalid={Boolean(errors.paymentMethodId)} aria-describedby={errors.paymentMethodId ? 'transaction-payment-method-error' : undefined} {...register('paymentMethodId')}>
               <option value="">{en ? 'Select payment method' : 'Chọn phương thức'}</option>
               {paymentMethods.map((x) => (
                 <option key={x.id} value={x.id}>
@@ -645,12 +674,13 @@ export function TransactionForm() {
             </select>
           </Field>
           <Field
+            fieldId="transaction-purpose"
             label={en ? 'Purpose' : 'Mục đích'}
             required
             error={errors.purposeId?.message}
             {...aiFieldProps('purposeId')}
           >
-            <select className={`field ${aiFieldClass(aiFieldProps('purposeId'))}`} required {...register('purposeId')}>
+            <select id="transaction-purpose" className={`field ${aiFieldClass(aiFieldProps('purposeId'))}`} required aria-invalid={Boolean(errors.purposeId)} aria-describedby={errors.purposeId ? 'transaction-purpose-error' : undefined} {...register('purposeId')}>
               <option value="">{en ? 'Select purpose' : 'Chọn mục đích'}</option>
               {purposes.map((x) => (
                 <option key={x.id} value={x.id}>
@@ -660,12 +690,13 @@ export function TransactionForm() {
             </select>
           </Field>
           <Field
+            fieldId="transaction-expense-type"
             label={en ? 'Category' : 'Danh mục'}
             required
             error={errors.expenseTypeId?.message}
             {...aiFieldProps('expenseTypeId')}
           >
-            <select className={`field ${aiFieldClass(aiFieldProps('expenseTypeId'))}`} required {...register('expenseTypeId')}>
+            <select id="transaction-expense-type" className={`field ${aiFieldClass(aiFieldProps('expenseTypeId'))}`} required aria-invalid={Boolean(errors.expenseTypeId)} aria-describedby={errors.expenseTypeId ? 'transaction-expense-type-error' : undefined} {...register('expenseTypeId')}>
               <option value="">{en ? 'Select expense type' : 'Chọn loại chi phí'}</option>
               {expenseTypes.map((x) => (
                 <option key={x.id} value={x.id}>
@@ -676,18 +707,21 @@ export function TransactionForm() {
           </Field>
           <button type="button" className="form-disclosure btn-secondary flex items-center justify-between md:col-span-3" aria-expanded={extrasOpen} onClick={() => setExtrasOpen((value) => !value)}><span>{en ? 'Advanced options' : 'Tùy chọn nâng cao'}</span><ChevronDown size={18} className={`transition-transform ${extrasOpen ? 'rotate-180' : ''}`}/></button>
           {extrasOpen && <div className="ui-enter grid gap-4 md:col-span-3 md:grid-cols-2">
-            <Field label={en ? 'Status' : 'Trạng thái'} {...aiFieldProps('status')}>
-              <select className={`field ${aiFieldClass(aiFieldProps('status'))}`} {...register('status')}>
+            <Field fieldId="transaction-status" label={en ? 'Status' : 'Trạng thái'} error={errors.status?.message} {...aiFieldProps('status')}>
+              <select id="transaction-status" className={`field ${aiFieldClass(aiFieldProps('status'))}`} aria-invalid={Boolean(errors.status)} aria-describedby={errors.status ? 'transaction-status-error' : undefined} {...register('status')}>
                 <option value="Thực tế">{en ? 'Actual' : 'Thực tế'}</option>
                 <option value="Dự kiến">{en ? 'Planned' : 'Dự kiến'}</option>
               </select>
               <span className="mt-1 block text-xs text-gray-500 dark:text-gray-400">{en ? 'The app selects this from the transaction date. Change it only when the actual status differs from the date.' : 'Ứng dụng tự chọn theo ngày giao dịch. Chỉ thay đổi khi giao dịch chưa hoặc đã thực sự phát sinh khác với ngày.'}</span>
             </Field>
-            <Field label={en ? 'Notes' : 'Ghi chú'}>
-              <textarea className="field min-h-24" {...register('note')} />
+            <Field fieldId="transaction-note" label={en ? 'Notes' : 'Ghi chú'}>
+              <textarea id="transaction-note" className="field min-h-24" {...register('note')} />
             </Field>
           </div>}
           {draftRestored && <p role="status" className="inline-feedback inline-feedback-warning md:col-span-3">{en ? 'Draft restored on this device. Review it before saving.' : 'Đã khôi phục bản nháp trên thiết bị. Hãy kiểm tra trước khi lưu.'}</p>}
+          {draftStatus === 'saving' && <p role="status" aria-live="polite" className="inline-feedback md:col-span-3">{en ? 'Saving draft on this device…' : 'Đang lưu bản nháp trên thiết bị…'}</p>}
+          {draftStatus === 'saved' && <p role="status" aria-live="polite" className="inline-feedback md:col-span-3">{en ? 'Draft saved on this device.' : 'Đã lưu bản nháp trên thiết bị.'}</p>}
+          {draftStatus === 'unavailable' && <p role="status" aria-live="polite" className="inline-feedback inline-feedback-warning md:col-span-3">{en ? 'This browser could not save a local draft. Keep this page open until you save.' : 'Trình duyệt không thể lưu bản nháp cục bộ. Hãy giữ trang này mở cho đến khi lưu giao dịch.'}</p>}
           {saveError && <div role="alert" className="inline-feedback inline-feedback-error md:col-span-3"><p>{saveError}</p><button type="button" className="btn-secondary mt-2" disabled={saveBusy || deleteBusy || (isSupabaseConfigured && !online)} onClick={() => void handleSubmit(onSubmit)()}>{en ? 'Try again' : 'Thử lại'}</button></div>}
           <div className="form-actions flex items-center gap-2 md:col-span-3">
             <button
@@ -731,6 +765,8 @@ export function TransactionForm() {
   );
 }
 function Field({
+  fieldId,
+  errorId,
   label,
   error,
   required = false,
@@ -738,6 +774,8 @@ function Field({
   aiTone = null,
   children,
 }: {
+  fieldId?: string;
+  errorId?: string;
   label: string;
   error?: string;
   required?: boolean;
@@ -747,24 +785,22 @@ function Field({
 }) {
   const { language } = useOptionalLanguage();
   const en = language === 'en';
+  const labelContent = <><span>{label}
+    {required && (
+      <>
+        <span className="ml-1 text-red-600" aria-hidden="true">*</span>
+        <span className="sr-only"> ({en ? 'required' : 'bắt buộc'})</span>
+      </>
+    )}
+  </span><AiBadge aiSuggested={aiSuggested} aiTone={aiTone} /></>;
   return (
-    <label className="min-w-0">
-      <span className="label flex items-center gap-2">
-        <span>{label}
-          {required && (
-            <>
-              <span className="ml-1 text-red-600" aria-hidden="true">*</span>
-              <span className="sr-only"> ({en ? 'required' : 'bắt buộc'})</span>
-            </>
-          )}
-        </span>
-        <AiBadge aiSuggested={aiSuggested} aiTone={aiTone} />
-      </span>
+    <div className="min-w-0">
+      {fieldId ? <label className="label flex items-center gap-2" htmlFor={fieldId}>{labelContent}</label> : <div className="label flex items-center gap-2">{labelContent}</div>}
       {children}
       {error && (
-        <span className="mt-1 block text-xs text-red-600 dark:text-red-300">{error}</span>
+        <span id={errorId || (fieldId ? `${fieldId}-error` : undefined)} role="alert" className="mt-1 block text-xs text-red-600 dark:text-red-300">{error}</span>
       )}
-    </label>
+    </div>
   );
 }
 

@@ -34,7 +34,6 @@ const renderRow = (overrides: Partial<React.ComponentProps<typeof TransactionRow
     currentUserRole: 'owner',
     currentUserId: 'user-1',
     onToggleSelected: vi.fn(),
-    onSetSelected: vi.fn(),
     onToggleMenu: vi.fn(),
     onRestore: vi.fn(),
     onPermanentlyDelete: vi.fn(),

@@ -31,6 +31,21 @@ const renderLogin = () => render(
 afterEach(() => vi.clearAllMocks());
 
 describe('xác thực tài khoản', () => {
+  it('dùng nhóm button cho chuyển mode đăng nhập và đăng ký', () => {
+    renderLogin();
+
+    const modeGroup = screen.getByRole('group', { name: 'Chế độ xác thực' });
+    expect(modeGroup).toBeInTheDocument();
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Đăng nhập' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Tạo tài khoản' })).toHaveAttribute('aria-pressed', 'false');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Tạo tài khoản' }));
+
+    expect(screen.getByRole('button', { name: 'Đăng nhập' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('button', { name: 'Tạo tài khoản' })).toHaveAttribute('aria-pressed', 'true');
+  });
+
   it('chặn gửi form khi thiếu email hoặc mật khẩu', () => {
     renderLogin();
     const form = screen.getByRole('button', { name: 'Tiếp tục' }).closest('form');

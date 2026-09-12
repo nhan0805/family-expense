@@ -4,6 +4,7 @@ import { supabase } from './supabase';
 // Recurring transactions are created by Supabase Cron outside the current
 // browser session, so active screens need a bounded refresh interval.
 export const REMOTE_TRANSACTION_REFRESH_INTERVAL_MS = 30_000;
+export const REMOTE_DASHBOARD_REFRESH_INTERVAL_MS = 60_000;
 
 export type ServerTransactionFilters = {
   query: string;
@@ -22,6 +23,12 @@ export type ServerTransactionFilters = {
   dateFrom: string;
   dateTo: string;
   sort: string;
+};
+
+export type TransactionPageCursor = {
+  transactionDate: string;
+  createdAt: string;
+  id: string;
 };
 
 type TransactionRow = {
@@ -71,13 +78,23 @@ export const mapTransactionRow = (row: TransactionRow): Transaction => ({
 export async function fetchTransactionPage(
   familyId: string,
   filters: ServerTransactionFilters,
-  page: number,
+  pageParam: number | TransactionPageCursor,
   pageSize = 50,
 ) {
-  const { data, error } = await supabase.rpc('list_family_transactions_v2', {
+  const useCursor = filters.sort === 'date-desc' || filters.sort === 'date-asc';
+  const cursor = typeof pageParam === 'object' ? pageParam : null;
+  const rpcName = useCursor ? 'list_family_transactions_v3' : 'list_family_transactions_v2';
+  const rpcArgs = {
     p_family_id: familyId,
     p_limit: pageSize,
-    p_offset: page * pageSize,
+    ...(useCursor
+      ? {
+          p_cursor_date: cursor?.transactionDate || null,
+          p_cursor_created_at: cursor?.createdAt || null,
+          p_cursor_id: cursor?.id || null,
+          p_include_totals: !cursor,
+        }
+      : { p_offset: (typeof pageParam === 'number' ? pageParam : 0) * pageSize }),
     p_query: filters.query,
     p_transaction_type: filters.transactionType,
     p_status: filters.status,
@@ -94,21 +111,58 @@ export async function fetchTransactionPage(
     p_date_from: filters.dateFrom || null,
     p_date_to: filters.dateTo || null,
     p_sort: filters.sort,
-  });
+  };
+  const { data, error } = await supabase.rpc(rpcName, rpcArgs);
   if (error) throw error;
   const result = data as unknown as {
     rows?: TransactionRow[];
     hasMore?: boolean;
     totalAmount?: number | string;
     totalCount?: number;
+    nextCursor?: TransactionPageCursor | null;
   };
   return {
     rows: (result.rows || []).map(mapTransactionRow),
     hasMore: Boolean(result.hasMore),
     totalAmount: Number(result.totalAmount || 0),
     totalCount: Number(result.totalCount || 0),
-    page,
+    page: typeof pageParam === 'number' ? pageParam : 0,
+    nextCursor: result.nextCursor || undefined,
   };
+}
+
+type DuplicateCandidate = Pick<Transaction, 'transactionDate' | 'amount' | 'description'>;
+
+export async function fetchTransactionDuplicateCandidates(
+  familyId: string,
+  candidates: DuplicateCandidate[],
+) {
+  const uniquePairs = Array.from(new Map(
+    candidates.map((candidate) => [
+      `${candidate.transactionDate}|${candidate.amount}`,
+      { date: candidate.transactionDate, amount: candidate.amount },
+    ]),
+  ).values());
+  const matches: DuplicateCandidate[] = [];
+  for (let from = 0; from < uniquePairs.length; from += 100) {
+    const filters = uniquePairs
+      .slice(from, from + 100)
+      .map(({ date, amount }) => `and(transaction_date.eq.${date},amount.eq.${amount})`)
+      .join(',');
+    const { data, error } = await supabase
+      .from('transactions')
+      .select('transaction_date,amount,description')
+      .eq('family_id', familyId)
+      .is('deleted_at', null)
+      .or(filters);
+    if (error) throw error;
+    matches.push(...((data || []) as Array<{ transaction_date: string; amount: number | string; description: string }>).map((row) => ({
+      transactionDate: row.transaction_date,
+      amount: Number(row.amount),
+      description: row.description,
+    })));
+  }
+  return matches;
 }
 
 export async function fetchTransaction(familyId: string, id: string) {
@@ -230,12 +284,25 @@ export async function fetchDashboardAggregates(
     comparison: DashboardAggregateRange;
   },
 ) {
-  const [chart, selected, comparison] = await Promise.all([
-    fetchDashboardAggregate(familyId, ranges.chart.from, ranges.chart.to),
-    fetchDashboardAggregate(familyId, ranges.selected.from, ranges.selected.to),
-    fetchDashboardAggregate(familyId, ranges.comparison.from, ranges.comparison.to),
-  ]);
-  return { chart, selected, comparison };
+  const rangeEntries = [
+    ['chart', ranges.chart],
+    ['selected', ranges.selected],
+    ['comparison', ranges.comparison],
+  ] as const;
+  const uniqueRanges = Array.from(new Map(
+    rangeEntries.map(([, range]) => [`${range.from}|${range.to}`, range]),
+  ).entries());
+  const aggregates = new Map(
+    await Promise.all(uniqueRanges.map(async ([key, range]) => [
+      key,
+      await fetchDashboardAggregate(familyId, range.from, range.to),
+    ] as const)),
+  );
+  return {
+    chart: aggregates.get(`${ranges.chart.from}|${ranges.chart.to}`)!,
+    selected: aggregates.get(`${ranges.selected.from}|${ranges.selected.to}`)!,
+    comparison: aggregates.get(`${ranges.comparison.from}|${ranges.comparison.to}`)!,
+  };
 }
 
 export async function fetchDashboardDueTransactions(

@@ -61,6 +61,7 @@ export function MultiSelectField({
         <summary
           className="field multi-select-trigger flex cursor-pointer list-none items-center justify-between gap-2 [&::-webkit-details-marker]:hidden"
           aria-labelledby={labelId}
+          aria-controls={`${id}-options`}
         >
           <span className="min-w-0 truncate">{summary}</span>
           <ChevronDown
@@ -70,9 +71,9 @@ export function MultiSelectField({
           />
         </summary>
         <div
-          role="listbox"
-          aria-label={label}
-          aria-multiselectable="true"
+          id={`${id}-options`}
+          role="group"
+          aria-labelledby={labelId}
           className="absolute left-0 top-full z-30 mt-1 max-h-64 min-w-full overflow-y-auto rounded-xl border border-black/10 bg-white p-1.5 shadow-xl dark:border-white/15 dark:bg-[#343746]"
         >
           <button

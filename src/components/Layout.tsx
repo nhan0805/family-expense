@@ -24,6 +24,7 @@ export function Layout() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const isTransactionForm = pathname === '/giao-dich/moi' || /^\/giao-dich\/[^/]+$/.test(pathname);
+  const mainRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -34,6 +35,11 @@ export function Layout() {
     const timeout = window.setTimeout(() => setMenuMounted(false), 180);
     return () => window.clearTimeout(timeout);
   }, [menuMounted, open]);
+  useEffect(() => {
+    if (isTransactionForm) return;
+    const frame = window.requestAnimationFrame(() => mainRef.current?.focus());
+    return () => window.cancelAnimationFrame(frame);
+  }, [isTransactionForm, pathname]);
   useEffect(() => {
     if (!open) {
       if (menuMounted) menuTriggerRef.current?.focus();
@@ -70,6 +76,7 @@ export function Layout() {
   };
 
   return <div className="app-shell">
+    <a className="skip-link" href="#main-content">{en ? 'Skip to main content' : 'Tới nội dung chính'}</a>
     <header className="app-header sticky top-0 z-30 border-b px-4 py-3 backdrop-blur">
       <div className="app-header-inner mx-auto flex max-w-7xl items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
@@ -102,7 +109,7 @@ export function Layout() {
           <button className="flex w-full items-center gap-3 rounded-xl px-3 py-3 font-medium text-red-700 hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-950/30 md:hidden" disabled={signingOut} onClick={signOut}><LogOut size={19}/>{signingOut ? t('loggingOut') : t('logout')}</button>
         </div>
       </aside>
-      <main className="app-main min-w-0 flex-1 p-4 pb-28 sm:p-5 md:p-8 lg:p-9">{loading ? <PageSkeleton label={t('familyLoading')}/> : error ? <div className="rounded-xl bg-red-50 p-4 text-red-700 dark:bg-red-950/30 dark:text-red-300" role="alert"><p>{error}</p><button type="button" className="btn-secondary mt-3" onClick={reloadApp}>{t('reload')}</button></div> : <div key={pathname} className="ui-enter"><Outlet /></div>}</main>
+      <main ref={mainRef} id="main-content" tabIndex={-1} className="app-main min-w-0 flex-1 p-4 pb-28 outline-none sm:p-5 md:p-8 lg:p-9">{loading ? <PageSkeleton label={t('familyLoading')}/> : error ? <div className="rounded-xl bg-red-50 p-4 text-red-700 dark:bg-red-950/30 dark:text-red-300" role="alert"><p>{error}</p><button type="button" className="btn-secondary mt-3" onClick={reloadApp}>{t('reload')}</button></div> : <div key={pathname} className="ui-enter"><Outlet /></div>}</main>
     </div>
     {!isTransactionForm && <NavLink to="/giao-dich/moi" className="fab fixed bottom-[calc(4.5rem+max(1rem,env(safe-area-inset-bottom)))] right-5 z-20 flex h-14 w-14 items-center justify-center rounded-full text-white md:bottom-7" aria-label={en ? 'Add transaction' : 'Thêm giao dịch'}><Plus /></NavLink>}
     <nav className="app-bottom-nav safe-bottom fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t px-1 pt-1.5 text-[10px] md:hidden">{mobilePrimaryLinks.map(([to, label, Icon]) => <NavLink key={to} to={to} end={to === '/'} className={({ isActive }) => `app-bottom-nav-link mx-0.5 flex min-w-0 flex-col items-center gap-1 rounded-xl px-1 py-1.5 font-semibold ${isActive ? 'app-bottom-nav-link-active' : ''}`}><Icon size={20} /><span className="max-w-full truncate">{t(label)}</span></NavLink>)}<button type="button" className={`app-bottom-nav-link mx-0.5 flex min-w-0 flex-col items-center gap-1 rounded-xl px-1 py-1.5 font-semibold ${open ? 'app-bottom-nav-link-active' : ''}`} aria-label={en ? 'More' : 'Thêm'} aria-pressed={open} onClick={() => setOpen(true)}><MoreHorizontal size={20} /><span className="max-w-full truncate">{t('more')}</span></button></nav>

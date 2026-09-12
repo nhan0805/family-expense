@@ -128,6 +128,26 @@ describe('Dashboard', () => {
     ).toHaveLength(4);
   });
 
+  it('để các phân tích phụ ở trạng thái đóng theo mặc định', () => {
+    vi.mocked(useApp).mockReturnValue({
+      transactions: [transaction('Chi tháng hiện tại', '2026-09-10', 200_000)],
+      purposes: [{ id: 'p1', name: 'Sinh hoạt' }],
+      expenseTypes: [{ id: 'e1', name: 'Thực phẩm' }],
+      confirmPlannedTransaction,
+    } as unknown as ReturnType<typeof useApp>);
+    renderDashboard();
+
+    const topCategories = screen.getByText('Top danh mục theo thời gian').closest('details');
+    const insights = screen.getByText('Điểm đáng chú ý').closest('details');
+
+    expect(topCategories).toBeInTheDocument();
+    expect(topCategories).not.toHaveAttribute('open');
+    expect(topCategories?.querySelector('summary')).toHaveClass('min-h-11');
+    expect(insights).toBeInTheDocument();
+    expect(insights).not.toHaveAttribute('open');
+    expect(insights?.querySelector('summary')).toHaveClass('min-h-11');
+  });
+
   it('không hiển thị khu vực xác nhận giao dịch dự kiến trên Tổng quan', () => {
     vi.mocked(useApp).mockReturnValue({
       transactions: [transaction('Tiền điện dự kiến', '2020-01-10', 500_000, 'Dự kiến')],
@@ -168,6 +188,22 @@ describe('Dashboard', () => {
     expect(summarized).toHaveLength(6);
     expect(summarized.at(-1)).toMatchObject({ id: 'other', name: 'Khác', value: 14_000 });
     expect(summarized.at(-1)?.hiddenItems).toHaveLength(4);
+  });
+
+  it('cho phép ẩn và hiện từng chuỗi dữ liệu từ legend xu hướng', () => {
+    vi.mocked(useApp).mockReturnValue({
+      transactions: [transaction('Chi tháng hiện tại', '2026-09-10', 200_000)],
+      purposes: [{ id: 'p1', name: 'Sinh hoạt' }],
+      expenseTypes: [{ id: 'e1', name: 'Thực phẩm' }],
+      confirmPlannedTransaction,
+    } as unknown as ReturnType<typeof useApp>);
+    renderDashboard();
+
+    const expenseLegend = screen.getByRole('button', { name: 'Ẩn Chi tiêu' });
+    expect(expenseLegend).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(expenseLegend);
+
+    expect(screen.getByRole('button', { name: 'Hiện Chi tiêu' })).toHaveAttribute('aria-pressed', 'false');
   });
 
   it('tính đúng hai loại giao dịch và các preset kỳ xem', () => {
