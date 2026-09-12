@@ -4,7 +4,6 @@ import {
   Cell,
   ComposedChart,
   LabelList,
-  Legend,
   Line,
   Pie,
   PieChart,
@@ -22,6 +21,7 @@ import {
   ArrowUpFromLine,
   BarChart3,
   CalendarDays,
+  ChevronDown,
   PiggyBank,
   Scale,
   Sparkles,
@@ -42,13 +42,20 @@ import { reportClientError } from '../lib/telemetry';
 import {
   fetchDashboardAggregates,
   fetchTransactionYears,
-  REMOTE_TRANSACTION_REFRESH_INTERVAL_MS,
+  REMOTE_DASHBOARD_REFRESH_INTERVAL_MS,
 } from '../lib/transactionsApi';
 
 type DashboardMode = 'month' | '6m' | '12m' | 'year' | 'custom';
 type Period = { key: string; label: string };
 type DateRange = { from: string; to: string };
 type Tone = 'emerald' | 'rose' | 'sky' | 'violet';
+type TrendSeriesKey = 'expense' | 'income' | 'net';
+
+const trendSeriesMeta: Record<TrendSeriesKey, { vi: string; en: string; color: string }> = {
+  expense: { vi: 'Chi tiêu', en: 'Expenses', color: 'var(--chart-expense)' },
+  income: { vi: 'Thu nhập', en: 'Income', color: 'var(--chart-income)' },
+  net: { vi: 'Thu ròng', en: 'Net value', color: 'var(--chart-net)' },
+};
 
 const monthOptions = Array.from({ length: 12 }, (_, index) => ({
   value: String(index + 1).padStart(2, '0'),
@@ -281,6 +288,13 @@ export function Dashboard() {
   const [mode, setMode] = useState<DashboardMode>('month');
   const [customFrom, setCustomFrom] = useState(`${currentMonth}-01`);
   const [customTo, setCustomTo] = useState(todayKey());
+  const [showTrendTable, setShowTrendTable] = useState(false);
+  const [hiddenTrendSeries, setHiddenTrendSeries] = useState<TrendSeriesKey[]>([]);
+  const toggleTrendSeries = (series: TrendSeriesKey) => {
+    setHiddenTrendSeries((current) => current.includes(series)
+      ? current.filter((item) => item !== series)
+      : [...current, series]);
+  };
   const anchorKey = `${selectedYear}-${selectedMonth}`;
   const selectedPeriods = useMemo(() => periodsForMode(anchorKey, mode, customFrom, customTo), [anchorKey, mode, customFrom, customTo]);
   const selectedRange = useMemo(() => rangeForPeriods(selectedPeriods, mode === 'custom' ? customFrom : '', mode === 'custom' ? customTo : ''), [selectedPeriods, mode, customFrom, customTo]);
@@ -330,8 +344,9 @@ export function Dashboard() {
     },
     enabled: isSupabaseConfigured && Boolean(familyId) && validRange,
     refetchInterval: isSupabaseConfigured && Boolean(familyId) && validRange
-      ? REMOTE_TRANSACTION_REFRESH_INTERVAL_MS
+      ? REMOTE_DASHBOARD_REFRESH_INTERVAL_MS
       : false,
+    staleTime: REMOTE_DASHBOARD_REFRESH_INTERVAL_MS,
     refetchOnWindowFocus: true,
   });
   useEffect(() => {
@@ -556,27 +571,84 @@ export function Dashboard() {
       {(!validRange || error) && <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300"><span>{customRangeError ? customRangeErrorMessage : !validRange ? (en ? 'Choose a valid date range.' : 'Vui lòng chọn khoảng ngày hợp lệ.') : (dashboardQuery.data ? (en ? 'Showing the last loaded dashboard data. Refresh failed.' : 'Đang hiển thị dữ liệu Dashboard đã tải trước đó. Lần làm mới vừa thất bại.') : (en ? 'Could not load part of the dashboard.' : 'Không thể tải một phần Dashboard.'))}</span>{validRange && <button type="button" className="btn-secondary px-3 py-1.5 text-xs" onClick={() => { void dashboardQuery.refetch(); void yearsQuery.refetch(); }}>{en ? 'Retry' : 'Thử lại'}</button>}</div>}
 
       <section className={`ui-stagger dashboard-kpi-grid grid grid-cols-2 gap-3 sm:gap-4 ${hasMultiMonthView ? 'xl:grid-cols-6' : 'xl:grid-cols-3'}`} aria-label={en ? 'Financial summary' : 'Tóm tắt tài chính'}>
-        <Kpi label={en ? 'Total income' : 'Tổng thu'} value={selectedIncome} icon={ArrowDownToLine} tone="emerald" meta={renderChange(incomeChange, en, 'vs previous period')} to={periodFilterLink('Thu nhập')} />
-        <Kpi label={en ? 'Total expenses' : 'Tổng chi'} value={selectedExpense} icon={ArrowUpFromLine} tone="rose" meta={renderChange(expenseChange, en, 'vs previous period')} to={periodFilterLink('Chi tiêu')} />
-        <div className={hasMultiMonthView ? 'min-w-0' : 'col-span-2 min-w-0 xl:col-span-1'}><Kpi label={en ? 'Net value' : 'Giá trị ròng'} value={selectedIncome - selectedExpense} icon={Scale} tone={selectedIncome >= selectedExpense ? 'emerald' : 'rose'} meta={en ? 'Income minus expenses' : 'Thu nhập trừ chi tiêu'} to={periodFilterLink()} /></div>
+        <Kpi en={en} label={en ? 'Total income' : 'Tổng thu'} value={selectedIncome} icon={ArrowDownToLine} tone="emerald" meta={renderChange(incomeChange, en, 'vs previous period')} to={periodFilterLink('Thu nhập')} />
+        <Kpi en={en} label={en ? 'Total expenses' : 'Tổng chi'} value={selectedExpense} icon={ArrowUpFromLine} tone="rose" meta={renderChange(expenseChange, en, 'vs previous period')} to={periodFilterLink('Chi tiêu')} />
+        <div className={hasMultiMonthView ? 'min-w-0' : 'col-span-2 min-w-0 xl:col-span-1'}><Kpi en={en} label={en ? 'Net value' : 'Giá trị ròng'} value={selectedIncome - selectedExpense} icon={Scale} tone={selectedIncome >= selectedExpense ? 'emerald' : 'rose'} meta={en ? 'Income minus expenses' : 'Thu nhập trừ chi tiêu'} to={periodFilterLink()} /></div>
         {hasMultiMonthView && <>
-          <Kpi label={en ? 'Average / month' : 'Trung bình / tháng'} value={averageExpense} icon={BarChart3} tone="sky" meta={en ? `${periodCount} mo.` : `${periodCount} tháng`} to={periodFilterLink('Chi tiêu')} />
-          <Kpi label={en ? 'Peak month' : 'Tháng cao nhất'} value={highestMonth.expense} icon={TrendingUp} tone="violet" meta={highestMonth.expense > 0 ? `T${highestMonth.key.slice(5, 7)}/${highestMonth.key.slice(0, 4)}` : (en ? 'No data' : 'Chưa có dữ liệu')} to={periodFilterLink('Chi tiêu', highestMonth.expense > 0 ? rangeForPeriods([{ key: highestMonth.key, label: highestMonth.label }]) : selectedRange)} />
-          <Kpi label={en ? 'Lowest month' : 'Tháng thấp nhất'} value={lowestMonth.expense} icon={TrendingDown} tone="sky" meta={lowestMonth.expense > 0 ? `T${lowestMonth.key.slice(5, 7)}/${lowestMonth.key.slice(0, 4)}` : (en ? 'No data' : 'Chưa có dữ liệu')} to={periodFilterLink('Chi tiêu', lowestMonth.expense > 0 ? rangeForPeriods([{ key: lowestMonth.key, label: lowestMonth.label }]) : selectedRange)} />
+          <Kpi en={en} label={en ? 'Average / month' : 'Trung bình / tháng'} value={averageExpense} icon={BarChart3} tone="sky" meta={en ? `${periodCount} mo.` : `${periodCount} tháng`} to={periodFilterLink('Chi tiêu')} />
+          <Kpi en={en} label={en ? 'Peak month' : 'Tháng cao nhất'} value={highestMonth.expense} icon={TrendingUp} tone="violet" meta={highestMonth.expense > 0 ? `T${highestMonth.key.slice(5, 7)}/${highestMonth.key.slice(0, 4)}` : (en ? 'No data' : 'Chưa có dữ liệu')} to={periodFilterLink('Chi tiêu', highestMonth.expense > 0 ? rangeForPeriods([{ key: highestMonth.key, label: highestMonth.label }]) : selectedRange)} />
+          <Kpi en={en} label={en ? 'Lowest month' : 'Tháng thấp nhất'} value={lowestMonth.expense} icon={TrendingDown} tone="sky" meta={lowestMonth.expense > 0 ? `T${lowestMonth.key.slice(5, 7)}/${lowestMonth.key.slice(0, 4)}` : (en ? 'No data' : 'Chưa có dữ liệu')} to={periodFilterLink('Chi tiêu', lowestMonth.expense > 0 ? rangeForPeriods([{ key: lowestMonth.key, label: lowestMonth.label }]) : selectedRange)} />
         </>}
       </section>
 
       {budgetQuery.isError && <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/20 dark:text-amber-200"><span>{en ? 'Budget data could not be loaded.' : 'Không thể tải dữ liệu ngân sách.'}</span><button type="button" className="btn-secondary px-3 py-1.5 text-xs" onClick={() => void budgetQuery.refetch()}>{en ? 'Retry' : 'Thử lại'}</button></div>}
       {!budgetQuery.isError && <BudgetSnapshot summary={budgetSummary} en={en} month={selectedMonth} year={selectedYear} />}
-      <section className="card dashboard-chart-card min-w-0 overflow-hidden p-4 sm:p-5" aria-labelledby="dashboard-trend-title"><div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between"><div><h3 id="dashboard-trend-title" className="text-lg font-bold">{en ? 'Spending and income trend' : 'Xu hướng thu chi'}</h3><p className="text-sm text-gray-500 dark:text-gray-400">{mode === 'month' ? (en ? 'Six months ending in the selected month' : 'Sáu tháng kết thúc tại tháng đang chọn') : (en ? 'Monthly breakdown for this view' : 'Phân bổ theo từng tháng trong kỳ xem')}</p></div><div className="text-right text-sm"><p className="font-bold text-[#d96f4f]">{formatVnd(selectedExpense)}</p><p className="text-gray-500">{en ? 'expenses in view' : 'chi trong kỳ xem'}</p></div></div><div className="h-80 min-w-0 max-w-full">{trend.some((item) => item.expense || item.income) ? <ResponsiveContainer><ComposedChart data={trend} margin={{ top: 20, right: 12, left: 4, bottom: 6 }}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="label" /><YAxis tickFormatter={(value) => formatCompactVnd(Number(value)).replace(' ₫', '')} width={54} /><Tooltip labelFormatter={(label) => formatPeriodKey(String(trend.find((item) => item.label === label)?.key || ''), en)} formatter={(value) => formatVnd(Number(value))} /><Legend verticalAlign="top" align="right" /><Bar name={en ? 'Expenses' : 'Chi tiêu'} dataKey="expense" fill="#d96f4f" radius={[8, 8, 0, 0]} cursor="pointer" onClick={(_, index) => { const period = trend[index]; if (period) navigate(`/giao-dich?transactionType=Chi tiêu&month=${period.key.slice(5, 7)}&year=${period.key.slice(0, 4)}`); }}><LabelList dataKey="expense" position="top" formatter={(value) => Number(value) > 0 ? formatCompactVnd(Number(value)).replace(' ₫', '') : ''} /></Bar><Line name={en ? 'Income' : 'Thu nhập'} type="monotone" dataKey="income" stroke="#155e46" strokeWidth={3} dot={{ r: 4 }} /><Line name={en ? 'Net value' : 'Thu ròng'} type="monotone" dataKey="net" stroke="#247df2" strokeWidth={2} strokeDasharray="5 5" dot={false} /></ComposedChart></ResponsiveContainer> : <EmptyState title={en ? 'No trend data' : 'Chưa có dữ liệu xu hướng'} description={en ? 'The trend will appear when the selected period has actual transactions.' : 'Xu hướng sẽ xuất hiện khi kỳ đang chọn có giao dịch thực tế.'} />}</div></section>
+      <section className="card dashboard-chart-card min-w-0 overflow-hidden p-4 sm:p-5" aria-labelledby="dashboard-trend-title">
+        <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h3 id="dashboard-trend-title" className="text-lg font-bold">{en ? 'Spending and income trend' : 'Xu hướng thu chi'}</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{mode === 'month' ? (en ? 'Six months ending in the selected month' : 'Sáu tháng kết thúc tại tháng đang chọn') : (en ? 'Monthly breakdown for this view' : 'Phân bổ theo từng tháng trong kỳ xem')}</p>
+          </div>
+          <div className="flex items-start justify-between gap-3 sm:justify-end">
+            <div className="text-right text-sm">
+              <p className="font-bold text-[var(--chart-expense)]">{formatVnd(selectedExpense)}</p>
+              <p className="text-gray-500">{en ? 'expenses in view' : 'chi trong kỳ xem'}</p>
+            </div>
+            {trend.some((item) => item.expense || item.income) && <button type="button" className="btn-secondary shrink-0 px-2.5 py-1.5 text-xs" aria-expanded={showTrendTable} aria-controls="dashboard-trend-table" onClick={() => setShowTrendTable((value) => !value)}>{showTrendTable ? (en ? 'Hide table' : 'Ẩn bảng') : (en ? 'View table' : 'Xem dạng bảng')}</button>}
+          </div>
+        </div>
+        {trend.some((item) => item.expense || item.income) && <div className="mb-2 border-t border-black/5 pt-2 dark:border-white/10"><TrendLegend en={en} hiddenSeries={hiddenTrendSeries} onToggle={toggleTrendSeries} /></div>}
+        <div className="h-80 min-w-0 max-w-full">
+          {trend.some((item) => item.expense || item.income) ? <ResponsiveContainer><ComposedChart data={trend} margin={{ top: 20, right: 12, left: 4, bottom: 6 }}><CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" /><XAxis dataKey="label" /><YAxis tickFormatter={(value) => formatCompactVnd(Number(value)).replace(' ₫', '')} width={54} /><Tooltip labelFormatter={(label) => formatPeriodKey(String(trend.find((item) => item.label === label)?.key || ''), en)} formatter={(value) => formatVnd(Number(value))} /><Bar name={en ? 'Expenses' : 'Chi tiêu'} dataKey="expense" fill="var(--chart-expense)" hide={hiddenTrendSeries.includes('expense')} radius={[8, 8, 0, 0]} cursor="pointer" onClick={(_, index) => { const period = trend[index]; if (period) navigate(`/giao-dich?transactionType=Chi tiêu&month=${period.key.slice(5, 7)}&year=${period.key.slice(0, 4)}`); }}><LabelList dataKey="expense" position="top" formatter={(value) => Number(value) > 0 ? formatCompactVnd(Number(value)).replace(' ₫', '') : ''} /></Bar><Line name={en ? 'Income' : 'Thu nhập'} type="monotone" dataKey="income" hide={hiddenTrendSeries.includes('income')} stroke="var(--chart-income)" strokeWidth={3} dot={{ r: 4 }} /><Line name={en ? 'Net value' : 'Thu ròng'} type="monotone" dataKey="net" hide={hiddenTrendSeries.includes('net')} stroke="var(--chart-net)" strokeWidth={2} strokeDasharray="5 5" dot={false} /></ComposedChart></ResponsiveContainer> : <EmptyState title={en ? 'No trend data' : 'Chưa có dữ liệu xu hướng'} description={en ? 'The trend will appear when the selected period has actual transactions.' : 'Xu hướng sẽ xuất hiện khi kỳ đang chọn có giao dịch thực tế.'} />}
+        </div>
+        {showTrendTable && trend.some((item) => item.expense || item.income) && <div id="dashboard-trend-table" className="mt-3 overflow-x-auto rounded-xl border border-black/10 dark:border-white/10"><table className="w-full min-w-[34rem] text-left text-xs"><caption className="sr-only">{en ? 'Spending and income by period' : 'Thu chi theo từng kỳ'}</caption><thead className="bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-300"><tr><th scope="col" className="px-3 py-2 font-semibold">{en ? 'Period' : 'Kỳ'}</th><th scope="col" className="px-3 py-2 text-right font-semibold">{en ? 'Expenses' : 'Chi tiêu'}</th><th scope="col" className="px-3 py-2 text-right font-semibold">{en ? 'Income' : 'Thu nhập'}</th><th scope="col" className="px-3 py-2 text-right font-semibold">{en ? 'Net' : 'Thu ròng'}</th></tr></thead><tbody className="divide-y divide-black/10 dark:divide-white/10">{trend.map((item) => <tr key={item.key}><th scope="row" className="px-3 py-2 font-medium">{formatPeriodKey(item.key, en)}</th><td className="px-3 py-2 text-right tabular-nums">{formatVnd(item.expense)}</td><td className="px-3 py-2 text-right tabular-nums">{formatVnd(item.income)}</td><td className="px-3 py-2 text-right tabular-nums">{formatVnd(item.net)}</td></tr>)}</tbody></table></div>}
+      </section>
 
       <section className="ui-stagger grid gap-4 lg:grid-cols-2"><div className="card dashboard-pie-card min-w-0 overflow-hidden p-4 sm:p-5"><ExpensePieChart title={en ? 'Expenses by purpose' : 'Chi tiêu theo mục đích'} data={byPurpose} to={periodFilterLink()} filterKey="purposeId" en={en} /></div><div className="card dashboard-pie-card min-w-0 overflow-hidden p-4 sm:p-5"><ExpensePieChart title={en ? 'Expenses by category' : 'Chi tiêu theo danh mục'} data={byExpenseType} to={periodFilterLink()} filterKey="expenseTypeId" en={en} /></div></section>
 
-      <section className="card dashboard-breakdown-card min-w-0 overflow-hidden p-4 sm:p-5"><div className="mb-4 flex items-start justify-between gap-3"><div><h3 className="text-lg font-bold">{en ? 'Top categories over time' : 'Top danh mục theo thời gian'}</h3><p className="text-sm text-gray-500 dark:text-gray-400">{en ? 'Click a row to inspect the filtered transactions.' : 'Bấm vào một dòng để xem các giao dịch đã lọc.'}</p></div><TrendingUp className="text-[#247df2]" size={22} aria-hidden="true" /></div>{topCategories.length ? <div className="space-y-2">{topCategories.map((item) => <Link key={item.id} to={`${periodFilterLink(undefined)}&expenseTypeId=${encodeURIComponent(item.id)}`} className="card-interactive grid grid-cols-[minmax(0,1fr)_minmax(120px,1.6fr)_auto] items-center gap-3 rounded-xl border border-black/5 p-3 hover:bg-black/[.025] focus-visible:outline focus-visible:ring-2 focus-visible:ring-[#137050] dark:border-white/10 dark:hover:bg-white/5"><div className="min-w-0"><p className="truncate font-semibold">{item.name}</p><p className="text-xs text-gray-500">{formatVnd(item.value)}</p></div><MiniTrend values={item.trend} label={`${item.name}: ${formatVnd(item.value)}`} /><ChangeBadge value={changePercent(item.value, item.previousValue)} en={en} /></Link>)}</div> : <div className="rounded-xl bg-black/[.025] px-4 py-7 text-center text-sm text-gray-500 dark:bg-white/[.04]">{en ? 'No category data in this period.' : 'Chưa có dữ liệu danh mục trong kỳ này.'}</div>}</section>
+      <details className="group card dashboard-breakdown-card min-w-0 overflow-hidden">
+        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 p-4 sm:p-5 [&::-webkit-details-marker]:hidden">
+          <div className="min-w-0">
+            <h3 className="text-lg font-bold">{en ? 'Top categories over time' : 'Top danh mục theo thời gian'}</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{en ? 'Click a row to inspect the filtered transactions.' : 'Bấm vào một dòng để xem các giao dịch đã lọc.'}</p>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="ui-chip">{topCategories.length ? `${topCategories.length} ${en ? 'categories' : 'danh mục'}` : (en ? 'No data' : 'Chưa có dữ liệu')}</span>
+            <TrendingUp className="text-[var(--chart-net)]" size={22} aria-hidden="true" />
+            <ChevronDown size={18} aria-hidden="true" className="transition-transform group-open:rotate-180" />
+          </div>
+        </summary>
+        <div className="px-4 pb-4 sm:px-5 sm:pb-5">
+          {topCategories.length ? <div className="space-y-2">{topCategories.map((item) => <Link key={item.id} to={`${periodFilterLink(undefined)}&expenseTypeId=${encodeURIComponent(item.id)}`} className="card-interactive grid grid-cols-[minmax(0,1fr)_minmax(120px,1.6fr)_auto] items-center gap-3 rounded-xl border border-black/5 p-3 hover:bg-black/[.025] focus-visible:outline focus-visible:ring-2 focus-visible:ring-[#137050] dark:border-white/10 dark:hover:bg-white/5"><div className="min-w-0"><p className="truncate font-semibold">{item.name}</p><p className="text-xs text-gray-500">{formatVnd(item.value)}</p></div><MiniTrend values={item.trend} label={`${item.name}: ${formatVnd(item.value)}`} /><ChangeBadge value={changePercent(item.value, item.previousValue)} en={en} /></Link>)}</div> : <div className="rounded-xl bg-black/[.025] px-4 py-7 text-center text-sm text-gray-500 dark:bg-white/[.04]">{en ? 'No category data in this period.' : 'Chưa có dữ liệu danh mục trong kỳ này.'}</div>}
+        </div>
+      </details>
 
-      <section className="ui-stagger grid gap-4 lg:grid-cols-2"><div className="card dashboard-pie-card min-w-0 overflow-hidden p-4 sm:p-5"><ExpensePieChart title={en ? 'Income by purpose' : 'Thu nhập theo mục đích'} data={incomeByPurpose} to={periodFilterLink('Thu nhập')} filterKey="purposeId" en={en} income /></div><div className="card dashboard-pie-card min-w-0 overflow-hidden p-4 sm:p-5"><ExpensePieChart title={en ? 'Income by category' : 'Thu nhập theo danh mục'} data={incomeByExpenseType} to={periodFilterLink('Thu nhập')} filterKey="expenseTypeId" en={en} income /></div></section>
+      <details className="group card dashboard-details overflow-hidden p-4 sm:p-5">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-bold [&::-webkit-details-marker]:hidden">
+          <span>{en ? 'Income breakdown' : 'Phân bổ thu nhập'}</span>
+          <ChevronDown size={18} aria-hidden="true" className="transition-transform group-open:rotate-180" />
+        </summary>
+        <div className="ui-stagger mt-4 grid gap-4 lg:grid-cols-2"><div className="card dashboard-pie-card min-w-0 overflow-hidden p-4 sm:p-5"><ExpensePieChart title={en ? 'Income by purpose' : 'Thu nhập theo mục đích'} data={incomeByPurpose} to={periodFilterLink('Thu nhập')} filterKey="purposeId" en={en} income /></div><div className="card dashboard-pie-card min-w-0 overflow-hidden p-4 sm:p-5"><ExpensePieChart title={en ? 'Income by category' : 'Thu nhập theo danh mục'} data={incomeByExpenseType} to={periodFilterLink('Thu nhập')} filterKey="expenseTypeId" en={en} income /></div></div>
+      </details>
 
-      <section className="card attention-card border-amber-200 bg-amber-50/60 p-4 sm:p-5 dark:border-amber-900/60 dark:bg-amber-950/20" aria-labelledby="dashboard-insights-title"><div className="mb-3 flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-2"><Sparkles size={19} className="text-amber-600" aria-hidden="true" /><h3 id="dashboard-insights-title" className="font-bold">{en ? 'What stands out' : 'Điểm đáng chú ý'}</h3></div><button type="button" className="btn-secondary inline-flex shrink-0 items-center gap-2 text-sm" disabled={!isSupabaseConfigured || !validRange || aiSummaryBusy} onClick={() => void runAiSummary()} title={!isSupabaseConfigured ? (en ? 'Connect Supabase to use AI' : 'Cần kết nối Supabase để dùng AI') : undefined}><Sparkles size={16} aria-hidden="true" />{aiSummaryBusy ? (en ? 'Summarizing…' : 'Đang tóm tắt…') : aiSummaryQuery.isError ? (en ? 'Retry AI summary' : 'Thử lại tóm tắt AI') : (en ? 'Summarize with AI' : 'Tóm tắt bằng AI')}</button></div>{insights.length ? <ul className="grid gap-2 text-sm sm:grid-cols-2">{insights.map((insight) => <li key={insight} className="rounded-xl border border-amber-100 bg-white/70 p-3 dark:border-amber-900/40 dark:bg-white/5">{insight}</li>)}</ul> : <p className="text-sm text-gray-600 dark:text-gray-300">{en ? 'Insights will appear when there is enough actual data.' : 'Nhận xét sẽ xuất hiện khi có đủ dữ liệu giao dịch thực tế.'}</p>}{aiSummaryQuery.isError && <div role="alert" className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-red-100/70 p-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300"><span>{aiErrorMessage(aiSummaryQuery.error, en, 'summary')}</span><button type="button" className="btn-secondary px-3 py-1.5 text-xs" onClick={() => void runAiSummary()}>{en ? 'Retry' : 'Thử lại'}</button></div>}{aiSummaryQuery.data && <div className="mt-3 rounded-xl border border-amber-200 bg-white/75 p-3 text-sm dark:border-amber-900/60 dark:bg-white/5"><p className="leading-6">{aiSummaryQuery.data.summary}</p>{aiSummaryQuery.data.highlights.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5 text-gray-700 dark:text-gray-300">{aiSummaryQuery.data.highlights.map((highlight) => <li key={highlight}>{highlight}</li>)}</ul>}</div>}</section>
+      <details className="group card attention-card overflow-hidden border-amber-200 bg-amber-50/60 dark:border-amber-900/60 dark:bg-amber-950/20" aria-labelledby="dashboard-insights-title">
+        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 p-4 sm:p-5 [&::-webkit-details-marker]:hidden">
+          <div className="flex min-w-0 items-center gap-2">
+            <Sparkles size={19} className="shrink-0 text-amber-600" aria-hidden="true" />
+            <div className="min-w-0">
+              <h3 id="dashboard-insights-title" className="font-bold">{en ? 'What stands out' : 'Điểm đáng chú ý'}</h3>
+              <p className="text-xs text-gray-600 dark:text-gray-300">{insights.length ? `${insights.length} ${en ? 'insights available' : 'nhận xét sẵn có'}` : (en ? 'Open to see insights and AI summary.' : 'Mở để xem nhận xét và tóm tắt AI.')}</p>
+            </div>
+          </div>
+          <ChevronDown size={18} aria-hidden="true" className="shrink-0 transition-transform group-open:rotate-180" />
+        </summary>
+        <div className="px-4 pb-4 sm:px-5 sm:pb-5">
+          <div className="mb-3 flex justify-end"><button type="button" className="btn-secondary inline-flex shrink-0 items-center gap-2 text-sm" disabled={!isSupabaseConfigured || !validRange || aiSummaryBusy} onClick={() => void runAiSummary()} title={!isSupabaseConfigured ? (en ? 'Connect Supabase to use AI' : 'Cần kết nối Supabase để dùng AI') : undefined}><Sparkles size={16} aria-hidden="true" />{aiSummaryBusy ? (en ? 'Summarizing…' : 'Đang tóm tắt…') : aiSummaryQuery.isError ? (en ? 'Retry AI summary' : 'Thử lại tóm tắt AI') : (en ? 'Summarize with AI' : 'Tóm tắt bằng AI')}</button></div>
+          {insights.length ? <ul className="grid gap-2 text-sm sm:grid-cols-2">{insights.map((insight) => <li key={insight} className="rounded-xl border border-amber-100 bg-white/70 p-3 dark:border-amber-900/40 dark:bg-white/5">{insight}</li>)}</ul> : <p className="text-sm text-gray-600 dark:text-gray-300">{en ? 'Insights will appear when there is enough actual data.' : 'Nhận xét sẽ xuất hiện khi có đủ dữ liệu giao dịch thực tế.'}</p>}
+          {aiSummaryQuery.isError && <div role="alert" className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-red-100/70 p-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300"><span>{aiErrorMessage(aiSummaryQuery.error, en, 'summary')}</span><button type="button" className="btn-secondary px-3 py-1.5 text-xs" onClick={() => void runAiSummary()}>{en ? 'Retry' : 'Thử lại'}</button></div>}
+          {aiSummaryQuery.data && <div className="mt-3 rounded-xl border border-amber-200 bg-white/75 p-3 text-sm dark:border-amber-900/60 dark:bg-white/5"><p className="leading-6">{aiSummaryQuery.data.summary}</p>{aiSummaryQuery.data.highlights.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5 text-gray-700 dark:text-gray-300">{aiSummaryQuery.data.highlights.map((highlight) => <li key={highlight}>{highlight}</li>)}</ul>}</div>}
+        </div>
+      </details>
     </div>
   );
 }
@@ -657,6 +729,14 @@ function MiniTrend({ values, label }: { values: number[]; label: string }) {
   return <svg viewBox={`0 0 ${width} ${height}`} className="h-10 w-full min-w-0 text-[var(--chart-net)]" role="img" aria-label={label}><polyline points={points} fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg>;
 }
 
+function TrendLegend({ en, hiddenSeries, onToggle }: { en: boolean; hiddenSeries: TrendSeriesKey[]; onToggle: (series: TrendSeriesKey) => void }) {
+  return <div className="flex flex-wrap justify-end gap-x-2 gap-y-1 text-xs" role="group" aria-label={en ? 'Trend series' : 'Các loại dữ liệu xu hướng'}>{(Object.keys(trendSeriesMeta) as TrendSeriesKey[]).map((series) => {
+    const label = trendSeriesMeta[series][en ? 'en' : 'vi'];
+    const hidden = hiddenSeries.includes(series);
+    return <button key={series} type="button" className={`flex min-h-11 items-center gap-1.5 rounded-lg px-2 transition-opacity hover:bg-black/5 focus-visible:outline focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] dark:hover:bg-white/5 ${hidden ? 'opacity-50' : ''}`} aria-pressed={!hidden} aria-label={`${hidden ? (en ? 'Show' : 'Hiện') : (en ? 'Hide' : 'Ẩn')} ${label}`} onClick={() => onToggle(series)}><span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: trendSeriesMeta[series].color }} aria-hidden="true" /><span className={hidden ? 'line-through' : undefined}>{label}</span></button>;
+  })}</div>;
+}
+
 function ExpensePieChart({ title, data, to, filterKey, en, income = false }: { title: string; data: ExpenseChartItem[]; to: string; filterKey: 'purposeId' | 'expenseTypeId'; en: boolean; income?: boolean }) {
   const navigate = useNavigate();
   const pieData = summarizePieData(data, en ? 'en' : 'vi');
@@ -676,7 +756,7 @@ function ExpensePieChart({ title, data, to, filterKey, en, income = false }: { t
     <div className="min-h-72 min-w-0 max-w-full pt-3">
       {pieData.length ? <>
         <div className="h-56 sm:h-64"><ResponsiveContainer><PieChart margin={{ top: 18, right: 18, left: 18, bottom: 0 }}><Pie data={pieData} dataKey="value" nameKey="name" innerRadius={45} outerRadius={75} labelLine={false} label={formatPieLabel}>{pieData.map((item) => { const interactive = item.id !== 'uncategorized' && (item.isOther ? Boolean(item.hiddenItems?.length) : true); return <Cell key={item.id || item.name} fill={item.fill} cursor={interactive ? 'pointer' : undefined} role={interactive ? 'button' : undefined} tabIndex={interactive ? 0 : undefined} aria-label={item.isOther ? `${item.name}: ${formatVnd(item.value)} (${item.hiddenItems?.length || 0} danh mục)` : `${item.name}: ${formatVnd(item.value)}`} onClick={() => openItem(item)} onKeyDown={(event) => { if (interactive && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); openItem(item); } }} />; })}</Pie><Tooltip content={<PieTooltip />} /></PieChart></ResponsiveContainer></div>
-        <ul className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs sm:grid-cols-3" aria-label={`${title} legend`}>{pieData.map((item) => <li key={item.id || item.name} className="flex min-w-0 items-center gap-1.5"><span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: item.fill }} aria-hidden="true" /><span className="truncate" title={`${item.name}: ${formatVnd(item.value)}`}>{item.name}</span></li>)}</ul>
+        <ul className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs sm:grid-cols-3" aria-label={`${title} legend`}>{pieData.map((item) => { const interactive = item.id !== 'uncategorized' && (item.isOther ? Boolean(item.hiddenItems?.length) : true); return <li key={item.id || item.name} className="min-w-0"><button type="button" className="flex min-h-11 w-full min-w-0 items-center gap-1.5 rounded-lg px-1 text-left hover:bg-black/5 disabled:cursor-default disabled:hover:bg-transparent dark:hover:bg-white/5 dark:disabled:hover:bg-transparent" disabled={!interactive} onClick={() => openItem(item)} aria-label={`${item.name}: ${formatVnd(item.value)}`}><span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: item.fill }} aria-hidden="true" /><span className="truncate" title={`${item.name}: ${formatVnd(item.value)}`}>{item.name}</span></button></li>; })}</ul>
         {otherItem && <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{en ? `${otherItem.hiddenItems?.length || 0} smaller categories grouped into “Other”; tap, click, or focus “Other” to see details.` : `${otherItem.hiddenItems?.length || 0} danh mục nhỏ được gộp vào “Khác”; nhấn, bấm hoặc dùng phím Enter trên “Khác” để xem chi tiết.`}</p>}
         {showTable && <div className="mt-3 overflow-x-auto rounded-xl border border-black/10 dark:border-white/10"><table className="w-full min-w-[18rem] text-left text-xs"><caption className="sr-only">{title}</caption><thead className="bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-300"><tr><th scope="col" className="px-3 py-2 font-semibold">{en ? 'Category' : 'Danh mục'}</th><th scope="col" className="px-3 py-2 text-right font-semibold">{en ? 'Amount' : 'Số tiền'}</th><th scope="col" className="px-3 py-2 text-right font-semibold">%</th></tr></thead><tbody className="divide-y divide-black/10 dark:divide-white/10">{pieData.map((item) => <tr key={item.id || item.name}><th scope="row" className="max-w-[12rem] px-3 py-2 font-medium">{item.name}</th><td className="px-3 py-2 text-right tabular-nums">{formatVnd(item.value)}</td><td className="px-3 py-2 text-right tabular-nums">{total ? `${Math.round((item.value / total) * 100)}%` : '0%'}</td></tr>)}</tbody></table></div>}
       </> : <EmptyState title={en ? 'No chart data' : 'Chưa có dữ liệu biểu đồ'} description={en ? `No actual ${income ? 'income' : 'expense'} transactions in this period.` : `Chưa có giao dịch thực tế ${income ? 'thu nhập' : 'chi tiêu'} trong kỳ này.`} />}
@@ -691,7 +771,7 @@ function PieTooltip({ active, payload }: { active?: boolean; payload?: Array<{ p
   return <div className="rounded-xl border border-black/10 bg-white px-3 py-2 text-xs shadow-lg dark:border-white/10 dark:bg-[var(--surface)]"><p className="font-bold">{item.name}: {formatVnd(item.value)}</p>{item.hiddenItems?.length ? <ul className="mt-1 space-y-0.5 text-gray-600 dark:text-gray-300">{item.hiddenItems.map((hiddenItem) => <li key={hiddenItem.id}>{hiddenItem.name}: {formatVnd(hiddenItem.value)}</li>)}</ul> : null}</div>;
 }
 
-function Kpi({ label, value, icon: Icon, tone, meta, to }: { label: string; value: number; icon: LucideIcon; tone: Tone; meta: ReactNode; to: string }) {
+function Kpi({ en, label, value, icon: Icon, tone, meta, to }: { en: boolean; label: string; value: number; icon: LucideIcon; tone: Tone; meta: ReactNode; to: string }) {
   const toneClass = `kpi-tone-${tone}`;
-  return <Link to={to} className="card card-interactive kpi-card group block h-full min-w-0 p-3 transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] sm:p-4" aria-label={`Mở giao dịch theo ${label}`}><div className="min-w-0"><div className="flex items-center gap-2"><span className={`kpi-icon grid size-9 shrink-0 place-items-center rounded-xl ${toneClass}`}><Icon size={18} aria-hidden="true" /></span><p className="min-h-8 min-w-0 flex-1 text-xs font-semibold leading-4 text-gray-500 dark:text-gray-400">{label}</p></div><p className="kpi-value mt-2 max-w-full break-words whitespace-normal text-lg font-extrabold leading-tight sm:text-xl" title={formatVnd(value)} aria-label={`${label}: ${formatVnd(value)}`}>{formatCompactVnd(value)}</p></div><p className="kpi-meta mt-3 flex min-w-0 items-center gap-1 truncate text-xs leading-4">{meta}</p></Link>;
+  return <Link to={to} className="card card-interactive kpi-card group block h-full min-w-0 p-3 transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] sm:p-4" aria-label={`${en ? 'Open transactions filtered by' : 'Mở giao dịch theo'} ${label}`}><div className="min-w-0"><div className="flex items-center gap-2"><span className={`kpi-icon grid size-9 shrink-0 place-items-center rounded-xl ${toneClass}`}><Icon size={18} aria-hidden="true" /></span><p className="min-h-8 min-w-0 flex-1 text-xs font-semibold leading-4 text-gray-500 dark:text-gray-400">{label}</p></div><p className="kpi-value mt-2 max-w-full break-words whitespace-normal text-lg font-extrabold leading-tight sm:text-xl" title={formatVnd(value)}>{formatCompactVnd(value)}</p></div><p className="kpi-meta mt-3 flex min-w-0 items-center gap-1 truncate text-xs leading-4">{meta}</p></Link>;
 }

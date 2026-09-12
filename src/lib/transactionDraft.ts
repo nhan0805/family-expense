@@ -26,11 +26,13 @@ export function saveTransactionDraft(
   familyId: string,
   values: Partial<TransactionFormInput>,
   transactionId?: string,
-) {
+): boolean {
   try {
     localStorage.setItem(transactionDraftKey(familyId, transactionId), JSON.stringify(values));
+    return true;
   } catch {
     // Storage có thể bị khóa ở chế độ riêng tư; không làm hỏng luồng nhập liệu.
+    return false;
   }
 }
 

@@ -1,6 +1,6 @@
 -- Structural tests for multi-select transaction filters and semantic cleanup.
 begin;
-select plan(8);
+select plan(9);
 
 select ok(
   exists (
@@ -53,6 +53,20 @@ select ok(
       and p.proargtypes[10] = 'uuid[]'::regtype
   ),
   'list_deleted_transactions_v2 accepts exclusion catalog filters'
+);
+select ok(
+  exists (
+    select 1
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public'
+      and p.proname = 'list_family_transactions_v3'
+      and p.proargtypes[1] = 'int'::regtype
+      and p.proargtypes[2] = 'date'::regtype
+      and p.proargtypes[3] = 'timestamptz'::regtype
+      and p.proargtypes[4] = 'uuid'::regtype
+  ),
+  'list_family_transactions_v3 supports date cursor pagination'
 );
 select ok(
   not exists (

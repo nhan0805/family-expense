@@ -11,10 +11,12 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useOptionalLanguage } from '../context/LanguageContext';
-import { getCatalogDisplayName, transactionTypeLabel, type CatalogLanguage, type Transaction } from '../lib/domain';
+import { getCatalogDisplayName, transactionTypeLabel, type CatalogLanguage } from '../lib/domain';
 import { formatImportCheckSummary } from '../lib/importSummary';
 import { userFacingError } from '../lib/errorRecovery';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
+import { fetchTransactionDuplicateCandidates } from '../lib/transactionsApi';
+import { markTemplateDuplicates } from '../lib/templateDuplicates';
 import { inferImportMode, type TemplateError, type TemplateRow } from '../lib/templateTypes';
 
 type ExportRow = Record<string, unknown>;
@@ -112,51 +114,26 @@ export function ImportExport() {
     setCheckingFile(true);
     setMessage(en ? 'Validating file…' : 'Đang kiểm tra file…');
     try {
+      const buffer = await file.arrayBuffer();
       const digestHex = globalThis.crypto?.subtle
-        ? Array.from(new Uint8Array(await globalThis.crypto.subtle.digest('SHA-256', await file.arrayBuffer())), (byte) => byte.toString(16).padStart(2, '0')).join('')
+        ? Array.from(new Uint8Array(await globalThis.crypto.subtle.digest('SHA-256', buffer)), (byte) => byte.toString(16).padStart(2, '0')).join('')
         : '';
       setImportKey(`${file.name}:${file.size}:${file.lastModified}:${digestHex}`);
       const { parseTemplate } = await import('../lib/templateImport');
-      let duplicateTransactions = transactions;
-      if (isSupabaseConfigured && familyId) {
-        duplicateTransactions = [];
-        const pageSize = 1000;
-        for (let from = 0; ; from += pageSize) {
-          const { data, error } = await supabase
-            .from('transactions')
-            .select('id,transaction_date,amount,description')
-            .eq('family_id', familyId)
-            .is('deleted_at', null)
-            .range(from, from + pageSize - 1);
-          if (error) throw error;
-          const batch = data || [];
-          duplicateTransactions.push(
-            ...batch.map(
-              (row) =>
-                ({
-                  id: row.id,
-                  transactionDate: row.transaction_date,
-                  amount: Number(row.amount),
-                  description: row.description,
-                  transactionType: 'Chi tiêu',
-                  status: 'Thực tế',
-                  purposeId: '',
-                  expenseTypeId: '',
-                  source: 'manual',
-                  aiGenerated: false,
-                }) satisfies Transaction,
-            ),
-          );
-          if (batch.length < pageSize) break;
-        }
-      }
-      const result = await parseTemplate(
-        await file.arrayBuffer(),
+      let result = await parseTemplate(
+        buffer,
         purposes,
         expenseTypes,
         paymentMethods,
-        duplicateTransactions,
+        isSupabaseConfigured ? [] : transactions,
       );
+      if (isSupabaseConfigured && familyId) {
+        const duplicateCandidates = await fetchTransactionDuplicateCandidates(
+          familyId,
+          result.valid.filter((row) => !row.id),
+        );
+        result = { ...result, valid: markTemplateDuplicates(result.valid, duplicateCandidates) };
+      }
       setValidRows(result.valid);
       setImportErrors(result.errors);
       const duplicateCount = result.valid.filter((row) => row.duplicate).length;

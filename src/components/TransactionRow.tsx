@@ -13,6 +13,7 @@ import {
   type Transaction,
 } from '../lib/domain';
 import { getCatalogIcon } from '../lib/catalogIcons';
+import { memo } from 'react';
 
 type TransactionRowProps = {
   transaction: Transaction;
@@ -34,15 +35,14 @@ type TransactionRowProps = {
   currentUserRole: 'owner' | 'member' | null;
   currentUserId: string;
   onToggleSelected: (id: string) => void;
-  onSetSelected: (ids: Set<string>) => void;
   onToggleMenu: (id: string) => void;
-  onRestore: () => void;
-  onPermanentlyDelete: () => void;
+  onRestore: (id: string) => void;
+  onPermanentlyDelete: (id: string) => void;
   onCopy: (transaction: Transaction) => void;
-  onRemove: (id: string) => void;
+  onRemove: (transaction: Transaction) => void;
 };
 
-export function TransactionRow({
+export const TransactionRow = memo(function TransactionRow({
   transaction,
   purposeName,
   purposeIcon,
@@ -61,7 +61,6 @@ export function TransactionRow({
   currentUserRole,
   currentUserId,
   onToggleSelected,
-  onSetSelected,
   onToggleMenu,
   onRestore,
   onPermanentlyDelete,
@@ -71,12 +70,11 @@ export function TransactionRow({
   const tone = transaction.transactionType === 'Thu nhập'
     ? { rowClass: 'bg-gradient-to-r from-emerald-100/90 via-emerald-50/55 to-transparent dark:from-emerald-400/15 dark:via-emerald-400/5 dark:to-transparent', amountClass: 'text-emerald-700 dark:text-emerald-300' }
         : { rowClass: 'bg-gradient-to-r from-rose-100/90 via-rose-50/55 to-transparent dark:from-rose-400/15 dark:via-rose-400/5 dark:to-transparent', amountClass: 'text-rose-700 dark:text-rose-300' };
-  const setOnlySelected = () => onSetSelected(new Set([transaction.id]));
   const date = formatDateOnlyVi(transaction.transactionDate);
   const canDelete = canDeleteTransaction(transaction, currentUserRole, currentUserId);
 
   return (
-    <div>
+    <div className="transaction-row-shell">
       <article aria-label={`Giao dịch ${transaction.description}`} className={`transaction-card relative rounded-2xl border border-black/10 p-4 shadow-sm transition duration-150 hover:-translate-y-0.5 hover:shadow-md dark:border-white/10 md:hidden ${tone.rowClass}`}>
         <div className="flex items-start justify-between gap-3">
           {selectMode && <input type="checkbox" className="mt-1 size-5 shrink-0 accent-[#155e46]" aria-label={`Chọn giao dịch ${transaction.description}`} checked={selected} onChange={() => onToggleSelected(transaction.id)} />}
@@ -84,10 +82,10 @@ export function TransactionRow({
             {showTrash ? <span className="block break-words text-base font-bold [overflow-wrap:anywhere] line-clamp-2">{transaction.description}</span> : <Link to={`/giao-dich/${transaction.id}`} title={transaction.description} className="block break-words text-base font-bold active:opacity-70 [overflow-wrap:anywhere] line-clamp-2">{transaction.description}</Link>}
             <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400"><span>{date}</span>{transaction.status === 'Dự kiến' && <span className="rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 font-semibold text-amber-900 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-200">{plannedLabel}</span>}{transaction.source === 'recurring' && <span className="ui-chip">{recurringLabel}</span>}</div>
           </div>
-          <div className="flex shrink-0 items-start gap-1"><strong className={`pt-1 text-base ${tone.amountClass} ${showTrash ? 'line-through opacity-70' : ''}`}>{formatVnd(transaction.amount)}</strong>{showTrash && <><button type="button" className="rounded-lg p-2 text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-950/30" aria-label={`Khôi phục ${transaction.description}`} title="Khôi phục" onClick={() => { setOnlySelected(); onRestore(); }}><RotateCcw size={18}/></button><button type="button" className="rounded-lg p-2 text-red-600 hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-950/30" aria-label={`Xóa vĩnh viễn ${transaction.description}`} title="Xóa vĩnh viễn" onClick={() => { setOnlySelected(); onPermanentlyDelete(); }}><Trash2 size={18}/></button></>}{!showTrash && <button type="button" className="rounded-lg p-2 hover:bg-black/5 dark:hover:bg-white/5" aria-label={`Thao tác với ${transaction.description}`} aria-expanded={openMenu} onClick={() => onToggleMenu(transaction.id)}><MoreHorizontal size={19}/></button>}</div>
+          <div className="flex shrink-0 items-start gap-1"><strong className={`pt-1 text-base ${tone.amountClass} ${showTrash ? 'line-through opacity-70' : ''}`}>{formatVnd(transaction.amount)}</strong>{showTrash && <><button type="button" className="rounded-lg p-2 text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-950/30" aria-label={`Khôi phục ${transaction.description}`} title="Khôi phục" onClick={() => onRestore(transaction.id)}><RotateCcw size={18}/></button><button type="button" className="rounded-lg p-2 text-red-600 hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-950/30" aria-label={`Xóa vĩnh viễn ${transaction.description}`} title="Xóa vĩnh viễn" onClick={() => onPermanentlyDelete(transaction.id)}><Trash2 size={18}/></button></>}{!showTrash && <button type="button" className="rounded-lg p-2 hover:bg-black/5 dark:hover:bg-white/5" aria-label={`Thao tác với ${transaction.description}`} aria-expanded={openMenu} onClick={() => onToggleMenu(transaction.id)}><MoreHorizontal size={19}/></button>}</div>
         </div>
         <div className="mt-3 flex flex-wrap gap-1.5"><CatalogTag name={purposeName} icon={purposeIcon} /><CatalogTag name={expenseTypeName} icon={expenseTypeIcon} />{paymentMethodName !== '—' && <CatalogTag name={paymentMethodName} icon={paymentMethodIcon} />}</div>
-        {openMenu && <div className="absolute right-3 top-12 z-10 min-w-40 overflow-hidden rounded-xl border border-black/10 bg-white p-1 shadow-xl dark:border-white/10 dark:bg-[var(--surface)]"><Link className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/5" to={`/giao-dich/${transaction.id}`} onClick={() => onToggleMenu(transaction.id)}><Pencil size={16}/>Sửa</Link><button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/5" disabled={copying} onClick={() => { onToggleMenu(transaction.id); onCopy(transaction); }}><Copy size={16}/>Sao chép</button>{canDelete && <button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-red-700 hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-950/30" disabled={deleting} onClick={() => { onToggleMenu(transaction.id); onRemove(transaction.id); }}><Trash2 size={16}/>Xóa</button>}</div>}
+        {openMenu && <div className="absolute right-3 top-12 z-10 min-w-40 overflow-hidden rounded-xl border border-black/10 bg-white p-1 shadow-xl dark:border-white/10 dark:bg-[var(--surface)]"><Link className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/5" to={`/giao-dich/${transaction.id}`} onClick={() => onToggleMenu(transaction.id)}><Pencil size={16}/>Sửa</Link><button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/5" disabled={copying} onClick={() => { onToggleMenu(transaction.id); onCopy(transaction); }}><Copy size={16}/>Sao chép</button>{canDelete && <button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-red-700 hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-950/30" disabled={deleting} onClick={() => { onToggleMenu(transaction.id); onRemove(transaction); }}><Trash2 size={16}/>Xóa</button>}</div>}
       </article>
       <div className={`transaction-table-row hidden w-full gap-1 border-t border-black/5 p-3 transition-colors hover:brightness-[.98] dark:border-white/5 dark:hover:brightness-110 md:grid md:min-w-[1080px] md:items-center ${selectMode ? 'md:grid-cols-[32px_80px_minmax(180px,1fr)_190px_160px_190px_220px]' : 'md:grid-cols-[80px_minmax(180px,1fr)_190px_160px_190px_220px]'} ${tone.rowClass}`}>
         {selectMode && <input type="checkbox" className="size-5 accent-[#155e46]" aria-label={`Chọn giao dịch ${transaction.description} trên bảng`} checked={selected} onChange={() => onToggleSelected(transaction.id)} />}
@@ -96,12 +94,28 @@ export function TransactionRow({
         <CatalogValue name={purposeName} icon={purposeIcon} /><CatalogValue name={expenseTypeName} icon={expenseTypeIcon} /><CatalogValue name={paymentMethodName} icon={paymentMethodIcon} />
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_72px] items-center gap-1">
           <strong className={`transaction-row-amount min-w-0 truncate text-sm font-bold ${tone.amountClass}`}>{formatVnd(transaction.amount)}</strong>
-          <span className="transaction-row-actions grid w-[72px] shrink-0 grid-cols-2 items-center">{showTrash && <button type="button" aria-label={`Khôi phục ${transaction.description}`} title="Khôi phục" className="grid size-8 place-items-center text-emerald-700" onClick={() => { setOnlySelected(); onRestore(); }}><RotateCcw size={17}/></button>}{showTrash && <button type="button" aria-label={`Xóa vĩnh viễn ${transaction.description}`} title="Xóa vĩnh viễn" className="grid size-8 place-items-center text-red-600" onClick={() => { setOnlySelected(); onPermanentlyDelete(); }}><Trash2 size={17}/></button>}<span className={showTrash ? 'hidden' : 'contents'}><button type="button" aria-label="Sao chép" className="grid size-8 place-items-center" disabled={copying} onClick={() => onCopy(transaction)}><Copy size={17}/></button>{canDelete && <button type="button" aria-label="Xóa" className="grid size-8 place-items-center text-red-600" disabled={deleting} onClick={() => onRemove(transaction.id)}><Trash2 size={17}/></button>}</span></span>
+          <span className="transaction-row-actions grid w-[72px] shrink-0 grid-cols-2 items-center">{showTrash && <button type="button" aria-label={`Khôi phục ${transaction.description}`} title="Khôi phục" className="grid size-8 place-items-center text-emerald-700" onClick={() => onRestore(transaction.id)}><RotateCcw size={17}/></button>}{showTrash && <button type="button" aria-label={`Xóa vĩnh viễn ${transaction.description}`} title="Xóa vĩnh viễn" className="grid size-8 place-items-center text-red-600" onClick={() => onPermanentlyDelete(transaction.id)}><Trash2 size={17}/></button>}<span className={showTrash ? 'hidden' : 'contents'}><button type="button" aria-label="Sao chép" className="grid size-8 place-items-center" disabled={copying} onClick={() => onCopy(transaction)}><Copy size={17}/></button>{canDelete && <button type="button" aria-label="Xóa" className="grid size-8 place-items-center text-red-600" disabled={deleting} onClick={() => onRemove(transaction)}><Trash2 size={17}/></button>}</span></span>
         </div>
       </div>
     </div>
   );
-}
+}, (previous, next) => previous.transaction === next.transaction
+  && previous.purposeName === next.purposeName
+  && previous.purposeIcon === next.purposeIcon
+  && previous.expenseTypeName === next.expenseTypeName
+  && previous.expenseTypeIcon === next.expenseTypeIcon
+  && previous.paymentMethodName === next.paymentMethodName
+  && previous.paymentMethodIcon === next.paymentMethodIcon
+  && previous.recurringLabel === next.recurringLabel
+  && previous.plannedLabel === next.plannedLabel
+  && previous.showTrash === next.showTrash
+  && previous.selectMode === next.selectMode
+  && previous.selected === next.selected
+  && previous.openMenu === next.openMenu
+  && previous.deleting === next.deleting
+  && previous.copying === next.copying
+  && previous.currentUserRole === next.currentUserRole
+  && previous.currentUserId === next.currentUserId);
 
 function CatalogTag({ name, icon }: { name: string; icon?: string }) {
   const Icon = getCatalogIcon(icon);

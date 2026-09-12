@@ -12,6 +12,8 @@ import type {
   TemplateError,
   TemplateRow,
 } from './templateTypes';
+import { templateDuplicateKey } from './templateDuplicates';
+export { markTemplateDuplicates, templateDuplicateKey } from './templateDuplicates';
 export { inferImportMode } from './templateTypes';
 export type { ImportMode, TemplateError, TemplateRow } from './templateTypes';
 const templateTransactionTypes = ['Tiền ra', 'Tiền vào'] as const;
@@ -186,12 +188,10 @@ export async function parseTemplate(
     items.find(
       (x) => [x.name, x.nameEn].some((candidate) => candidate ? normalizeText(candidate) === normalizeText(name) : false),
     )?.id;
-  const duplicateKey = (date: string, amount: number, description: string) =>
-    `${date}|${amount}|${normalizeText(description)}`;
   const duplicateKeys = new Set(
     transactions
       .filter((transaction) => !transaction.deletedAt)
-      .map((transaction) => duplicateKey(transaction.transactionDate, transaction.amount, transaction.description)),
+      .map((transaction) => templateDuplicateKey(transaction.transactionDate, transaction.amount, transaction.description)),
   );
   const fileKeys = new Set<string>();
   rows.slice(1).forEach((values, index) => {
@@ -225,7 +225,7 @@ export async function parseTemplate(
       errors.push({ rowNumber: n, messages });
       return;
     }
-    const key = duplicateKey(raw.date, raw.amount, raw.description);
+    const key = templateDuplicateKey(raw.date, raw.amount, raw.description);
     const duplicate = !raw.id && (duplicateKeys.has(key) || fileKeys.has(key));
     if (!raw.id) fileKeys.add(key);
     valid.push({

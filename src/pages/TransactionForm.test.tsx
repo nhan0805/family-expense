@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { FeedbackProvider } from '../components/Feedback';
@@ -45,6 +45,28 @@ describe('Form giao dịch hợp nhất', () => {
     expect(aiButton).toBeEnabled();
   });
 
+  it('debounce autosave và báo rõ khi bản nháp đã được lưu', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.mocked(useApp).mockReturnValue(appValue);
+      render(<FeedbackProvider><QueryClientProvider client={new QueryClient()}><MemoryRouter><TransactionForm/></MemoryRouter></QueryClientProvider></FeedbackProvider>);
+
+      fireEvent.change(screen.getByLabelText(/Nội dung/), { target: { value: 'Mua sữa' } });
+      expect(screen.queryByText('Đã lưu bản nháp trên thiết bị.')).not.toBeInTheDocument();
+
+      await act(async () => {
+        vi.advanceTimersByTime(350);
+      });
+
+      expect(screen.getByText('Đã lưu bản nháp trên thiết bị.')).toBeInTheDocument();
+      const unloadEvent = new Event('beforeunload', { cancelable: true });
+      window.dispatchEvent(unloadEvent);
+      expect(unloadEvent.defaultPrevented).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('thông báo, tóm tắt và đánh dấu đúng các trường AI đã điền', async () => {
     vi.mocked(useApp).mockReturnValue(appValue);
     invokeMock.mockResolvedValue({
@@ -65,7 +87,7 @@ describe('Form giao dịch hợp nhất', () => {
     expect(screen.getByText('AI đã đề xuất 8 trường. Hãy kiểm tra trước khi lưu.')).toBeInTheDocument();
     expect(screen.getByText(/Ngày, Nội dung, Loại giao dịch, Trạng thái, Số tiền/)).toBeInTheDocument();
     expect(screen.getAllByText('AI đề xuất')).toHaveLength(7);
-    const paymentField = screen.getByLabelText(/Phương thức thanh toán/).closest('label');
+    const paymentField = screen.getByLabelText(/Phương thức thanh toán/).closest('div');
     expect(paymentField).not.toBeNull();
     expect(paymentField?.querySelector('.label')).toHaveClass('flex', 'items-center');
     expect(within(paymentField as HTMLElement).getByText('AI đề xuất')).toHaveClass('shrink-0', 'whitespace-nowrap');

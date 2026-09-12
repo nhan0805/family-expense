@@ -55,6 +55,7 @@ import {
   fetchTransactionPage,
   fetchTransactionYears,
   REMOTE_TRANSACTION_REFRESH_INTERVAL_MS,
+  type TransactionPageCursor,
 } from '../lib/transactionsApi';
 
 type SortOption =
@@ -507,10 +508,10 @@ export function Transactions() {
     queryKey: ['transactions', familyId, serverFilters],
     queryFn: ({ pageParam }) =>
       fetchTransactionPage(familyId, serverFilters, pageParam),
-    initialPageParam: 0,
+    initialPageParam: 0 as number | TransactionPageCursor,
     placeholderData: keepPreviousData,
     getNextPageParam: (lastPage) =>
-      lastPage.hasMore ? lastPage.page + 1 : undefined,
+      lastPage.nextCursor || (lastPage.hasMore ? lastPage.page + 1 : undefined),
     enabled: isSupabaseConfigured && Boolean(familyId) && !showTrash,
     refetchInterval: isSupabaseConfigured && Boolean(familyId) && !showTrash
       ? REMOTE_TRANSACTION_REFRESH_INTERVAL_MS
@@ -540,11 +541,17 @@ export function Transactions() {
     ),
     [purposes, expenseTypes, paymentMethods],
   );
-  const trashFilters = { query, transactionType, status, purposeIds, expenseTypeIds, paymentMethodIds, excludePurposeIds, excludeExpenseTypeIds, excludePaymentMethodIds, amountMin, amountMax, month, year, dateFrom, dateTo, sort } satisfies TransactionFilters;
+  const trashFilters = useMemo(() => ({ query, transactionType, status, purposeIds, expenseTypeIds, paymentMethodIds, excludePurposeIds, excludeExpenseTypeIds, excludePaymentMethodIds, amountMin, amountMax, month, year, dateFrom, dateTo, sort } satisfies TransactionFilters), [amountMax, amountMin, dateFrom, dateTo, excludeExpenseTypeIds, excludePaymentMethodIds, excludePurposeIds, expenseTypeIds, month, paymentMethodIds, purposeIds, query, sort, status, transactionType, year]);
   const localTrashRows = useMemo(() => filterAndSortTransactions(transactions.filter((item) => item.deletedAt && (currentUserRole === 'owner' || item.createdBy === currentUserId)), trashFilters, true), [transactions, currentUserRole, currentUserId, trashFilters]);
-  const rows = showTrash
-    ? (isSupabaseConfigured ? trashQuery.data?.rows || [] : localTrashRows)
-    : (isSupabaseConfigured ? transactionQuery.data?.pages.flatMap((page) => page.rows) || [] : localRows);
+  const purposeById = useMemo(() => new Map(purposes.map((item) => [item.id, item])), [purposes]);
+  const expenseTypeById = useMemo(() => new Map(expenseTypes.map((item) => [item.id, item])), [expenseTypes]);
+  const paymentMethodById = useMemo(() => new Map(paymentMethods.map((item) => [item.id, item])), [paymentMethods]);
+  const rows = useMemo(
+    () => showTrash
+      ? (isSupabaseConfigured ? trashQuery.data?.rows || [] : localTrashRows)
+      : (isSupabaseConfigured ? transactionQuery.data?.pages.flatMap((page) => page.rows) || [] : localRows),
+    [localRows, localTrashRows, showTrash, trashQuery.data?.rows, transactionQuery.data?.pages],
+  );
   const activeQueryIsPending = showTrash ? trashQuery.isPending : transactionQuery.isPending;
   const activeQueryIsError = showTrash ? trashQuery.isError : transactionQuery.isError;
   const activeQueryError = showTrash ? trashQuery.error : transactionQuery.error;
@@ -664,8 +671,9 @@ export function Transactions() {
     setDateTo('');
     setSort('date-desc');
   };
-  const restoreSelected = async () => {
-    const restoreRows = rows.filter((item) => selectedIds.has(item.id));
+  const restoreSelected = async (selectedId?: string) => {
+    const selectedTransactionIds = selectedId ? new Set([selectedId]) : selectedIds;
+    const restoreRows = rows.filter((item) => selectedTransactionIds.has(item.id));
     if (!restoreRows.length) return;
     if (!await askConfirm({ title: 'Khôi phục giao dịch?', description: `${restoreRows.length} giao dịch sẽ quay lại danh sách chính và được tính lại vào báo cáo.`, confirmLabel: 'Khôi phục' })) return;
     setBulkEditBusy(true);
@@ -686,15 +694,16 @@ export function Transactions() {
         queryClient.invalidateQueries({ queryKey: ['budgets', familyId] }),
       ]);
     } else {
-      setTransactions((items) => items.map((item) => selectedIds.has(item.id) ? { ...item, deletedAt: null } : item));
+      setTransactions((items) => items.map((item) => selectedTransactionIds.has(item.id) ? { ...item, deletedAt: null } : item));
     }
     const count = restoreRows.length;
     setBulkEditBusy(false);
     setSelectedIds(new Set());
     notify(`Đã khôi phục ${count} giao dịch.`);
   };
-  const permanentlyDeleteSelected = async () => {
-    const deleteRows = rows.filter((item) => selectedIds.has(item.id));
+  const permanentlyDeleteSelected = async (selectedId?: string) => {
+    const selectedTransactionIds = selectedId ? new Set([selectedId]) : selectedIds;
+    const deleteRows = rows.filter((item) => selectedTransactionIds.has(item.id));
     if (!deleteRows.length) return;
     if (!await askConfirm({ title: 'Xóa vĩnh viễn?', description: `${deleteRows.length} giao dịch sẽ bị xóa khỏi cơ sở dữ liệu và không thể khôi phục.`, confirmLabel: 'Xóa vĩnh viễn', danger: true })) return;
     setBulkEditBusy(true);
@@ -818,12 +827,9 @@ export function Transactions() {
     closeSelectMode();
     notify(`Đã cập nhật ${updatedCount} giao dịch.`);
   };
-  const remove = async (id: string) => {
-    const transaction = rows.find((item) => item.id === id);
-    if (
-      !transaction ||
-      !canDeleteTransaction(transaction, currentUserRole, currentUserId)
-    ) {
+  const remove = async (transaction: Transaction) => {
+    const id = transaction.id;
+    if (!canDeleteTransaction(transaction, currentUserRole, currentUserId)) {
       setDeleteError('Bạn chỉ có thể xóa giao dịch do chính mình tạo.');
       return;
     }
@@ -930,6 +936,10 @@ export function Transactions() {
     }
     setCopyingId(null);
     notify('Đã tạo bản sao giao dịch.');
+  };
+
+  const toggleMenu = (id: string) => {
+    setOpenMenuId((value) => value === id ? null : id);
   };
 
   const toggleVoiceSearch = () => {
@@ -1371,9 +1381,9 @@ export function Transactions() {
           <span>{en ? 'Amount' : 'Số tiền'}</span>
         </div>
         {rows.map((transaction) => {
-          const purpose = purposes.find((item) => item.id === transaction.purposeId);
-          const expenseType = expenseTypes.find((item) => item.id === transaction.expenseTypeId);
-          const paymentMethod = paymentMethods.find((item) => item.id === transaction.paymentMethodId);
+          const purpose = purposeById.get(transaction.purposeId);
+          const expenseType = expenseTypeById.get(transaction.expenseTypeId);
+          const paymentMethod = paymentMethodById.get(transaction.paymentMethodId || '');
           const purposeName =
             getCatalogDisplayName(purpose, language) ||
             '—';
@@ -1383,7 +1393,7 @@ export function Transactions() {
           const paymentMethodName =
             getCatalogDisplayName(paymentMethod, language) ||
             '—';
-          return <TransactionRow key={transaction.id} transaction={transaction} purposeName={purposeName} purposeIcon={purpose?.icon} expenseTypeName={expenseTypeName} expenseTypeIcon={expenseType?.icon} paymentMethodName={paymentMethodName} paymentMethodIcon={paymentMethod?.icon} recurringLabel={en ? 'Recurring' : 'Định kỳ'} plannedLabel={en ? 'Planned' : 'Dự kiến'} actualLabel={en ? 'Actual' : 'Thực tế'} showTrash={showTrash} selectMode={selectMode} selected={selectedIds.has(transaction.id)} openMenu={openMenuId === transaction.id} deleting={deletingId === transaction.id} copying={copyingId === transaction.id} currentUserRole={currentUserRole} currentUserId={currentUserId} onToggleSelected={toggleSelected} onSetSelected={setSelectedIds} onToggleMenu={(id) => setOpenMenuId((value) => value === id ? null : id)} onRestore={() => void restoreSelected()} onPermanentlyDelete={() => void permanentlyDeleteSelected()} onCopy={(item) => void copyTransaction(item)} onRemove={(id) => void remove(id)} />;
+          return <TransactionRow key={transaction.id} transaction={transaction} purposeName={purposeName} purposeIcon={purpose?.icon} expenseTypeName={expenseTypeName} expenseTypeIcon={expenseType?.icon} paymentMethodName={paymentMethodName} paymentMethodIcon={paymentMethod?.icon} recurringLabel={en ? 'Recurring' : 'Định kỳ'} plannedLabel={en ? 'Planned' : 'Dự kiến'} actualLabel={en ? 'Actual' : 'Thực tế'} showTrash={showTrash} selectMode={selectMode} selected={selectedIds.has(transaction.id)} openMenu={openMenuId === transaction.id} deleting={deletingId === transaction.id} copying={copyingId === transaction.id} currentUserRole={currentUserRole} currentUserId={currentUserId} onToggleSelected={toggleSelected} onToggleMenu={toggleMenu} onRestore={restoreSelected} onPermanentlyDelete={permanentlyDeleteSelected} onCopy={copyTransaction} onRemove={remove} />;
         })}
         {(activeQueryIsPending && isSupabaseConfigured && Boolean(familyId)) && <TransactionListSkeleton/>}
         {rows.length === 0 && !activeQueryIsPending && !activeQueryIsError && (
