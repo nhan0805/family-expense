@@ -240,6 +240,7 @@ export function BudgetNotifications() {
         queryClient.invalidateQueries({ queryKey: ['dashboard-due', familyId] }),
         queryClient.invalidateQueries({ queryKey: ['dashboard-data', familyId] }),
         queryClient.invalidateQueries({ queryKey: ['transactions', familyId] }),
+        queryClient.invalidateQueries({ queryKey: ['asset-summary', familyId] }),
         queryClient.invalidateQueries({ queryKey: ['budgets', familyId] }),
       ]);
     }

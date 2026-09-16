@@ -6,7 +6,7 @@ export const transactionTypes = [
 export type TransactionType = (typeof transactionTypes)[number];
 export const transactionTypeLabel = (type: string) => type === 'Chi tiêu' ? 'Tiền ra' : type === 'Thu nhập' ? 'Tiền vào' : type;
 export const statuses = ['Thực tế', 'Dự kiến'] as const;
-export const transactionSources = ['manual', 'ai', 'excel_import', 'recurring'] as const;
+export const transactionSources = ['manual', 'ai', 'excel_import', 'recurring', 'asset'] as const;
 export const statusForTransactionDate = (
   transactionDate: string,
   today: string,
@@ -99,6 +99,11 @@ export const expenseTypeNames = [
   'Quà',
   'Đầu tư chứng khoán',
   'Đầu tư vàng',
+  'Gửi tiết kiệm',
+  'Lãi tiền gửi',
+  'Rút tiết kiệm',
+  'Phí tiết kiệm',
+  'Tất toán tiết kiệm',
   'Khác',
 ];
 export const paymentMethodNames = [
@@ -147,6 +152,11 @@ export const expenseTypeNameEn = [
   'Gifts',
   'Stock investments',
   'Gold investments',
+  'Savings deposit',
+  'Savings interest',
+  'Savings withdrawal',
+  'Savings fee',
+  'Savings settlement',
   'Other',
 ];
 export const paymentMethodNameEn = [

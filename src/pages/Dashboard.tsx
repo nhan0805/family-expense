@@ -22,11 +22,14 @@ import {
   BarChart3,
   CalendarDays,
   ChevronDown,
+  Coins,
+  Landmark,
   PiggyBank,
   Scale,
   Sparkles,
   TrendingDown,
   TrendingUp,
+  WalletCards,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { EmptyState, PageSkeleton } from '../components/AsyncStates';
@@ -36,6 +39,8 @@ import { dashboardSummaryResponseSchema } from '../lib/ai';
 import { aiErrorMessage, invokeAiFunction } from '../lib/aiClient';
 import { buildLocalBudgetSummary, formatBudgetInput, type BudgetSummary } from '../lib/budget';
 import { fetchBudgetSummary } from '../lib/budgetsApi';
+import { buildLocalAssetSummary, type AssetSummary } from '../lib/assets';
+import { fetchAssetSummary } from '../lib/assetsApi';
 import { formatCompactVnd, formatVnd, getCatalogDisplayName, type CatalogItem, type CatalogLanguage, type Transaction } from '../lib/domain';
 import { isSupabaseConfigured } from '../lib/supabase';
 import { reportClientError } from '../lib/telemetry';
@@ -359,6 +364,19 @@ export function Dashboard() {
     retry: false,
     staleTime: 60_000,
   });
+  const assetSummaryQuery = useQuery({
+    queryKey: ['asset-summary', familyId],
+    queryFn: () => fetchAssetSummary(familyId),
+    enabled: isSupabaseConfigured && Boolean(familyId),
+    retry: false,
+    staleTime: 30_000,
+    refetchOnWindowFocus: true,
+  });
+  const localAssetSummary = useMemo(
+    () => buildLocalAssetSummary(familyId, transactions),
+    [familyId, transactions],
+  );
+  const assetSummary = isSupabaseConfigured ? assetSummaryQuery.data : localAssetSummary;
   const availableYears = isSupabaseConfigured
     ? Array.from(new Set([currentYear, ...(yearsQuery.data || [])])).sort((a, b) => Number(b) - Number(a))
     : localAvailableYears;
@@ -583,6 +601,8 @@ export function Dashboard() {
 
       {budgetQuery.isError && <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/20 dark:text-amber-200"><span>{en ? 'Budget data could not be loaded.' : 'Không thể tải dữ liệu ngân sách.'}</span><button type="button" className="btn-secondary px-3 py-1.5 text-xs" onClick={() => void budgetQuery.refetch()}>{en ? 'Retry' : 'Thử lại'}</button></div>}
       {!budgetQuery.isError && <BudgetSnapshot summary={budgetSummary} en={en} month={selectedMonth} year={selectedYear} />}
+      {assetSummaryQuery.isError && <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/20 dark:text-amber-200"><span>{en ? 'Asset data could not be loaded.' : 'Không thể tải dữ liệu tài sản.'}</span><button type="button" className="btn-secondary px-3 py-1.5 text-xs" onClick={() => void assetSummaryQuery.refetch()}>{en ? 'Retry' : 'Thử lại'}</button></div>}
+      <AssetSnapshot summary={assetSummary} en={en} loading={assetSummaryQuery.isPending && isSupabaseConfigured} />
       <section className="card dashboard-chart-card min-w-0 overflow-hidden p-4 sm:p-5" aria-labelledby="dashboard-trend-title">
         <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -671,6 +691,29 @@ function renderChange(value: number | null, en: boolean, suffix: string) {
   const Icon = value > 0 ? TrendingUp : TrendingDown;
   const fullText = `${direction} ${formatPercent(value)}% · ${en ? suffix : 'so với kỳ trước'}`;
   return <span className="inline-flex min-w-0 items-center gap-1" aria-label={fullText}><Icon size={13} aria-hidden="true" /><span>{formatPercent(value)}%</span><span className="sr-only"> · {en ? suffix : 'so với kỳ trước'}</span></span>;
+}
+
+function AssetSnapshot({ summary, en, loading }: { summary?: AssetSummary; en: boolean; loading: boolean }) {
+  if (!summary && loading)
+    return <section className="card p-4 sm:p-5" aria-label={en ? 'Loading assets' : 'Đang tải tài sản'}><p className="text-sm text-gray-500 dark:text-gray-400">{en ? 'Loading asset snapshot…' : 'Đang tải tổng hợp tài sản…'}</p></section>;
+  if (!summary) return null;
+  const goldPnl = summary.goldMissingEstimateCount ? null : summary.goldEstimatedTotal - summary.goldCost;
+  const quantityLabel = `${summary.goldQuantityChi.toLocaleString('vi-VN', { maximumFractionDigits: 3 })} ${en ? 'chỉ' : 'chỉ'}`;
+  return <section className="card overflow-hidden p-4 sm:p-5" aria-labelledby="dashboard-assets-title">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex min-w-0 items-start gap-3"><span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-[var(--primary-soft)] text-[var(--primary)]"><Coins size={20} aria-hidden="true" /></span><div className="min-w-0"><h3 id="dashboard-assets-title" className="text-lg font-extrabold">{en ? 'Assets' : 'Tài sản'}</h3><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{en ? 'All actual transactions · simple current snapshot' : 'Tổng hợp theo giao dịch thực tế · số dư hiện tại'}</p></div></div>
+      <Link className="btn-secondary inline-flex items-center justify-center text-sm" to="/tai-san">{en ? 'Manage assets' : 'Quản lý tài sản'}</Link>
+    </div>
+    <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div className="rounded-2xl bg-sky-50 p-4 text-sky-900 dark:bg-sky-950/20 dark:text-sky-100"><div className="flex items-center gap-2 text-sm font-semibold"><WalletCards size={17} aria-hidden="true" />{en ? 'Net cash' : 'Tiền ròng'}</div><p className="mt-2 text-xl font-extrabold">{formatVnd(summary.netCash)}</p><p className="mt-1 text-xs opacity-75">{en ? 'Income − actual expenses' : 'Tổng thu nhập − chi tiêu thực tế'}</p></div>
+      <div className="rounded-2xl bg-emerald-50 p-4 text-emerald-900 dark:bg-emerald-950/20 dark:text-emerald-100"><div className="flex items-center gap-2 text-sm font-semibold"><Landmark size={17} aria-hidden="true" />{en ? 'Savings' : 'Sổ tiết kiệm'}</div><p className="mt-2 text-xl font-extrabold">{formatVnd(summary.savingsTotal)}</p><p className="mt-1 text-xs opacity-75">{summary.savingsCount} {en ? 'book(s)' : 'sổ'}</p></div>
+      <div className="rounded-2xl bg-amber-50 p-4 text-amber-900 dark:bg-amber-950/20 dark:text-amber-100"><div className="flex items-center gap-2 text-sm font-semibold"><Coins size={17} aria-hidden="true" />{en ? 'Gold estimate' : 'Vàng ước tính'}</div><p className="mt-2 text-xl font-extrabold">{formatVnd(summary.goldEstimatedTotal)}</p><p className="mt-1 text-xs opacity-75">{quantityLabel}{summary.goldMissingEstimateCount ? ` · ${en ? 'missing price for' : 'chưa có giá'} ${summary.goldMissingEstimateCount}` : ''}</p></div>
+    </div>
+    {(summary.savings.length || summary.gold.length) ? <div className="mt-4 grid gap-4 lg:grid-cols-2">
+      <div className="rounded-2xl border border-black/10 p-3 dark:border-white/10"><h4 className="flex items-center gap-2 font-bold"><Landmark size={16} aria-hidden="true" />{en ? 'Savings books' : 'Danh sách sổ tiết kiệm'}</h4>{summary.savings.length ? <ul className="mt-2 divide-y divide-black/10 text-sm dark:divide-white/10">{summary.savings.map((account) => <li key={account.id} className="flex flex-wrap items-center justify-between gap-2 py-2"><span className="min-w-0"><span className="block truncate font-semibold">{account.bankName} · {account.name}</span><span className="text-xs text-gray-500">{en ? 'Maturity' : 'Đáo hạn'} {formatDate(account.maturityOn)}</span></span><span className="font-bold tabular-nums">{formatVnd(account.currentBalance)}</span></li>)}</ul> : <p className="mt-2 text-sm text-gray-500">{en ? 'No active books.' : 'Chưa có sổ đang theo dõi.'}</p>}</div>
+      <div className="rounded-2xl border border-black/10 p-3 dark:border-white/10"><div className="flex items-center justify-between gap-2"><h4 className="flex items-center gap-2 font-bold"><Coins size={16} aria-hidden="true" />{en ? 'Gold holdings' : 'Danh sách vàng'}</h4><span className={goldPnl === null || goldPnl >= 0 ? 'text-xs font-bold text-emerald-700 dark:text-emerald-300' : 'text-xs font-bold text-rose-700 dark:text-rose-300'}>{en ? 'P/L' : 'Lãi/lỗ'} {goldPnl === null ? '—' : formatVnd(goldPnl)}</span></div>{summary.gold.length ? <ul className="mt-2 divide-y divide-black/10 text-sm dark:divide-white/10">{summary.gold.map((asset) => <li key={asset.id} className="flex flex-wrap items-center justify-between gap-2 py-2"><span><span className="block font-semibold">{asset.remainingQuantityChi.toLocaleString('vi-VN', { maximumFractionDigits: 3 })} chỉ</span><span className="text-xs text-gray-500">{en ? 'Bought' : 'Ngày mua'} {formatDate(asset.purchaseDate)} · {formatVnd(asset.purchasePricePerChi)}/chỉ</span></span><span className="font-bold tabular-nums">{asset.estimatedSellPricePerChi === null ? '—' : formatVnd(Math.round(asset.remainingQuantityChi * asset.estimatedSellPricePerChi))}</span></li>)}</ul> : <p className="mt-2 text-sm text-gray-500">{en ? 'No active gold holdings.' : 'Chưa có vàng đang giữ.'}</p>}</div>
+    </div> : <p className="mt-4 rounded-xl bg-black/[.025] p-3 text-sm text-gray-500 dark:bg-white/[.04]">{en ? 'Add a savings book or gold lot to see the asset list here.' : 'Thêm sổ tiết kiệm hoặc vàng để xem danh sách tài sản tại đây.'}</p>}
+  </section>;
 }
 
 function BudgetSnapshot({ summary, en, month, year }: { summary?: BudgetSummary; en: boolean; month: string; year: string }) {

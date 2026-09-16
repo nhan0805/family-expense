@@ -13,6 +13,7 @@ vi.mock('../context/LanguageContext', () => ({
     t: (key: string) => ({
       overview: 'Tổng quan',
       transactions: 'Giao dịch',
+      assets: 'Tài sản',
       budgets: 'Ngân sách',
       recurringExpenses: 'Chi phí định kỳ',
       catalogs: 'Danh mục',
@@ -76,7 +77,8 @@ describe('Layout mobile navigation', () => {
     expect(bottomNav).toBeInTheDocument();
     expect(within(bottomNav!).getAllByRole('link')).toHaveLength(4);
     expect(within(bottomNav!).queryByRole('link', { name: 'Thành viên' })).not.toBeInTheDocument();
-    expect(within(bottomNav!).getByRole('link', { name: 'Chi phí định kỳ' })).toHaveAttribute('href', '/chi-phi-dinh-ky');
+    expect(within(bottomNav!).getByRole('link', { name: 'Tài sản' })).toHaveAttribute('href', '/tai-san');
+    expect(within(bottomNav!).queryByRole('link', { name: 'Chi phí định kỳ' })).not.toBeInTheDocument();
 
     const memberLinks = screen.getAllByRole('link', { name: 'Mở màn hình thành viên của Chủ gia đình' });
     expect(memberLinks).toHaveLength(2);
@@ -85,7 +87,6 @@ describe('Layout mobile navigation', () => {
 
     fireEvent.click(within(bottomNav!).getByRole('button', { name: 'Thêm' }));
     expect(screen.getByRole('link', { name: 'Thành viên' })).toHaveAttribute('href', '/thanh-vien');
-    expect(screen.getAllByRole('link', { name: 'Chi phí định kỳ' })).toHaveLength(2);
-    expect(screen.getAllByRole('link', { name: 'Chi phí định kỳ' })[1]).toHaveAttribute('href', '/chi-phi-dinh-ky');
+    expect(screen.getByRole('link', { name: 'Chi phí định kỳ' })).toHaveAttribute('href', '/chi-phi-dinh-ky');
   });
 });

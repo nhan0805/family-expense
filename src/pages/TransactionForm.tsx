@@ -304,6 +304,9 @@ export function TransactionForm() {
         queryKey: ['transactions', familyId],
       });
       await queryClient.invalidateQueries({
+        queryKey: ['asset-summary', familyId],
+      });
+      await queryClient.invalidateQueries({
         queryKey: ['dashboard-data', familyId],
       });
       await queryClient.invalidateQueries({
@@ -359,6 +362,9 @@ export function TransactionForm() {
     if (isSupabaseConfigured) {
       await queryClient.invalidateQueries({
         queryKey: ['transactions', familyId],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ['asset-summary', familyId],
       });
       await queryClient.invalidateQueries({
         queryKey: ['dashboard-data', familyId],
