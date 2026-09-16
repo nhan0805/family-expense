@@ -277,12 +277,10 @@ export async function upsertGoldAsset(
 
 export async function recordGoldSale(
   familyId: string,
-  assetId: string,
   input: GoldSaleInput,
 ) {
-  const { data, error } = await supabase.rpc('record_gold_sale', {
+  const { data, error } = await supabase.rpc('record_gold_sale_aggregate', {
     p_family_id: familyId,
-    p_gold_asset_id: assetId,
     p_sale_date: input.saleDate,
     p_quantity_chi: input.quantityChi,
     p_sale_price_per_chi: input.salePricePerChi,

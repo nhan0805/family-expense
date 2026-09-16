@@ -14,9 +14,11 @@ import {
   goldAssetInputSchema,
   getLocalAssetData,
   isLocalAssetTransaction,
+  recordLocalGoldSaleAggregate,
   recordLocalSavingsMovement,
   recordLocalGoldSale,
   settleLocalSavingsAccount,
+  summarizeGoldHoldings,
   savingsAccountInputSchema,
   savingsMovementInputSchema,
   savingsSettlementInputSchema,
@@ -98,6 +100,52 @@ describe('asset domain', () => {
     expect(saved.asset.remainingQuantityChi).toBe(1.5);
     expect(goldEstimatedValue(saved.asset)).toBe(12_000_000);
     expect(saved.sale.amount).toBe(4_000_000);
+  });
+
+  it('summarizes quantity, weighted average cost and estimated P/L across gold lots', () => {
+    const summary = summarizeGoldHoldings([
+      { remainingQuantityChi: 1.5, purchasePricePerChi: 8_000_000 },
+      { remainingQuantityChi: 0.5, purchasePricePerChi: 10_000_000 },
+    ], 9_000_000);
+
+    expect(summary).toEqual({
+      quantityChi: 2,
+      cost: 17_000_000,
+      averageCostPerChi: 8_500_000,
+      estimatedValue: 18_000_000,
+      unrealizedPnl: 1_000_000,
+    });
+  });
+
+  it('records one aggregate local sale while allocating history across FIFO lots', () => {
+    upsertLocalGoldAsset('family-a', goldAssetInputSchema.parse({
+      purchaseDate: '2026-01-01',
+      quantityChi: 1,
+      purchasePricePerChi: 7_500_000,
+    }), 'gold-1', null);
+    upsertLocalGoldAsset('family-a', goldAssetInputSchema.parse({
+      purchaseDate: '2026-02-01',
+      quantityChi: 2,
+      purchasePricePerChi: 8_000_000,
+    }), 'gold-2', null);
+
+    const result = recordLocalGoldSaleAggregate('family-a', {
+      saleDate: '2026-03-01',
+      quantityChi: 1.5,
+      salePricePerChi: 9_000_000,
+      paymentMethodId: 'cash',
+      note: 'Bán tổng hợp',
+    }, 'tx-sale');
+    const data = getLocalAssetData('family-a');
+
+    expect(result.sales).toHaveLength(2);
+    expect(result.sales.map((sale) => sale.quantityChi)).toEqual([1, 0.5]);
+    expect(result.sales.every((sale) => sale.transactionId === 'tx-sale')).toBe(true);
+    expect(result.sales.reduce((total, sale) => total + sale.amount, 0)).toBe(13_500_000);
+    expect(data.goldAssets).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: 'gold-1', remainingQuantityChi: 0, status: 'sold' }),
+      expect.objectContaining({ id: 'gold-2', remainingQuantityChi: 1.5, status: 'active' }),
+    ]));
   });
 
   it('applies one shared buy-back price to every local gold lot', () => {

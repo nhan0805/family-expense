@@ -168,4 +168,52 @@ describe('Tài sản', () => {
       sourceReference: expect.stringMatching(/^asset:gold:/),
     });
   });
+
+  it('bán theo tổng số vàng và tự phân bổ lịch sử qua nhiều lô', async () => {
+    const secondGoldAsset = {
+      ...goldAsset,
+      id: 'gold-ui-2',
+      purchaseDate: '2026-02-01',
+      quantityChi: 2,
+      remainingQuantityChi: 2,
+      purchasePricePerChi: 10_000_000,
+    };
+    localStorage.setItem(`family-expense:gold-assets:${familyId}`, JSON.stringify([goldAsset, secondGoldAsset]));
+    const { setTransactions } = renderAssets([]);
+
+    expect(screen.getByText('Số vàng hiện có')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Bán vàng' }));
+    await screen.findByRole('heading', { name: 'Bán theo tổng số vàng hiện có' });
+    fireEvent.change(screen.getByLabelText('Số lượng (chỉ)', { exact: false }), { target: { value: '1.5' } });
+    fireEvent.change(screen.getByLabelText('Giá bán / chỉ (VND)', { exact: false }), { target: { value: '9000000' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Bán và ghi thu nhập' }));
+    const dialog = await screen.findByRole('alertdialog');
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Bán và ghi nhận' }));
+
+    await waitFor(() => expect(screen.getByText('Đã ghi nhận bán vàng.')).toBeInTheDocument());
+    const savedAssets = JSON.parse(localStorage.getItem(`family-expense:gold-assets:${familyId}`) || '[]');
+    const savedSales = JSON.parse(localStorage.getItem(`family-expense:gold-sales:${familyId}`) || '[]');
+    expect(savedAssets).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: 'gold-ui', remainingQuantityChi: 0, status: 'sold' }),
+      expect.objectContaining({ id: 'gold-ui-2', remainingQuantityChi: 1.5, status: 'active' }),
+    ]));
+    expect(savedSales).toHaveLength(2);
+    expect(savedSales.map((sale: { quantityChi: number }) => sale.quantityChi)).toEqual([1, 0.5]);
+    expect(savedSales.every((sale: { transactionId: string }) => Boolean(sale.transactionId))).toBe(true);
+    await waitFor(() => expect(setTransactions).toHaveBeenCalledTimes(1));
+    const update = setTransactions.mock.calls[0]![0] as (items: Array<Record<string, unknown>>) => Array<Record<string, unknown>>;
+    expect(update([])[0]).toMatchObject({ transactionType: 'Thu nhập', amount: 13_500_000, sourceReference: expect.stringContaining('asset:gold:aggregate:sale:') });
+  });
+
+  it('cho phép nhập lãi suất thập phân trên bàn phím điện thoại', () => {
+    renderAssets([]);
+    fireEvent.click(screen.getAllByRole('button', { name: /^Thêm sổ$/ })[0]!);
+
+    const rateInput = screen.getByLabelText('Lãi suất năm (%)');
+    expect(rateInput).toHaveAttribute('type', 'text');
+    expect(rateInput).toHaveAttribute('inputmode', 'decimal');
+
+    fireEvent.change(rateInput, { target: { value: '8,2' } });
+    expect(rateInput).toHaveValue('8.2');
+  });
 });
