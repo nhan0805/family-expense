@@ -10,6 +10,7 @@ import type {
   SavingsAccountInput,
   SavingsMovement,
   SavingsMovementInput,
+  SavingsSettlementInput,
 } from './assets';
 
 type SavingsAccountRow = {
@@ -213,6 +214,23 @@ export async function recordSavingsMovement(
     p_payment_method_id: input.paymentMethodId || null,
     p_note: input.note || null,
     p_close_account: input.type === 'settlement',
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function settleSavingsAccount(
+  familyId: string,
+  accountId: string,
+  input: SavingsSettlementInput,
+) {
+  const { data, error } = await supabase.rpc('settle_savings_account', {
+    p_family_id: familyId,
+    p_savings_account_id: accountId,
+    p_interest_amount: input.interestAmount,
+    p_settlement_date: input.settlementDate,
+    p_payment_method_id: input.paymentMethodId || null,
+    p_note: input.note || null,
   });
   if (error) throw error;
   return data;

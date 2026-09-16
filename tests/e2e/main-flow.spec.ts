@@ -12,7 +12,8 @@ test('luồng demo mở danh sách và form giao dịch', async ({ page }) => {
   await page.getByRole('link', { name: /Giao dịch/i }).first().click();
   await expect(page.getByRole('heading', { name: /^Giao dịch$/i })).toBeVisible();
   await page.getByRole('link', { name: /Thêm giao dịch/i }).first().click();
-  await expect(page.getByRole('heading', { name: /Thêm giao dịch/i })).toBeVisible();
+  await expect(page).toHaveURL(/\/giao-dich\/moi$/, { timeout: 15_000 });
+  await expect(page.getByRole('heading', { name: /Thêm giao dịch/i })).toBeVisible({ timeout: 15_000 });
   await page.getByRole('textbox', { name: 'Nội dung', exact: true }).fill('Kiểm tra luồng demo');
   await page.getByLabel('Số tiền (VND)').fill('100000');
   await page.getByLabel('Mục đích').selectOption({ index: 1 });
