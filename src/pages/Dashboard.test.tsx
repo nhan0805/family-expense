@@ -177,7 +177,8 @@ describe('Dashboard', () => {
     const snapshot = screen.getByRole('region', { name: 'Tài sản' });
     expect(within(snapshot).getByText('Tổng tài sản')).toBeInTheDocument();
     expect(within(snapshot).getByText(/124\.000\.000/)).toBeInTheDocument();
-    expect(within(snapshot).getByText(/Lãi dự kiến \+2\.975\.342/)).toBeInTheDocument();
+    expect(within(snapshot).getByText(/Lãi đến hiện tại \+2\.975\.342/)).toBeInTheDocument();
+    expect(within(snapshot).getByText(/Toàn kỳ \+2\.975\.342/)).toBeInTheDocument();
     expect(within(snapshot).getByText(/Lãi\/lỗ ước tính \+1\.000\.000/)).toBeInTheDocument();
   });
 
