@@ -6,7 +6,9 @@ import {
   deleteLocalGoldAsset,
   deleteLocalSavingsAccount,
   expectedSavingsInterest,
+  expectedSavingsInterestToDate,
   formatAssetMoneyInput,
+  sanitizeDecimalInput,
   goldEstimatedValue,
   goldPurchaseAmount,
   goldAssetInputSchema,
@@ -30,6 +32,13 @@ describe('asset domain', () => {
     expect(formatAssetMoneyInput('')).toBe('');
   });
 
+  it('keeps only one decimal separator and numeric characters while typing', () => {
+    expect(sanitizeDecimalInput('8sda')).toBe('8');
+    expect(sanitizeDecimalInput('8,25')).toBe('8.25');
+    expect(sanitizeDecimalInput('1.2.3')).toBe('1.23');
+    expect(sanitizeDecimalInput('8.')).toBe('8.');
+  });
+
   it('allows both owners and members to manage assets', () => {
     expect(canManageAssets('owner')).toBe(true);
     expect(canManageAssets('member')).toBe(true);
@@ -51,6 +60,21 @@ describe('asset domain', () => {
     };
     expect(expectedSavingsInterest(account)).toBe(Math.round(100_000_000 * 0.06 * 181 / 365));
     expect(goldPurchaseAmount(1.25, 8_000_000)).toBe(10_000_000);
+  });
+
+  it('calculates savings interest through today and caps it at maturity', () => {
+    const account = {
+      principal: 100_000_000,
+      annualInterestRate: 6,
+      openedOn: '2026-01-01',
+      maturityOn: '2026-07-01',
+    };
+
+    expect(expectedSavingsInterestToDate(account, '2026-04-02')).toBe(
+      Math.round(100_000_000 * 0.06 * 91 / 365),
+    );
+    expect(expectedSavingsInterestToDate(account, '2026-12-31')).toBe(expectedSavingsInterest(account));
+    expect(expectedSavingsInterestToDate(account, '2025-12-31')).toBe(0);
   });
 
   it('keeps a gold lot quantity and estimated value after a partial sale', () => {

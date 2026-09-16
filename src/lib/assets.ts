@@ -173,6 +173,14 @@ export const formatAssetMoneyInput = (value: string | number) => {
   return digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 };
 
+export const sanitizeDecimalInput = (value: string) => {
+  const normalized = value.replace(/,/g, '.');
+  const [whole = '', ...fraction] = normalized.split('.');
+  const wholeDigits = whole.replace(/\D/g, '');
+  const fractionDigits = fraction.join('').replace(/\D/g, '');
+  return fraction.length > 0 ? `${wholeDigits}.${fractionDigits}` : wholeDigits;
+};
+
 export const calculateSavingsMaturityDate = (openedOn: string, termMonths: number) => {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(openedOn);
   if (!match || !Number.isInteger(termMonths) || termMonths <= 0) return '';
@@ -323,13 +331,17 @@ export const todayInVietnam = () =>
 export const daysUntilMaturity = (maturityOn: string, today = todayInVietnam()) =>
   daysBetween(today, maturityOn);
 
+export const expectedSavingsInterestToDate = (
+  account: Pick<SavingsAccount, 'principal' | 'annualInterestRate' | 'openedOn' | 'maturityOn'>,
+  today = todayInVietnam(),
+) => {
+  const termDays = Math.max(daysBetween(account.openedOn, account.maturityOn), 0);
+  const elapsedDays = Math.min(Math.max(daysBetween(account.openedOn, today), 0), termDays);
+  return Math.round(account.principal * (account.annualInterestRate / 100) * elapsedDays / 365);
+};
+
 export const expectedSavingsInterest = (account: Pick<SavingsAccount, 'principal' | 'annualInterestRate' | 'openedOn' | 'maturityOn'>) =>
-  Math.round(
-    account.principal *
-      (account.annualInterestRate / 100) *
-      Math.max(daysBetween(account.openedOn, account.maturityOn), 0) /
-      365,
-  );
+  expectedSavingsInterestToDate(account, account.maturityOn);
 
 export const goldPurchaseAmount = (quantityChi: number, pricePerChi: number) =>
   Math.round(quantityChi * pricePerChi);
