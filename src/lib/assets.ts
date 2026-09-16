@@ -323,13 +323,17 @@ export const todayInVietnam = () =>
 export const daysUntilMaturity = (maturityOn: string, today = todayInVietnam()) =>
   daysBetween(today, maturityOn);
 
+export const expectedSavingsInterestToDate = (
+  account: Pick<SavingsAccount, 'principal' | 'annualInterestRate' | 'openedOn' | 'maturityOn'>,
+  today = todayInVietnam(),
+) => {
+  const termDays = Math.max(daysBetween(account.openedOn, account.maturityOn), 0);
+  const elapsedDays = Math.min(Math.max(daysBetween(account.openedOn, today), 0), termDays);
+  return Math.round(account.principal * (account.annualInterestRate / 100) * elapsedDays / 365);
+};
+
 export const expectedSavingsInterest = (account: Pick<SavingsAccount, 'principal' | 'annualInterestRate' | 'openedOn' | 'maturityOn'>) =>
-  Math.round(
-    account.principal *
-      (account.annualInterestRate / 100) *
-      Math.max(daysBetween(account.openedOn, account.maturityOn), 0) /
-      365,
-  );
+  expectedSavingsInterestToDate(account, account.maturityOn);
 
 export const goldPurchaseAmount = (quantityChi: number, pricePerChi: number) =>
   Math.round(quantityChi * pricePerChi);

@@ -39,7 +39,7 @@ import { dashboardSummaryResponseSchema } from '../lib/ai';
 import { aiErrorMessage, invokeAiFunction } from '../lib/aiClient';
 import { buildLocalBudgetSummary, formatBudgetInput, type BudgetSummary } from '../lib/budget';
 import { fetchBudgetSummary } from '../lib/budgetsApi';
-import { buildLocalAssetSummary, expectedSavingsInterest, type AssetSummary } from '../lib/assets';
+import { buildLocalAssetSummary, expectedSavingsInterest, expectedSavingsInterestToDate, type AssetSummary } from '../lib/assets';
 import { fetchAssetSummary } from '../lib/assetsApi';
 import { formatCompactVnd, formatVnd, getCatalogDisplayName, type CatalogItem, type CatalogLanguage, type Transaction } from '../lib/domain';
 import { isSupabaseConfigured } from '../lib/supabase';
@@ -701,11 +701,11 @@ function AssetSnapshot({ summary, en, loading }: { summary?: AssetSummary; en: b
     return <section className="card p-4 sm:p-5" aria-label={en ? 'Loading assets' : 'Đang tải tài sản'}><p className="text-sm text-gray-500 dark:text-gray-400">{en ? 'Loading asset snapshot…' : 'Đang tải tổng hợp tài sản…'}</p></section>;
   if (!summary) return null;
   const goldPnl = summary.goldMissingEstimateCount ? null : summary.goldEstimatedTotal - summary.goldCost;
-  const savingsInterest = summary.savings
-    .filter((account) => account.status === 'active')
-    .reduce((total, account) => total + expectedSavingsInterest(account), 0);
+  const activeSavings = summary.savings.filter((account) => account.status === 'active');
+  const savingsInterestToDate = activeSavings.reduce((total, account) => total + expectedSavingsInterestToDate(account), 0);
+  const savingsInterestFullTerm = activeSavings.reduce((total, account) => total + expectedSavingsInterest(account), 0);
   const totalAssets = summary.netCash + summary.savingsTotal + summary.goldEstimatedTotal;
-  const SavingsPnlIcon = savingsInterest > 0 ? TrendingUp : Scale;
+  const SavingsPnlIcon = savingsInterestToDate > 0 ? TrendingUp : Scale;
   const GoldPnlIcon = goldPnl === null ? Scale : goldPnl > 0 ? TrendingUp : goldPnl < 0 ? TrendingDown : Scale;
   const goldPnlClass = goldPnl === null
     ? 'text-amber-800 dark:text-amber-200'
@@ -721,7 +721,7 @@ function AssetSnapshot({ summary, en, loading }: { summary?: AssetSummary; en: b
     <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
       <div className="min-w-0 rounded-2xl bg-violet-50 p-4 text-violet-900 dark:bg-violet-950/20 dark:text-violet-100"><div className="flex items-center gap-2 text-sm font-semibold"><Scale size={17} aria-hidden="true" />{en ? 'Total assets' : 'Tổng tài sản'}</div><p className="mt-2 break-words text-xl font-extrabold tabular-nums">{formatVnd(totalAssets)}</p><p className="mt-1 text-xs opacity-75">{en ? 'Net cash + savings + gold estimate' : 'Tiền ròng + tiết kiệm + vàng ước tính'}</p></div>
       <div className="min-w-0 rounded-2xl bg-sky-50 p-4 text-sky-900 dark:bg-sky-950/20 dark:text-sky-100"><div className="flex items-center gap-2 text-sm font-semibold"><WalletCards size={17} aria-hidden="true" />{en ? 'Net cash' : 'Tiền ròng'}</div><p className="mt-2 break-words text-xl font-extrabold tabular-nums">{formatVnd(summary.netCash)}</p><p className="mt-1 text-xs opacity-75">{en ? 'Income − actual expenses' : 'Tổng thu nhập − chi tiêu thực tế'}</p></div>
-      <div className="min-w-0 rounded-2xl bg-emerald-50 p-4 text-emerald-900 dark:bg-emerald-950/20 dark:text-emerald-100"><div className="flex items-center gap-2 text-sm font-semibold"><Landmark size={17} aria-hidden="true" />{en ? 'Savings' : 'Sổ tiết kiệm'}</div><p className="mt-2 break-words text-xl font-extrabold tabular-nums">{formatVnd(summary.savingsTotal)}</p><p className="mt-1 text-xs opacity-75">{summary.savingsCount} {en ? 'book(s)' : 'sổ'}</p><p className="mt-1 inline-flex max-w-full items-center gap-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300"><SavingsPnlIcon size={14} aria-hidden="true" /><span>{en ? 'Est. interest' : 'Lãi dự kiến'} {formatSignedVnd(savingsInterest)}</span></p></div>
+      <div className="min-w-0 rounded-2xl bg-emerald-50 p-4 text-emerald-900 dark:bg-emerald-950/20 dark:text-emerald-100"><div className="flex items-center gap-2 text-sm font-semibold"><Landmark size={17} aria-hidden="true" />{en ? 'Savings' : 'Sổ tiết kiệm'}</div><p className="mt-2 break-words text-xl font-extrabold tabular-nums">{formatVnd(summary.savingsTotal)}</p><p className="mt-1 text-xs opacity-75">{summary.savingsCount} {en ? 'book(s)' : 'sổ'}</p><div className="mt-1 grid gap-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300"><span className="inline-flex max-w-full items-center gap-1"><SavingsPnlIcon size={14} aria-hidden="true" /><span>{en ? 'Interest to date' : 'Lãi đến hiện tại'} {formatSignedVnd(savingsInterestToDate)}</span></span><span className="pl-5">{en ? 'Full term' : 'Toàn kỳ'} {formatSignedVnd(savingsInterestFullTerm)}</span></div></div>
       <div className="min-w-0 rounded-2xl bg-amber-50 p-4 text-amber-900 dark:bg-amber-950/20 dark:text-amber-100"><div className="flex items-center gap-2 text-sm font-semibold"><Coins size={17} aria-hidden="true" />{en ? 'Gold estimate' : 'Vàng ước tính'}</div><p className="mt-2 break-words text-xl font-extrabold tabular-nums">{formatVnd(summary.goldEstimatedTotal)}</p><p className="mt-1 text-xs opacity-75">{quantityLabel}{summary.goldMissingEstimateCount ? ` · ${en ? 'missing price for' : 'chưa có giá'} ${summary.goldMissingEstimateCount}` : ''}</p><p className={`mt-1 inline-flex max-w-full items-center gap-1 text-xs font-semibold ${goldPnlClass}`}><GoldPnlIcon size={14} aria-hidden="true" /><span>{en ? 'Est. P/L' : 'Lãi/lỗ ước tính'} {goldPnl === null ? '—' : formatSignedVnd(goldPnl)}</span></p></div>
     </div>
     {(summary.savings.length || summary.gold.length) ? <div className="mt-4 grid gap-4 lg:grid-cols-2">
