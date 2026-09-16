@@ -579,6 +579,7 @@ export function TransactionForm() {
                   required
                   aria-invalid={Boolean(errors.description)}
                   aria-describedby={errors.description ? 'transaction-description-error' : undefined}
+                  autoFocus={!id}
                   {...register('description')}
                 />
                 {voiceSupported && (
@@ -639,7 +640,6 @@ export function TransactionForm() {
                   aria-invalid={Boolean(errors.amount)}
                   aria-describedby={errors.amount ? 'transaction-amount-error' : undefined}
                   autoComplete="off"
-                  autoFocus={!id}
                   className={`field text-right text-lg font-bold ${aiFieldClass(aiFieldProps('amount'))}`}
                   required
                   value={

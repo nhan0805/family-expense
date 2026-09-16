@@ -17,7 +17,7 @@ export const statusForNewTransaction = (
   today: string,
   paymentMethodName?: string,
 ): (typeof statuses)[number] =>
-  paymentMethodName === 'Thẻ tín dụng'
+  paymentMethodName === 'Thẻ tín dụng' || paymentMethodName === 'Trả góp'
     ? 'Dự kiến'
     : statusForTransactionDate(transactionDate, today);
 export const transactionSchema = z
