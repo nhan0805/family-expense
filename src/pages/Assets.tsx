@@ -170,6 +170,8 @@ function assetError(error: unknown, en: boolean, fallback: string) {
     return en ? 'Sell all remaining gold before archiving it.' : 'Hãy bán hết vàng còn lại trước khi lưu trữ.';
   if (raw.includes('principal_edit_not_allowed'))
     return en ? 'The opening principal cannot be edited after the book is created.' : 'Không thể sửa tiền gốc sau khi đã tạo sổ.';
+  if (raw.includes('catalog_not_ready'))
+    return en ? 'The asset categories are not ready yet. Please reload and try again.' : 'Danh mục tài sản chưa sẵn sàng. Hãy tải lại trang rồi thử lại.';
   if (raw.includes('account_not_active') || raw.includes('asset_not_active'))
     return en ? 'This asset is no longer active.' : 'Tài sản này không còn ở trạng thái hoạt động.';
   return en ? fallback : userFacingError(error, fallback);
