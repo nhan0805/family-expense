@@ -387,6 +387,18 @@ export const makeLocalAssetTransaction = (input: LocalAssetTransactionInput): Tr
   deletedAt: null,
 });
 
+export type LocalAssetKind = 'savings' | 'gold';
+
+export const assetTransactionReferencePrefix = (kind: LocalAssetKind, assetId: string) =>
+  `asset:${kind}:${assetId}:`;
+
+export const isLocalAssetTransaction = (
+  transaction: Pick<Transaction, 'source' | 'sourceReference'>,
+  kind: LocalAssetKind,
+  assetId: string,
+) => transaction.source === 'asset'
+  && transaction.sourceReference?.startsWith(assetTransactionReferencePrefix(kind, assetId)) === true;
+
 export function upsertLocalSavingsAccount(
   familyId: string,
   input: SavingsAccountInput,
@@ -496,6 +508,22 @@ export function archiveLocalSavingsAccount(familyId: string, accountId: string) 
   saveStored(key, items.map((item) => item.id === accountId ? { ...item, status: 'archived', archivedAt: new Date().toISOString() } : item));
 }
 
+export function deleteLocalSavingsAccount(familyId: string, accountId: string) {
+  const accountKey = localStorageKey(familyId, 'savings-accounts');
+  const accounts = readStored(accountKey, isSavingsAccount);
+  const account = accounts.find((item) => item.id === accountId);
+  if (!account) throw new Error('NOT_FOUND');
+  saveStored(accountKey, accounts.filter((item) => item.id !== accountId));
+
+  const movementKey = localStorageKey(familyId, 'savings-movements');
+  const movements = readStored(movementKey, isSavingsMovement);
+  saveStored(movementKey, movements.filter((item) => item.savingsAccountId !== accountId));
+  return Array.from(new Set(movements
+    .filter((item) => item.savingsAccountId === accountId)
+    .map((item) => item.transactionId)
+    .filter((id): id is string => Boolean(id))));
+}
+
 export function upsertLocalGoldAsset(
   familyId: string,
   input: GoldAssetInput,
@@ -579,6 +607,22 @@ export function archiveLocalGoldAsset(familyId: string, assetId: string) {
   const current = items.find((item) => item.id === assetId);
   if (!current || current.status !== 'sold' || current.remainingQuantityChi !== 0) throw new Error('ASSET_NOT_SOLD');
   saveStored(key, items.map((item) => item.id === assetId ? { ...item, status: 'archived', archivedAt: new Date().toISOString() } : item));
+}
+
+export function deleteLocalGoldAsset(familyId: string, assetId: string) {
+  const assetKey = localStorageKey(familyId, 'gold-assets');
+  const assets = readStored(assetKey, isGoldAsset);
+  const asset = assets.find((item) => item.id === assetId);
+  if (!asset) throw new Error('NOT_FOUND');
+  saveStored(assetKey, assets.filter((item) => item.id !== assetId));
+
+  const saleKey = localStorageKey(familyId, 'gold-sales');
+  const sales = readStored(saleKey, isGoldSale);
+  saveStored(saleKey, sales.filter((item) => item.goldAssetId !== assetId));
+  return Array.from(new Set([
+    asset.transactionId,
+    ...sales.filter((item) => item.goldAssetId === assetId).map((item) => item.transactionId),
+  ].filter((id): id is string => Boolean(id))));
 }
 
 export function buildLocalAssetSummary(familyId: string, transactions: Transaction[]): AssetSummary {

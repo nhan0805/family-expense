@@ -3,6 +3,8 @@ import {
   buildLocalAssetSummary,
   canManageAssets,
   calculateSavingsMaturityDate,
+  deleteLocalGoldAsset,
+  deleteLocalSavingsAccount,
   expectedSavingsInterest,
   expectedSavingsInterestToDate,
   formatAssetMoneyInput,
@@ -11,6 +13,7 @@ import {
   goldPurchaseAmount,
   goldAssetInputSchema,
   getLocalAssetData,
+  isLocalAssetTransaction,
   recordLocalSavingsMovement,
   recordLocalGoldSale,
   savingsAccountInputSchema,
@@ -175,6 +178,58 @@ describe('asset domain', () => {
     ]);
     expect(summary.netCash).toBe(-48_800_000);
     expect(summary.savingsTotal).toBe(50_000_000);
+  });
+
+  it('deletes local assets, their histories and only their linked transactions', () => {
+    const familyId = 'family-delete';
+    const accountInput = savingsAccountInputSchema.parse({
+      bankName: 'ACB',
+      name: 'Sổ cần xóa',
+      principal: 20_000_000,
+      annualInterestRate: 5,
+      termMonths: 6,
+      openedOn: '2026-01-01',
+      maturityOn: '2026-07-01',
+      interestMethod: 'end_of_term',
+      paymentMethodId: 'bank',
+    });
+    const account = upsertLocalSavingsAccount(familyId, accountInput, 'saving-delete', 'tx-opening');
+    recordLocalSavingsMovement(
+      familyId,
+      account.id,
+      savingsMovementInputSchema.parse({
+        type: 'interest',
+        amount: 500_000,
+        movementDate: '2026-07-01',
+        paymentMethodId: 'bank',
+      }),
+      'tx-interest',
+      'movement-delete',
+    );
+    const gold = upsertLocalGoldAsset(familyId, goldAssetInputSchema.parse({
+      purchaseDate: '2026-01-01',
+      quantityChi: 1,
+      purchasePricePerChi: 8_000_000,
+      estimatedSellPricePerChi: 8_500_000,
+    }), 'gold-delete', 'tx-purchase');
+    recordLocalGoldSale(familyId, gold.id, goldAssetInputToSale({
+      saleDate: '2026-02-01',
+      quantityChi: 0.25,
+      salePricePerChi: 8_500_000,
+      paymentMethodId: 'cash',
+    }), 'tx-sale', 'sale-delete');
+
+    deleteLocalSavingsAccount(familyId, account.id);
+    deleteLocalGoldAsset(familyId, gold.id);
+
+    const data = getLocalAssetData(familyId);
+    expect(data.savingsAccounts).toEqual([]);
+    expect(data.savingsMovements).toEqual([]);
+    expect(data.goldAssets).toEqual([]);
+    expect(data.goldSales).toEqual([]);
+    expect(isLocalAssetTransaction({ source: 'asset', sourceReference: 'asset:savings:saving-delete:movement:movement-delete' }, 'savings', account.id)).toBe(true);
+    expect(isLocalAssetTransaction({ source: 'asset', sourceReference: 'asset:gold:other:purchase' }, 'gold', gold.id)).toBe(false);
+    expect(isLocalAssetTransaction({ source: 'manual', sourceReference: 'asset:savings:saving-delete:opening' }, 'savings', account.id)).toBe(false);
   });
 });
 
