@@ -548,38 +548,6 @@ export function TransactionForm() {
           </p>
           {validationErrors.length > 0 && <div ref={errorSummaryRef} tabIndex={-1} role="alert" aria-labelledby="transaction-form-errors-title" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800 outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-200 md:col-span-3"><h3 id="transaction-form-errors-title" className="font-bold">{en ? 'Please fix these fields' : 'Vui lòng kiểm tra các trường sau'}</h3><ul className="mt-2 list-disc space-y-1 pl-5">{validationErrors.map((item) => <li key={item.id}><a className="underline underline-offset-2" href={`#${item.id}`}>{item.label}: {item.message}</a></li>)}</ul></div>}
           <div className="form-section-heading form-section-heading-primary md:col-span-3"><h3 className="font-bold">{en ? 'Basic information' : 'Thông tin chính'}</h3><p className="text-xs text-gray-500 dark:text-gray-400">{en ? 'Enter the information needed to record this transaction.' : 'Nhập các thông tin cần thiết để ghi nhận giao dịch.'}</p></div>
-          <Field fieldId="transaction-amount" label={en ? 'Amount (VND)' : 'Số tiền (VND)'} required error={errors.amount?.message} {...aiFieldProps('amount')}>
-            <Controller
-              name="amount"
-              control={control}
-              render={({ field }) => (
-                <input
-                  ref={field.ref}
-                  name={field.name}
-                  onBlur={field.onBlur}
-                  type="text"
-                  id="transaction-amount"
-                  inputMode="numeric"
-                  aria-invalid={Boolean(errors.amount)}
-                  aria-describedby={errors.amount ? 'transaction-amount-error' : undefined}
-                  autoComplete="off"
-                  autoFocus={!id}
-                  className={`field text-right text-lg font-bold ${aiFieldClass(aiFieldProps('amount'))}`}
-                  required
-                  value={
-                    typeof field.value === 'number' && field.value > 0
-                      ? field.value.toLocaleString('vi-VN')
-                      : ''
-                  }
-                  onChange={(e) => {
-                    const digits = e.target.value.replace(/\D/g, '');
-                    field.onChange(digits ? Number(digits) : undefined);
-                  }}
-                />
-              )}
-            />
-            <span className="mt-1 block text-xs text-gray-500 dark:text-gray-400">{en ? 'Enter the amount first, then add the context below.' : 'Nhập số tiền trước, sau đó bổ sung nội dung bên dưới.'}</span>
-          </Field>
           <div className="md:col-span-3">
             <label className="label flex items-center gap-2" htmlFor="transaction-description">
               <span>{en ? 'Description' : 'Nội dung'} <span className="text-red-600" aria-hidden="true">*</span></span>
@@ -638,6 +606,38 @@ export function TransactionForm() {
               </div>
             </section>
           )}
+          <Field fieldId="transaction-amount" label={en ? 'Amount (VND)' : 'Số tiền (VND)'} required error={errors.amount?.message} {...aiFieldProps('amount')}>
+            <Controller
+              name="amount"
+              control={control}
+              render={({ field }) => (
+                <input
+                  ref={field.ref}
+                  name={field.name}
+                  onBlur={field.onBlur}
+                  type="text"
+                  id="transaction-amount"
+                  inputMode="numeric"
+                  aria-invalid={Boolean(errors.amount)}
+                  aria-describedby={errors.amount ? 'transaction-amount-error' : undefined}
+                  autoComplete="off"
+                  autoFocus={!id}
+                  className={`field text-right text-lg font-bold ${aiFieldClass(aiFieldProps('amount'))}`}
+                  required
+                  value={
+                    typeof field.value === 'number' && field.value > 0
+                      ? field.value.toLocaleString('vi-VN')
+                      : ''
+                  }
+                  onChange={(e) => {
+                    const digits = e.target.value.replace(/\D/g, '');
+                    field.onChange(digits ? Number(digits) : undefined);
+                  }}
+                />
+              )}
+            />
+            <span className="mt-1 block text-xs text-gray-500 dark:text-gray-400">{en ? 'Enter the amount and the transaction context.' : 'Nhập số tiền và nội dung giao dịch.'}</span>
+          </Field>
           <Field fieldId="transaction-date" label={en ? 'Date' : 'Ngày'} required error={errors.transactionDate?.message} {...aiFieldProps('transactionDate')}>
             <input
               id="transaction-date"
