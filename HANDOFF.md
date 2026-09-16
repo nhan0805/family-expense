@@ -4,11 +4,11 @@
 
 ## Current state
 
-- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; check/smoke riêng cho commit `4738584` chưa được ghi trong workspace.
-- Code production gần nhất: PR [#164](https://github.com/nhan0805/family-expense/pull/164), commit `4738584b18c9e48e8f4b91b3abcab0f4fdab7e7b`.
-- CI main [run 35081191858](https://github.com/nhan0805/family-expense/actions/runs/35081191858) pass với quality, E2E, db-security và performance budget; Supabase Production Deploy [run 35081191930](https://github.com/nhan0805/family-expense/actions/runs/35081191930) pass.
-- Các PR #160, #162, #163 và #164 đã merge vào `main`, đưa các sửa lỗi tài sản, xóa tài sản liên kết và bộ lọc giao dịch cá nhân lên production backend; Cloudflare production cho commit `4738584` cần được xác minh.
-- Nhánh release hiện tại: `codex/asset-list-collapse-20260917`, tách từ `origin/main`; đang chờ CI/PR cho thay đổi thu gọn danh sách tài sản.
+- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; deployment production cho merge commit `3748633` đã pass và smoke test trả HTTP 200.
+- Code production gần nhất: PR [#166](https://github.com/nhan0805/family-expense/pull/166), merge commit `37486333c09b7cc7f57c0443c6dfc1db8719c44b`.
+- CI main [run 35134311249](https://github.com/nhan0805/family-expense/actions/runs/35134311249) pass với quality, E2E, db-security và performance budget.
+- PR #166 đã merge vào `main`, đưa nút thu gọn riêng cho danh sách sổ tiết kiệm và vàng lên production; đây là thay đổi frontend-only nên không có Supabase Production Deploy mới.
+- Supabase Production Deploy gần nhất [run 35081191930](https://github.com/nhan0805/family-expense/actions/runs/35081191930) pass cho các thay đổi backend trước đó.
 - Đã cập nhật CI/preview cho `merge_group`, thu hẹp trigger Supabase và chuẩn hóa single-writer cho tài liệu release; chưa bật Merge Queue/branch protection trên GitHub.
 - Bản đồ kiến trúc ổn định nằm trong [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md); quy tắc phân loại tài liệu nằm trong [`docs/AI_CONTEXT_GUIDE.md`](docs/AI_CONTEXT_GUIDE.md).
 
@@ -70,7 +70,7 @@
 
 ## Current work
 
-Release branch đang chứa thay đổi UI thu gọn danh sách tài sản trên nền `main` tại `4738584`; local validation đã pass cho Dashboard, TypeScript, ESLint và `git diff --check`. Cần merge PR và xác minh Cloudflare production trước khi kết luận deploy hoàn tất.
+Release PR [#166](https://github.com/nhan0805/family-expense/pull/166) đã merge vào `main` với commit `37486333c09b7cc7f57c0443c6dfc1db8719c44b`; CI main, Cloudflare Pages production và HTTP smoke test đều pass. Thay đổi đã hoàn tất triển khai, không có migration/API/backend runtime cần deploy thêm.
 
 ## Pending tasks
 
@@ -84,7 +84,6 @@ Release branch đang chứa thay đổi UI thu gọn danh sách tài sản trên
 - Build có cảnh báo chunk lớn liên quan XLSX/ExcelJS/charts; performance budget CI vẫn là kiểm soát bắt buộc.
 - App không có offline mutation queue; không coi giao dịch là đã lưu nếu request chưa thành công.
 - Cloudflare Pages build settings và Supabase production secrets nằm ngoài repo; chỉ xác minh được qua CI/deployment, không ghi giá trị vào tài liệu.
-- PR cho thay đổi thu gọn danh sách tài sản chưa có CI/preview và Cloudflare production evidence.
 - Backup/restore drill staging chưa có bằng chứng thực tế trong workspace.
 
 ## Important decisions
@@ -146,15 +145,16 @@ Release branch đang chứa thay đổi UI thu gọn danh sách tài sản trên
 
 Latest application/release validation:
 
-- Main commit `4738584`: CI [run 35081191858](https://github.com/nhan0805/family-expense/actions/runs/35081191858) pass quality, E2E, db-security và performance budget; Supabase deploy [run 35081191930](https://github.com/nhan0805/family-expense/actions/runs/35081191930) pass.
-- Release branch local: Dashboard Vitest 11/11, TypeScript và ESLint các file liên quan pass; `git diff --check` pass. Full CI/preview cho commit release đang chờ.
-- Cloudflare production check/smoke cho `4738584` và commit release chưa được ghi.
+- Merge commit `37486333c09b7cc7f57c0443c6dfc1db8719c44b` của PR [#166](https://github.com/nhan0805/family-expense/pull/166): CI main [run 35134311249](https://github.com/nhan0805/family-expense/actions/runs/35134311249) pass quality, E2E, db-security và performance budget.
+- Local release validation: full Vitest 43 file/201 test, TypeScript, ESLint, production build và `git diff --check` pass; Playwright E2E local 4 pass/2 skip vì chưa cấu hình tài khoản test.
+- Cloudflare Pages production [check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/e5e0a156-8878-416e-ad98-c29c6f90cb82) pass; smoke `https://family-expense-8fo.pages.dev/` trả HTTP 200.
+- Không chạy Supabase Production Deploy mới cho PR #166 vì không có thay đổi schema, migration, Edge Function hoặc backend runtime; run gần nhất [35081191930](https://github.com/nhan0805/family-expense/actions/runs/35081191930) vẫn pass.
 
 For a new change, rerun only the relevant focused tests during iteration, then the full release gate before deploy: `pnpm test`, `pnpm typecheck`, `pnpm lint`, `pnpm build`, `git diff --check`, plus E2E/DB tests when applicable.
 
 ## Next recommended step
 
-Tiếp theo tạo PR cho `codex/asset-list-collapse-20260917`, chờ required checks/merge, rồi xác minh Cloudflare Pages production và HTTP smoke; không dùng production làm môi trường rehearsal.
+Tiếp theo có thể chạy backup/restore và rollback drill trên staging với secrets riêng; không dùng production làm môi trường rehearsal.
 
 ## Session start instructions
 
