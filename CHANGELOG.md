@@ -7,7 +7,8 @@
 - Thêm nút `Xem danh sách`/`Thu gọn` riêng cho danh sách sổ tiết kiệm và vàng trong Asset Snapshot; mặc định đóng để Dashboard không bị kéo dài khi có nhiều dòng.
 - Nút có `aria-expanded`/`aria-controls` và vùng chạm tối thiểu 44px; không đổi schema, API hoặc dữ liệu.
 - Files: `src/pages/Dashboard.tsx`, `src/pages/Dashboard.test.tsx`.
-- Kiểm thử local: Dashboard Vitest 11/11, TypeScript, ESLint các file liên quan và `git diff --check` pass. CI/Cloudflare production sẽ được xác nhận sau khi PR merge.
+- Kiểm thử local: full Vitest 43 file/201 test, TypeScript, ESLint, production build và `git diff --check` pass; Playwright E2E local 4 pass/2 skip vì chưa cấu hình tài khoản test.
+- Deployment: PR [#166](https://github.com/nhan0805/family-expense/pull/166) đã merge vào `main` với commit `37486333c09b7cc7f57c0443c6dfc1db8719c44b`; CI main [run 35134311249](https://github.com/nhan0805/family-expense/actions/runs/35134311249) và Cloudflare Pages production [check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/e5e0a156-8878-416e-ad98-c29c6f90cb82) pass. Smoke `https://family-expense-8fo.pages.dev/` trả HTTP 200. Không có thay đổi backend nên không chạy Supabase Production Deploy mới.
 
 ## 2026-09-16
 
