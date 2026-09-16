@@ -175,7 +175,7 @@ export const formatAssetMoneyInput = (value: string | number) => {
 
 export const sanitizeDecimalInput = (value: string) => {
   const normalized = value.replace(/,/g, '.');
-  const [whole, ...fraction] = normalized.split('.');
+  const [whole = '', ...fraction] = normalized.split('.');
   const wholeDigits = whole.replace(/\D/g, '');
   const fractionDigits = fraction.join('').replace(/\D/g, '');
   return fraction.length > 0 ? `${wholeDigits}.${fractionDigits}` : wholeDigits;
