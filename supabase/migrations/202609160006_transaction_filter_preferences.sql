@@ -18,6 +18,8 @@ for each row execute function public.touch_updated_at();
 
 alter table public.transaction_filter_preferences enable row level security;
 
+revoke all on table public.transaction_filter_preferences from anon, public;
+
 create policy transaction_filter_preferences_select
   on public.transaction_filter_preferences for select to authenticated
   using (public.is_family_member(family_id) and user_id = auth.uid());
