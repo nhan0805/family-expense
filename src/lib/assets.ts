@@ -173,6 +173,14 @@ export const formatAssetMoneyInput = (value: string | number) => {
   return digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 };
 
+export const sanitizeDecimalInput = (value: string) => {
+  const normalized = value.replace(/,/g, '.');
+  const [whole = '', ...fraction] = normalized.split('.');
+  const wholeDigits = whole.replace(/\D/g, '');
+  const fractionDigits = fraction.join('').replace(/\D/g, '');
+  return fraction.length > 0 ? `${wholeDigits}.${fractionDigits}` : wholeDigits;
+};
+
 export const calculateSavingsMaturityDate = (openedOn: string, termMonths: number) => {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(openedOn);
   if (!match || !Number.isInteger(termMonths) || termMonths <= 0) return '';

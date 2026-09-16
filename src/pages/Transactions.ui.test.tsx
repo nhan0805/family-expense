@@ -67,7 +67,7 @@ describe('Giao dịch mobile', () => {
     expect(screen.getAllByText((content) => content.includes('250.000')).length).toBeGreaterThan(0);
   });
 
-  it('mặc định chỉ hiển thị chi tiêu thực tế trong tháng và trừ đầu tư', () => {
+  it('mặc định hiển thị chi tiêu thực tế trong tháng, gồm cả đầu tư', () => {
     vi.mocked(useApp).mockReturnValue({
       transactions: [
         { id: 'actual-1', transactionDate: '2026-09-01', transactionType: 'Chi tiêu', status: 'Thực tế', description: 'Đi chợ', amount: 250000, purposeId: 'p1', expenseTypeId: 'e1', paymentMethodId: 'm1', source: 'manual', aiGenerated: false, createdBy: 'u1' },
@@ -83,7 +83,7 @@ describe('Giao dịch mobile', () => {
     expect(screen.getByLabelText('Trạng thái')).toHaveValue('Thực tế');
     expect(screen.getByRole('article', { name: 'Giao dịch Đi chợ' })).toBeInTheDocument();
     expect(screen.queryByRole('article', { name: 'Giao dịch Tiền điện' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('article', { name: 'Giao dịch Mua vàng' })).not.toBeInTheDocument();
+    expect(screen.getByRole('article', { name: 'Giao dịch Mua vàng' })).toBeInTheDocument();
     expect(screen.queryByRole('article', { name: 'Giao dịch Lương' })).not.toBeInTheDocument();
   });
 

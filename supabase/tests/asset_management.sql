@@ -1,6 +1,6 @@
 -- Structural tests for savings-book and gold asset management.
 begin;
-select plan(27);
+select plan(29);
 
 select ok(
   exists(
@@ -127,6 +127,18 @@ select ok(
   pg_get_functiondef('public.upsert_gold_asset(uuid,uuid,date,numeric,numeric,numeric,uuid,text,boolean)'::regprocedure) ilike '%purpose_id, expense_type_id, payment_method_id, note%'
   and pg_get_functiondef('public.upsert_gold_asset(uuid,uuid,date,numeric,numeric,numeric,uuid,text,boolean)'::regprocedure) not ilike '%purpose_id, expense_type_id, resolved_payment_method_id, note%',
   'gold purchase transaction uses the payment_method_id column'
+);
+select ok(
+  pg_get_functiondef('public.upsert_savings_account(uuid,uuid,text,text,numeric,numeric,integer,date,date,text,uuid,text,boolean)'::regprocedure) ilike '%p.code = ''purpose-8''%'
+  and pg_get_functiondef('public.record_savings_movement(uuid,uuid,text,numeric,date,uuid,text,boolean)'::regprocedure) ilike '%p.code = ''purpose-8''%'
+  and pg_get_functiondef('public.upsert_gold_asset(uuid,uuid,date,numeric,numeric,numeric,uuid,text,boolean)'::regprocedure) ilike '%p.code = ''purpose-8''%'
+  and pg_get_functiondef('public.record_gold_sale(uuid,uuid,date,numeric,numeric,uuid,text)'::regprocedure) ilike '%p.code = ''purpose-8''%',
+  'asset RPCs resolve the stable investment purpose code'
+);
+select ok(
+  pg_get_functiondef('public.upsert_gold_asset(uuid,uuid,date,numeric,numeric,numeric,uuid,text,boolean)'::regprocedure) ilike '%e.code = ''expense-25''%'
+  and pg_get_functiondef('public.record_gold_sale(uuid,uuid,date,numeric,numeric,uuid,text)'::regprocedure) ilike '%e.code = ''expense-25''%',
+  'gold RPCs resolve the stable gold category code'
 );
 
 select * from finish();
