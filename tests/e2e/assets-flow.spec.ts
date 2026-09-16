@@ -28,4 +28,10 @@ test('luồng demo thêm và bán vàng', async ({ page }) => {
   await page.getByRole('alertdialog').getByRole('button', { name: 'Bán và ghi nhận' }).click();
   await expect(page.getByText('Đã ghi nhận bán vàng.')).toBeVisible();
   await expect(page.getByText(/1 \/ 1,5 chỉ/)).toBeVisible();
+
+  await page.getByRole('button', { name: 'Xóa' }).click();
+  await expect(page.getByRole('alertdialog')).toContainText('các giao dịch được tự tạo cho lô này');
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Xóa vàng' }).click();
+  await expect(page.getByText('Đã xóa vàng.')).toBeVisible();
+  await expect(page.getByText('Chưa có vàng')).toBeVisible();
 });

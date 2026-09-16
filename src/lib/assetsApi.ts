@@ -227,6 +227,15 @@ export async function archiveSavingsAccount(familyId: string, id: string) {
   return data;
 }
 
+export async function deleteSavingsAccount(familyId: string, id: string) {
+  const { data, error } = await supabase.rpc('delete_savings_account', {
+    p_family_id: familyId,
+    p_id: id,
+  });
+  if (error) throw error;
+  return data;
+}
+
 export async function upsertGoldAsset(
   familyId: string,
   input: GoldAssetInput,
@@ -268,6 +277,15 @@ export async function recordGoldSale(
 
 export async function archiveGoldAsset(familyId: string, id: string) {
   const { data, error } = await supabase.rpc('archive_gold_asset', {
+    p_family_id: familyId,
+    p_id: id,
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteGoldAsset(familyId: string, id: string) {
+  const { data, error } = await supabase.rpc('delete_gold_asset', {
     p_family_id: familyId,
     p_id: id,
   });
