@@ -79,10 +79,10 @@ Generated/dependency output such as `node_modules/`, `dist/`, `coverage/`, Playw
 
 ### Savings and gold assets
 
-- `src/pages/Assets.tsx` is the simple asset ledger for savings books and gold purchase lots. Owners can create/edit/close/archive savings books, record interest/withdrawal/fee/settlement movements, update gold estimates, and record partial or full gold sales. Members have read-only access.
+- `src/pages/Assets.tsx` is the simple asset ledger for savings books and gold purchase records. Active family members can create/edit/close/archive savings books, record interest/withdrawal/fee/settlement movements, update the shared gold buy-back price, and record partial or full gold sales.
 - `src/lib/assets.ts` contains validation, maturity/interest calculations, gold value/P&L helpers and the local-storage fallback. `src/lib/assetsApi.ts` maps asset rows and calls the family-scoped RPCs.
-- Migration `202609160001_asset_management.sql` adds `savings_accounts`, `savings_movements`, `gold_assets` and `gold_sales`, plus RLS and owner-only RPCs. Asset mutations atomically create linked `transactions` with source `asset`: deposits and gold purchases are expenses, interest/withdrawals/gold sales are income, and savings fees are expenses. Gold sales do not add a fee.
-- `get_asset_summary` returns all-time actual net cash (`income - expenses`) and the current savings/gold list for the Dashboard, independent of the selected spending-period charts.
+- Migrations `202609160001_asset_management.sql`–`202609160003_member_asset_controls.sql` add the asset tables, repair linked transaction writes, store one shared family buy-back price, calculate savings maturity in a trigger, and expose active-member RLS/RPC access. Asset mutations atomically create linked `transactions` with source `asset`: deposits and gold purchases are expenses, interest/withdrawals/gold sales are income, and savings fees are expenses. Gold sales do not add a fee.
+- `get_asset_summary` returns all-time actual net cash (`income - expenses`), the shared buy-back price and the current savings/gold list for the Dashboard, independent of the selected spending-period charts.
 
 ### Recurring transactions
 
@@ -141,7 +141,7 @@ AI suggestions and imported values are untrusted. AI never writes a transaction 
 ### Asset mutation
 
 ```text
-Owner form validation
+Active family member form validation
   → savings/gold RPC locks the asset and inserts its linked cash transaction
   → invalidate asset, transaction, dashboard and budget queries
   → render the persisted asset and transaction
@@ -167,7 +167,7 @@ Supabase pg_cron
 - `budgets` belongs to a family/month/purpose and is guarded by budget visibility rules.
 - `recurring_transactions` stores templates; `recurring_transaction_runs` records idempotent occurrences; generated `transactions` link back with `recurring_transaction_id`.
 - `savings_accounts` stores a savings book and its current balance; `savings_movements` stores opening, interest, withdrawal, fee and settlement history.
-- `gold_assets` stores one purchase lot per buy date/price; `gold_sales` stores partial/full sales and their linked income transactions. The estimated sell value uses the manually entered shop buy-back price.
+- `gold_assets` stores one purchase record per buy date/price; `gold_sales` stores partial/full sales and their linked income transactions. The estimated sell value uses the shared family shop buy-back price.
 - `import_batches` and `import_issues` audit Excel imports.
 - `ai_usage_logs` records minimal AI request metadata and is subject to retention; AI cache/RPC access is server-controlled where configured.
 

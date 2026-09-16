@@ -1,15 +1,15 @@
 # Family Expense — Development Handoff
 
-> Cập nhật: **11/09/2026** (`Asia/Ho_Chi_Minh`)
+> Cập nhật: **16/09/2026** (`Asia/Ho_Chi_Minh`)
 
 ## Current state
 
 - Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages.
-- Code production gần nhất: PR [#149](https://github.com/nhan0805/family-expense/pull/149), merge commit `93fd69cf6be9205987b750a50bf7f74498b273ad`.
-- Release tài liệu/rule gần nhất: PR [#143](https://github.com/nhan0805/family-expense/pull/143), merge commit `67a391967862cd4d6bd95747d4115774c6b7be5b`.
-- CI main [run 34624390764](https://github.com/nhan0805/family-expense/actions/runs/34624390764) pass với quality, E2E và db-security; Cloudflare Pages production [check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/91053e44-e6ab-4f0c-bfaa-3749daef7f40) báo deploy thành công; smoke production trả HTTP 200.
-- Nhánh workspace hiện tại: `codex/loading-error-recovery`.
-- PR #149 đã merge vào `main` và deploy production qua Cloudflare Pages Git integration. Không có migration, Edge Function hoặc thay đổi dữ liệu cần deploy Supabase.
+- Code production gần nhất: PR [#156](https://github.com/nhan0805/family-expense/pull/156), merge commit `f99ef4415fc103f6cdf09ce039372442b3578e4f`.
+- CI main [run 35074751965](https://github.com/nhan0805/family-expense/actions/runs/35074751965) pass với quality, coverage, E2E, db-security và performance budget; Supabase Production Deploy [run 35074751902](https://github.com/nhan0805/family-expense/actions/runs/35074751902) pass.
+- Cloudflare Pages production [check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/147ea61d-fca7-413a-9309-09eb1713b77f) pass; smoke `https://family-expense-8fo.pages.dev/` trả HTTP 200.
+- Nhánh release/status hiện tại: `codex/release-status-20260916`.
+- PR #156 đã merge vào `main`; migration tài sản dùng chung đã được áp dụng qua Supabase workflow và frontend đã deploy qua Cloudflare Pages Git integration.
 - Đã cập nhật CI/preview cho `merge_group`, thu hẹp trigger Supabase và chuẩn hóa single-writer cho tài liệu release; chưa bật Merge Queue/branch protection trên GitHub.
 - Bản đồ kiến trúc ổn định nằm trong [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md); quy tắc phân loại tài liệu nằm trong [`docs/AI_CONTEXT_GUIDE.md`](docs/AI_CONTEXT_GUIDE.md).
 
@@ -25,6 +25,13 @@
 - Semantic embedding/search production path đã bị loại bỏ; không đưa lại nếu chưa có quyết định kiến trúc mới.
 
 ## Recently completed
+
+### Triển khai nhãn tài sản và mặc định giao dịch
+
+- Giao diện song ngữ dùng tên tài sản `Gold`/`vàng` và đơn vị `mace`/`chỉ`; không còn nhãn giao diện theo lô/thỏi vàng.
+- Giá tiệm mua vào được lưu dùng chung cho gia đình; kỳ hạn sổ tiết kiệm được tính bằng trigger database; active member có thể quản lý tài sản qua RLS/RPC.
+- Giao dịch mới thanh toán bằng thẻ tín dụng mặc định là `Dự kiến`. Tab Giao dịch mặc định là `Chi tiêu` thực tế trong tháng hiện tại và loại trừ mục đích `Đầu tư`.
+- PR [#156](https://github.com/nhan0805/family-expense/pull/156) đã merge và deploy production thành công.
 
 ### Giảm conflict trước auto-merge
 
@@ -57,7 +64,7 @@
 
 ## Current work
 
-Release #149 đã hoàn tất quality gate, merge vào `main` và deploy production thành công. Dashboard tách các truy vấn aggregate theo từng khoảng để chế độ 12 tháng/năm không vượt giới hạn RPC; khoảng Tùy chỉnh dài hơn 366 ngày được báo lỗi rõ ràng và không gọi dữ liệu. Tab Giao dịch chỉ còn danh sách giao dịch; giao dịch dự kiến tới hạn được hiển thị đầy đủ bằng thanh cuộn trong phần Thông báo. Nhánh hiện tại bổ sung xử lý lỗi/loading: lỗi tải Thùng rác có retry, các màn hình không có `familyId` không giữ skeleton vô hạn, và Supabase request có timeout 15 giây. Không có thay đổi schema, migration, RLS/RPC, Edge Function hoặc dữ liệu.
+Release #156 đã hoàn tất quality gate, merge vào `main` và deploy production thành công. Bản release bổ sung quyền quản lý tài sản cho active member, giá vàng dùng chung, trigger tính ngày đáo hạn, nhãn `Gold/mace`, mặc định giao dịch thẻ tín dụng là `Dự kiến` và bộ lọc Giao dịch mặc định cho chi tiêu thực tế trong tháng hiện tại, trừ `Đầu tư`. Không còn pending deploy cho release này.
 
 ## Pending tasks
 
@@ -106,13 +113,16 @@ Release #149 đã hoàn tất quality gate, merge vào `main` và deploy product
 - `.gitignore` — generated Python cache exclusions.
 - `README.md`, `docs/AI_CONTEXT_GUIDE.md`, `docs/DEPLOY_RUNBOOK.md`, `docs/RELEASE_GOVERNANCE.md`, `HUONG-DAN-DEPLOY-THU-CONG.md` — auto-merge/release-document policy.
 - `src/components/Layout.tsx`, `src/components/TransactionRow.tsx`, `src/context/ThemeContext.tsx`, `src/index.css` — mobile navigation, transaction cards và design tokens.
+- `src/lib/assets.ts`, `src/lib/assetsApi.ts`, `src/pages/Assets.tsx`, `src/pages/Dashboard.tsx` — giá vàng dùng chung, quyền member và snapshot tài sản.
+- `src/lib/domain.ts`, `src/pages/TransactionForm.tsx`, `src/pages/Transactions.tsx` — mặc định trạng thái thẻ tín dụng và bộ lọc Giao dịch.
+- `supabase/migrations/202609160002_fix_asset_transaction_writes.sql`, `supabase/migrations/202609160003_member_asset_controls.sql`, `supabase/tests/asset_management.sql` — sửa ghi giao dịch liên kết và cập nhật contract tài sản.
 - `src/lib/transactionsApi.ts`, `src/lib/errorRecovery.ts`, `src/lib/supabase.ts`, `src/pages/Dashboard.tsx`, `src/pages/Budgets.tsx`, `src/pages/Transactions.tsx`, `src/pages/Members.tsx`, `src/pages/RecurringExpenses.tsx`, `src/pages/TransactionForm.tsx`, `src/components/BudgetNotifications.tsx` — dashboard hierarchy, lỗi/loading recovery, charts, budget semantics, transaction responsive UI và due-transaction notifications.
 - `src/pages/TransactionForm.tsx`, `src/pages/Login.tsx`, `src/pages/ResetPassword.tsx`, `src/pages/CreateFamily.tsx` — form/auth/onboarding UI.
 - Các test liên quan đến Layout, Dashboard, Budgets, Transactions, TransactionRow, TransactionForm và Login.
 
 ## Database state
 
-- Ordered migrations are in `supabase/migrations/`; latest security/dashboard migration is `202609070001_security_integrity_and_dashboard.sql`, followed by recurring transaction migrations `202609050001`–`202609050005` in timestamp order.
+- Ordered migrations are in `supabase/migrations/`; asset migrations `202609160001`–`202609160003` are now applied in production. The latest asset migration stores the shared family gold buy-back price, calculates savings maturity in a trigger, and grants active-member asset read/mutation access through guarded RLS/RPC paths.
 - Current schema includes families/members, catalogs, transactions, budgets, recurring templates/runs, import audit and minimal AI usage logs.
 - RLS/owner-member policies and guarded RPCs are part of the migration contract. Do not infer authorization from frontend checks.
 - Production migration/function deployment is handled by `.github/workflows/supabase-deploy.yml` after matching changes reach `main`.
@@ -129,18 +139,18 @@ Release #149 đã hoàn tất quality gate, merge vào `main` và deploy product
 
 Latest application/release validation:
 
-- Vitest: 37 files, 164 tests passed.
+- Vitest: 39 files, 185 tests passed.
 - TypeScript typecheck: passed.
 - ESLint: passed.
 - Production build: passed; only known large-chunk warnings remain.
-- Playwright/DB security: sẽ xác nhận lại trong CI của PR loading recovery.
-- Production smoke của release hiện tại: `https://family-expense-8fo.pages.dev/` returned HTTP 200; bản sửa mới chưa deploy.
+- Playwright focused asset flow: passed; main CI E2E and DB-security also passed.
+- Production smoke: `https://family-expense-8fo.pages.dev/` returned HTTP 200.
 
 For a new change, rerun only the relevant focused tests during iteration, then the full release gate before deploy: `pnpm test`, `pnpm typecheck`, `pnpm lint`, `pnpm build`, `git diff --check`, plus E2E/DB tests when applicable.
 
 ## Next recommended step
 
-Tiếp theo push branch, mở PR vào `main`, chờ CI/Cloudflare Pages và smoke test production cho bản sửa loading recovery.
+Tiếp theo chạy backup/restore và rollback drill trên staging bằng secrets riêng; không dùng production làm môi trường rehearsal.
 
 ## Session start instructions
 

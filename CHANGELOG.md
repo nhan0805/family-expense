@@ -1,5 +1,16 @@
 # Nhật ký thay đổi Family Expense
 
+## 2026-09-16
+
+### Triển khai nhãn tài sản và mặc định giao dịch
+
+- Màn hình tài sản dùng tên đơn giản `Gold`/`vàng`; đơn vị tiếng Anh là `mace`, tiếng Việt là `chỉ`. Không còn nhãn giao diện theo lô/thỏi vàng.
+- Giá tiệm mua vào được lưu thành một thiết lập dùng chung cho gia đình; kỳ hạn sổ tiết kiệm được tính lại bằng trigger database. Active member có thể xem và quản lý tài sản qua RLS/RPC được bảo vệ.
+- Giao dịch mới thanh toán bằng `Thẻ tín dụng` mặc định ở trạng thái `Dự kiến`; màn hình Giao dịch mặc định lọc `Chi tiêu` thực tế trong tháng hiện tại và loại trừ mục đích `Đầu tư`.
+- Files/DB: `src/pages/Assets.tsx`, `src/pages/Dashboard.tsx`, `src/pages/TransactionForm.tsx`, `src/pages/Transactions.tsx`, các regression/E2E tests; migration `supabase/migrations/202609160003_member_asset_controls.sql` và `supabase/tests/asset_management.sql`.
+- Validation: CI main run [35074751965](https://github.com/nhan0805/family-expense/actions/runs/35074751965) pass quality, coverage, E2E, db-security và performance budget; Supabase Production Deploy run [35074751902](https://github.com/nhan0805/family-expense/actions/runs/35074751902) pass; local smoke flow pass; local pgTAP không chạy vì PostgreSQL chưa bật tại `127.0.0.1:54322`.
+- Deployment: PR [#156](https://github.com/nhan0805/family-expense/pull/156) đã merge với commit `f99ef4415fc103f6cdf09ce039372442b3578e4f`; Cloudflare Pages production check [pass](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/147ea61d-fca7-413a-9309-09eb1713b77f). `https://family-expense-8fo.pages.dev/` trả HTTP 200.
+
 ## 2026-09-12
 
 ### Hiển thị lỗi thay vì loading vô hạn
