@@ -3,8 +3,9 @@ import {
   fireEvent,
   render,
   screen,
+  within,
 } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useApp } from '../context/AppContext';
@@ -48,6 +49,10 @@ const renderDashboard = () => {
 };
 
 describe('Dashboard', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
   afterEach(() => {
     cleanup();
     vi.restoreAllMocks();
@@ -126,6 +131,54 @@ describe('Dashboard', () => {
     expect(
       screen.getAllByText('Chưa có dữ liệu biểu đồ'),
     ).toHaveLength(4);
+  });
+
+  it('hiển thị tổng tài sản và lãi/lỗ ước tính cho sổ tiết kiệm và vàng', () => {
+    const familyId = 'family-assets';
+    window.localStorage.setItem(`family-expense:savings-accounts:${familyId}`, JSON.stringify([{
+      id: 'savings-1',
+      familyId,
+      bankName: 'ACB',
+      name: 'Sổ 6 tháng',
+      principal: 100_000_000,
+      currentBalance: 100_000_000,
+      annualInterestRate: 6,
+      termMonths: 6,
+      openedOn: '2026-01-01',
+      maturityOn: '2026-07-01',
+      interestMethod: 'end_of_term',
+      status: 'active',
+      note: null,
+    }]));
+    window.localStorage.setItem(`family-expense:gold-assets:${familyId}`, JSON.stringify([{
+      id: 'gold-1',
+      familyId,
+      purchaseDate: '2026-01-01',
+      quantityChi: 2,
+      remainingQuantityChi: 2,
+      purchasePricePerChi: 7_500_000,
+      estimatedSellPricePerChi: 8_000_000,
+      status: 'active',
+      transactionId: null,
+      note: null,
+    }]));
+    vi.mocked(useApp).mockReturnValue({
+      familyId,
+      transactions: [
+        transaction('Thu tiền', '2026-01-02', 10_000_000, 'Thực tế', 'Thu nhập'),
+        transaction('Chi tiền', '2026-01-03', 2_000_000),
+      ],
+      purposes: [{ id: 'p1', name: 'Sinh hoạt' }],
+      expenseTypes: [{ id: 'e1', name: 'Thực phẩm' }],
+      confirmPlannedTransaction,
+    } as unknown as ReturnType<typeof useApp>);
+    renderDashboard();
+
+    const snapshot = screen.getByRole('region', { name: 'Tài sản' });
+    expect(within(snapshot).getByText('Tổng tài sản')).toBeInTheDocument();
+    expect(within(snapshot).getByText(/124\.000\.000/)).toBeInTheDocument();
+    expect(within(snapshot).getByText(/Lãi dự kiến \+2\.975\.342/)).toBeInTheDocument();
+    expect(within(snapshot).getByText(/Lãi\/lỗ ước tính \+1\.000\.000/)).toBeInTheDocument();
   });
 
   it('để các phân tích phụ ở trạng thái đóng theo mặc định', () => {

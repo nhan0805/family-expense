@@ -10,6 +10,7 @@ import {
   canDeleteTransaction,
   findDuplicates,
   getCatalogDisplayName,
+  statusForNewTransaction,
   statusForTransactionDate,
   transactionSchema,
   type TransactionInput,
@@ -82,6 +83,15 @@ function getSpeechRecognition() {
   };
   return speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition;
 }
+
+const getVietnamToday = () =>
+  new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Ho_Chi_Minh',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
+
 export function TransactionForm() {
   const { language } = useOptionalLanguage();
   const en = language === 'en';
@@ -107,6 +117,9 @@ export function TransactionForm() {
     enabled: isSupabaseConfigured && Boolean(familyId && id),
   });
   const existing = isSupabaseConfigured ? existingQuery.data : localExisting;
+  const today = getVietnamToday();
+  const defaultPaymentMethod = paymentMethods.find((method) => method.name === 'Chuyển khoản');
+  const defaultTransactionDate = today;
   const [aiBusy, setAiBusy] = useState(false);
   const [aiError, setAiError] = useState('');
   const [aiResult, setAiResult] = useState<AiResult | null>(null);
@@ -132,21 +145,18 @@ export function TransactionForm() {
   } = useForm<TransactionFormInput, unknown, TransactionInput>({
     resolver: zodResolver(transactionSchema),
     defaultValues: existing ?? {
-      transactionDate: new Intl.DateTimeFormat('en-CA', {
-        timeZone: 'Asia/Ho_Chi_Minh',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      }).format(new Date()),
+      transactionDate: defaultTransactionDate,
       transactionType: 'Chi tiêu',
-      status: 'Thực tế',
+      status: statusForNewTransaction(
+        defaultTransactionDate,
+        today,
+        defaultPaymentMethod?.name,
+      ),
       description: '',
       amount: undefined,
       purposeId: '',
       expenseTypeId: '',
-      paymentMethodId:
-        paymentMethods.find((method) => method.name === 'Chuyển khoản')?.id ??
-        '',
+      paymentMethodId: defaultPaymentMethod?.id ?? '',
       source: 'manual',
       aiGenerated: false,
     },
@@ -200,19 +210,21 @@ export function TransactionForm() {
     }
   }, [existing, reset]);
   const transactionDate = watch('transactionDate');
+  const paymentMethodId = watch('paymentMethodId') || '';
   const description = watch('description') || '';
-  useEffect(() => {
-    if (id || !transactionDate) return;
-    const today = new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'Asia/Ho_Chi_Minh',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    }).format(new Date());
-    setValue('status', statusForTransactionDate(transactionDate, today), {
-      shouldValidate: true,
-    });
-  }, [id, setValue, transactionDate]);
+  const updateDefaultStatus = (nextDate: string, nextPaymentMethodId: string) => {
+    if (id || !nextDate) return;
+    const nextPaymentMethodName = paymentMethods.find(
+      (method) => method.id === nextPaymentMethodId,
+    )?.name;
+    setValue(
+      'status',
+      statusForNewTransaction(nextDate, getVietnamToday(), nextPaymentMethodName),
+      { shouldDirty: true, shouldValidate: true },
+    );
+  };
+  const transactionDateField = register('transactionDate');
+  const paymentMethodField = register('paymentMethodId');
   useEffect(() => () => speechRecognitionRef.current?.stop(), []);
   const handleCancel = async () => {
     if (isDirty && !await askConfirm({
@@ -652,7 +664,11 @@ export function TransactionForm() {
               required
               aria-invalid={Boolean(errors.transactionDate)}
               aria-describedby={errors.transactionDate ? 'transaction-date-error' : undefined}
-              {...register('transactionDate')}
+              {...transactionDateField}
+              onChange={(event) => {
+                transactionDateField.onChange(event);
+                updateDefaultStatus(event.target.value, paymentMethodId);
+              }}
             />
           </Field>
           <Field errorId="transaction-type-error" label={en ? 'Transaction type' : 'Loại giao dịch'} required error={errors.transactionType?.message} {...aiFieldProps('transactionType')}>
@@ -670,7 +686,10 @@ export function TransactionForm() {
             error={errors.paymentMethodId?.message}
             {...aiFieldProps('paymentMethodId')}
           >
-            <select id="transaction-payment-method" className={`field ${aiFieldClass(aiFieldProps('paymentMethodId'))}`} required aria-invalid={Boolean(errors.paymentMethodId)} aria-describedby={errors.paymentMethodId ? 'transaction-payment-method-error' : undefined} {...register('paymentMethodId')}>
+            <select id="transaction-payment-method" className={`field ${aiFieldClass(aiFieldProps('paymentMethodId'))}`} required aria-invalid={Boolean(errors.paymentMethodId)} aria-describedby={errors.paymentMethodId ? 'transaction-payment-method-error' : undefined} {...paymentMethodField} onChange={(event) => {
+              paymentMethodField.onChange(event);
+              updateDefaultStatus(transactionDate || '', event.target.value);
+            }}>
               <option value="">{en ? 'Select payment method' : 'Chọn phương thức'}</option>
               {paymentMethods.map((x) => (
                 <option key={x.id} value={x.id}>

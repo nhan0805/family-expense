@@ -13,7 +13,7 @@ import {
   WalletCards,
   X,
 } from 'lucide-react';
-import { useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { EmptyState, PageSkeleton } from '../components/AsyncStates';
 import { useFeedback } from '../components/Feedback';
@@ -31,11 +31,14 @@ import {
   fetchAssetSummary,
   recordGoldSale,
   recordSavingsMovement,
+  setGoldBuybackPrice,
   upsertGoldAsset,
   upsertSavingsAccount,
 } from '../lib/assetsApi';
 import {
   buildLocalAssetSummary,
+  canManageAssets,
+  calculateSavingsMaturityDate,
   daysUntilMaturity,
   expectedSavingsInterest,
   goldCostValue,
@@ -43,6 +46,8 @@ import {
   goldPurchaseAmount,
   goldSaleInputSchema,
   goldAssetInputSchema,
+  goldBuybackPriceInputSchema,
+  formatAssetMoneyInput,
   getLocalAssetData,
   makeLocalAssetTransaction,
   recordLocalGoldSale,
@@ -54,6 +59,7 @@ import {
   upsertLocalSavingsAccount,
   archiveLocalGoldAsset,
   archiveLocalSavingsAccount,
+  setLocalGoldBuybackPrice,
   type GoldAsset,
   type SavingsAccount,
   type SavingsAccountInput,
@@ -84,7 +90,6 @@ type GoldForm = {
   purchaseDate: string;
   quantityChi: string;
   purchasePricePerChi: string;
-  estimatedSellPricePerChi: string;
   paymentMethodId: string;
   note: string;
   createTransaction: boolean;
@@ -121,16 +126,15 @@ const todayInVietnam = () =>
     day: '2-digit',
   }).format(new Date());
 
-const addMonthsToDate = (dateValue: string, months: number) => {
-  const [year, month, day] = dateValue.split('-').map(Number);
-  const date = new Date(Date.UTC(year || 1970, (month || 1) - 1 + months, day || 1));
-  return date.toISOString().slice(0, 10);
-};
-
 const inputAmount = (value: string) => value.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
 const inputDecimal = (value: string) => value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
 const formatQuantity = (value: number) => value.toLocaleString('vi-VN', { maximumFractionDigits: 3 });
 const formatRate = (value: number) => value.toLocaleString('vi-VN', { maximumFractionDigits: 4 });
+const calculatedMaturityDate = (openedOn: string, termMonths: string) => {
+  const months = Number(inputAmount(termMonths));
+  return calculateSavingsMaturityDate(openedOn, months);
+};
+const goldUnitLabel = (en: boolean) => (en ? 'mace' : 'chỉ');
 
 const interestMethodLabel = (value: SavingsAccount['interestMethod'], en: boolean) => {
   if (value === 'monthly') return en ? 'Monthly' : 'Hàng tháng';
@@ -150,7 +154,7 @@ const movementLabel = (value: SavingsMovementType, en: boolean) => {
 function assetError(error: unknown, en: boolean, fallback: string) {
   const raw = error instanceof Error ? error.message.toLowerCase() : '';
   if (raw.includes('forbidden') || raw.includes('42501'))
-    return en ? 'Only the family owner can change assets.' : 'Chỉ chủ gia đình mới có quyền thay đổi tài sản.';
+    return en ? 'You must be a family member to change assets.' : 'Bạn phải là thành viên gia đình để thay đổi tài sản.';
   if (raw.includes('insufficient_balance'))
     return en ? 'The amount is greater than the current savings balance.' : 'Số tiền vượt quá số dư hiện tại của sổ.';
   if (raw.includes('insufficient_quantity'))
@@ -162,7 +166,7 @@ function assetError(error: unknown, en: boolean, fallback: string) {
   if (raw.includes('account_not_closed'))
     return en ? 'Close the savings book with a settlement before archiving it.' : 'Hãy tất toán sổ trước khi lưu trữ.';
   if (raw.includes('asset_not_sold'))
-    return en ? 'Sell all remaining gold before archiving this lot.' : 'Hãy bán hết vàng còn lại trước khi lưu trữ dòng vàng.';
+    return en ? 'Sell all remaining gold before archiving it.' : 'Hãy bán hết vàng còn lại trước khi lưu trữ.';
   if (raw.includes('principal_edit_not_allowed'))
     return en ? 'The opening principal cannot be edited after the book is created.' : 'Không thể sửa tiền gốc sau khi đã tạo sổ.';
   if (raw.includes('account_not_active') || raw.includes('asset_not_active'))
@@ -190,13 +194,30 @@ export function Assets() {
   } = useApp();
   const { askConfirm, notify } = useFeedback();
   const queryClient = useQueryClient();
-  const canManage = currentUserRole === 'owner';
-  const [savingsEditor, setSavingsEditor] = useState<SavingsForm | null>(null);
-  const [goldEditor, setGoldEditor] = useState<GoldForm | null>(null);
-  const [movementEditor, setMovementEditor] = useState<MovementForm | null>(null);
-  const [saleEditor, setSaleEditor] = useState<SaleForm | null>(null);
+  const canManage = canManageAssets(currentUserRole);
+  const [savingsEditor, setSavingsEditorState] = useState<SavingsForm | null>(null);
+  const [goldEditor, setGoldEditorState] = useState<GoldForm | null>(null);
+  const [movementEditor, setMovementEditorState] = useState<MovementForm | null>(null);
+  const [saleEditor, setSaleEditorState] = useState<SaleForm | null>(null);
+  const [goldBuybackPriceInput, setGoldBuybackPriceInput] = useState('');
   const [formError, setFormError] = useState('');
   const [busy, setBusy] = useState('');
+
+  const setSavingsEditor = (value: SavingsForm | null) =>
+    setSavingsEditorState(value ? {
+      ...value,
+      principal: formatAssetMoneyInput(value.principal),
+      maturityOn: calculatedMaturityDate(value.openedOn, value.termMonths),
+    } : null);
+  const setGoldEditor = (value: GoldForm | null) =>
+    setGoldEditorState(value ? {
+      ...value,
+      purchasePricePerChi: formatAssetMoneyInput(value.purchasePricePerChi),
+    } : null);
+  const setMovementEditor = (value: MovementForm | null) =>
+    setMovementEditorState(value ? { ...value, amount: formatAssetMoneyInput(value.amount) } : null);
+  const setSaleEditor = (value: SaleForm | null) =>
+    setSaleEditorState(value ? { ...value, salePricePerChi: formatAssetMoneyInput(value.salePricePerChi) } : null);
 
   const assetQuery = useQuery({
     queryKey: ['assets', familyId],
@@ -215,6 +236,12 @@ export function Assets() {
   const data = isSupabaseConfigured
     ? assetQuery.data
     : getLocalAssetData(familyId);
+  const goldBuybackPricePerChi = data?.goldBuybackPricePerChi;
+
+  useEffect(() => {
+    if (goldBuybackPricePerChi === undefined) return;
+    setGoldBuybackPriceInput(goldBuybackPricePerChi === null ? '' : formatAssetMoneyInput(goldBuybackPricePerChi));
+  }, [goldBuybackPricePerChi]);
 
   const defaultPaymentMethodId =
     paymentMethods.find((item) => item.name === 'Chuyển khoản')?.id ||
@@ -264,6 +291,34 @@ export function Assets() {
     ]);
   };
 
+  const saveGoldBuybackPrice = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const rawPrice = inputAmount(goldBuybackPriceInput);
+    const parsed = goldBuybackPriceInputSchema.safeParse(rawPrice ? Number(rawPrice) : null);
+    if (!parsed.success) {
+      setFormError(en ? 'Enter a valid positive shop buy-back price.' : 'Hãy nhập giá tiệm mua vào hợp lệ, lớn hơn 0.');
+      return;
+    }
+    if (isSupabaseConfigured && !online) {
+      setFormError(en ? 'Reconnect before saving.' : 'Hãy kết nối lại trước khi lưu.');
+      return;
+    }
+    setBusy('gold-price');
+    setFormError('');
+    try {
+      if (isSupabaseConfigured) await setGoldBuybackPrice(familyId, parsed.data);
+      else setLocalGoldBuybackPrice(familyId, parsed.data);
+      setGoldBuybackPriceInput(parsed.data === null ? '' : formatAssetMoneyInput(parsed.data));
+      await refreshRelated();
+      notify(en ? 'Shared gold buy-back price saved.' : 'Đã lưu giá tiệm mua vào dùng chung.');
+    } catch (error) {
+      reportClientError(error, 'mutation');
+      setFormError(assetError(error, en, en ? 'Could not save the shared gold price.' : 'Không thể lưu giá vàng dùng chung.'));
+    } finally {
+      setBusy('');
+    }
+  };
+
   const closeEditors = () => {
     setSavingsEditor(null);
     setGoldEditor(null);
@@ -280,11 +335,11 @@ export function Assets() {
           id: item.id,
           bankName: item.bankName,
           name: item.name,
-          principal: String(item.principal),
+          principal: formatAssetMoneyInput(item.principal),
           annualInterestRate: String(item.annualInterestRate),
           termMonths: String(item.termMonths),
           openedOn: item.openedOn,
-          maturityOn: item.maturityOn,
+          maturityOn: calculatedMaturityDate(item.openedOn, String(item.termMonths)),
           interestMethod: item.interestMethod,
           paymentMethodId: defaultPaymentMethodId,
           note: item.note || '',
@@ -297,7 +352,7 @@ export function Assets() {
           annualInterestRate: '',
           termMonths: '6',
           openedOn: today,
-          maturityOn: addMonthsToDate(today, 6),
+          maturityOn: calculateSavingsMaturityDate(today, 6),
           interestMethod: 'end_of_term',
           paymentMethodId: defaultPaymentMethodId,
           note: '',
@@ -312,8 +367,7 @@ export function Assets() {
           id: item.id,
           purchaseDate: item.purchaseDate,
           quantityChi: String(item.quantityChi),
-          purchasePricePerChi: String(item.purchasePricePerChi),
-          estimatedSellPricePerChi: item.estimatedSellPricePerChi === null ? '' : String(item.estimatedSellPricePerChi),
+          purchasePricePerChi: formatAssetMoneyInput(item.purchasePricePerChi),
           paymentMethodId: defaultPaymentMethodId,
           note: item.note || '',
           createTransaction: false,
@@ -322,7 +376,6 @@ export function Assets() {
           purchaseDate: todayInVietnam(),
           quantityChi: '',
           purchasePricePerChi: '',
-          estimatedSellPricePerChi: '',
           paymentMethodId: defaultPaymentMethodId,
           note: '',
           createTransaction: true,
@@ -334,7 +387,7 @@ export function Assets() {
     setMovementEditor({
       accountId: account.id,
       type,
-      amount: type === 'settlement' ? String(account.currentBalance) : '',
+      amount: type === 'settlement' ? formatAssetMoneyInput(account.currentBalance) : '',
       movementDate: todayInVietnam(),
       paymentMethodId: type === 'interest' || type === 'withdrawal' || type === 'settlement'
         ? cashPaymentMethodId
@@ -350,8 +403,8 @@ export function Assets() {
       saleDate: todayInVietnam(),
       quantityChi: String(asset.remainingQuantityChi),
       salePricePerChi: asset.estimatedSellPricePerChi === null
-        ? String(asset.purchasePricePerChi)
-        : String(asset.estimatedSellPricePerChi),
+        ? formatAssetMoneyInput(asset.purchasePricePerChi)
+        : formatAssetMoneyInput(asset.estimatedSellPricePerChi),
       paymentMethodId: cashPaymentMethodId,
       note: '',
     });
@@ -428,9 +481,7 @@ export function Assets() {
       purchaseDate: goldEditor.purchaseDate,
       quantityChi: Number(inputDecimal(goldEditor.quantityChi)),
       purchasePricePerChi: Number(inputAmount(goldEditor.purchasePricePerChi)),
-      estimatedSellPricePerChi: inputAmount(goldEditor.estimatedSellPricePerChi)
-        ? Number(inputAmount(goldEditor.estimatedSellPricePerChi))
-        : null,
+      estimatedSellPricePerChi: null,
       paymentMethodId: goldEditor.paymentMethodId || null,
       note: goldEditor.note,
     });
@@ -444,7 +495,7 @@ export function Assets() {
     }
     const isNew = !goldEditor.id;
     if (isNew && goldEditor.createTransaction && !await askConfirm({
-      title: en ? 'Create the gold lot and cash expense?' : 'Tạo dòng vàng và ghi giao dịch chi tiền?',
+      title: en ? 'Create gold and cash expense?' : 'Tạo vàng và ghi giao dịch chi tiền?',
       description: en ? `A ${formatVnd(goldPurchaseAmount(parsed.data.quantityChi, parsed.data.purchasePricePerChi))} expense will be created for the purchase.` : `Hệ thống sẽ tự tạo giao dịch chi ${formatVnd(goldPurchaseAmount(parsed.data.quantityChi, parsed.data.purchasePricePerChi))} cho khoản mua vàng.`,
       confirmLabel: en ? 'Create and record' : 'Tạo và ghi giao dịch',
     })) return;
@@ -475,10 +526,10 @@ export function Assets() {
       }
       await refreshRelated();
       closeEditors();
-      notify(en ? 'Gold holding saved.' : 'Đã lưu dòng vàng.');
+      notify(en ? 'Gold saved.' : 'Đã lưu vàng.');
     } catch (error) {
       reportClientError(error, 'mutation');
-      setFormError(assetError(error, en, en ? 'Could not save the gold holding.' : 'Không thể lưu dòng vàng.'));
+      setFormError(assetError(error, en, en ? 'Could not save gold.' : 'Không thể lưu vàng.'));
     } finally {
       setBusy('');
     }
@@ -576,7 +627,7 @@ export function Assets() {
     const amount = goldPurchaseAmount(parsed.data.quantityChi, parsed.data.salePricePerChi);
     if (!await askConfirm({
       title: en ? 'Sell gold and create income?' : 'Bán vàng và tự tạo giao dịch thu nhập?',
-      description: en ? `This records ${formatQuantity(parsed.data.quantityChi)} chi and creates ${formatVnd(amount)} income. No selling fee is included.` : `Hệ thống sẽ ghi bán ${formatQuantity(parsed.data.quantityChi)} chỉ và tạo giao dịch thu nhập ${formatVnd(amount)}. Không tính phí bán.`,
+      description: en ? `This records ${formatQuantity(parsed.data.quantityChi)} mace and creates ${formatVnd(amount)} income. No selling fee is included.` : `Hệ thống sẽ ghi bán ${formatQuantity(parsed.data.quantityChi)} chỉ và tạo giao dịch thu nhập ${formatVnd(amount)}. Không tính phí bán.`,
       confirmLabel: en ? 'Sell and record' : 'Bán và ghi nhận',
     })) return;
     setBusy('sale');
@@ -634,8 +685,8 @@ export function Assets() {
 
   const archiveGold = async (asset: GoldAsset) => {
     if (!await askConfirm({
-      title: en ? 'Archive this gold lot?' : 'Lưu trữ dòng vàng này?',
-      description: en ? 'It will stay in history and leave the active list.' : 'Dòng vàng vẫn được giữ trong lịch sử và rời khỏi danh sách đang theo dõi.',
+      title: en ? 'Archive this gold?' : 'Lưu trữ vàng này?',
+      description: en ? 'It will stay in history and leave the active list.' : 'Vàng vẫn được giữ trong lịch sử và rời khỏi danh sách đang theo dõi.',
       confirmLabel: en ? 'Archive' : 'Lưu trữ',
       danger: true,
     })) return;
@@ -644,9 +695,9 @@ export function Assets() {
       if (isSupabaseConfigured) await archiveGoldAsset(familyId, asset.id);
       else archiveLocalGoldAsset(familyId, asset.id);
       await refreshRelated();
-      notify(en ? 'Gold lot archived.' : 'Đã lưu trữ dòng vàng.');
+      notify(en ? 'Gold archived.' : 'Đã lưu trữ vàng.');
     } catch (error) {
-      notify(assetError(error, en, en ? 'Could not archive the gold lot.' : 'Không thể lưu trữ dòng vàng.'), 'error');
+      notify(assetError(error, en, en ? 'Could not archive gold.' : 'Không thể lưu trữ vàng.'), 'error');
     } finally {
       setBusy('');
     }
@@ -669,7 +720,7 @@ export function Assets() {
         <h2 className="page-title">{en ? 'Assets' : 'Tài sản'}</h2>
         <p className="page-subtitle">{en ? 'Track savings books and physical gold in a simple ledger.' : 'Theo dõi sổ tiết kiệm và vàng theo cách đơn giản.'}</p>
       </div>
-      {canManage && <div className="flex flex-wrap gap-2"><button type="button" className="btn-primary inline-flex items-center gap-2" onClick={() => openSavingsEditor()}><Plus size={17} aria-hidden="true" />{en ? 'Savings book' : 'Thêm sổ'}</button><button type="button" className="btn-secondary inline-flex items-center gap-2" onClick={() => openGoldEditor()}><Plus size={17} aria-hidden="true" />{en ? 'Gold lot' : 'Thêm vàng'}</button></div>}
+      {canManage && <div className="flex flex-wrap gap-2"><button type="button" className="btn-primary inline-flex items-center gap-2" onClick={() => openSavingsEditor()}><Plus size={17} aria-hidden="true" />{en ? 'Savings book' : 'Thêm sổ'}</button><button type="button" className="btn-secondary inline-flex items-center gap-2" onClick={() => openGoldEditor()}><Plus size={17} aria-hidden="true" />{en ? 'Gold' : 'Thêm vàng'}</button></div>}
     </header>
 
     {!canManage && <div role="status" className="rounded-xl border border-sky-200 bg-sky-50 p-3 text-sm text-sky-800 dark:border-sky-900/60 dark:bg-sky-950/20 dark:text-sky-200">{en ? 'You have read-only access to family assets.' : 'Bạn đang ở chế độ chỉ xem tài sản gia đình.'}</div>}
@@ -679,8 +730,8 @@ export function Assets() {
 
     <section className="grid grid-cols-2 gap-3 sm:grid-cols-4" aria-label={en ? 'Asset totals' : 'Tổng tài sản'}>
       <AssetKpi label={en ? 'Savings balance' : 'Số dư tiết kiệm'} value={savingsTotal} icon={Landmark} tone="emerald" meta={`${activeSavings.length} ${en ? 'book(s)' : 'sổ'}`} />
-      <AssetKpi label={en ? 'Gold estimate' : 'Giá trị vàng ước tính'} value={goldValue} icon={Coins} tone="amber" meta={`${formatQuantity(goldQuantity)} chỉ`} />
-      <AssetKpi label={en ? 'Gold cost' : 'Giá vốn vàng'} value={activeGold.reduce((total, item) => total + goldCostValue(item), 0)} icon={ReceiptText} tone="violet" meta={en ? 'Remaining lots' : 'Phần còn lại'} />
+      <AssetKpi label={en ? 'Gold estimate' : 'Giá trị vàng ước tính'} value={goldValue} icon={Coins} tone="amber" meta={`${formatQuantity(goldQuantity)} ${goldUnitLabel(en)}`} />
+      <AssetKpi label={en ? 'Gold cost' : 'Giá vốn vàng'} value={activeGold.reduce((total, item) => total + goldCostValue(item), 0)} icon={ReceiptText} tone="violet" meta={en ? 'Remaining gold' : 'Phần còn lại'} />
       <AssetKpi label={en ? 'Net cash' : 'Tiền ròng'} value={summary?.netCash || 0} icon={WalletCards} tone="sky" meta={en ? 'Actual transactions' : 'Giao dịch thực tế'} />
     </section>
 
@@ -700,11 +751,22 @@ export function Assets() {
 
     <section className="card overflow-hidden" aria-labelledby="gold-title">
       <div className="flex flex-col gap-3 border-b border-black/10 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5 dark:border-white/10">
-        <div><h3 id="gold-title" className="flex items-center gap-2 text-lg font-extrabold"><Coins size={19} aria-hidden="true" />{en ? 'Gold' : 'Vàng'}</h3><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{en ? 'Prices are per chỉ. Estimate uses the shop buy-back price; no selling fee is included.' : 'Giá tính theo chỉ. Giá trị ước tính dùng giá tiệm mua vào; không tính phí bán.'}</p></div>
+        <div><h3 id="gold-title" className="flex items-center gap-2 text-lg font-extrabold"><Coins size={19} aria-hidden="true" />{en ? 'Gold' : 'Vàng'}</h3><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{en ? 'Prices are per mace. Estimate uses the shared shop buy-back price; no selling fee is included.' : 'Giá tính theo chỉ. Giá trị ước tính dùng giá tiệm mua vào dùng chung; không tính phí bán.'}</p></div>
         {canManage && <button type="button" className="btn-secondary inline-flex items-center gap-2 self-start text-sm" onClick={() => openGoldEditor()}><Plus size={16} aria-hidden="true" />{en ? 'Add gold' : 'Thêm vàng'}</button>}
       </div>
-      {activeGold.length ? <div className="divide-y divide-black/10 dark:divide-white/10">{activeGold.map((asset) => <GoldRow key={asset.id} asset={asset} sales={allGoldSales.filter((item) => item.goldAssetId === asset.id)} canManage={canManage} busy={busy} en={en} onEdit={() => openGoldEditor(asset)} onSell={() => openSaleEditor(asset)} />)}</div> : <EmptyState title={en ? 'No gold holdings yet' : 'Chưa có vàng'} description={en ? 'Add each purchase as one lot so purchase date and cost stay clear.' : 'Mỗi lần mua được lưu thành một dòng để rõ ngày mua và giá vốn.'} action={canManage ? <button type="button" className="btn-primary inline-flex items-center gap-2" onClick={() => openGoldEditor()}><Plus size={16} aria-hidden="true" />{en ? 'Add gold lot' : 'Thêm dòng vàng'}</button> : undefined} />}
-      {soldGold.length > 0 && <details className="border-t border-black/10 dark:border-white/10"><summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 p-4 font-bold [&::-webkit-details-marker]:hidden"><span>{en ? 'Sold lots' : 'Dòng đã bán'} ({soldGold.length})</span><ChevronDown size={18} aria-hidden="true" /></summary><div className="divide-y divide-black/10 dark:divide-white/10">{soldGold.map((asset) => <GoldRow key={asset.id} asset={asset} sales={allGoldSales.filter((item) => item.goldAssetId === asset.id)} canManage={canManage} busy={busy} en={en} onEdit={() => undefined} onSell={() => undefined} onArchive={() => void archiveGold(asset)} sold />)}</div></details>}
+      <div className="border-b border-black/10 p-4 dark:border-white/10 sm:p-5">
+        <form className="flex flex-col gap-3 sm:flex-row sm:items-end" onSubmit={saveGoldBuybackPrice}>
+          <label className="block min-w-0 flex-1 sm:max-w-md">
+            <span className="label">{en ? 'Shared shop buy-back price / mace (VND)' : 'Giá tiệm mua vào dùng chung / chỉ (VND)'}</span>
+            <input className="field" inputMode="numeric" value={goldBuybackPriceInput} disabled={!canManage || busy === 'gold-price'} onChange={(event) => setGoldBuybackPriceInput(formatAssetMoneyInput(event.target.value))} placeholder={en ? 'Optional' : 'Không bắt buộc'} />
+            <span className="mt-1 block text-xs text-gray-500">{en ? 'Used for all gold and estimated P/L. Leave empty to hide the estimate.' : 'Áp dụng cho tất cả vàng và lãi/lỗ tạm tính. Để trống nếu chưa muốn tính.'}</span>
+          </label>
+          {canManage && <button type="submit" className="btn-primary inline-flex items-center justify-center gap-2" disabled={Boolean(busy)}>{busy === 'gold-price' && <LoaderCircle size={16} className="animate-spin" aria-hidden="true" />}{en ? 'Save shared price' : 'Lưu giá dùng chung'}</button>}
+        </form>
+        {formError && <div role="alert" className="inline-feedback inline-feedback-error mt-3">{formError}</div>}
+      </div>
+      {activeGold.length ? <div className="divide-y divide-black/10 dark:divide-white/10">{activeGold.map((asset) => <GoldRow key={asset.id} asset={asset} sales={allGoldSales.filter((item) => item.goldAssetId === asset.id)} canManage={canManage} busy={busy} en={en} onEdit={() => openGoldEditor(asset)} onSell={() => openSaleEditor(asset)} />)}</div> : <EmptyState title={en ? 'No gold yet' : 'Chưa có vàng'} description={en ? 'Add each purchase separately so purchase date and cost stay clear.' : 'Mỗi lần mua được lưu riêng để rõ ngày mua và giá vốn.'} action={canManage ? <button type="button" className="btn-primary inline-flex items-center gap-2" onClick={() => openGoldEditor()}><Plus size={16} aria-hidden="true" />{en ? 'Add gold' : 'Thêm vàng'}</button> : undefined} />}
+      {soldGold.length > 0 && <details className="border-t border-black/10 dark:border-white/10"><summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 p-4 font-bold [&::-webkit-details-marker]:hidden"><span>{en ? 'Sold gold' : 'Vàng đã bán'} ({soldGold.length})</span><ChevronDown size={18} aria-hidden="true" /></summary><div className="divide-y divide-black/10 dark:divide-white/10">{soldGold.map((asset) => <GoldRow key={asset.id} asset={asset} sales={allGoldSales.filter((item) => item.goldAssetId === asset.id)} canManage={canManage} busy={busy} en={en} onEdit={() => undefined} onSell={() => undefined} onArchive={() => void archiveGold(asset)} sold />)}</div></details>}
       {archivedGold.length > 0 && <details className="border-t border-black/10 dark:border-white/10"><summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 p-4 text-sm font-bold [&::-webkit-details-marker]:hidden"><span>{en ? 'Archived gold' : 'Vàng đã lưu trữ'} ({archivedGold.length})</span><ChevronDown size={18} aria-hidden="true" /></summary><div className="divide-y divide-black/10 dark:divide-white/10">{archivedGold.map((asset) => <GoldRow key={asset.id} asset={asset} sales={allGoldSales.filter((item) => item.goldAssetId === asset.id)} canManage={false} busy="" en={en} onEdit={() => undefined} onSell={() => undefined} sold />)}</div></details>}
     </section>
 
@@ -787,7 +849,8 @@ function GoldRow({
   const cost = goldCostValue(asset);
   const hasEstimate = asset.estimatedSellPricePerChi !== null;
   const pnl = currentValue - cost;
-  return <article className="p-4 sm:p-5"><div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between"><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h4 className="text-base font-bold">{formatQuantity(asset.remainingQuantityChi)} / {formatQuantity(asset.quantityChi)} chỉ</h4><span className="ui-chip">{sold || asset.status === 'archived' ? (en ? 'Sold' : 'Đã bán') : (en ? 'Active' : 'Đang giữ')}</span></div><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{en ? 'Purchased' : 'Ngày mua'} {formatDateOnlyVi(asset.purchaseDate)} · {en ? 'Cost' : 'Giá mua'} {formatVnd(asset.purchasePricePerChi)}/chỉ</p></div><div className="text-left lg:text-right"><p className="text-lg font-extrabold text-[var(--primary)]">{hasEstimate ? formatVnd(currentValue) : '—'}</p><p className="text-xs text-gray-500 dark:text-gray-400">{en ? 'Estimated sell value' : 'Giá trị bán ước tính'}</p></div></div><div className="mt-3 grid gap-2 text-sm sm:grid-cols-3"><div className="rounded-xl bg-black/[.025] p-3 dark:bg-white/[.04]"><p className="text-xs text-gray-500">{en ? 'Purchase price' : 'Giá mua'}</p><p className="mt-1 font-semibold">{formatVnd(asset.purchasePricePerChi)}/chỉ</p></div><div className="rounded-xl bg-black/[.025] p-3 dark:bg-white/[.04]"><p className="text-xs text-gray-500">{en ? 'Shop buy-back estimate' : 'Giá tiệm mua vào'}</p><p className="mt-1 font-semibold">{asset.estimatedSellPricePerChi === null ? (en ? 'Not entered' : 'Chưa nhập') : `${formatVnd(asset.estimatedSellPricePerChi)}/chỉ`}</p></div><div className={`rounded-xl p-3 ${!hasEstimate ? 'bg-black/[.025] text-gray-500 dark:bg-white/[.04]' : pnl >= 0 ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-200' : 'bg-rose-50 text-rose-800 dark:bg-rose-950/20 dark:text-rose-200'}`}><p className="text-xs">{en ? 'Estimated P/L' : 'Lãi/lỗ tạm tính'}</p><p className="mt-1 flex items-center gap-1 font-semibold">{!hasEstimate ? '—' : <>{pnl >= 0 ? <TrendingUp size={15} aria-hidden="true" /> : <TrendingDown size={15} aria-hidden="true" />}{pnl >= 0 ? '+' : ''}{formatVnd(pnl)}</>}</p></div></div>{asset.note && <p className="mt-3 text-sm text-gray-600 dark:text-gray-300">{asset.note}</p>}{sales.length > 0 && <details className="mt-3 rounded-xl border border-black/10 dark:border-white/10"><summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 text-sm font-semibold [&::-webkit-details-marker]:hidden"><span>{en ? 'Sale history' : 'Lịch sử bán'} ({sales.length})</span><ChevronDown size={17} aria-hidden="true" /></summary><div className="divide-y divide-black/10 border-t border-black/10 text-sm dark:divide-white/10 dark:border-white/10">{sales.map((sale) => <div key={sale.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2"><span>{formatDateOnlyVi(sale.saleDate)} · {formatQuantity(sale.quantityChi)} chỉ · {formatVnd(sale.salePricePerChi)}/chỉ</span><span className="font-semibold text-emerald-700 dark:text-emerald-300">+{formatVnd(sale.amount)}</span></div>)}</div></details>}{canManage && !sold && asset.status === 'active' && <div className="mt-4 flex flex-wrap gap-2"><button type="button" className="btn-secondary inline-flex items-center gap-2 text-sm" disabled={Boolean(busy)} onClick={onEdit}><Pencil size={15} aria-hidden="true" />{en ? 'Edit' : 'Sửa'}</button><button type="button" className="btn-primary text-sm" disabled={Boolean(busy)} onClick={onSell}>{en ? 'Sell gold' : 'Bán vàng'}</button></div>}{canManage && sold && asset.status === 'sold' && onArchive && <button type="button" className="btn-secondary mt-4 inline-flex items-center gap-2 text-sm" disabled={Boolean(busy)} onClick={onArchive}><Archive size={15} aria-hidden="true" />{en ? 'Archive' : 'Lưu trữ'}</button>}</article>;
+  const unit = goldUnitLabel(en);
+  return <article className="p-4 sm:p-5"><div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between"><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h4 className="text-base font-bold">{formatQuantity(asset.remainingQuantityChi)} / {formatQuantity(asset.quantityChi)} {unit}</h4><span className="ui-chip">{sold || asset.status === 'archived' ? (en ? 'Sold' : 'Đã bán') : (en ? 'Active' : 'Đang giữ')}</span></div><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{en ? 'Purchased' : 'Ngày mua'} {formatDateOnlyVi(asset.purchaseDate)} · {en ? 'Cost' : 'Giá mua'} {formatVnd(asset.purchasePricePerChi)}/{unit}</p></div><div className="text-left lg:text-right"><p className="text-lg font-extrabold text-[var(--primary)]">{hasEstimate ? formatVnd(currentValue) : '—'}</p><p className="text-xs text-gray-500 dark:text-gray-400">{en ? 'Estimated sell value' : 'Giá trị bán ước tính'}</p></div></div><div className="mt-3 grid gap-2 text-sm sm:grid-cols-3"><div className="rounded-xl bg-black/[.025] p-3 dark:bg-white/[.04]"><p className="text-xs text-gray-500">{en ? 'Purchase price' : 'Giá mua'}</p><p className="mt-1 font-semibold">{formatVnd(asset.purchasePricePerChi)}/{unit}</p></div><div className="rounded-xl bg-black/[.025] p-3 dark:bg-white/[.04]"><p className="text-xs text-gray-500">{en ? 'Shop buy-back estimate' : 'Giá tiệm mua vào'}</p><p className="mt-1 font-semibold">{asset.estimatedSellPricePerChi === null ? (en ? 'Not entered' : 'Chưa nhập') : `${formatVnd(asset.estimatedSellPricePerChi)}/${unit}`}</p></div><div className={`rounded-xl p-3 ${!hasEstimate ? 'bg-black/[.025] text-gray-500 dark:bg-white/[.04]' : pnl >= 0 ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-200' : 'bg-rose-50 text-rose-800 dark:bg-rose-950/20 dark:text-rose-200'}`}><p className="text-xs">{en ? 'Estimated P/L' : 'Lãi/lỗ tạm tính'}</p><p className="mt-1 flex items-center gap-1 font-semibold">{!hasEstimate ? '—' : <>{pnl >= 0 ? <TrendingUp size={15} aria-hidden="true" /> : <TrendingDown size={15} aria-hidden="true" />}{pnl >= 0 ? '+' : ''}{formatVnd(pnl)}</>}</p></div></div>{asset.note && <p className="mt-3 text-sm text-gray-600 dark:text-gray-300">{asset.note}</p>}{sales.length > 0 && <details className="mt-3 rounded-xl border border-black/10 dark:border-white/10"><summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 text-sm font-semibold [&::-webkit-details-marker]:hidden"><span>{en ? 'Sale history' : 'Lịch sử bán'} ({sales.length})</span><ChevronDown size={17} aria-hidden="true" /></summary><div className="divide-y divide-black/10 border-t border-black/10 text-sm dark:divide-white/10 dark:border-white/10">{sales.map((sale) => <div key={sale.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2"><span>{formatDateOnlyVi(sale.saleDate)} · {formatQuantity(sale.quantityChi)} {unit} · {formatVnd(sale.salePricePerChi)}/{unit}</span><span className="font-semibold text-emerald-700 dark:text-emerald-300">+{formatVnd(sale.amount)}</span></div>)}</div></details>}{canManage && !sold && asset.status === 'active' && <div className="mt-4 flex flex-wrap gap-2"><button type="button" className="btn-secondary inline-flex items-center gap-2 text-sm" disabled={Boolean(busy)} onClick={onEdit}><Pencil size={15} aria-hidden="true" />{en ? 'Edit' : 'Sửa'}</button><button type="button" className="btn-primary text-sm" disabled={Boolean(busy)} onClick={onSell}>{en ? 'Sell gold' : 'Bán vàng'}</button></div>}{canManage && sold && asset.status === 'sold' && onArchive && <button type="button" className="btn-secondary mt-4 inline-flex items-center gap-2 text-sm" disabled={Boolean(busy)} onClick={onArchive}><Archive size={15} aria-hidden="true" />{en ? 'Archive' : 'Lưu trữ'}</button>}</article>;
 }
 
 function PaymentSelect({ id, value, onChange, paymentMethods, en, label = 'Phương thức thanh toán' }: { id: string; value: string; onChange: (value: string) => void; paymentMethods: ReturnType<typeof useApp>['paymentMethods']; en: boolean; label?: string }) {
@@ -795,7 +858,29 @@ function PaymentSelect({ id, value, onChange, paymentMethods, en, label = 'Phư�
 }
 
 function SavingsForm({ editor, setEditor, onSubmit, onCancel, paymentMethods, busy, error, en }: { editor: SavingsForm; setEditor: (value: SavingsForm | null) => void; onSubmit: (event: FormEvent<HTMLFormElement>) => void; onCancel: () => void; paymentMethods: ReturnType<typeof useApp>['paymentMethods']; busy: boolean; error: string; en: boolean }) {
-  return <section className="card border-[var(--primary)] p-4 sm:p-5" aria-labelledby="savings-form-title"><div className="flex items-start justify-between gap-3"><div><p className="page-kicker"><Landmark size={15} aria-hidden="true" />{en ? 'Savings book form' : 'Thông tin sổ tiết kiệm'}</p><h3 id="savings-form-title" className="text-lg font-extrabold">{editor.id ? (en ? 'Edit savings book' : 'Sửa sổ tiết kiệm') : (en ? 'Add savings book' : 'Thêm sổ tiết kiệm')}</h3></div><button type="button" className="icon-button" onClick={onCancel} aria-label={en ? 'Close savings form' : 'Đóng biểu mẫu sổ'}><X size={18} /></button></div><form className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" onSubmit={onSubmit}><label><span className="label">{en ? 'Bank' : 'Ngân hàng'}</span><input className="field" value={editor.bankName} onChange={(event) => setEditor({ ...editor, bankName: event.target.value })} /></label><label><span className="label">{en ? 'Book name' : 'Tên sổ'}</span><input className="field" value={editor.name} onChange={(event) => setEditor({ ...editor, name: event.target.value })} /></label><label><span className="label">{en ? 'Opening principal (VND)' : 'Tiền gốc (VND)'}</span><input className="field" inputMode="numeric" disabled={Boolean(editor.id)} value={editor.principal} onChange={(event) => setEditor({ ...editor, principal: event.target.value })} /><span className="mt-1 block text-xs text-gray-500">{editor.id ? (en ? 'Opening principal cannot be edited.' : 'Tiền gốc không sửa sau khi tạo.') : (en ? 'This is also the opening cash expense when enabled.' : 'Khoản này cũng là giao dịch chi mở sổ nếu bật bên dưới.')}</span></label><label><span className="label">{en ? 'Annual rate (%)' : 'Lãi suất năm (%)'}</span><input className="field" inputMode="decimal" step="0.0001" value={editor.annualInterestRate} onChange={(event) => setEditor({ ...editor, annualInterestRate: event.target.value })} /></label><label><span className="label">{en ? 'Term (months)' : 'Kỳ hạn (tháng)'}</span><input className="field" inputMode="numeric" type="number" min="1" max="120" value={editor.termMonths} onChange={(event) => setEditor({ ...editor, termMonths: event.target.value })} /></label><PaymentSelect id="savings-payment" value={editor.paymentMethodId} onChange={(value) => setEditor({ ...editor, paymentMethodId: value })} paymentMethods={paymentMethods} en={en} /><label><span className="label">{en ? 'Opened on' : 'Ngày mở'}</span><input className="field" type="date" value={editor.openedOn} onChange={(event) => setEditor({ ...editor, openedOn: event.target.value })} /></label><label><span className="label">{en ? 'Maturity date' : 'Ngày đáo hạn'}</span><input className="field" type="date" value={editor.maturityOn} onChange={(event) => setEditor({ ...editor, maturityOn: event.target.value })} /></label><label><span className="label">{en ? 'Interest payout' : 'Phương thức nhận lãi'}</span><select className="field" value={editor.interestMethod} onChange={(event) => setEditor({ ...editor, interestMethod: event.target.value as SavingsAccountInput['interestMethod'] })}>{savingsInterestMethods.map((method) => <option key={method} value={method}>{interestMethodLabel(method, en)}</option>)}</select></label><label className="sm:col-span-2 lg:col-span-3"><span className="label">{en ? 'Note' : 'Ghi chú'}</span><input className="field" value={editor.note} onChange={(event) => setEditor({ ...editor, note: event.target.value })} /></label>{!editor.id && <label className="flex min-h-11 items-center gap-3 rounded-xl bg-[var(--primary-soft)] px-3 py-2 text-sm sm:col-span-2 lg:col-span-3"><input type="checkbox" checked={editor.createTransaction} onChange={(event) => setEditor({ ...editor, createTransaction: event.target.checked })} /><span>{en ? 'Automatically create the opening expense transaction' : 'Tự tạo giao dịch chi tiền mở sổ'}</span></label>}{error && <div role="alert" className="inline-feedback inline-feedback-error sm:col-span-2 lg:col-span-3">{error}</div>}<div className="flex flex-wrap justify-end gap-2 sm:col-span-2 lg:col-span-3"><button type="button" className="btn-secondary" onClick={onCancel}>{en ? 'Cancel' : 'Hủy'}</button><button type="submit" className="btn-primary inline-flex items-center gap-2" disabled={busy}>{busy && <LoaderCircle size={16} className="animate-spin" aria-hidden="true" />}{en ? 'Save savings book' : 'Lưu sổ'}</button></div></form></section>;
+  return (
+    <section className="card border-[var(--primary)] p-4 sm:p-5" aria-labelledby="savings-form-title">
+      <div className="flex items-start justify-between gap-3">
+        <div><p className="page-kicker"><Landmark size={15} aria-hidden="true" />{en ? 'Savings book form' : 'Thông tin sổ tiết kiệm'}</p><h3 id="savings-form-title" className="text-lg font-extrabold">{editor.id ? (en ? 'Edit savings book' : 'Sửa sổ tiết kiệm') : (en ? 'Add savings book' : 'Thêm sổ tiết kiệm')}</h3></div>
+        <button type="button" className="icon-button" onClick={onCancel} aria-label={en ? 'Close savings form' : 'Đóng biểu mẫu sổ'}><X size={18} /></button>
+      </div>
+      <form className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" onSubmit={onSubmit}>
+        <label><span className="label">{en ? 'Bank' : 'Ngân hàng'}</span><input className="field" value={editor.bankName} onChange={(event) => setEditor({ ...editor, bankName: event.target.value })} /></label>
+        <label><span className="label">{en ? 'Book name' : 'Tên sổ'}</span><input className="field" value={editor.name} onChange={(event) => setEditor({ ...editor, name: event.target.value })} /></label>
+        <label><span className="label">{en ? 'Opening principal (VND)' : 'Tiền gốc (VND)'}</span><input className="field" inputMode="numeric" disabled={Boolean(editor.id)} value={editor.principal} onChange={(event) => setEditor({ ...editor, principal: event.target.value })} /><span className="mt-1 block text-xs text-gray-500">{editor.id ? (en ? 'Opening principal cannot be edited.' : 'Tiền gốc không sửa sau khi tạo.') : (en ? 'This is also the opening cash expense when enabled.' : 'Khoản này cũng là giao dịch chi mở sổ nếu bật bên dưới.')}</span></label>
+        <label><span className="label">{en ? 'Annual rate (%)' : 'Lãi suất năm (%)'}</span><input className="field" inputMode="decimal" step="0.0001" value={editor.annualInterestRate} onChange={(event) => setEditor({ ...editor, annualInterestRate: event.target.value })} /></label>
+        <label><span className="label">{en ? 'Term (months)' : 'Kỳ hạn (tháng)'}</span><input className="field" inputMode="numeric" type="number" min="1" max="120" value={editor.termMonths} onChange={(event) => setEditor({ ...editor, termMonths: event.target.value })} /></label>
+        <PaymentSelect id="savings-payment" value={editor.paymentMethodId} onChange={(value) => setEditor({ ...editor, paymentMethodId: value })} paymentMethods={paymentMethods} en={en} />
+        <label><span className="label">{en ? 'Opened on' : 'Ngày mở'}</span><input className="field" type="date" value={editor.openedOn} onChange={(event) => setEditor({ ...editor, openedOn: event.target.value })} /></label>
+        <label><span className="label">{en ? 'Maturity date' : 'Ngày đáo hạn'}</span><input className="field" type="date" value={editor.maturityOn} disabled /><span className="mt-1 block text-xs text-gray-500">{en ? 'Calculated from the opening date and term.' : 'Tự tính từ ngày mở và kỳ hạn.'}</span></label>
+        <label><span className="label">{en ? 'Interest payout' : 'Phương thức nhận lãi'}</span><select className="field" value={editor.interestMethod} onChange={(event) => setEditor({ ...editor, interestMethod: event.target.value as SavingsAccountInput['interestMethod'] })}>{savingsInterestMethods.map((method) => <option key={method} value={method}>{interestMethodLabel(method, en)}</option>)}</select></label>
+        <label className="sm:col-span-2 lg:col-span-3"><span className="label">{en ? 'Note' : 'Ghi chú'}</span><input className="field" value={editor.note} onChange={(event) => setEditor({ ...editor, note: event.target.value })} /></label>
+        {!editor.id && <label className="flex min-h-11 items-center gap-3 rounded-xl bg-[var(--primary-soft)] px-3 py-2 text-sm sm:col-span-2 lg:col-span-3"><input type="checkbox" checked={editor.createTransaction} onChange={(event) => setEditor({ ...editor, createTransaction: event.target.checked })} /><span>{en ? 'Automatically create the opening expense transaction' : 'Tự tạo giao dịch chi tiền mở sổ'}</span></label>}
+        {error && <div role="alert" className="inline-feedback inline-feedback-error sm:col-span-2 lg:col-span-3">{error}</div>}
+        <div className="flex flex-wrap justify-end gap-2 sm:col-span-2 lg:col-span-3"><button type="button" className="btn-secondary" onClick={onCancel}>{en ? 'Cancel' : 'Hủy'}</button><button type="submit" className="btn-primary inline-flex items-center gap-2" disabled={busy}>{busy && <LoaderCircle size={16} className="animate-spin" aria-hidden="true" />}{en ? 'Save savings book' : 'Lưu sổ'}</button></div>
+      </form>
+    </section>
+  );
 }
 
 function SavingsMovementForm({ editor, setEditor, onSubmit, onCancel, paymentMethods, busy, error, en, account }: { editor: MovementForm; setEditor: (value: MovementForm | null) => void; onSubmit: (event: FormEvent<HTMLFormElement>) => void; onCancel: () => void; paymentMethods: ReturnType<typeof useApp>['paymentMethods']; busy: boolean; error: string; en: boolean; account?: SavingsAccount }) {
@@ -803,10 +888,27 @@ function SavingsMovementForm({ editor, setEditor, onSubmit, onCancel, paymentMet
 }
 
 function GoldForm({ editor, setEditor, onSubmit, onCancel, paymentMethods, busy, error, en, hasSales }: { editor: GoldForm; setEditor: (value: GoldForm | null) => void; onSubmit: (event: FormEvent<HTMLFormElement>) => void; onCancel: () => void; paymentMethods: ReturnType<typeof useApp>['paymentMethods']; busy: boolean; error: string; en: boolean; hasSales: boolean }) {
-  return <section className="card border-[var(--primary)] p-4 sm:p-5" aria-labelledby="gold-form-title"><div className="flex items-start justify-between gap-3"><div><p className="page-kicker"><Coins size={15} aria-hidden="true" />{en ? 'Gold lot form' : 'Thông tin dòng vàng'}</p><h3 id="gold-form-title" className="text-lg font-extrabold">{editor.id ? (en ? 'Edit gold lot' : 'Sửa dòng vàng') : (en ? 'Add gold lot' : 'Thêm dòng vàng')}</h3></div><button type="button" className="icon-button" onClick={onCancel} aria-label={en ? 'Close gold form' : 'Đóng biểu mẫu vàng'}><X size={18} /></button></div><form className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" onSubmit={onSubmit}><label><span className="label">{en ? 'Purchase date' : 'Ngày mua'}</span><input className="field" type="date" value={editor.purchaseDate} onChange={(event) => setEditor({ ...editor, purchaseDate: event.target.value })} /></label><label><span className="label">{en ? 'Quantity (chỉ)' : 'Số lượng (chỉ)'}</span><input className="field" inputMode="decimal" step="0.001" value={editor.quantityChi} disabled={hasSales} onChange={(event) => setEditor({ ...editor, quantityChi: event.target.value })} /></label><label><span className="label">{en ? 'Purchase price / chỉ (VND)' : 'Giá mua / chỉ (VND)'}</span><input className="field" inputMode="numeric" value={editor.purchasePricePerChi} disabled={hasSales} onChange={(event) => setEditor({ ...editor, purchasePricePerChi: event.target.value })} /></label><label><span className="label">{en ? 'Estimated shop buy-back / chỉ' : 'Giá tiệm mua vào ước tính / chỉ'}</span><input className="field" inputMode="numeric" value={editor.estimatedSellPricePerChi} onChange={(event) => setEditor({ ...editor, estimatedSellPricePerChi: event.target.value })} /><span className="mt-1 block text-xs text-gray-500">{en ? 'Optional; used for current value and estimated P/L.' : 'Không bắt buộc; dùng để tính giá trị và lãi/lỗ tạm tính.'}</span></label><PaymentSelect id="gold-payment" value={editor.paymentMethodId} onChange={(value) => setEditor({ ...editor, paymentMethodId: value })} paymentMethods={paymentMethods} en={en} /><label><span className="label">{en ? 'Note' : 'Ghi chú'}</span><input className="field" value={editor.note} onChange={(event) => setEditor({ ...editor, note: event.target.value })} /></label>{!editor.id && <label className="flex min-h-11 items-center gap-3 rounded-xl bg-[var(--primary-soft)] px-3 py-2 text-sm sm:col-span-2 lg:col-span-3"><input type="checkbox" checked={editor.createTransaction} onChange={(event) => setEditor({ ...editor, createTransaction: event.target.checked })} /><span>{en ? 'Automatically create the purchase expense transaction' : 'Tự tạo giao dịch chi tiền mua vàng'}</span></label>}{error && <div role="alert" className="inline-feedback inline-feedback-error sm:col-span-2 lg:col-span-3">{error}</div>}<div className="flex flex-wrap justify-end gap-2 sm:col-span-2 lg:col-span-3"><button type="button" className="btn-secondary" onClick={onCancel}>{en ? 'Cancel' : 'Hủy'}</button><button type="submit" className="btn-primary inline-flex items-center gap-2" disabled={busy}>{busy && <LoaderCircle size={16} className="animate-spin" aria-hidden="true" />}{en ? 'Save gold lot' : 'Lưu dòng vàng'}</button></div></form></section>;
+  return (
+    <section className="card border-[var(--primary)] p-4 sm:p-5" aria-labelledby="gold-form-title">
+      <div className="flex items-start justify-between gap-3">
+        <div><p className="page-kicker"><Coins size={15} aria-hidden="true" />{en ? 'Gold form' : 'Thông tin vàng'}</p><h3 id="gold-form-title" className="text-lg font-extrabold">{editor.id ? (en ? 'Edit gold' : 'Sửa vàng') : (en ? 'Add gold' : 'Thêm vàng')}</h3></div>
+        <button type="button" className="icon-button" onClick={onCancel} aria-label={en ? 'Close gold form' : 'Đóng biểu mẫu vàng'}><X size={18} /></button>
+      </div>
+      <form className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" onSubmit={onSubmit}>
+        <label><span className="label">{en ? 'Purchase date' : 'Ngày mua'}</span><input className="field" type="date" value={editor.purchaseDate} onChange={(event) => setEditor({ ...editor, purchaseDate: event.target.value })} /></label>
+        <label><span className="label">{en ? 'Quantity (mace)' : 'Số lượng (chỉ)'}</span><input className="field" inputMode="decimal" step="0.001" value={editor.quantityChi} disabled={hasSales} onChange={(event) => setEditor({ ...editor, quantityChi: event.target.value })} /></label>
+        <label><span className="label">{en ? 'Purchase price per mace (VND)' : 'Giá mua / chỉ (VND)'}</span><input className="field" inputMode="numeric" value={editor.purchasePricePerChi} disabled={hasSales} onChange={(event) => setEditor({ ...editor, purchasePricePerChi: event.target.value })} /></label>
+        <PaymentSelect id="gold-payment" value={editor.paymentMethodId} onChange={(value) => setEditor({ ...editor, paymentMethodId: value })} paymentMethods={paymentMethods} en={en} />
+        <label><span className="label">{en ? 'Note' : 'Ghi chú'}</span><input className="field" value={editor.note} onChange={(event) => setEditor({ ...editor, note: event.target.value })} /></label>
+        {!editor.id && <label className="flex min-h-11 items-center gap-3 rounded-xl bg-[var(--primary-soft)] px-3 py-2 text-sm sm:col-span-2 lg:col-span-3"><input type="checkbox" checked={editor.createTransaction} onChange={(event) => setEditor({ ...editor, createTransaction: event.target.checked })} /><span>{en ? 'Automatically create the purchase expense transaction' : 'Tự tạo giao dịch chi tiền mua vàng'}</span></label>}
+        {error && <div role="alert" className="inline-feedback inline-feedback-error sm:col-span-2 lg:col-span-3">{error}</div>}
+        <div className="flex flex-wrap justify-end gap-2 sm:col-span-2 lg:col-span-3"><button type="button" className="btn-secondary" onClick={onCancel}>{en ? 'Cancel' : 'Hủy'}</button><button type="submit" className="btn-primary inline-flex items-center gap-2" disabled={busy}>{busy && <LoaderCircle size={16} className="animate-spin" aria-hidden="true" />}{en ? 'Save gold' : 'Lưu vàng'}</button></div>
+      </form>
+    </section>
+  );
 }
 
 function GoldSaleForm({ editor, setEditor, onSubmit, onCancel, paymentMethods, busy, error, en, asset }: { editor: SaleForm; setEditor: (value: SaleForm | null) => void; onSubmit: (event: FormEvent<HTMLFormElement>) => void; onCancel: () => void; paymentMethods: ReturnType<typeof useApp>['paymentMethods']; busy: boolean; error: string; en: boolean; asset?: GoldAsset }) {
   const amount = goldPurchaseAmount(Number(inputDecimal(editor.quantityChi)), Number(inputAmount(editor.salePricePerChi)));
-  return <section className="card border-[var(--primary)] p-4 sm:p-5" aria-labelledby="gold-sale-form-title"><div className="flex items-start justify-between gap-3"><div><p className="page-kicker"><Banknote size={15} aria-hidden="true" />{en ? 'Gold sale' : 'Bán vàng'}</p><h3 id="gold-sale-form-title" className="text-lg font-extrabold">{asset ? `${formatQuantity(asset.remainingQuantityChi)} chỉ còn lại` : (en ? 'Sell gold' : 'Bán vàng')}</h3></div><button type="button" className="icon-button" onClick={onCancel} aria-label={en ? 'Close sale form' : 'Đóng biểu mẫu bán vàng'}><X size={18} /></button></div><form className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" onSubmit={onSubmit}><label><span className="label">{en ? 'Sale date' : 'Ngày bán'}</span><input className="field" type="date" value={editor.saleDate} onChange={(event) => setEditor({ ...editor, saleDate: event.target.value })} /></label><label><span className="label">{en ? 'Quantity (chỉ)' : 'Số lượng (chỉ)'}</span><input className="field" inputMode="decimal" step="0.001" value={editor.quantityChi} onChange={(event) => setEditor({ ...editor, quantityChi: event.target.value })} /><span className="mt-1 block text-xs text-gray-500">{asset ? (en ? `Maximum ${formatQuantity(asset.remainingQuantityChi)} chỉ` : `Tối đa ${formatQuantity(asset.remainingQuantityChi)} chỉ`) : ''}</span></label><label><span className="label">{en ? 'Sale price / chỉ (VND)' : 'Giá bán / chỉ (VND)'}</span><input className="field" inputMode="numeric" value={editor.salePricePerChi} onChange={(event) => setEditor({ ...editor, salePricePerChi: event.target.value })} /></label><PaymentSelect id="sale-payment" value={editor.paymentMethodId} onChange={(value) => setEditor({ ...editor, paymentMethodId: value })} paymentMethods={paymentMethods} en={en} /><label><span className="label">{en ? 'Note' : 'Ghi chú'}</span><input className="field" value={editor.note} onChange={(event) => setEditor({ ...editor, note: event.target.value })} /></label><div className="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-200"><p className="text-xs">{en ? 'Income created' : 'Thu nhập sẽ tạo'}</p><p className="mt-1 font-bold">{formatVnd(Number.isFinite(amount) ? amount : 0)}</p><p className="mt-1 text-xs">{en ? 'No selling fee' : 'Không tính phí bán'}</p></div>{error && <div role="alert" className="inline-feedback inline-feedback-error sm:col-span-2 lg:col-span-3">{error}</div>}<div className="flex flex-wrap justify-end gap-2 sm:col-span-2 lg:col-span-3"><button type="button" className="btn-secondary" onClick={onCancel}>{en ? 'Cancel' : 'Hủy'}</button><button type="submit" className="btn-primary inline-flex items-center gap-2" disabled={busy}>{busy && <LoaderCircle size={16} className="animate-spin" aria-hidden="true" />}{en ? 'Sell and record income' : 'Bán và ghi thu nhập'}</button></div></form></section>;
+  return <section className="card border-[var(--primary)] p-4 sm:p-5" aria-labelledby="gold-sale-form-title"><div className="flex items-start justify-between gap-3"><div><p className="page-kicker"><Banknote size={15} aria-hidden="true" />{en ? 'Gold sale' : 'Bán vàng'}</p><h3 id="gold-sale-form-title" className="text-lg font-extrabold">{asset ? (en ? `${formatQuantity(asset.remainingQuantityChi)} mace remaining` : `${formatQuantity(asset.remainingQuantityChi)} chỉ còn lại`) : (en ? 'Sell gold' : 'Bán vàng')}</h3></div><button type="button" className="icon-button" onClick={onCancel} aria-label={en ? 'Close sale form' : 'Đóng biểu mẫu bán vàng'}><X size={18} /></button></div><form className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" onSubmit={onSubmit}><label><span className="label">{en ? 'Sale date' : 'Ngày bán'}</span><input className="field" type="date" value={editor.saleDate} onChange={(event) => setEditor({ ...editor, saleDate: event.target.value })} /></label><label><span className="label">{en ? 'Quantity (mace)' : 'Số lượng (chỉ)'}</span><input className="field" inputMode="decimal" step="0.001" value={editor.quantityChi} onChange={(event) => setEditor({ ...editor, quantityChi: event.target.value })} /><span className="mt-1 block text-xs text-gray-500">{asset ? (en ? `Maximum ${formatQuantity(asset.remainingQuantityChi)} mace` : `Tối đa ${formatQuantity(asset.remainingQuantityChi)} chỉ`) : ''}</span></label><label><span className="label">{en ? 'Sale price per mace (VND)' : 'Giá bán / chỉ (VND)'}</span><input className="field" inputMode="numeric" value={editor.salePricePerChi} onChange={(event) => setEditor({ ...editor, salePricePerChi: event.target.value })} /></label><PaymentSelect id="sale-payment" value={editor.paymentMethodId} onChange={(value) => setEditor({ ...editor, paymentMethodId: value })} paymentMethods={paymentMethods} en={en} /><label><span className="label">{en ? 'Note' : 'Ghi chú'}</span><input className="field" value={editor.note} onChange={(event) => setEditor({ ...editor, note: event.target.value })} /></label><div className="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-200"><p className="text-xs">{en ? 'Income created' : 'Thu nhập sẽ tạo'}</p><p className="mt-1 font-bold">{formatVnd(Number.isFinite(amount) ? amount : 0)}</p><p className="mt-1 text-xs">{en ? 'No selling fee' : 'Không tính phí bán'}</p></div>{error && <div role="alert" className="inline-feedback inline-feedback-error sm:col-span-2 lg:col-span-3">{error}</div>}<div className="flex flex-wrap justify-end gap-2 sm:col-span-2 lg:col-span-3"><button type="button" className="btn-secondary" onClick={onCancel}>{en ? 'Cancel' : 'Hủy'}</button><button type="submit" className="btn-primary inline-flex items-center gap-2" disabled={busy}>{busy && <LoaderCircle size={16} className="animate-spin" aria-hidden="true" />}{en ? 'Sell and record income' : 'Bán và ghi thu nhập'}</button></div></form></section>;
 }

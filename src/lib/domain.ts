@@ -12,6 +12,14 @@ export const statusForTransactionDate = (
   today: string,
 ): (typeof statuses)[number] =>
   transactionDate > today ? 'Dự kiến' : 'Thực tế';
+export const statusForNewTransaction = (
+  transactionDate: string,
+  today: string,
+  paymentMethodName?: string,
+): (typeof statuses)[number] =>
+  paymentMethodName === 'Thẻ tín dụng'
+    ? 'Dự kiến'
+    : statusForTransactionDate(transactionDate, today);
 export const transactionSchema = z
   .object({
     id: z.string().optional(),
