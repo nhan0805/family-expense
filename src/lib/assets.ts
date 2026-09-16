@@ -53,6 +53,14 @@ export const savingsMovementInputSchema = z.object({
 });
 export type SavingsMovementInput = z.infer<typeof savingsMovementInputSchema>;
 
+export const savingsSettlementInputSchema = z.object({
+  interestAmount: z.number().finite().int().nonnegative().max(999_999_999_999_999),
+  settlementDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Vui lòng chọn ngày tất toán'),
+  paymentMethodId: z.string().nullable().optional(),
+  note: z.string().trim().max(500).optional(),
+});
+export type SavingsSettlementInput = z.infer<typeof savingsSettlementInputSchema>;
+
 export const goldAssetInputSchema = z.object({
   purchaseDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Vui lòng chọn ngày mua'),
   quantityChi: z.number().finite().positive().max(999_999),
@@ -498,6 +506,67 @@ export function recordLocalSavingsMovement(
   const movementKey = localStorageKey(familyId, 'savings-movements');
   saveStored(movementKey, [...readStored(movementKey, isSavingsMovement), movement]);
   return { account: nextAccount, movement };
+}
+
+export function settleLocalSavingsAccount(
+  familyId: string,
+  accountId: string,
+  input: SavingsSettlementInput,
+  settlementTransactionId?: string | null,
+  interestTransactionId?: string | null,
+  settlementMovementId?: string,
+  interestMovementId?: string,
+): { account: SavingsAccount; settlementMovement: SavingsMovement; interestMovement: SavingsMovement | null } {
+  const accountKey = localStorageKey(familyId, 'savings-accounts');
+  const accounts = readStored(accountKey, isSavingsAccount);
+  const current = accounts.find((item) => item.id === accountId);
+  if (!current || current.status !== 'active') throw new Error('ACCOUNT_NOT_ACTIVE');
+  if (current.currentBalance <= 0) throw new Error('ACCOUNT_EMPTY');
+  if (!Number.isInteger(input.interestAmount) || input.interestAmount < 0) throw new Error('INVALID_INTEREST_AMOUNT');
+
+  const createdAt = new Date().toISOString();
+  const nextAccount: SavingsAccount = {
+    ...current,
+    currentBalance: 0,
+    status: 'closed',
+    closedAt: createdAt,
+  };
+  const note = input.note?.trim() || null;
+  const settlementMovement: SavingsMovement = {
+    id: settlementMovementId || localId('savings-settlement'),
+    familyId,
+    savingsAccountId: accountId,
+    movementType: 'settlement',
+    amount: current.currentBalance,
+    balanceAfter: 0,
+    movementDate: input.settlementDate,
+    paymentMethodId: input.paymentMethodId || null,
+    transactionId: settlementTransactionId || null,
+    note,
+    createdBy: 'local-user',
+    createdAt,
+  };
+  const interestMovement = input.interestAmount > 0
+    ? {
+        id: interestMovementId || localId('savings-settlement-interest'),
+        familyId,
+        savingsAccountId: accountId,
+        movementType: 'interest' as const,
+        amount: input.interestAmount,
+        balanceAfter: 0,
+        movementDate: input.settlementDate,
+        paymentMethodId: input.paymentMethodId || null,
+        transactionId: interestTransactionId || null,
+        note,
+        createdBy: 'local-user',
+        createdAt,
+      }
+    : null;
+  saveStored(accountKey, accounts.map((item) => item.id === accountId ? nextAccount : item));
+  const movementKey = localStorageKey(familyId, 'savings-movements');
+  const movements = readStored(movementKey, isSavingsMovement);
+  saveStored(movementKey, [...movements, settlementMovement, ...(interestMovement ? [interestMovement] : [])]);
+  return { account: nextAccount, settlementMovement, interestMovement };
 }
 
 export function archiveLocalSavingsAccount(familyId: string, accountId: string) {

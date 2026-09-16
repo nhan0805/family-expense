@@ -16,8 +16,10 @@ import {
   isLocalAssetTransaction,
   recordLocalSavingsMovement,
   recordLocalGoldSale,
+  settleLocalSavingsAccount,
   savingsAccountInputSchema,
   savingsMovementInputSchema,
+  savingsSettlementInputSchema,
   upsertLocalGoldAsset,
   upsertLocalSavingsAccount,
   setLocalGoldBuybackPrice,
@@ -230,6 +232,48 @@ describe('asset domain', () => {
     expect(isLocalAssetTransaction({ source: 'asset', sourceReference: 'asset:savings:saving-delete:movement:movement-delete' }, 'savings', account.id)).toBe(true);
     expect(isLocalAssetTransaction({ source: 'asset', sourceReference: 'asset:gold:other:purchase' }, 'gold', gold.id)).toBe(false);
     expect(isLocalAssetTransaction({ source: 'manual', sourceReference: 'asset:savings:saving-delete:opening' }, 'savings', account.id)).toBe(false);
+  });
+
+  it('settles a savings book with principal and interest in one local action', () => {
+    const accountInput = savingsAccountInputSchema.parse({
+      bankName: 'ACB',
+      name: 'Sổ đáo hạn',
+      principal: 50_000_000,
+      annualInterestRate: 5,
+      termMonths: 6,
+      openedOn: '2026-01-01',
+      maturityOn: '2026-07-01',
+      interestMethod: 'end_of_term',
+      paymentMethodId: 'bank',
+    });
+    const account = upsertLocalSavingsAccount('family-a', accountInput, 'saving-2', 'tx-opening-2');
+    const settlement = savingsSettlementInputSchema.parse({
+      interestAmount: 1_200_000,
+      settlementDate: '2026-07-01',
+      paymentMethodId: 'bank',
+      note: 'Đã nhận đủ',
+    });
+
+    const changed = settleLocalSavingsAccount(
+      'family-a',
+      account.id,
+      settlement,
+      'tx-settlement',
+      'tx-settlement-interest',
+      'movement-settlement',
+      'movement-settlement-interest',
+    );
+
+    expect(changed.account.status).toBe('closed');
+    expect(changed.account.currentBalance).toBe(0);
+    expect(changed.settlementMovement.amount).toBe(50_000_000);
+    expect(changed.settlementMovement.balanceAfter).toBe(0);
+    expect(changed.interestMovement?.amount).toBe(1_200_000);
+    expect(getLocalAssetData('family-a').savingsMovements.map((item) => item.movementType)).toEqual([
+      'opening',
+      'settlement',
+      'interest',
+    ]);
   });
 });
 
