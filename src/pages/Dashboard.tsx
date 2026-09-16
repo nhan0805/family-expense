@@ -696,7 +696,6 @@ function renderChange(value: number | null, en: boolean, suffix: string) {
 function formatSignedVnd(value: number) {
   return `${value > 0 ? '+' : ''}${formatVnd(value)}`;
 }
-
 function AssetSnapshot({ summary, en, loading }: { summary?: AssetSummary; en: boolean; loading: boolean }) {
   if (!summary && loading)
     return <section className="card p-4 sm:p-5" aria-label={en ? 'Loading assets' : 'Đang tải tài sản'}><p className="text-sm text-gray-500 dark:text-gray-400">{en ? 'Loading asset snapshot…' : 'Đang tải tổng hợp tài sản…'}</p></section>;
