@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { FeedbackProvider } from '../components/Feedback';
 import { useApp } from '../context/AppContext';
+import type { AutomaticTransactionDefault } from '../lib/automaticTransactionDefaults';
 import { Assets } from './Assets';
 
 vi.mock('../context/AppContext', () => ({ useApp: vi.fn() }));
@@ -37,7 +38,13 @@ const goldAsset = {
   note: null,
 };
 
-function renderAssets(transactions: Array<Record<string, unknown>>, setTransactions = vi.fn()) {
+function renderAssets(
+  transactions: Array<Record<string, unknown>>,
+  setTransactions = vi.fn(),
+  automaticDefaults?: AutomaticTransactionDefault[],
+) {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  if (automaticDefaults) queryClient.setQueryData(['automatic-transaction-defaults', familyId], automaticDefaults);
   vi.mocked(useApp).mockReturnValue({
     familyId,
     currentUserId: 'user-ui',
@@ -49,8 +56,7 @@ function renderAssets(transactions: Array<Record<string, unknown>>, setTransacti
     setTransactions,
     online: true,
   } as unknown as ReturnType<typeof useApp>);
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return { setTransactions, ...render(<FeedbackProvider><QueryClientProvider client={client}><Assets /></QueryClientProvider></FeedbackProvider>) };
+  return { setTransactions, ...render(<FeedbackProvider><QueryClientProvider client={queryClient}><Assets /></QueryClientProvider></FeedbackProvider>) };
 }
 
 describe('Tài sản', () => {
@@ -123,5 +129,39 @@ describe('Tài sản', () => {
     expect(update(linkedTransactions)).toEqual([linkedTransactions[2]]);
     expect(JSON.parse(localStorage.getItem(`family-expense:gold-assets:${familyId}`) || '[]')).toEqual([]);
     expect(JSON.parse(localStorage.getItem(`family-expense:gold-sales:${familyId}`) || '[]')).toEqual([]);
+  });
+
+  it('dùng cấu hình giao dịch tự động đã lưu khi tạo lô vàng', async () => {
+    const automaticDefaults = [
+      'savings_opening',
+      'savings_interest',
+      'savings_withdrawal',
+      'savings_fee',
+      'savings_settlement',
+      'gold_purchase',
+      'gold_sale',
+    ].map((automationKey) => ({
+      automationKey: automationKey as AutomaticTransactionDefault['automationKey'],
+      purposeId: 'purpose-investment',
+      expenseTypeId: 'expense-investment',
+      paymentMethodId: 'payment-bank',
+    }));
+    const { setTransactions } = renderAssets([], vi.fn(), automaticDefaults);
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Thêm vàng' })[0]!);
+    fireEvent.change(screen.getByLabelText('Số lượng (chỉ)'), { target: { value: '1' } });
+    fireEvent.change(screen.getByLabelText('Giá mua / chỉ (VND)'), { target: { value: '8.000.000' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu vàng' }));
+    const dialog = await screen.findByRole('alertdialog');
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Tạo và ghi giao dịch' }));
+
+    await waitFor(() => expect(setTransactions).toHaveBeenCalledTimes(1));
+    const update = setTransactions.mock.calls[0]![0] as (items: Array<Record<string, unknown>>) => Array<Record<string, unknown>>;
+    expect(update([])[0]).toMatchObject({
+      purposeId: 'purpose-investment',
+      expenseTypeId: 'expense-investment',
+      paymentMethodId: 'payment-bank',
+      sourceReference: expect.stringMatching(/^asset:gold:/),
+    });
   });
 });
