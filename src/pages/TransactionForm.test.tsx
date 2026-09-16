@@ -17,7 +17,7 @@ vi.mock('../lib/supabase', () => ({
 const appValue = {
   transactions: [], setTransactions: vi.fn(), familyId: 'f1', currentUserId: 'u1', currentUserRole: 'owner',
   purposes: [{ id: 'p1', name: 'Sinh hoạt' }], expenseTypes: [{ id: 'e1', name: 'Thực phẩm' }],
-  paymentMethods: [{ id: 'm1', name: 'Chuyển khoản' }],
+  paymentMethods: [{ id: 'm1', name: 'Chuyển khoản' }, { id: 'm2', name: 'Thẻ tín dụng' }],
 } as unknown as ReturnType<typeof useApp>;
 
 describe('Form giao dịch hợp nhất', () => {
@@ -43,6 +43,16 @@ describe('Form giao dịch hợp nhất', () => {
     expect(aiButton).toBeDisabled();
     fireEvent.change(screen.getByLabelText(/Nội dung/), { target: { value: 'Hôm nay mua sữa 450 nghìn' } });
     expect(aiButton).toBeEnabled();
+  });
+
+  it('mặc định giao dịch mới bằng thẻ tín dụng là dự kiến', () => {
+    vi.mocked(useApp).mockReturnValue(appValue);
+    render(<FeedbackProvider><QueryClientProvider client={new QueryClient()}><MemoryRouter><TransactionForm/></MemoryRouter></QueryClientProvider></FeedbackProvider>);
+
+    fireEvent.change(screen.getByLabelText(/Phương thức thanh toán/), { target: { value: 'm2' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Tùy chọn nâng cao' }));
+
+    expect(screen.getByLabelText(/Trạng thái/)).toHaveValue('Dự kiến');
   });
 
   it('debounce autosave và báo rõ khi bản nháp đã được lưu', async () => {

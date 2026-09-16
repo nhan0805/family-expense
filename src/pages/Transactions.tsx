@@ -174,7 +174,19 @@ export const getInitialTransactionPeriod = (
 };
 
 export const getInitialTransactionType = (value: string | null) =>
-  value === 'Chi tiêu' || value === 'Thu nhập' ? value : '';
+  value === 'Chi tiêu' || value === 'Thu nhập' ? value : 'Chi tiêu';
+
+export const getInitialExcludePurposeIds = (
+  searchParams: URLSearchParams,
+  purposes: Array<{ id: string; name: string }>,
+) => {
+  const explicitIds = getInitialFilterIds(searchParams, 'excludePurposeId');
+  if (explicitIds.length > 0) return explicitIds;
+  if (searchParams.getAll('purposeId').length > 0) return [];
+  return purposes
+    .filter((purpose) => purpose.name === 'Đầu tư')
+    .map((purpose) => purpose.id);
+};
 
 export const getInitialTransactionStatus = (value: string | null) =>
   value === 'Thực tế' || value === 'Dự kiến' ? value : 'Thực tế';
@@ -352,7 +364,7 @@ export function Transactions() {
     getInitialFilterIds(searchParams, 'paymentMethodId'),
   );
   const [excludePurposeIds, setExcludePurposeIds] = useState(() =>
-    getInitialFilterIds(searchParams, 'excludePurposeId'),
+    getInitialExcludePurposeIds(searchParams, purposes),
   );
   const [excludeExpenseTypeIds, setExcludeExpenseTypeIds] = useState(() =>
     getInitialFilterIds(searchParams, 'excludeExpenseTypeId'),

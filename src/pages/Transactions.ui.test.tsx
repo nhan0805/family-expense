@@ -67,19 +67,24 @@ describe('Giao dịch mobile', () => {
     expect(screen.getAllByText((content) => content.includes('250.000')).length).toBeGreaterThan(0);
   });
 
-  it('mặc định chỉ hiển thị giao dịch thực tế', () => {
+  it('mặc định chỉ hiển thị chi tiêu thực tế trong tháng và trừ đầu tư', () => {
     vi.mocked(useApp).mockReturnValue({
       transactions: [
         { id: 'actual-1', transactionDate: '2026-09-01', transactionType: 'Chi tiêu', status: 'Thực tế', description: 'Đi chợ', amount: 250000, purposeId: 'p1', expenseTypeId: 'e1', paymentMethodId: 'm1', source: 'manual', aiGenerated: false, createdBy: 'u1' },
         { id: 'planned-1', transactionDate: '2026-09-02', transactionType: 'Chi tiêu', status: 'Dự kiến', description: 'Tiền điện', amount: 300000, purposeId: 'p1', expenseTypeId: 'e1', paymentMethodId: 'm1', source: 'manual', aiGenerated: false, createdBy: 'u1' },
+        { id: 'investment-1', transactionDate: '2026-09-03', transactionType: 'Chi tiêu', status: 'Thực tế', description: 'Mua vàng', amount: 5000000, purposeId: 'p2', expenseTypeId: 'e1', paymentMethodId: 'm1', source: 'manual', aiGenerated: false, createdBy: 'u1' },
+        { id: 'income-1', transactionDate: '2026-09-04', transactionType: 'Thu nhập', status: 'Thực tế', description: 'Lương', amount: 20000000, purposeId: 'p1', expenseTypeId: 'e1', paymentMethodId: 'm1', source: 'manual', aiGenerated: false, createdBy: 'u1' },
       ],
-      setTransactions: vi.fn(), purposes: [{ id: 'p1', name: 'Sinh hoạt' }], expenseTypes: [{ id: 'e1', name: 'Hóa đơn' }], paymentMethods: [{ id: 'm1', name: 'Chuyển khoản' }], familyId: 'f1', currentUserId: 'u1', currentUserRole: 'owner',
+      setTransactions: vi.fn(), purposes: [{ id: 'p1', name: 'Sinh hoạt' }, { id: 'p2', name: 'Đầu tư' }], expenseTypes: [{ id: 'e1', name: 'Hóa đơn' }], paymentMethods: [{ id: 'm1', name: 'Chuyển khoản' }], familyId: 'f1', currentUserId: 'u1', currentUserRole: 'owner',
     } as unknown as ReturnType<typeof useApp>);
     render(<FeedbackProvider><QueryClientProvider client={new QueryClient()}><MemoryRouter initialEntries={['/giao-dich?month=09&year=2026']}><Transactions/></MemoryRouter></QueryClientProvider></FeedbackProvider>);
 
+    expect(screen.getByLabelText('Loại giao dịch')).toHaveValue('Chi tiêu');
     expect(screen.getByLabelText('Trạng thái')).toHaveValue('Thực tế');
     expect(screen.getByRole('article', { name: 'Giao dịch Đi chợ' })).toBeInTheDocument();
     expect(screen.queryByRole('article', { name: 'Giao dịch Tiền điện' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('article', { name: 'Giao dịch Mua vàng' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('article', { name: 'Giao dịch Lương' })).not.toBeInTheDocument();
   });
 
   it('chuyển giọng nói thành từ khóa tìm kiếm', async () => {

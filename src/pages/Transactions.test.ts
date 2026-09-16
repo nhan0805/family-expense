@@ -5,6 +5,7 @@ import {
   formatAmountFilterInput,
   filterAndSortTransactions,
   getInitialTransactionPeriod,
+  getInitialExcludePurposeIds,
   getInitialTransactionStatus,
   getInitialTransactionType,
   getTransactionListTone,
@@ -28,7 +29,8 @@ describe('sắp xếp giao dịch theo ngày', () => {
   it('đọc đúng bộ lọc loại giao dịch từ URL KPI', () => {
     expect(getInitialTransactionType('Chi tiêu')).toBe('Chi tiêu');
     expect(getInitialTransactionType('Thu nhập')).toBe('Thu nhập');
-    expect(getInitialTransactionType('không hợp lệ')).toBe('');
+    expect(getInitialTransactionType(null)).toBe('Chi tiêu');
+    expect(getInitialTransactionType('không hợp lệ')).toBe('Chi tiêu');
   });
   it('mặc định chỉ lọc giao dịch thực tế và vẫn nhận trạng thái từ URL', () => {
     expect(getInitialTransactionStatus(null)).toBe('Thực tế');
@@ -52,6 +54,17 @@ describe('sắp xếp giao dịch theo ngày', () => {
     expect(
       getInitialTransactionPeriod('2024-11', null, new Date(2026, 7, 26)),
     ).toEqual({ month: '11', year: '2024' });
+  });
+  it('mặc định loại trừ mục đích Đầu tư và tôn trọng bộ lọc URL', () => {
+    const investment = { id: 'investment-purpose', name: 'Đầu tư' };
+    const regular = { id: 'regular-purpose', name: 'Sinh hoạt gia đình' };
+    expect(getInitialExcludePurposeIds(new URLSearchParams(), [regular, investment])).toEqual([
+      'investment-purpose',
+    ]);
+    expect(getInitialExcludePurposeIds(new URLSearchParams('purposeId=regular-purpose'), [regular, investment])).toEqual([]);
+    expect(getInitialExcludePurposeIds(new URLSearchParams('excludePurposeId=550e8400-e29b-41d4-a716-446655440000'), [regular, investment])).toEqual([
+      '550e8400-e29b-41d4-a716-446655440000',
+    ]);
   });
 
   it('dùng màu riêng cho hai loại giao dịch trong danh sách', () => {

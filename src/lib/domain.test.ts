@@ -9,6 +9,7 @@ import {
   getNetExpense,
   getTransactionTotalImpact,
   normalizeText,
+  statusForNewTransaction,
   statusForTransactionDate,
   transactionTypes,
   transactionSchema,
@@ -83,6 +84,11 @@ describe('định dạng và quy tắc giao dịch', () => {
     expect(statusForTransactionDate('2026-08-25', '2026-08-26')).toBe(
       'Thực tế',
     );
+  });
+  it('mặc định giao dịch mới bằng thẻ tín dụng là dự kiến', () => {
+    expect(statusForNewTransaction('2026-08-25', '2026-08-26', 'Thẻ tín dụng')).toBe('Dự kiến');
+    expect(statusForNewTransaction('2026-08-25', '2026-08-26', 'Chuyển khoản')).toBe('Thực tế');
+    expect(statusForNewTransaction('2026-08-27', '2026-08-26', 'Chuyển khoản')).toBe('Dự kiến');
   });
   it('chặn số tiền không dương', () => {
     const base = {
