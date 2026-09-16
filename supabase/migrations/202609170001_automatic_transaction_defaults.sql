@@ -30,7 +30,7 @@ for each row execute function public.touch_updated_at();
 
 alter table public.automatic_transaction_defaults enable row level security;
 
-revoke all on table public.automatic_transaction_defaults from anon, public;
+revoke all on table public.automatic_transaction_defaults from anon, authenticated, public;
 grant select on table public.automatic_transaction_defaults to authenticated;
 
 create policy automatic_transaction_defaults_select
@@ -227,7 +227,7 @@ begin
 end;
 $$;
 
-revoke all on function public.save_automatic_transaction_defaults(uuid, jsonb) from public;
+revoke all on function public.save_automatic_transaction_defaults(uuid, jsonb) from anon, authenticated, public;
 grant execute on function public.save_automatic_transaction_defaults(uuid, jsonb) to authenticated;
 
 -- Apply the configured mapping only when an asset workflow creates a new
