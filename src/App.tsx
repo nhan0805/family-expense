@@ -15,6 +15,9 @@ const Transactions = lazy(() =>
 const Budgets = lazy(() =>
   import('./pages/Budgets').then((module) => ({ default: module.Budgets })),
 );
+const Assets = lazy(() =>
+  import('./pages/Assets').then((module) => ({ default: module.Assets })),
+);
 const TransactionForm = lazy(() =>
   import('./pages/TransactionForm').then((module) => ({
     default: module.TransactionForm,
@@ -65,6 +68,7 @@ export function App() {
             <Route path="/giao-dich" element={<Transactions />} />
             <Route path="/giao-dich/moi" element={<TransactionForm />} />
             <Route path="/giao-dich/:id" element={<TransactionForm />} />
+            <Route path="/tai-san" element={<Assets />} />
             <Route path="/ngan-sach" element={<Budgets />} />
             <Route path="/chi-phi-dinh-ky" element={<RecurringExpenses />} />
             <Route path="/danh-muc" element={<Catalogs />} />

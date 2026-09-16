@@ -690,6 +690,7 @@ export function Transactions() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['trash', familyId] }),
         queryClient.invalidateQueries({ queryKey: ['transactions', familyId] }),
+        queryClient.invalidateQueries({ queryKey: ['asset-summary', familyId] }),
         queryClient.invalidateQueries({ queryKey: ['dashboard-data', familyId] }),
         queryClient.invalidateQueries({ queryKey: ['budgets', familyId] }),
       ]);
@@ -718,6 +719,7 @@ export function Transactions() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['trash', familyId] }),
         queryClient.invalidateQueries({ queryKey: ['transactions', familyId] }),
+        queryClient.invalidateQueries({ queryKey: ['asset-summary', familyId] }),
         queryClient.invalidateQueries({ queryKey: ['dashboard-data', familyId] }),
         queryClient.invalidateQueries({ queryKey: ['budgets', familyId] }),
       ]);
@@ -771,6 +773,7 @@ export function Transactions() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['transactions', familyId] }),
         queryClient.invalidateQueries({ queryKey: ['dashboard-due', familyId] }),
+        queryClient.invalidateQueries({ queryKey: ['asset-summary', familyId] }),
         queryClient.invalidateQueries({ queryKey: ['dashboard-data', familyId] }),
         queryClient.invalidateQueries({ queryKey: ['budgets', familyId] }),
       ]);
@@ -816,6 +819,7 @@ export function Transactions() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['transactions', familyId] }),
         queryClient.invalidateQueries({ queryKey: ['dashboard-due', familyId] }),
+        queryClient.invalidateQueries({ queryKey: ['asset-summary', familyId] }),
         queryClient.invalidateQueries({ queryKey: ['dashboard-data', familyId] }),
         queryClient.invalidateQueries({ queryKey: ['budgets', familyId] }),
       ]);
@@ -858,6 +862,9 @@ export function Transactions() {
     if (isSupabaseConfigured) {
       await queryClient.invalidateQueries({
         queryKey: ['transactions', familyId],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ['asset-summary', familyId],
       });
       await queryClient.invalidateQueries({
         queryKey: ['dashboard-data', familyId],
@@ -918,6 +925,9 @@ export function Transactions() {
       }
       await queryClient.invalidateQueries({
         queryKey: ['transactions', familyId],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ['asset-summary', familyId],
       });
       await queryClient.invalidateQueries({
         queryKey: ['dashboard-data', familyId],

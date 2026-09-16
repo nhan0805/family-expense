@@ -2,7 +2,7 @@
 
 ## Project overview
 
-Family Expense is a Vietnamese, mobile-first Progressive Web App for managing family income, expenses, budgets, recurring transactions, catalogs, members and Excel data. Amounts are VND and dates use `Asia/Ho_Chi_Minh`. The application supports a demo/local fallback when Supabase is not configured.
+Family Expense is a Vietnamese, mobile-first Progressive Web App for managing family income, expenses, budgets, recurring transactions, savings books, physical gold, catalogs, members and Excel data. Amounts are VND and dates use `Asia/Ho_Chi_Minh`. The application supports a demo/local fallback when Supabase is not configured.
 
 The browser is a React application backed by Supabase Auth, PostgreSQL, RLS, RPCs and Deno Edge Functions. Cloudflare Pages hosts the frontend. Gemini is used only behind Edge Functions for transaction suggestions, natural-language search filters and dashboard summaries; the user confirms any suggested transaction before saving.
 
@@ -77,6 +77,13 @@ Generated/dependency output such as `node_modules/`, `dist/`, `coverage/`, Playw
 - `src/pages/Budgets.tsx`, `src/lib/budgetsApi.ts`, `src/lib/budget.ts` and `src/lib/budgetNotifications.ts` implement monthly budgets, totals and alerts.
 - Dashboard aggregate and budget RPCs keep large calculations in PostgreSQL rather than relying only on browser state.
 
+### Savings and gold assets
+
+- `src/pages/Assets.tsx` is the simple asset ledger for savings books and gold purchase lots. Owners can create/edit/close/archive savings books, record interest/withdrawal/fee/settlement movements, update gold estimates, and record partial or full gold sales. Members have read-only access.
+- `src/lib/assets.ts` contains validation, maturity/interest calculations, gold value/P&L helpers and the local-storage fallback. `src/lib/assetsApi.ts` maps asset rows and calls the family-scoped RPCs.
+- Migration `202609160001_asset_management.sql` adds `savings_accounts`, `savings_movements`, `gold_assets` and `gold_sales`, plus RLS and owner-only RPCs. Asset mutations atomically create linked `transactions` with source `asset`: deposits and gold purchases are expenses, interest/withdrawals/gold sales are income, and savings fees are expenses. Gold sales do not add a fee.
+- `get_asset_summary` returns all-time actual net cash (`income - expenses`) and the current savings/gold list for the Dashboard, independent of the selected spending-period charts.
+
 ### Recurring transactions
 
 - `src/pages/RecurringExpenses.tsx`, `src/lib/recurringExpensesApi.ts` and `src/lib/recurringExpense.ts` implement template CRUD, pause/resume, due generation, history, restore and permanent deletion.
@@ -131,6 +138,15 @@ Form/import/AI suggestion
 
 AI suggestions and imported values are untrusted. AI never writes a transaction directly; import writes are batch-audited and duplicate-aware.
 
+### Asset mutation
+
+```text
+Owner form validation
+  → savings/gold RPC locks the asset and inserts its linked cash transaction
+  → invalidate asset, transaction, dashboard and budget queries
+  → render the persisted asset and transaction
+```
+
 ### Recurring transaction generation
 
 ```text
@@ -150,6 +166,8 @@ Supabase pg_cron
 - `transactions` belongs to a family and references catalogs; soft deletion uses `deleted_at`. Amount is positive; `transaction_type` determines income/expense net meaning.
 - `budgets` belongs to a family/month/purpose and is guarded by budget visibility rules.
 - `recurring_transactions` stores templates; `recurring_transaction_runs` records idempotent occurrences; generated `transactions` link back with `recurring_transaction_id`.
+- `savings_accounts` stores a savings book and its current balance; `savings_movements` stores opening, interest, withdrawal, fee and settlement history.
+- `gold_assets` stores one purchase lot per buy date/price; `gold_sales` stores partial/full sales and their linked income transactions. The estimated sell value uses the manually entered shop buy-back price.
 - `import_batches` and `import_issues` audit Excel imports.
 - `ai_usage_logs` records minimal AI request metadata and is subject to retention; AI cache/RPC access is server-controlled where configured.
 
@@ -167,6 +185,7 @@ The authoritative schema and policy definitions are the ordered SQL migrations, 
 | `/` | Dashboard |
 | `/giao-dich` | Transaction list, filters and planned confirmation |
 | `/giao-dich/moi`, `/giao-dich/:id` | Create/edit transaction |
+| `/tai-san` | Savings books and gold assets |
 | `/ngan-sach` | Budgets |
 | `/chi-phi-dinh-ky` | Recurring templates and runs |
 | `/danh-muc` | Catalog management |
