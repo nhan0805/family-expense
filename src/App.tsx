@@ -12,6 +12,11 @@ const Transactions = lazy(() =>
     default: module.Transactions,
   })),
 );
+const TransactionFilterSettings = lazy(() =>
+  import('./pages/TransactionFilterSettings').then((module) => ({
+    default: module.TransactionFilterSettings,
+  })),
+);
 const Budgets = lazy(() =>
   import('./pages/Budgets').then((module) => ({ default: module.Budgets })),
 );
@@ -66,6 +71,7 @@ export function App() {
           <Route element={<Layout />}>
             <Route index element={<Dashboard />} />
             <Route path="/giao-dich" element={<Transactions />} />
+            <Route path="/cai-dat/giao-dich" element={<TransactionFilterSettings />} />
             <Route path="/giao-dich/moi" element={<TransactionForm />} />
             <Route path="/giao-dich/:id" element={<TransactionForm />} />
             <Route path="/tai-san" element={<Assets />} />

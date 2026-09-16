@@ -14,6 +14,7 @@ import {
   LoaderCircle,
   Mic,
   MicOff,
+  Settings2,
 } from 'lucide-react';
 import { EmptyState, TransactionListSkeleton } from '../components/AsyncStates';
 import { MultiSelectField } from '../components/MultiSelectField';
@@ -51,6 +52,18 @@ import { userFacingError } from '../lib/errorRecovery';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { reportClientError } from '../lib/telemetry';
 import {
+  createSystemTransactionFilterPreset,
+  formatAmountFilterInput as formatAmountFilterInputShared,
+  getVietnamCurrentPeriod,
+  hasExplicitTransactionFilterParams,
+  normalizeAmountFilterInput as normalizeAmountFilterInputShared,
+  resolveTransactionFilterPreset,
+  sanitizeTransactionFilterPreset,
+  type TransactionFilters as SharedTransactionFilters,
+  type TransactionFilterSort,
+} from '../lib/transactionFilters';
+import { fetchTransactionFilterPreference } from '../lib/transactionFilterPreferencesApi';
+import {
   fetchDeletedTransactionPage,
   fetchTransactionPage,
   fetchTransactionYears,
@@ -58,26 +71,8 @@ import {
   type TransactionPageCursor,
 } from '../lib/transactionsApi';
 
-type SortOption =
-  'date-desc' | 'date-asc' | 'amount-desc' | 'amount-asc' | 'description-asc';
-type TransactionFilters = {
-  query: string;
-  transactionType: string;
-  status: string;
-  purposeIds: string[];
-  expenseTypeIds: string[];
-  paymentMethodIds: string[];
-  excludePurposeIds: string[];
-  excludeExpenseTypeIds: string[];
-  excludePaymentMethodIds: string[];
-  amountMin: string;
-  amountMax: string;
-  month: string;
-  year: string;
-  dateFrom: string;
-  dateTo: string;
-  sort: SortOption;
-};
+type SortOption = TransactionFilterSort;
+type TransactionFilters = SharedTransactionFilters;
 type SpeechRecognitionEventLike = {
   results: ArrayLike<{ 0: { transcript: string }; isFinal: boolean }>;
 };
@@ -160,17 +155,7 @@ export const getInitialTransactionPeriod = (
   if (legacyMonth)
     return { month: legacyMonth[2] || '', year: legacyMonth[1] || '' };
   if (validMonth || validYear) return { month: validMonth, year: validYear };
-  const currentPeriod = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'Asia/Ho_Chi_Minh',
-    year: 'numeric',
-    month: '2-digit',
-  }).formatToParts(now);
-  const currentMonth = currentPeriod.find((part) => part.type === 'month')?.value || '';
-  const currentYear = currentPeriod.find((part) => part.type === 'year')?.value || '';
-  return {
-    month: currentMonth,
-    year: currentYear,
-  };
+  return getVietnamCurrentPeriod(now);
 };
 
 export const getInitialTransactionType = (value: string | null) =>
@@ -193,13 +178,8 @@ export const getInitialTransactionDateRange = (
   dateTo: isIsoDateParam(dateToParam) ? dateToParam || '' : '',
 });
 
-export const normalizeAmountFilterInput = (value: string) =>
-  value.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
-
-export const formatAmountFilterInput = (value: string) => {
-  const normalized = normalizeAmountFilterInput(value);
-  return normalized.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-};
+export const normalizeAmountFilterInput = normalizeAmountFilterInputShared;
+export const formatAmountFilterInput = formatAmountFilterInputShared;
 
 export const getTransactionListTone = (
   transactionType: Transaction['transactionType'],
@@ -326,6 +306,7 @@ export function Transactions() {
     currentUserRole,
   } = useApp();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [hasExplicitUrlFilters] = useState(() => hasExplicitTransactionFilterParams(searchParams));
   const initialPeriod = getInitialTransactionPeriod(
     searchParams.get('month'),
     searchParams.get('year'),
@@ -388,11 +369,60 @@ export function Transactions() {
   const [voiceListening, setVoiceListening] = useState(false);
   const [voiceSupported] = useState(() => Boolean(getSpeechRecognition()));
   const speechRecognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const systemDefaultPreset = useMemo(
+    () => createSystemTransactionFilterPreset(purposes),
+    [purposes],
+  );
+  const [filtersInitialized, setFiltersInitialized] = useState(hasExplicitUrlFilters);
+  const filterPreferenceQuery = useQuery({
+    queryKey: ['transaction-filter-preference', familyId, currentUserId],
+    queryFn: () => fetchTransactionFilterPreference(familyId, currentUserId),
+    enabled: Boolean(familyId && currentUserId && !hasExplicitUrlFilters),
+    retry: false,
+  });
+  useEffect(() => {
+    if (
+      hasExplicitUrlFilters ||
+      filtersInitialized ||
+      !familyId ||
+      !currentUserId ||
+      filterPreferenceQuery.isPending
+    ) return;
+    const saved = filterPreferenceQuery.data
+      ? sanitizeTransactionFilterPreset(filterPreferenceQuery.data, {
+          purposes,
+          expenseTypes,
+          paymentMethods,
+        })
+      : null;
+    const resolved = resolveTransactionFilterPreset(
+      saved?.enabled === false || !saved ? systemDefaultPreset : saved,
+    );
+    setQuery('');
+    setDebouncedQuery('');
+    setTransactionType(resolved.transactionType);
+    setStatus(resolved.status);
+    setPurposeIds(resolved.purposeIds);
+    setExpenseTypeIds(resolved.expenseTypeIds);
+    setPaymentMethodIds(resolved.paymentMethodIds);
+    setExcludePurposeIds(resolved.excludePurposeIds);
+    setExcludeExpenseTypeIds(resolved.excludeExpenseTypeIds);
+    setExcludePaymentMethodIds(resolved.excludePaymentMethodIds);
+    setAmountMin(resolved.amountMin);
+    setAmountMax(resolved.amountMax);
+    setMonth(resolved.month);
+    setYear(resolved.year);
+    setDateFrom(resolved.dateFrom);
+    setDateTo(resolved.dateTo);
+    setSort(resolved.sort);
+    setFiltersInitialized(true);
+  }, [currentUserId, expenseTypes, familyId, filterPreferenceQuery.data, filterPreferenceQuery.isPending, filtersInitialized, hasExplicitUrlFilters, paymentMethods, purposes, systemDefaultPreset]);
   useEffect(() => {
     const timeout = window.setTimeout(() => setDebouncedQuery(query), 300);
     return () => window.clearTimeout(timeout);
   }, [query]);
   useEffect(() => {
+    if (!filtersInitialized) return;
     const params = new URLSearchParams();
     if (debouncedQuery) params.set('query', debouncedQuery);
     if (transactionType) params.set('transactionType', transactionType);
@@ -411,7 +441,7 @@ export function Transactions() {
     }
     if (sort !== 'date-desc') params.set('sort', sort);
     setSearchParams(params, { replace: true });
-  }, [amountMax, amountMin, dateFrom, dateTo, debouncedQuery, expenseTypeIds, month, paymentMethodIds, purposeIds, setSearchParams, sort, status, transactionType, year]);
+  }, [amountMax, amountMin, dateFrom, dateTo, debouncedQuery, expenseTypeIds, filtersInitialized, month, paymentMethodIds, purposeIds, setSearchParams, sort, status, transactionType, year]);
   useEffect(() => {
     if (bulkEditOpen) {
       setBulkEditMounted(true);
@@ -515,7 +545,7 @@ export function Transactions() {
     placeholderData: keepPreviousData,
     getNextPageParam: (lastPage) =>
       lastPage.nextCursor || (lastPage.hasMore ? lastPage.page + 1 : undefined),
-    enabled: isSupabaseConfigured && Boolean(familyId) && !showTrash,
+    enabled: isSupabaseConfigured && Boolean(familyId) && filtersInitialized && !showTrash,
     refetchInterval: isSupabaseConfigured && Boolean(familyId) && !showTrash
       ? REMOTE_TRANSACTION_REFRESH_INTERVAL_MS
       : false,
@@ -524,7 +554,7 @@ export function Transactions() {
   const trashQuery = useQuery({
     queryKey: ['trash', familyId, serverFilters],
     queryFn: () => fetchDeletedTransactionPage(familyId, serverFilters, 0),
-    enabled: isSupabaseConfigured && Boolean(familyId) && showTrash,
+    enabled: isSupabaseConfigured && Boolean(familyId) && filtersInitialized && showTrash,
   });
   const yearsQuery = useQuery({
     queryKey: ['transaction-years', familyId],
@@ -550,10 +580,10 @@ export function Transactions() {
   const expenseTypeById = useMemo(() => new Map(expenseTypes.map((item) => [item.id, item])), [expenseTypes]);
   const paymentMethodById = useMemo(() => new Map(paymentMethods.map((item) => [item.id, item])), [paymentMethods]);
   const rows = useMemo(
-    () => showTrash
+    () => !filtersInitialized ? [] : showTrash
       ? (isSupabaseConfigured ? trashQuery.data?.rows || [] : localTrashRows)
       : (isSupabaseConfigured ? transactionQuery.data?.pages.flatMap((page) => page.rows) || [] : localRows),
-    [localRows, localTrashRows, showTrash, trashQuery.data?.rows, transactionQuery.data?.pages],
+    [filtersInitialized, localRows, localTrashRows, showTrash, trashQuery.data?.rows, transactionQuery.data?.pages],
   );
   const activeQueryIsPending = showTrash ? trashQuery.isPending : transactionQuery.isPending;
   const activeQueryIsError = showTrash ? trashQuery.isError : transactionQuery.isError;
@@ -1102,6 +1132,10 @@ export function Transactions() {
           <h2 className="page-title">{en ? 'Transactions' : 'Giao dịch'}</h2>
           <p className="page-subtitle">{en ? 'Search, review and organize every family transaction.' : 'Tìm kiếm, rà soát và sắp xếp mọi giao dịch của gia đình.'}</p>
         </div>
+        <Link to="/cai-dat/giao-dich" className="btn-secondary inline-flex items-center gap-2">
+          <Settings2 size={17} aria-hidden="true" />
+          {en ? 'Default filters' : 'Bộ lọc mặc định'}
+        </Link>
       </div>
       <section
         aria-label={en ? 'Net value for current filters' : 'Giá trị ròng theo bộ lọc'}
