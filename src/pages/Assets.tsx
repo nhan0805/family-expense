@@ -41,6 +41,7 @@ import {
   calculateSavingsMaturityDate,
   daysUntilMaturity,
   expectedSavingsInterest,
+  expectedSavingsInterestToDate,
   goldCostValue,
   goldEstimatedValue,
   goldPurchaseAmount,
@@ -174,6 +175,8 @@ function assetError(error: unknown, en: boolean, fallback: string) {
     return en ? 'The asset categories are not ready yet. Please reload and try again.' : 'Danh mục tài sản chưa sẵn sàng. Hãy tải lại trang rồi thử lại.';
   if (raw.includes('account_not_active') || raw.includes('asset_not_active'))
     return en ? 'This asset is no longer active.' : 'Tài sản này không còn ở trạng thái hoạt động.';
+  if (raw.includes('catalog_not_ready'))
+    return en ? 'The family is missing a category needed to record the gold transaction. Please refresh after the update.' : 'Gia đình đang thiếu danh mục cần thiết để ghi giao dịch mua vàng. Vui lòng tải lại sau khi cập nhật hệ thống.';
   return en ? fallback : userFacingError(error, fallback);
 }
 
@@ -808,6 +811,8 @@ function SavingsRow({
   archived?: boolean;
 }) {
   const days = daysUntilMaturity(account.maturityOn);
+  const expectedInterestToDate = expectedSavingsInterestToDate(account);
+  const expectedInterestFullTerm = expectedSavingsInterest(account);
   const maturityClass = days <= 30 && days >= 0 ? 'text-amber-700 dark:text-amber-300' : days < 0 ? 'text-rose-700 dark:text-rose-300' : 'text-gray-600 dark:text-gray-300';
   const status = account.status === 'closed'
     ? (en ? 'Closed' : 'Đã đóng')
@@ -819,7 +824,7 @@ function SavingsRow({
       <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h4 className="truncate text-base font-bold">{account.bankName} · {account.name}</h4><span className="ui-chip">{status}</span></div><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{en ? 'Principal' : 'Tiền gốc'} {formatVnd(account.principal)} · {formatRate(account.annualInterestRate)}% · {account.termMonths} {en ? 'mo.' : 'tháng'} · {interestMethodLabel(account.interestMethod, en)}</p></div>
       <div className="text-left lg:text-right"><p className="text-lg font-extrabold text-[var(--primary)]">{formatVnd(account.currentBalance)}</p><p className="text-xs text-gray-500 dark:text-gray-400">{en ? 'Current balance' : 'Số dư hiện tại'}</p></div>
     </div>
-    <div className="mt-3 grid gap-2 text-sm sm:grid-cols-3"><div className="rounded-xl bg-black/[.025] p-3 dark:bg-white/[.04]"><p className="text-xs text-gray-500">{en ? 'Opened' : 'Ngày mở'}</p><p className="mt-1 font-semibold">{formatDateOnlyVi(account.openedOn)}</p></div><div className={`rounded-xl bg-black/[.025] p-3 dark:bg-white/[.04] ${maturityClass}`}><p className="text-xs">{en ? 'Maturity' : 'Đáo hạn'}</p><p className="mt-1 font-semibold">{formatDateOnlyVi(account.maturityOn)}</p><p className="text-xs">{days < 0 ? (en ? 'Past due' : 'Đã quá hạn') : days === 0 ? (en ? 'Today' : 'Hôm nay') : (en ? `${days} day(s) left` : `Còn ${days} ngày`)}</p></div><div className="rounded-xl bg-black/[.025] p-3 dark:bg-white/[.04]"><p className="text-xs text-gray-500">{en ? 'Expected interest' : 'Lãi dự kiến'}</p><p className="mt-1 font-semibold">{formatVnd(expectedSavingsInterest(account))}</p><p className="text-xs text-gray-500">{en ? 'for the full term' : 'cho toàn kỳ'}</p></div></div>
+    <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-4"><div className="rounded-xl bg-black/[.025] p-3 dark:bg-white/[.04]"><p className="text-xs text-gray-500">{en ? 'Opened' : 'Ngày mở'}</p><p className="mt-1 font-semibold">{formatDateOnlyVi(account.openedOn)}</p></div><div className={`rounded-xl bg-black/[.025] p-3 dark:bg-white/[.04] ${maturityClass}`}><p className="text-xs">{en ? 'Maturity' : 'Đáo hạn'}</p><p className="mt-1 font-semibold">{formatDateOnlyVi(account.maturityOn)}</p><p className="text-xs">{days < 0 ? (en ? 'Past due' : 'Đã quá hạn') : days === 0 ? (en ? 'Today' : 'Hôm nay') : (en ? `${days} day(s) left` : `Còn ${days} ngày`)}</p></div><div className="rounded-xl bg-black/[.025] p-3 dark:bg-white/[.04]"><p className="text-xs text-gray-500">{en ? 'Interest to date' : 'Lãi đến hiện tại'}</p><p className="mt-1 font-semibold">{formatVnd(expectedInterestToDate)}</p><p className="text-xs text-gray-500">{en ? 'estimated through today' : 'ước tính đến hôm nay'}</p></div><div className="rounded-xl bg-black/[.025] p-3 dark:bg-white/[.04]"><p className="text-xs text-gray-500">{en ? 'Full-term interest' : 'Lãi dự kiến toàn kỳ'}</p><p className="mt-1 font-semibold">{formatVnd(expectedInterestFullTerm)}</p><p className="text-xs text-gray-500">{en ? 'if held until maturity' : 'nếu giữ đến đáo hạn'}</p></div></div>
     {account.note && <p className="mt-3 text-sm text-gray-600 dark:text-gray-300">{account.note}</p>}
     {movements.length > 0 && <details className="mt-3 rounded-xl border border-black/10 dark:border-white/10"><summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 text-sm font-semibold [&::-webkit-details-marker]:hidden"><span>{en ? 'Book history' : 'Lịch sử sổ'} ({movements.length})</span><ChevronDown size={17} aria-hidden="true" /></summary><div className="divide-y divide-black/10 border-t border-black/10 text-sm dark:divide-white/10 dark:border-white/10">{movements.map((movement) => <div key={movement.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2"><span>{movementLabel(movement.movementType, en)} · {formatDateOnlyVi(movement.movementDate)}<span className="ml-2 text-xs text-gray-500">{paymentName(movement.paymentMethodId || '', paymentMethods, language)}</span></span><span className={movement.movementType === 'fee' ? 'font-semibold text-rose-700 dark:text-rose-300' : 'font-semibold text-emerald-700 dark:text-emerald-300'}>{movement.movementType === 'fee' ? '-' : '+'}{formatVnd(movement.amount)}</span></div>)}</div></details>}
     {canManage && !archived && account.status === 'active' && <div className="mt-4 flex flex-wrap gap-2"><button type="button" className="btn-secondary inline-flex items-center gap-2 text-sm" disabled={Boolean(busy)} onClick={onEdit}><Pencil size={15} aria-hidden="true" />{en ? 'Edit' : 'Sửa'}</button><button type="button" className="btn-secondary text-sm" disabled={Boolean(busy)} onClick={() => onAction('interest')}>{en ? 'Record interest' : 'Ghi lãi'}</button><button type="button" className="btn-secondary text-sm" disabled={Boolean(busy)} onClick={() => onAction('withdrawal')}>{en ? 'Withdraw' : 'Rút tiền'}</button><button type="button" className="btn-secondary text-sm" disabled={Boolean(busy)} onClick={() => onAction('fee')}>{en ? 'Fee' : 'Phí'}</button><button type="button" className="btn-primary text-sm" disabled={Boolean(busy) || account.currentBalance <= 0} onClick={() => onAction('settlement')}>{en ? 'Settle' : 'Tất toán'}</button></div>}

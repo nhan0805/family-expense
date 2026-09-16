@@ -1,6 +1,6 @@
 -- Structural tests for savings-book and gold asset management.
 begin;
-select plan(29);
+select plan(30);
 
 select ok(
   exists(
@@ -139,6 +139,20 @@ select ok(
   pg_get_functiondef('public.upsert_gold_asset(uuid,uuid,date,numeric,numeric,numeric,uuid,text,boolean)'::regprocedure) ilike '%e.code = ''expense-25''%'
   and pg_get_functiondef('public.record_gold_sale(uuid,uuid,date,numeric,numeric,uuid,text)'::regprocedure) ilike '%e.code = ''expense-25''%',
   'gold RPCs resolve the stable gold category code'
+);
+select ok(
+  not exists(
+    select 1
+    from public.families f
+    where not exists(
+      select 1
+      from public.expense_types e
+      where e.family_id = f.id
+        and e.name = 'Đầu tư vàng'
+        and e.active
+    )
+  ),
+  'every family has an active gold investment expense category'
 );
 
 select * from finish();
