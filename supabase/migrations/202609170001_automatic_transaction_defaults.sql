@@ -240,6 +240,8 @@ set search_path = ''
 as $$
   select case
     when p_source_reference like 'asset:savings:%:opening' then 'savings_opening'
+    when p_source_reference like 'asset:savings:%:settlement-interest' then 'savings_interest'
+    when p_source_reference like 'asset:savings:%:settlement' then 'savings_settlement'
     when p_source_reference like 'asset:gold:%:purchase' then 'gold_purchase'
     when p_source_reference like 'asset:gold:%:sale:%' then 'gold_sale'
     else null

@@ -33,7 +33,7 @@ import {
   fetchAssetData,
   fetchAssetSummary,
   recordGoldSale,
-  recordSavingsMovement,
+  settleSavingsAccount,
   setGoldBuybackPrice,
   upsertGoldAsset,
   upsertSavingsAccount,
@@ -63,10 +63,10 @@ import {
   getLocalAssetData,
   makeLocalAssetTransaction,
   recordLocalGoldSale,
-  recordLocalSavingsMovement,
+  settleLocalSavingsAccount,
   savingsAccountInputSchema,
   savingsInterestMethods,
-  savingsMovementInputSchema,
+  savingsSettlementInputSchema,
   upsertLocalGoldAsset,
   upsertLocalSavingsAccount,
   archiveLocalGoldAsset,
@@ -79,7 +79,6 @@ import {
   type GoldAsset,
   type SavingsAccount,
   type SavingsAccountInput,
-  type SavingsMovementInput,
   type SavingsMovementType,
 } from '../lib/assets';
 import { isSupabaseConfigured } from '../lib/supabase';
@@ -111,11 +110,10 @@ type GoldForm = {
   createTransaction: boolean;
 };
 
-type MovementForm = {
+type SettlementForm = {
   accountId: string;
-  type: SavingsMovementInput['type'];
-  amount: string;
-  movementDate: string;
+  interestAmount: string;
+  settlementDate: string;
   paymentMethodId: string;
   note: string;
 };
@@ -160,19 +158,11 @@ const interestMethodLabel = (value: SavingsAccount['interestMethod'], en: boolea
 };
 
 const movementLabel = (value: SavingsMovementType, en: boolean) => {
-  if (value === 'interest') return en ? 'Interest received' : 'Ghi lãi';
+  if (value === 'interest') return en ? 'Interest received' : 'Lãi nhận về';
   if (value === 'withdrawal') return en ? 'Withdrawal' : 'Rút tiền';
   if (value === 'fee') return en ? 'Fee' : 'Phí';
   if (value === 'settlement') return en ? 'Settlement' : 'Tất toán';
   return en ? 'Opening deposit' : 'Mở sổ';
-};
-
-const savingsMovementAutomationKey = (value: SavingsMovementType): AutomaticTransactionKey => {
-  if (value === 'interest') return 'savings_interest';
-  if (value === 'withdrawal') return 'savings_withdrawal';
-  if (value === 'fee') return 'savings_fee';
-  if (value === 'settlement') return 'savings_settlement';
-  return 'savings_opening';
 };
 
 function assetError(error: unknown, en: boolean, fallback: string) {
@@ -225,7 +215,7 @@ export function Assets() {
   const canManage = canManageAssets(currentUserRole);
   const [savingsEditor, setSavingsEditorState] = useState<SavingsForm | null>(null);
   const [goldEditor, setGoldEditorState] = useState<GoldForm | null>(null);
-  const [movementEditor, setMovementEditorState] = useState<MovementForm | null>(null);
+  const [settlementEditor, setSettlementEditorState] = useState<SettlementForm | null>(null);
   const [saleEditor, setSaleEditorState] = useState<SaleForm | null>(null);
   const [goldBuybackPriceInput, setGoldBuybackPriceInput] = useState('');
   const [formError, setFormError] = useState('');
@@ -242,8 +232,8 @@ export function Assets() {
       ...value,
       purchasePricePerChi: formatAssetMoneyInput(value.purchasePricePerChi),
     } : null);
-  const setMovementEditor = (value: MovementForm | null) =>
-    setMovementEditorState(value ? { ...value, amount: formatAssetMoneyInput(value.amount) } : null);
+  const setSettlementEditor = (value: SettlementForm | null) =>
+    setSettlementEditorState(value ? { ...value, interestAmount: formatAssetMoneyInput(value.interestAmount) } : null);
   const setSaleEditor = (value: SaleForm | null) =>
     setSaleEditorState(value ? { ...value, salePricePerChi: formatAssetMoneyInput(value.salePricePerChi) } : null);
 
@@ -350,7 +340,7 @@ export function Assets() {
   const closeEditors = () => {
     setSavingsEditor(null);
     setGoldEditor(null);
-    setMovementEditor(null);
+    setSettlementEditor(null);
     setSaleEditor(null);
     setFormError('');
   };
@@ -410,14 +400,13 @@ export function Assets() {
         });
   };
 
-  const openMovementEditor = (account: SavingsAccount, type: SavingsMovementInput['type']) => {
+  const openSettlementEditor = (account: SavingsAccount) => {
     setFormError('');
-    setMovementEditor({
+    setSettlementEditor({
       accountId: account.id,
-      type,
-      amount: type === 'settlement' ? formatAssetMoneyInput(account.currentBalance) : '',
-      movementDate: todayInVietnam(),
-      paymentMethodId: automaticDefault(savingsMovementAutomationKey(type)).paymentMethodId,
+      interestAmount: formatAssetMoneyInput(expectedSavingsInterest(account)),
+      settlementDate: todayInVietnam(),
+      paymentMethodId: automaticDefault('savings_settlement').paymentMethodId,
       note: '',
     });
   };
@@ -561,62 +550,88 @@ export function Assets() {
     }
   };
 
-  const saveMovement = async (event: FormEvent<HTMLFormElement>) => {
+  const saveSettlement = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!movementEditor) return;
-    const parsed = savingsMovementInputSchema.safeParse({
-      type: movementEditor.type,
-      amount: Number(inputAmount(movementEditor.amount)),
-      movementDate: movementEditor.movementDate,
-      paymentMethodId: movementEditor.paymentMethodId || null,
-      note: movementEditor.note,
+    if (!settlementEditor) return;
+    const parsed = savingsSettlementInputSchema.safeParse({
+      interestAmount: Number(inputAmount(settlementEditor.interestAmount)),
+      settlementDate: settlementEditor.settlementDate,
+      paymentMethodId: settlementEditor.paymentMethodId || null,
+      note: settlementEditor.note,
     });
     if (!parsed.success) {
-      setFormError(parsed.error.issues[0]?.message || (en ? 'Review the movement form.' : 'Hãy kiểm tra lại thông tin phát sinh.'));
+      setFormError(parsed.error.issues[0]?.message || (en ? 'Review the settlement form.' : 'Hãy kiểm tra lại thông tin tất toán.'));
       return;
     }
-    const account = data?.savingsAccounts.find((item) => item.id === movementEditor.accountId);
+    const account = data?.savingsAccounts.find((item) => item.id === settlementEditor.accountId);
     if (!account) return;
     if (isSupabaseConfigured && !online) {
       setFormError(en ? 'Reconnect before saving.' : 'Hãy kết nối lại trước khi lưu.');
       return;
     }
-    const income = parsed.data.type !== 'fee';
+    const totalReceived = account.currentBalance + parsed.data.interestAmount;
     if (!await askConfirm({
-      title: en ? `${movementLabel(parsed.data.type, true)} and create a transaction?` : `${movementLabel(parsed.data.type, false)} và tự tạo giao dịch?`,
-      description: income
-        ? (en ? `This creates a ${formatVnd(parsed.data.amount)} income transaction.` : `Hệ thống sẽ tạo giao dịch thu nhập ${formatVnd(parsed.data.amount)}.`)
-        : (en ? `This creates a ${formatVnd(parsed.data.amount)} expense transaction.` : `Hệ thống sẽ tạo giao dịch chi ${formatVnd(parsed.data.amount)}.`),
-      confirmLabel: en ? 'Record' : 'Ghi nhận',
+      title: en ? 'Settle the savings book and record the cash received?' : 'Tất toán sổ và ghi nhận tiền nhận về?',
+      description: en
+        ? `This closes the book and creates income transactions for ${formatVnd(account.currentBalance)} principal and ${formatVnd(parsed.data.interestAmount)} interest (${formatVnd(totalReceived)} total).`
+        : `Hệ thống sẽ đóng sổ và tạo giao dịch thu nhập gồm ${formatVnd(account.currentBalance)} tiền gốc và ${formatVnd(parsed.data.interestAmount)} tiền lãi (${formatVnd(totalReceived)} tổng nhận về).`,
+      confirmLabel: en ? 'Settle and record' : 'Tất toán và ghi nhận',
     })) return;
-    setBusy('movement');
+    setBusy('settlement');
     setFormError('');
     try {
       if (isSupabaseConfigured) {
-        await recordSavingsMovement(familyId, movementEditor.accountId, parsed.data);
+        await settleSavingsAccount(familyId, settlementEditor.accountId, parsed.data);
       } else {
-        const movementId = newLocalId('savings-movement');
-        const transaction = makeLocalAssetTransaction({
+        const settlementMovementId = newLocalId('savings-settlement');
+        const settlementTransaction = makeLocalAssetTransaction({
           familyId,
           currentUserId,
-          date: parsed.data.movementDate,
-          transactionType: income ? 'Thu nhập' : 'Chi tiêu',
-          description: `${movementLabel(parsed.data.type, false)}: ${account.bankName} - ${account.name}`,
-          amount: parsed.data.amount,
-          purposeId: automaticDefault(savingsMovementAutomationKey(parsed.data.type)).purposeId,
-          expenseTypeId: automaticDefault(savingsMovementAutomationKey(parsed.data.type)).expenseTypeId,
-          paymentMethodId: automaticDefault(savingsMovementAutomationKey(parsed.data.type)).paymentMethodId,
-          sourceReference: `asset:savings:${account.id}:movement:${movementId}`,
+          date: parsed.data.settlementDate,
+          transactionType: 'Thu nhập',
+          description: `Tất toán tiết kiệm: ${account.bankName} - ${account.name}`,
+          amount: account.currentBalance,
+          purposeId: automaticDefault('savings_settlement').purposeId,
+          expenseTypeId: automaticDefault('savings_settlement').expenseTypeId,
+          paymentMethodId: automaticDefault('savings_settlement').paymentMethodId,
+          sourceReference: `asset:savings:${account.id}:settlement`,
         });
-        recordLocalSavingsMovement(familyId, account.id, parsed.data, transaction.id, movementId);
-        setTransactions((items) => [transaction, ...items]);
+        const interestMovementId = parsed.data.interestAmount > 0 ? newLocalId('savings-settlement-interest') : undefined;
+        const interestTransaction = parsed.data.interestAmount > 0
+          ? makeLocalAssetTransaction({
+              familyId,
+              currentUserId,
+              date: parsed.data.settlementDate,
+              transactionType: 'Thu nhập',
+              description: `Lãi tất toán sổ tiết kiệm: ${account.bankName} - ${account.name}`,
+              amount: parsed.data.interestAmount,
+              purposeId: automaticDefault('savings_interest').purposeId,
+              expenseTypeId: automaticDefault('savings_interest').expenseTypeId,
+              paymentMethodId: automaticDefault('savings_interest').paymentMethodId,
+              sourceReference: `asset:savings:${account.id}:settlement-interest`,
+            })
+          : null;
+        settleLocalSavingsAccount(
+          familyId,
+          account.id,
+          parsed.data,
+          settlementTransaction.id,
+          interestTransaction?.id || null,
+          settlementMovementId,
+          interestMovementId,
+        );
+        setTransactions((items) => [
+          ...(interestTransaction ? [interestTransaction] : []),
+          settlementTransaction,
+          ...items,
+        ]);
       }
       await refreshRelated();
       closeEditors();
-      notify(en ? 'Savings movement recorded.' : 'Đã ghi nhận phát sinh sổ tiết kiệm.');
+      notify(en ? 'Savings book settled and cash recorded.' : 'Đã tất toán sổ và ghi nhận tiền gốc, tiền lãi.');
     } catch (error) {
       reportClientError(error, 'mutation');
-      setFormError(assetError(error, en, en ? 'Could not record the savings movement.' : 'Không thể ghi nhận phát sinh sổ tiết kiệm.'));
+      setFormError(assetError(error, en, en ? 'Could not settle the savings book.' : 'Không thể tất toán sổ tiết kiệm.'));
     } finally {
       setBusy('');
     }
@@ -824,10 +839,10 @@ export function Assets() {
         <div><h3 id="savings-title" className="flex items-center gap-2 text-lg font-extrabold"><Landmark size={19} aria-hidden="true" />{en ? 'Savings books' : 'Sổ tiết kiệm'}</h3><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{en ? 'Opening a book can create an expense transaction automatically.' : 'Khi mở sổ, hệ thống có thể tự tạo giao dịch chi để trừ tiền.'}</p></div>
         {canManage && <button type="button" className="btn-secondary inline-flex items-center gap-2 self-start text-sm" onClick={() => openSavingsEditor()}><Plus size={16} aria-hidden="true" />{en ? 'Add book' : 'Thêm sổ'}</button>}
       </div>
-      {activeSavings.length ? <div className="divide-y divide-black/10 dark:divide-white/10">{activeSavings.map((account) => <SavingsRow key={account.id} account={account} movements={allSavingsMovements.filter((item) => item.savingsAccountId === account.id)} paymentMethods={paymentMethods} canManage={canManage} busy={busy} en={en} language={language} onEdit={() => openSavingsEditor(account)} onAction={(type) => openMovementEditor(account, type)} onArchive={() => void archiveSavings(account)} onDelete={() => void deleteSavings(account)} />)}</div> : <EmptyState title={en ? 'No savings books yet' : 'Chưa có sổ tiết kiệm'} description={en ? 'Add a book to start tracking principal, maturity and actual interest.' : 'Thêm một sổ để theo dõi tiền gốc, đáo hạn và lãi thực tế.'} action={canManage ? <button type="button" className="btn-primary inline-flex items-center gap-2" onClick={() => openSavingsEditor()}><Plus size={16} aria-hidden="true" />{en ? 'Add savings book' : 'Thêm sổ tiết kiệm'}</button> : undefined} />}
+      {activeSavings.length ? <div className="divide-y divide-black/10 dark:divide-white/10">{activeSavings.map((account) => <SavingsRow key={account.id} account={account} movements={allSavingsMovements.filter((item) => item.savingsAccountId === account.id)} paymentMethods={paymentMethods} canManage={canManage} busy={busy} en={en} language={language} onEdit={() => openSavingsEditor(account)} onSettle={() => openSettlementEditor(account)} onArchive={() => void archiveSavings(account)} onDelete={() => void deleteSavings(account)} />)}</div> : <EmptyState title={en ? 'No savings books yet' : 'Chưa có sổ tiết kiệm'} description={en ? 'Add a book to start tracking principal, maturity and actual interest.' : 'Thêm một sổ để theo dõi tiền gốc, đáo hạn và lãi thực tế.'} action={canManage ? <button type="button" className="btn-primary inline-flex items-center gap-2" onClick={() => openSavingsEditor()}><Plus size={16} aria-hidden="true" />{en ? 'Add savings book' : 'Thêm sổ tiết kiệm'}</button> : undefined} />}
     </section>
 
-    {movementEditor && canManage && <SavingsMovementForm editor={movementEditor} setEditor={setMovementEditor} onSubmit={saveMovement} onCancel={closeEditors} paymentMethods={paymentMethods} busy={busy === 'movement'} error={formError} en={en} account={data?.savingsAccounts.find((item) => item.id === movementEditor.accountId)} />}
+    {settlementEditor && canManage && <SavingsSettlementForm editor={settlementEditor} setEditor={setSettlementEditor} onSubmit={saveSettlement} onCancel={closeEditors} paymentMethods={paymentMethods} busy={busy === 'settlement'} error={formError} en={en} account={data?.savingsAccounts.find((item) => item.id === settlementEditor.accountId)} />}
 
     {goldEditor && canManage && <GoldForm editor={goldEditor} setEditor={setGoldEditor} onSubmit={saveGold} onCancel={closeEditors} paymentMethods={paymentMethods} busy={busy === 'gold-save'} error={formError} en={en} hasSales={Boolean(allGoldSales.find((item) => item.goldAssetId === goldEditor.id))} />}
 
@@ -853,7 +868,7 @@ export function Assets() {
     </section>
 
     {saleEditor && canManage && <GoldSaleForm editor={saleEditor} setEditor={setSaleEditor} onSubmit={saveSale} onCancel={closeEditors} paymentMethods={paymentMethods} busy={busy === 'sale'} error={formError} en={en} asset={data?.goldAssets.find((item) => item.id === saleEditor.assetId)} />}
-    {archivedSavings.length > 0 && <details className="card overflow-hidden"><summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 p-4 font-bold [&::-webkit-details-marker]:hidden"><span>{en ? 'Archived savings books' : 'Sổ tiết kiệm đã lưu trữ'} ({archivedSavings.length})</span><ChevronDown size={18} aria-hidden="true" /><span className="sr-only">{en ? 'Open archived savings books' : 'Mở sổ tiết kiệm đã lưu trữ'}</span></summary><div className="divide-y divide-black/10 dark:divide-white/10">{archivedSavings.map((account) => <SavingsRow key={account.id} account={account} movements={allSavingsMovements.filter((item) => item.savingsAccountId === account.id)} paymentMethods={paymentMethods} canManage={canManage} busy={busy} en={en} language={language} onEdit={() => undefined} onAction={() => undefined} onArchive={() => undefined} onDelete={() => void deleteSavings(account)} archived />)}</div></details>}
+    {archivedSavings.length > 0 && <details className="card overflow-hidden"><summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 p-4 font-bold [&::-webkit-details-marker]:hidden"><span>{en ? 'Archived savings books' : 'Sổ tiết kiệm đã lưu trữ'} ({archivedSavings.length})</span><ChevronDown size={18} aria-hidden="true" /><span className="sr-only">{en ? 'Open archived savings books' : 'Mở sổ tiết kiệm đã lưu trữ'}</span></summary><div className="divide-y divide-black/10 dark:divide-white/10">{archivedSavings.map((account) => <SavingsRow key={account.id} account={account} movements={allSavingsMovements.filter((item) => item.savingsAccountId === account.id)} paymentMethods={paymentMethods} canManage={canManage} busy={busy} en={en} language={language} onEdit={() => undefined} onSettle={() => undefined} onArchive={() => undefined} onDelete={() => void deleteSavings(account)} archived />)}</div></details>}
   </div>;
 }
 
@@ -870,7 +885,7 @@ function SavingsRow({
   en,
   language,
   onEdit,
-  onAction,
+  onSettle,
   onArchive,
   onDelete,
   archived = false,
@@ -883,7 +898,7 @@ function SavingsRow({
   en: boolean;
   language: 'vi' | 'en';
   onEdit: () => void;
-  onAction: (type: SavingsMovementInput['type']) => void;
+  onSettle: () => void;
   onArchive: () => void;
   onDelete: () => void;
   archived?: boolean;
@@ -905,7 +920,7 @@ function SavingsRow({
     <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-4"><div className="rounded-xl bg-black/[.025] p-3 dark:bg-white/[.04]"><p className="text-xs text-gray-500">{en ? 'Opened' : 'Ngày mở'}</p><p className="mt-1 font-semibold">{formatDateOnlyVi(account.openedOn)}</p></div><div className={`rounded-xl bg-black/[.025] p-3 dark:bg-white/[.04] ${maturityClass}`}><p className="text-xs">{en ? 'Maturity' : 'Đáo hạn'}</p><p className="mt-1 font-semibold">{formatDateOnlyVi(account.maturityOn)}</p><p className="text-xs">{days < 0 ? (en ? 'Past due' : 'Đã quá hạn') : days === 0 ? (en ? 'Today' : 'Hôm nay') : (en ? `${days} day(s) left` : `Còn ${days} ngày`)}</p></div><div className="rounded-xl bg-black/[.025] p-3 dark:bg-white/[.04]"><p className="text-xs text-gray-500">{en ? 'Interest to date' : 'Lãi đến hiện tại'}</p><p className="mt-1 font-semibold">{formatVnd(expectedInterestToDate)}</p><p className="text-xs text-gray-500">{en ? 'estimated through today' : 'ước tính đến hôm nay'}</p></div><div className="rounded-xl bg-black/[.025] p-3 dark:bg-white/[.04]"><p className="text-xs text-gray-500">{en ? 'Full-term interest' : 'Lãi dự kiến toàn kỳ'}</p><p className="mt-1 font-semibold">{formatVnd(expectedInterestFullTerm)}</p><p className="text-xs text-gray-500">{en ? 'if held until maturity' : 'nếu giữ đến đáo hạn'}</p></div></div>
     {account.note && <p className="mt-3 text-sm text-gray-600 dark:text-gray-300">{account.note}</p>}
     {movements.length > 0 && <details className="mt-3 rounded-xl border border-black/10 dark:border-white/10"><summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 text-sm font-semibold [&::-webkit-details-marker]:hidden"><span>{en ? 'Book history' : 'Lịch sử sổ'} ({movements.length})</span><ChevronDown size={17} aria-hidden="true" /></summary><div className="divide-y divide-black/10 border-t border-black/10 text-sm dark:divide-white/10 dark:border-white/10">{movements.map((movement) => <div key={movement.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2"><span>{movementLabel(movement.movementType, en)} · {formatDateOnlyVi(movement.movementDate)}<span className="ml-2 text-xs text-gray-500">{paymentName(movement.paymentMethodId || '', paymentMethods, language)}</span></span><span className={movement.movementType === 'fee' ? 'font-semibold text-rose-700 dark:text-rose-300' : 'font-semibold text-emerald-700 dark:text-emerald-300'}>{movement.movementType === 'fee' ? '-' : '+'}{formatVnd(movement.amount)}</span></div>)}</div></details>}
-    {canManage && !archived && account.status === 'active' && <div className="mt-4 flex flex-wrap gap-2"><button type="button" className="btn-secondary inline-flex items-center gap-2 text-sm" disabled={Boolean(busy)} onClick={onEdit}><Pencil size={15} aria-hidden="true" />{en ? 'Edit' : 'Sửa'}</button><button type="button" className="btn-secondary text-sm" disabled={Boolean(busy)} onClick={() => onAction('interest')}>{en ? 'Record interest' : 'Ghi lãi'}</button><button type="button" className="btn-secondary text-sm" disabled={Boolean(busy)} onClick={() => onAction('withdrawal')}>{en ? 'Withdraw' : 'Rút tiền'}</button><button type="button" className="btn-secondary text-sm" disabled={Boolean(busy)} onClick={() => onAction('fee')}>{en ? 'Fee' : 'Phí'}</button><button type="button" className="btn-primary text-sm" disabled={Boolean(busy) || account.currentBalance <= 0} onClick={() => onAction('settlement')}>{en ? 'Settle' : 'Tất toán'}</button><button type="button" className="danger-button inline-flex items-center gap-2 px-3 text-sm" disabled={Boolean(busy)} onClick={onDelete}>{busy === account.id ? <LoaderCircle size={15} className="animate-spin" aria-hidden="true" /> : <Trash2 size={15} aria-hidden="true" />}{en ? 'Delete' : 'Xóa'}</button></div>}
+    {canManage && !archived && account.status === 'active' && <div className="mt-4 flex flex-wrap gap-2"><button type="button" className="btn-secondary inline-flex items-center gap-2 text-sm" disabled={Boolean(busy)} onClick={onEdit}><Pencil size={15} aria-hidden="true" />{en ? 'Edit' : 'Sửa'}</button><button type="button" className="btn-primary text-sm" disabled={Boolean(busy) || account.currentBalance <= 0} onClick={onSettle}>{en ? 'Settle' : 'Tất toán'}</button><button type="button" className="danger-button inline-flex items-center gap-2 px-3 text-sm" disabled={Boolean(busy)} onClick={onDelete}>{busy === account.id ? <LoaderCircle size={15} className="animate-spin" aria-hidden="true" /> : <Trash2 size={15} aria-hidden="true" />}{en ? 'Delete' : 'Xóa'}</button></div>}
     {canManage && !archived && account.status === 'closed' && <div className="mt-4 flex flex-wrap gap-2"><button type="button" className="btn-secondary inline-flex items-center gap-2 text-sm" disabled={Boolean(busy)} onClick={onArchive}><Archive size={15} aria-hidden="true" />{en ? 'Archive' : 'Lưu trữ'}</button><button type="button" className="danger-button inline-flex items-center gap-2 px-3 text-sm" disabled={Boolean(busy)} onClick={onDelete}>{busy === account.id ? <LoaderCircle size={15} className="animate-spin" aria-hidden="true" /> : <Trash2 size={15} aria-hidden="true" />}{en ? 'Delete' : 'Xóa'}</button></div>}
     {canManage && archived && <button type="button" className="danger-button mt-4 inline-flex items-center gap-2 px-3 text-sm" disabled={Boolean(busy)} onClick={onDelete}>{busy === account.id ? <LoaderCircle size={15} className="animate-spin" aria-hidden="true" /> : <Trash2 size={15} aria-hidden="true" />}{en ? 'Delete permanently' : 'Xóa vĩnh viễn'}</button>}
   </article>;
@@ -972,8 +987,10 @@ function SavingsForm({ editor, setEditor, onSubmit, onCancel, paymentMethods, bu
   );
 }
 
-function SavingsMovementForm({ editor, setEditor, onSubmit, onCancel, paymentMethods, busy, error, en, account }: { editor: MovementForm; setEditor: (value: MovementForm | null) => void; onSubmit: (event: FormEvent<HTMLFormElement>) => void; onCancel: () => void; paymentMethods: ReturnType<typeof useApp>['paymentMethods']; busy: boolean; error: string; en: boolean; account?: SavingsAccount }) {
-  return <section className="card border-[var(--primary)] p-4 sm:p-5" aria-labelledby="movement-form-title"><div className="flex items-start justify-between gap-3"><div><p className="page-kicker"><ReceiptText size={15} aria-hidden="true" />{en ? 'Savings movement' : 'Phát sinh sổ tiết kiệm'}</p><h3 id="movement-form-title" className="text-lg font-extrabold">{movementLabel(editor.type, en)}{account ? ` · ${account.bankName} - ${account.name}` : ''}</h3></div><button type="button" className="icon-button" onClick={onCancel} aria-label={en ? 'Close movement form' : 'Đóng biểu mẫu phát sinh'}><X size={18} /></button></div><form className="mt-4 grid gap-4 sm:grid-cols-2" onSubmit={onSubmit}><label><span className="label">{en ? 'Amount (VND)' : 'Số tiền (VND)'}</span><input className="field" inputMode="numeric" value={editor.amount} readOnly={editor.type === 'settlement'} onChange={(event) => setEditor({ ...editor, amount: event.target.value })} /><span className="mt-1 block text-xs text-gray-500">{editor.type === 'interest' ? (en ? 'Interest is recorded as income; the savings balance stays unchanged because it is received in cash.' : 'Lãi được ghi là thu nhập; số dư sổ giữ nguyên vì khoản lãi nhận về tiền.') : editor.type === 'settlement' ? (en ? 'Settlement closes the book and must equal its current balance.' : 'Tất toán đóng sổ và phải bằng đúng số dư hiện tại.') : ''}</span></label><PaymentSelect id="movement-payment" value={editor.paymentMethodId} onChange={(value) => setEditor({ ...editor, paymentMethodId: value })} paymentMethods={paymentMethods} en={en} /><label><span className="label">{en ? 'Date' : 'Ngày'}</span><input className="field" type="date" value={editor.movementDate} onChange={(event) => setEditor({ ...editor, movementDate: event.target.value })} /></label><label><span className="label">{en ? 'Note' : 'Ghi chú'}</span><input className="field" value={editor.note} onChange={(event) => setEditor({ ...editor, note: event.target.value })} /></label>{error && <div role="alert" className="inline-feedback inline-feedback-error sm:col-span-2">{error}</div>}<div className="flex flex-wrap justify-end gap-2 sm:col-span-2"><button type="button" className="btn-secondary" onClick={onCancel}>{en ? 'Cancel' : 'Hủy'}</button><button type="submit" className="btn-primary inline-flex items-center gap-2" disabled={busy}>{busy && <LoaderCircle size={16} className="animate-spin" aria-hidden="true" />}{en ? 'Record movement' : 'Ghi nhận'}</button></div></form></section>;
+function SavingsSettlementForm({ editor, setEditor, onSubmit, onCancel, paymentMethods, busy, error, en, account }: { editor: SettlementForm; setEditor: (value: SettlementForm | null) => void; onSubmit: (event: FormEvent<HTMLFormElement>) => void; onCancel: () => void; paymentMethods: ReturnType<typeof useApp>['paymentMethods']; busy: boolean; error: string; en: boolean; account?: SavingsAccount }) {
+  const principal = account?.currentBalance || 0;
+  const interest = Number(inputAmount(editor.interestAmount)) || 0;
+  return <section className="card border-[var(--primary)] p-4 sm:p-5" aria-labelledby="settlement-form-title"><div className="flex items-start justify-between gap-3"><div><p className="page-kicker"><Landmark size={15} aria-hidden="true" />{en ? 'Savings settlement' : 'Tất toán sổ tiết kiệm'}</p><h3 id="settlement-form-title" className="text-lg font-extrabold">{en ? 'Settle and record cash received' : 'Tất toán và ghi nhận tiền nhận về'}{account ? ` · ${account.bankName} - ${account.name}` : ''}</h3></div><button type="button" className="icon-button" onClick={onCancel} aria-label={en ? 'Close settlement form' : 'Đóng biểu mẫu tất toán'}><X size={18} /></button></div><form className="mt-4 grid gap-4 sm:grid-cols-2" onSubmit={onSubmit}><div className="rounded-xl bg-[var(--primary-soft)] p-3"><p className="text-xs text-gray-500 dark:text-gray-400">{en ? 'Principal received' : 'Tiền gốc nhận về'}</p><p className="mt-1 text-lg font-extrabold">{formatVnd(principal)}</p><p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{en ? 'The current savings balance will be closed.' : 'Số dư hiện tại sẽ được đóng sổ.'}</p></div><label><span className="label">{en ? 'Interest received (VND)' : 'Lãi thực nhận (VND)'}</span><input className="field" inputMode="numeric" value={editor.interestAmount} onChange={(event) => setEditor({ ...editor, interestAmount: event.target.value })} /><span className="mt-1 block text-xs text-gray-500">{en ? 'Defaults to the estimated full-term interest; adjust it to match the bank statement.' : 'Mặc định là lãi dự kiến toàn kỳ; hãy sửa theo số tiền ngân hàng thực trả.'}</span></label><PaymentSelect id="settlement-payment" value={editor.paymentMethodId} onChange={(value) => setEditor({ ...editor, paymentMethodId: value })} paymentMethods={paymentMethods} en={en} /><label><span className="label">{en ? 'Settlement date' : 'Ngày tất toán'}</span><input className="field" type="date" value={editor.settlementDate} onChange={(event) => setEditor({ ...editor, settlementDate: event.target.value })} /></label><label><span className="label">{en ? 'Note' : 'Ghi chú'}</span><input className="field" value={editor.note} onChange={(event) => setEditor({ ...editor, note: event.target.value })} /></label><div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/20 dark:text-emerald-200 sm:col-span-2"><p className="text-xs">{en ? 'Total income recorded' : 'Tổng thu nhập sẽ ghi nhận'}</p><p className="mt-1 text-lg font-extrabold">{formatVnd(principal + interest)}</p><p className="mt-1 text-xs">{en ? 'Principal and interest are recorded together, then the book is closed.' : 'Tiền gốc và tiền lãi được ghi nhận cùng lúc, sau đó sổ được đóng.'}</p></div>{error && <div role="alert" className="inline-feedback inline-feedback-error sm:col-span-2">{error}</div>}<div className="flex flex-wrap justify-end gap-2 sm:col-span-2"><button type="button" className="btn-secondary" onClick={onCancel}>{en ? 'Cancel' : 'Hủy'}</button><button type="submit" className="btn-primary inline-flex items-center gap-2" disabled={busy || !account}>{busy && <LoaderCircle size={16} className="animate-spin" aria-hidden="true" />}{en ? 'Settle and record' : 'Tất toán và ghi nhận'}</button></div></form></section>;
 }
 
 function GoldForm({ editor, setEditor, onSubmit, onCancel, paymentMethods, busy, error, en, hasSales }: { editor: GoldForm; setEditor: (value: GoldForm | null) => void; onSubmit: (event: FormEvent<HTMLFormElement>) => void; onCancel: () => void; paymentMethods: ReturnType<typeof useApp>['paymentMethods']; busy: boolean; error: string; en: boolean; hasSales: boolean }) {

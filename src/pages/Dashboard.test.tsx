@@ -180,6 +180,22 @@ describe('Dashboard', () => {
     expect(within(snapshot).getByText(/Lãi đến hiện tại \+2\.975\.342/)).toBeInTheDocument();
     expect(within(snapshot).getByText(/Toàn kỳ \+2\.975\.342/)).toBeInTheDocument();
     expect(within(snapshot).getByText(/Lãi\/lỗ ước tính \+1\.000\.000/)).toBeInTheDocument();
+
+    const savingsToggle = within(snapshot).getByRole('button', { name: 'Mở danh sách sổ tiết kiệm (1)' });
+    const goldToggle = within(snapshot).getByRole('button', { name: 'Mở danh sách vàng (1)' });
+    const savingsList = document.getElementById('dashboard-savings-list');
+    const goldList = document.getElementById('dashboard-gold-list');
+    expect(savingsToggle).toHaveAttribute('aria-expanded', 'false');
+    expect(goldToggle).toHaveAttribute('aria-expanded', 'false');
+    expect(savingsList).toHaveAttribute('hidden');
+    expect(goldList).toHaveAttribute('hidden');
+
+    fireEvent.click(savingsToggle);
+    expect(within(snapshot).getByRole('button', { name: 'Thu gọn danh sách sổ tiết kiệm' })).toHaveAttribute('aria-expanded', 'true');
+    expect(savingsList).not.toHaveAttribute('hidden');
+    fireEvent.click(goldToggle);
+    expect(within(snapshot).getByRole('button', { name: 'Thu gọn danh sách vàng' })).toHaveAttribute('aria-expanded', 'true');
+    expect(goldList).not.toHaveAttribute('hidden');
   });
 
   it('để các phân tích phụ ở trạng thái đóng theo mặc định', () => {

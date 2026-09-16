@@ -1,5 +1,14 @@
 # Nhật ký thay đổi Family Expense
 
+## 2026-09-17
+
+### Thu gọn danh sách tài sản trên Dashboard
+
+- Thêm nút `Xem danh sách`/`Thu gọn` riêng cho danh sách sổ tiết kiệm và vàng trong Asset Snapshot; mặc định đóng để Dashboard không bị kéo dài khi có nhiều dòng.
+- Nút có `aria-expanded`/`aria-controls` và vùng chạm tối thiểu 44px; không đổi schema, API hoặc dữ liệu.
+- Files: `src/pages/Dashboard.tsx`, `src/pages/Dashboard.test.tsx`.
+- Kiểm thử local: Dashboard Vitest 11/11, TypeScript, ESLint các file liên quan và `git diff --check` pass. CI/Cloudflare production sẽ được xác nhận sau khi PR merge.
+
 ## 2026-09-16
 
 ### Triển khai nhãn tài sản và mặc định giao dịch

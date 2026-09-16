@@ -64,6 +64,7 @@ select ok(
 );
 select ok(
   pg_get_functiondef('public.apply_automatic_transaction_defaults()'::regprocedure) ilike '%new.source%asset%'
+  and pg_get_functiondef('public.automatic_transaction_default_key(text)'::regprocedure) ilike '%settlement-interest%'
   and pg_get_functiondef('public.apply_automatic_transaction_defaults()'::regprocedure) ilike '%new.purpose_id%'
   and pg_get_functiondef('public.apply_automatic_transaction_defaults()'::regprocedure) ilike '%new.expense_type_id%'
   and pg_get_functiondef('public.apply_automatic_transaction_defaults()'::regprocedure) ilike '%new.payment_method_id%',
