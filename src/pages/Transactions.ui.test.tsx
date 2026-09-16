@@ -4,13 +4,14 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { FeedbackProvider } from '../components/Feedback';
 import { useApp } from '../context/AppContext';
+import { transactionFilterPreferenceKey } from '../lib/transactionFilterPreferencesApi';
 import { sanitizeAiSearchExplanation, Transactions } from './Transactions';
 
 vi.mock('../context/AppContext', () => ({ useApp: vi.fn() }));
 vi.mock('../lib/supabase', () => ({ isSupabaseConfigured: false, supabase: {} }));
 
 describe('Giao dịch mobile', () => {
-  afterEach(() => { cleanup(); vi.clearAllMocks(); });
+  afterEach(() => { cleanup(); localStorage.clear(); vi.clearAllMocks(); });
 
   it('ẩn ID kỹ thuật khỏi giải thích bộ lọc AI', () => {
     expect(sanitizeAiSearchExplanation("Đã lọc mục 'Tiền lãi' (ID: 0035874c-dfeb-47d2-a5f5-33a2e6071b7d) cho năm 2026.")).toBe("Đã lọc mục 'Tiền lãi' cho năm 2026.");
@@ -84,6 +85,84 @@ describe('Giao dịch mobile', () => {
     expect(screen.getByRole('article', { name: 'Giao dịch Đi chợ' })).toBeInTheDocument();
     expect(screen.queryByRole('article', { name: 'Giao dịch Tiền điện' })).not.toBeInTheDocument();
     expect(screen.queryByRole('article', { name: 'Giao dịch Mua vàng' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('article', { name: 'Giao dịch Lương' })).not.toBeInTheDocument();
+  });
+
+  it('áp dụng bộ lọc cá nhân khi URL không truyền bộ lọc', async () => {
+    localStorage.setItem(transactionFilterPreferenceKey('f1', 'u1'), JSON.stringify({
+      version: 1,
+      enabled: true,
+      transactionType: 'Thu nhập',
+      status: 'Thực tế',
+      period: 'all-time',
+      purposeIds: [],
+      expenseTypeIds: [],
+      paymentMethodIds: [],
+      excludePurposeIds: [],
+      excludeExpenseTypeIds: [],
+      excludePaymentMethodIds: [],
+      amountMin: '',
+      amountMax: '',
+      dateFrom: '',
+      dateTo: '',
+      sort: 'date-desc',
+    }));
+    vi.mocked(useApp).mockReturnValue({
+      transactions: [
+        { id: 'expense', transactionDate: '2026-08-01', transactionType: 'Chi tiêu', status: 'Thực tế', description: 'Tiền điện', amount: 250000, purposeId: 'p1', expenseTypeId: 'e1', paymentMethodId: 'm1', source: 'manual', aiGenerated: false, createdBy: 'u1' },
+        { id: 'income', transactionDate: '2026-08-02', transactionType: 'Thu nhập', status: 'Thực tế', description: 'Lương', amount: 20000000, purposeId: 'p1', expenseTypeId: 'e1', paymentMethodId: 'm1', source: 'manual', aiGenerated: false, createdBy: 'u1' },
+      ],
+      setTransactions: vi.fn(),
+      purposes: [{ id: 'p1', name: 'Sinh hoạt' }],
+      expenseTypes: [{ id: 'e1', name: 'Hóa đơn' }],
+      paymentMethods: [{ id: 'm1', name: 'Chuyển khoản' }],
+      familyId: 'f1',
+      currentUserId: 'u1',
+      currentUserRole: 'owner',
+    } as unknown as ReturnType<typeof useApp>);
+    render(<FeedbackProvider><QueryClientProvider client={new QueryClient()}><MemoryRouter><Transactions/></MemoryRouter></QueryClientProvider></FeedbackProvider>);
+
+    await waitFor(() => expect(screen.getByLabelText('Loại giao dịch')).toHaveValue('Thu nhập'));
+    expect(screen.getByRole('article', { name: 'Giao dịch Lương' })).toBeInTheDocument();
+    expect(screen.queryByRole('article', { name: 'Giao dịch Tiền điện' })).not.toBeInTheDocument();
+  });
+
+  it('ưu tiên bộ lọc được truyền trong URL hơn bộ lọc cá nhân', async () => {
+    localStorage.setItem(transactionFilterPreferenceKey('f1', 'u1'), JSON.stringify({
+      version: 1,
+      enabled: true,
+      transactionType: 'Thu nhập',
+      status: 'Thực tế',
+      period: 'all-time',
+      purposeIds: [],
+      expenseTypeIds: [],
+      paymentMethodIds: [],
+      excludePurposeIds: [],
+      excludeExpenseTypeIds: [],
+      excludePaymentMethodIds: [],
+      amountMin: '',
+      amountMax: '',
+      dateFrom: '',
+      dateTo: '',
+      sort: 'date-desc',
+    }));
+    vi.mocked(useApp).mockReturnValue({
+      transactions: [
+        { id: 'expense', transactionDate: '2026-09-01', transactionType: 'Chi tiêu', status: 'Thực tế', description: 'Tiền điện', amount: 250000, purposeId: 'p1', expenseTypeId: 'e1', paymentMethodId: 'm1', source: 'manual', aiGenerated: false, createdBy: 'u1' },
+        { id: 'income', transactionDate: '2026-09-01', transactionType: 'Thu nhập', status: 'Thực tế', description: 'Lương', amount: 20000000, purposeId: 'p1', expenseTypeId: 'e1', paymentMethodId: 'm1', source: 'manual', aiGenerated: false, createdBy: 'u1' },
+      ],
+      setTransactions: vi.fn(),
+      purposes: [{ id: 'p1', name: 'Sinh hoạt' }],
+      expenseTypes: [{ id: 'e1', name: 'Hóa đơn' }],
+      paymentMethods: [{ id: 'm1', name: 'Chuyển khoản' }],
+      familyId: 'f1',
+      currentUserId: 'u1',
+      currentUserRole: 'owner',
+    } as unknown as ReturnType<typeof useApp>);
+    render(<FeedbackProvider><QueryClientProvider client={new QueryClient()}><MemoryRouter initialEntries={['/giao-dich?month=09&year=2026']}><Transactions/></MemoryRouter></QueryClientProvider></FeedbackProvider>);
+
+    await waitFor(() => expect(screen.getByLabelText('Loại giao dịch')).toHaveValue('Chi tiêu'));
+    expect(screen.getByRole('article', { name: 'Giao dịch Tiền điện' })).toBeInTheDocument();
     expect(screen.queryByRole('article', { name: 'Giao dịch Lương' })).not.toBeInTheDocument();
   });
 
