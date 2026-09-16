@@ -85,8 +85,9 @@ describe('định dạng và quy tắc giao dịch', () => {
       'Thực tế',
     );
   });
-  it('mặc định giao dịch mới bằng thẻ tín dụng là dự kiến', () => {
+  it('mặc định giao dịch mới bằng thẻ tín dụng hoặc trả góp là dự kiến', () => {
     expect(statusForNewTransaction('2026-08-25', '2026-08-26', 'Thẻ tín dụng')).toBe('Dự kiến');
+    expect(statusForNewTransaction('2026-08-25', '2026-08-26', 'Trả góp')).toBe('Dự kiến');
     expect(statusForNewTransaction('2026-08-25', '2026-08-26', 'Chuyển khoản')).toBe('Thực tế');
     expect(statusForNewTransaction('2026-08-27', '2026-08-26', 'Chuyển khoản')).toBe('Dự kiến');
   });
