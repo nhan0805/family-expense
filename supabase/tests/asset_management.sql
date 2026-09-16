@@ -1,6 +1,6 @@
 -- Structural tests for savings-book and gold asset management.
 begin;
-select plan(20);
+select plan(22);
 
 select ok(
   exists(
@@ -77,6 +77,18 @@ select ok(
 select ok(
   exists(select 1 from pg_proc where oid = 'public.seed_family_defaults(uuid)'::regprocedure and prosecdef),
   'family defaults keep security definer behavior'
+);
+select ok(
+  pg_get_functiondef('public.upsert_savings_account(uuid,uuid,text,text,numeric,numeric,integer,date,date,text,uuid,text,boolean)'::regprocedure) ilike '%::public.transaction_status%'
+  and pg_get_functiondef('public.record_savings_movement(uuid,uuid,text,numeric,date,uuid,text,boolean)'::regprocedure) ilike '%::public.transaction_status%'
+  and pg_get_functiondef('public.upsert_gold_asset(uuid,uuid,date,numeric,numeric,numeric,uuid,text,boolean)'::regprocedure) ilike '%::public.transaction_status%'
+  and pg_get_functiondef('public.record_gold_sale(uuid,uuid,date,numeric,numeric,uuid,text)'::regprocedure) ilike '%::public.transaction_status%',
+  'asset transaction RPCs cast enum statuses explicitly'
+);
+select ok(
+  pg_get_functiondef('public.upsert_gold_asset(uuid,uuid,date,numeric,numeric,numeric,uuid,text,boolean)'::regprocedure) ilike '%purpose_id, expense_type_id, payment_method_id, note%'
+  and pg_get_functiondef('public.upsert_gold_asset(uuid,uuid,date,numeric,numeric,numeric,uuid,text,boolean)'::regprocedure) not ilike '%purpose_id, expense_type_id, resolved_payment_method_id, note%',
+  'gold purchase transaction uses the payment_method_id column'
 );
 
 select * from finish();
