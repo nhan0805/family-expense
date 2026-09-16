@@ -1,6 +1,6 @@
 -- Structural tests for savings-book and gold asset management.
 begin;
-select plan(22);
+select plan(27);
 
 select ok(
   exists(
@@ -34,6 +34,44 @@ select ok(
 select ok(
   exists(select 1 from pg_policies where schemaname = 'public' and tablename = 'gold_assets' and policyname = 'gold_assets_select'),
   'gold assets has family-scoped select policy'
+);
+select ok(
+  exists(
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'families'
+      and column_name = 'gold_buyback_price_per_chi'
+  ),
+  'families stores one shared gold buy-back price'
+);
+select ok(
+  (select count(*)
+   from pg_policies
+   where schemaname = 'public'
+     and ((tablename = 'savings_accounts' and policyname = 'savings_accounts_select')
+       or (tablename = 'gold_assets' and policyname = 'gold_assets_select'))
+     and qual ilike '%is_family_member%'
+     and qual not ilike '%is_family_owner%') = 2,
+  'asset rows are visible to all active family members'
+);
+select has_function('public', 'set_gold_buyback_price', array['uuid','numeric'], 'shared gold price RPC exists');
+select ok(
+  exists(select 1 from pg_trigger where tgname = 'savings_accounts_calculate_maturity'),
+  'savings maturity is calculated by a database trigger'
+);
+select ok(
+  (select count(*) from pg_proc where oid in (
+    'public.upsert_savings_account(uuid,uuid,text,text,numeric,numeric,integer,date,date,text,uuid,text,boolean)'::regprocedure,
+    'public.record_savings_movement(uuid,uuid,text,numeric,date,uuid,text,boolean)'::regprocedure,
+    'public.archive_savings_account(uuid,uuid)'::regprocedure,
+    'public.upsert_gold_asset(uuid,uuid,date,numeric,numeric,numeric,uuid,text,boolean)'::regprocedure,
+    'public.record_gold_sale(uuid,uuid,date,numeric,numeric,uuid,text)'::regprocedure,
+    'public.archive_gold_asset(uuid,uuid)'::regprocedure
+  )
+  and pg_get_functiondef(oid) ilike '%public.is_family_member(%'
+  and pg_get_functiondef(oid) not ilike '%public.is_family_owner(%') = 6,
+  'asset mutation RPCs allow all active family members'
 );
 
 select has_function('public', 'upsert_savings_account', array['uuid','uuid','text','text','numeric','numeric','integer','date','date','text','uuid','text','boolean'], 'savings upsert RPC exists');

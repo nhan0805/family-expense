@@ -1,20 +1,43 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   buildLocalAssetSummary,
+  canManageAssets,
+  calculateSavingsMaturityDate,
   expectedSavingsInterest,
+  formatAssetMoneyInput,
   goldEstimatedValue,
   goldPurchaseAmount,
   goldAssetInputSchema,
+  getLocalAssetData,
   recordLocalSavingsMovement,
   recordLocalGoldSale,
   savingsAccountInputSchema,
   savingsMovementInputSchema,
   upsertLocalGoldAsset,
   upsertLocalSavingsAccount,
+  setLocalGoldBuybackPrice,
 } from './assets';
 
 describe('asset domain', () => {
   beforeEach(() => window.localStorage.clear());
+
+  it('formats asset money inputs with Vietnamese thousand separators', () => {
+    expect(formatAssetMoneyInput('5000000')).toBe('5.000.000');
+    expect(formatAssetMoneyInput('5.000.000')).toBe('5.000.000');
+    expect(formatAssetMoneyInput('')).toBe('');
+  });
+
+  it('allows both owners and members to manage assets', () => {
+    expect(canManageAssets('owner')).toBe(true);
+    expect(canManageAssets('member')).toBe(true);
+    expect(canManageAssets(null)).toBe(false);
+  });
+
+  it('calculates maturity from opening date and term, including month-end dates', () => {
+    expect(calculateSavingsMaturityDate('2026-07-26', 6)).toBe('2027-01-26');
+    expect(calculateSavingsMaturityDate('2026-01-31', 1)).toBe('2026-02-28');
+    expect(calculateSavingsMaturityDate('', 6)).toBe('');
+  });
 
   it('calculates savings interest and days-independent gold amount deterministically', () => {
     const account = {
@@ -46,6 +69,31 @@ describe('asset domain', () => {
     expect(saved.asset.remainingQuantityChi).toBe(1.5);
     expect(goldEstimatedValue(saved.asset)).toBe(12_000_000);
     expect(saved.sale.amount).toBe(4_000_000);
+  });
+
+  it('applies one shared buy-back price to every local gold lot', () => {
+    const first = goldAssetInputSchema.parse({
+      purchaseDate: '2026-01-01',
+      quantityChi: 1,
+      purchasePricePerChi: 7_500_000,
+      estimatedSellPricePerChi: 8_000_000,
+    });
+    const second = goldAssetInputSchema.parse({
+      purchaseDate: '2026-02-01',
+      quantityChi: 2,
+      purchasePricePerChi: 8_000_000,
+      estimatedSellPricePerChi: 9_000_000,
+    });
+    upsertLocalGoldAsset('family-a', first, 'gold-1', null);
+    upsertLocalGoldAsset('family-a', second, 'gold-2', null);
+
+    setLocalGoldBuybackPrice('family-a', 10_000_000);
+    const shared = getLocalAssetData('family-a');
+    expect(shared.goldBuybackPricePerChi).toBe(10_000_000);
+    expect(shared.goldAssets.map((asset) => asset.estimatedSellPricePerChi)).toEqual([10_000_000, 10_000_000]);
+
+    setLocalGoldBuybackPrice('family-a', null);
+    expect(getLocalAssetData('family-a').goldAssets.every((asset) => asset.estimatedSellPricePerChi === null)).toBe(true);
   });
 
   it('tracks savings movements and net cash from actual transactions', () => {
@@ -120,4 +168,3 @@ function goldAssetInputToSale(input: {
     note: '',
   };
 }
-

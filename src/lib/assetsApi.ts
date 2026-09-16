@@ -118,14 +118,16 @@ const mapSavingsMovement = (row: SavingsMovementRow): SavingsMovement => ({
   createdAt: row.created_at,
 });
 
-const mapGoldAsset = (row: GoldAssetRow): GoldAsset => ({
+const mapGoldAsset = (row: GoldAssetRow, goldBuybackPricePerChi?: number | null): GoldAsset => ({
   id: row.id,
   familyId: row.family_id,
   purchaseDate: row.purchase_date,
   quantityChi: Number(row.quantity_chi),
   remainingQuantityChi: Number(row.remaining_quantity_chi),
   purchasePricePerChi: Number(row.purchase_price_per_chi),
-  estimatedSellPricePerChi: row.estimated_sell_price_per_chi === null ? null : Number(row.estimated_sell_price_per_chi),
+  estimatedSellPricePerChi: goldBuybackPricePerChi === undefined
+    ? row.estimated_sell_price_per_chi === null ? null : Number(row.estimated_sell_price_per_chi)
+    : goldBuybackPricePerChi,
   status: row.status,
   transactionId: row.transaction_id,
   note: row.note,
@@ -151,19 +153,24 @@ const mapGoldSale = (row: GoldSaleRow): GoldSale => ({
 });
 
 export async function fetchAssetData(familyId: string): Promise<AssetData> {
-  const [savingsResult, movementsResult, goldResult, salesResult] = await Promise.all([
+  const [savingsResult, movementsResult, goldResult, salesResult, familyResult] = await Promise.all([
     supabase.from('savings_accounts').select('*').eq('family_id', familyId).order('maturity_on', { ascending: true }),
     supabase.from('savings_movements').select('*').eq('family_id', familyId).order('movement_date', { ascending: false }),
     supabase.from('gold_assets').select('*').eq('family_id', familyId).order('purchase_date', { ascending: false }),
     supabase.from('gold_sales').select('*').eq('family_id', familyId).order('sale_date', { ascending: false }),
+    supabase.from('families').select('gold_buyback_price_per_chi').eq('id', familyId).maybeSingle(),
   ]);
-  const error = savingsResult.error || movementsResult.error || goldResult.error || salesResult.error;
+  const error = savingsResult.error || movementsResult.error || goldResult.error || salesResult.error || familyResult.error;
   if (error) throw error;
+  const goldBuybackPricePerChi = familyResult.data?.gold_buyback_price_per_chi === null || familyResult.data?.gold_buyback_price_per_chi === undefined
+    ? null
+    : Number(familyResult.data.gold_buyback_price_per_chi);
   return {
     savingsAccounts: ((savingsResult.data || []) as SavingsAccountRow[]).map(mapSavingsAccount),
     savingsMovements: ((movementsResult.data || []) as SavingsMovementRow[]).map(mapSavingsMovement),
-    goldAssets: ((goldResult.data || []) as GoldAssetRow[]).map(mapGoldAsset),
+    goldAssets: ((goldResult.data || []) as GoldAssetRow[]).map((row) => mapGoldAsset(row, goldBuybackPricePerChi)),
     goldSales: ((salesResult.data || []) as GoldSaleRow[]).map(mapGoldSale),
+    goldBuybackPricePerChi,
   };
 }
 
@@ -268,15 +275,28 @@ export async function archiveGoldAsset(familyId: string, id: string) {
   return data;
 }
 
+export async function setGoldBuybackPrice(familyId: string, pricePerChi: number | null) {
+  const { data, error } = await supabase.rpc('set_gold_buyback_price', {
+    p_family_id: familyId,
+    p_price_per_chi: pricePerChi,
+  });
+  if (error) throw error;
+  return data;
+}
+
 export async function fetchAssetSummary(familyId: string): Promise<AssetSummary> {
   const { data, error } = await supabase.rpc('get_asset_summary', {
     p_family_id: familyId,
   });
   if (error) throw error;
-  const result = (data || {}) as Partial<AssetSummary> & {
+  const result = (data || {}) as Omit<Partial<AssetSummary>, 'savings' | 'gold' | 'goldBuybackPricePerChi'> & {
     savings?: SavingsAccountRow[];
     gold?: GoldAssetRow[];
+    goldBuybackPricePerChi?: number | string | null;
   };
+  const goldBuybackPricePerChi = result.goldBuybackPricePerChi === null || result.goldBuybackPricePerChi === undefined
+    ? null
+    : Number(result.goldBuybackPricePerChi);
   return {
     netCash: Number(result.netCash || 0),
     savingsTotal: Number(result.savingsTotal || 0),
@@ -287,6 +307,7 @@ export async function fetchAssetSummary(familyId: string): Promise<AssetSummary>
     goldCount: Number(result.goldCount || 0),
     goldMissingEstimateCount: Number(result.goldMissingEstimateCount || 0),
     savings: (result.savings || []).map(mapSavingsAccount),
-    gold: (result.gold || []).map(mapGoldAsset),
+    gold: (result.gold || []).map((row) => mapGoldAsset(row, goldBuybackPricePerChi)),
+    goldBuybackPricePerChi,
   };
 }

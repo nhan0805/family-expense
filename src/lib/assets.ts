@@ -72,6 +72,8 @@ export const goldSaleInputSchema = z.object({
 });
 export type GoldSaleInput = z.infer<typeof goldSaleInputSchema>;
 
+export const goldBuybackPriceInputSchema = z.number().finite().int().positive().max(999_999_999_999).nullable();
+
 export type SavingsAccount = {
   id: string;
   familyId: string;
@@ -146,6 +148,7 @@ export type AssetData = {
   savingsMovements: SavingsMovement[];
   goldAssets: GoldAsset[];
   goldSales: GoldSale[];
+  goldBuybackPricePerChi: number | null;
 };
 
 export type AssetSummary = {
@@ -157,8 +160,26 @@ export type AssetSummary = {
   savingsCount: number;
   goldCount: number;
   goldMissingEstimateCount: number;
+  goldBuybackPricePerChi: number | null;
   savings: SavingsAccount[];
   gold: GoldAsset[];
+};
+
+export const canManageAssets = (role: 'owner' | 'member' | null | undefined) =>
+  role === 'owner' || role === 'member';
+
+export const formatAssetMoneyInput = (value: string | number) => {
+  const digits = String(value).replace(/\D/g, '').replace(/^0+(?=\d)/, '');
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+};
+
+export const calculateSavingsMaturityDate = (openedOn: string, termMonths: number) => {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(openedOn);
+  if (!match || !Number.isInteger(termMonths) || termMonths <= 0) return '';
+  const date = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1 + termMonths, 1));
+  const lastDay = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0)).getUTCDate();
+  date.setUTCDate(Math.min(Number(match[3]), lastDay));
+  return date.toISOString().slice(0, 10);
 };
 
 const localStorageKey = (familyId: string, kind: string) =>
@@ -176,6 +197,21 @@ const readStored = <T>(key: string, isItem: (value: unknown) => value is T) => {
     return Array.isArray(raw) ? raw.filter(isItem) : [];
   } catch {
     return [] as T[];
+  }
+};
+
+const readStoredNumber = (key: string): { configured: boolean; value: number | null } => {
+  if (typeof window === 'undefined') return { configured: false, value: null };
+  const raw = window.localStorage.getItem(key);
+  if (raw === null) return { configured: false, value: null };
+  try {
+    const value = JSON.parse(raw) as unknown;
+    return {
+      configured: true,
+      value: typeof value === 'number' && Number.isFinite(value) && Number.isInteger(value) && value > 0 ? value : null,
+    };
+  } catch {
+    return { configured: true, value: null };
   }
 };
 
@@ -245,12 +281,22 @@ const saveStored = <T>(key: string, values: T[]) => {
 };
 
 export function getLocalAssetData(familyId: string): AssetData {
+  const storedGoldAssets = readStored(localStorageKey(familyId, 'gold-assets'), isGoldAsset);
+  const storedPrice = readStoredNumber(localStorageKey(familyId, 'gold-buyback-price'));
+  const legacyPrice = storedGoldAssets.find((item) => item.estimatedSellPricePerChi !== null)?.estimatedSellPricePerChi ?? null;
+  const goldBuybackPricePerChi = storedPrice.configured ? storedPrice.value : legacyPrice;
   return {
     savingsAccounts: readStored(localStorageKey(familyId, 'savings-accounts'), isSavingsAccount),
     savingsMovements: readStored(localStorageKey(familyId, 'savings-movements'), isSavingsMovement),
-    goldAssets: readStored(localStorageKey(familyId, 'gold-assets'), isGoldAsset),
+    goldAssets: storedGoldAssets.map((asset) => ({ ...asset, estimatedSellPricePerChi: goldBuybackPricePerChi })),
     goldSales: readStored(localStorageKey(familyId, 'gold-sales'), isGoldSale),
+    goldBuybackPricePerChi,
   };
+}
+
+export function setLocalGoldBuybackPrice(familyId: string, pricePerChi: number | null) {
+  if (typeof window !== 'undefined')
+    window.localStorage.setItem(localStorageKey(familyId, 'gold-buyback-price'), JSON.stringify(pricePerChi));
 }
 
 const dateToDay = (value: string) => {
@@ -538,6 +584,7 @@ export function buildLocalAssetSummary(familyId: string, transactions: Transacti
     savingsCount: savings.length,
     goldCount: gold.length,
     goldMissingEstimateCount: gold.filter((item) => item.estimatedSellPricePerChi === null).length,
+    goldBuybackPricePerChi: data.goldBuybackPricePerChi,
     savings,
     gold,
   };
