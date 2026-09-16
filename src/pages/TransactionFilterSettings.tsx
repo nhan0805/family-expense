@@ -46,7 +46,7 @@ const optionNames = (
   .filter((option) => ids.includes(option.id))
   .map((option) => language === 'en' ? option.nameEn || option.name : option.name);
 
-export function TransactionFilterSettings() {
+export function TransactionFilterSettings({ embedded = false }: { embedded?: boolean } = {}) {
   const { language } = useOptionalLanguage();
   const en = language === 'en';
   const { notify, askConfirm } = useFeedback();
@@ -203,7 +203,7 @@ export function TransactionFilterSettings() {
 
   return (
     <div className="transaction-filter-settings-page flex flex-col gap-5">
-      <div className="page-header flex flex-wrap items-start justify-between gap-3">
+      {!embedded && <div className="page-header flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="page-kicker"><Settings2 size={16} aria-hidden="true" />{en ? 'Personal preferences' : 'Tùy chọn cá nhân'}</p>
           <h2 className="page-title">{en ? 'Default transaction filters' : 'Bộ lọc giao dịch mặc định'}</h2>
@@ -213,7 +213,7 @@ export function TransactionFilterSettings() {
           <ChevronLeft size={17} aria-hidden="true" />
           {en ? 'Back to transactions' : 'Quay lại giao dịch'}
         </Link>
-      </div>
+      </div>}
 
       {preferenceQuery.error && (
         <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-950/30 dark:text-amber-100">

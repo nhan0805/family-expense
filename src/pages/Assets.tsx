@@ -39,6 +39,14 @@ import {
   upsertSavingsAccount,
 } from '../lib/assetsApi';
 import {
+  fetchAutomaticTransactionDefaults,
+} from '../lib/automaticTransactionDefaultsApi';
+import {
+  createSystemAutomaticTransactionDefaults,
+  sanitizeAutomaticTransactionDefaults,
+  type AutomaticTransactionKey,
+} from '../lib/automaticTransactionDefaults';
+import {
   buildLocalAssetSummary,
   canManageAssets,
   calculateSavingsMaturityDate,
@@ -243,6 +251,25 @@ export function Assets() {
     retry: false,
     staleTime: 30_000,
   });
+  const catalogs = useMemo(() => ({ purposes, expenseTypes, paymentMethods }), [expenseTypes, paymentMethods, purposes]);
+  const systemAutomaticDefaults = useMemo(() => createSystemAutomaticTransactionDefaults(catalogs), [catalogs]);
+  const automaticDefaultsQuery = useQuery({
+    queryKey: ['automatic-transaction-defaults', familyId],
+    queryFn: () => fetchAutomaticTransactionDefaults(familyId),
+    enabled: Boolean(familyId),
+    retry: false,
+    staleTime: 30_000,
+  });
+  const automaticDefaults = useMemo(
+    () => automaticDefaultsQuery.data?.length
+      ? sanitizeAutomaticTransactionDefaults(automaticDefaultsQuery.data, catalogs)
+      : systemAutomaticDefaults,
+    [automaticDefaultsQuery.data, catalogs, systemAutomaticDefaults],
+  );
+  const automaticDefault = (automationKey: AutomaticTransactionKey) =>
+    automaticDefaults.find((item) => item.automationKey === automationKey)
+    || systemAutomaticDefaults.find((item) => item.automationKey === automationKey)
+    || { automationKey, purposeId: '', expenseTypeId: '', paymentMethodId: '' };
   const data = isSupabaseConfigured
     ? assetQuery.data
     : getLocalAssetData(familyId);
@@ -252,25 +279,6 @@ export function Assets() {
     if (goldBuybackPricePerChi === undefined) return;
     setGoldBuybackPriceInput(goldBuybackPricePerChi === null ? '' : formatAssetMoneyInput(goldBuybackPricePerChi));
   }, [goldBuybackPricePerChi]);
-
-  const defaultPaymentMethodId =
-    paymentMethods.find((item) => item.name === 'Chuyển khoản')?.id ||
-    paymentMethods[0]?.id ||
-    '';
-  const cashPaymentMethodId =
-    paymentMethods.find((item) => item.name === 'Tiền mặt')?.id ||
-    defaultPaymentMethodId;
-  const investmentPurposeId =
-    purposes.find((item) => item.name === 'Đầu tư')?.id || purposes[0]?.id || '';
-  const goldExpenseTypeId =
-    expenseTypes.find((item) => item.name === 'Đầu tư vàng')?.id ||
-    expenseTypes[0]?.id ||
-    '';
-  const savingsExpenseTypeId = (name: string) =>
-    expenseTypes.find((item) => item.name === name)?.id ||
-    expenseTypes.find((item) => item.name === 'Khác')?.id ||
-    expenseTypes[0]?.id ||
-    '';
 
   const activeSavings = (data?.savingsAccounts || []).filter((item) => item.status !== 'archived');
   const activeGold = (data?.goldAssets || []).filter((item) => item.status === 'active');
@@ -351,7 +359,7 @@ export function Assets() {
           openedOn: item.openedOn,
           maturityOn: calculatedMaturityDate(item.openedOn, String(item.termMonths)),
           interestMethod: item.interestMethod,
-          paymentMethodId: defaultPaymentMethodId,
+          paymentMethodId: automaticDefault('savings_opening').paymentMethodId,
           note: item.note || '',
           createTransaction: false,
         }
@@ -364,7 +372,7 @@ export function Assets() {
           openedOn: today,
           maturityOn: calculateSavingsMaturityDate(today, 6),
           interestMethod: 'end_of_term',
-          paymentMethodId: defaultPaymentMethodId,
+          paymentMethodId: automaticDefault('savings_opening').paymentMethodId,
           note: '',
           createTransaction: true,
         });
@@ -378,7 +386,7 @@ export function Assets() {
           purchaseDate: item.purchaseDate,
           quantityChi: String(item.quantityChi),
           purchasePricePerChi: formatAssetMoneyInput(item.purchasePricePerChi),
-          paymentMethodId: defaultPaymentMethodId,
+          paymentMethodId: automaticDefault('gold_purchase').paymentMethodId,
           note: item.note || '',
           createTransaction: false,
         }
@@ -386,7 +394,7 @@ export function Assets() {
           purchaseDate: todayInVietnam(),
           quantityChi: '',
           purchasePricePerChi: '',
-          paymentMethodId: defaultPaymentMethodId,
+          paymentMethodId: automaticDefault('gold_purchase').paymentMethodId,
           note: '',
           createTransaction: true,
         });
@@ -398,7 +406,7 @@ export function Assets() {
       accountId: account.id,
       interestAmount: formatAssetMoneyInput(expectedSavingsInterest(account)),
       settlementDate: todayInVietnam(),
-      paymentMethodId: cashPaymentMethodId,
+      paymentMethodId: automaticDefault('savings_settlement').paymentMethodId,
       note: '',
     });
   };
@@ -412,7 +420,7 @@ export function Assets() {
       salePricePerChi: asset.estimatedSellPricePerChi === null
         ? formatAssetMoneyInput(asset.purchasePricePerChi)
         : formatAssetMoneyInput(asset.estimatedSellPricePerChi),
-      paymentMethodId: cashPaymentMethodId,
+      paymentMethodId: automaticDefault('gold_sale').paymentMethodId,
       note: '',
     });
   };
@@ -461,9 +469,9 @@ export function Assets() {
               transactionType: 'Chi tiêu',
               description: `Gửi tiết kiệm: ${parsed.data.bankName} - ${parsed.data.name}`,
               amount: parsed.data.principal,
-              purposeId: investmentPurposeId,
-              expenseTypeId: savingsExpenseTypeId('Gửi tiết kiệm'),
-              paymentMethodId: parsed.data.paymentMethodId || defaultPaymentMethodId,
+              purposeId: automaticDefault('savings_opening').purposeId,
+              expenseTypeId: automaticDefault('savings_opening').expenseTypeId,
+              paymentMethodId: automaticDefault('savings_opening').paymentMethodId,
               sourceReference: `asset:savings:${accountId}:opening`,
             })
           : null;
@@ -522,9 +530,9 @@ export function Assets() {
               transactionType: 'Chi tiêu',
               description: `Mua vàng: ${formatQuantity(parsed.data.quantityChi)} chỉ`,
               amount,
-              purposeId: investmentPurposeId,
-              expenseTypeId: goldExpenseTypeId,
-              paymentMethodId: parsed.data.paymentMethodId || defaultPaymentMethodId,
+              purposeId: automaticDefault('gold_purchase').purposeId,
+              expenseTypeId: automaticDefault('gold_purchase').expenseTypeId,
+              paymentMethodId: automaticDefault('gold_purchase').paymentMethodId,
               sourceReference: `asset:gold:${assetId}:purchase`,
             })
           : null;
@@ -583,9 +591,9 @@ export function Assets() {
           transactionType: 'Thu nhập',
           description: `Tất toán tiết kiệm: ${account.bankName} - ${account.name}`,
           amount: account.currentBalance,
-          purposeId: investmentPurposeId,
-          expenseTypeId: savingsExpenseTypeId('Tất toán tiết kiệm'),
-          paymentMethodId: parsed.data.paymentMethodId || cashPaymentMethodId,
+          purposeId: automaticDefault('savings_settlement').purposeId,
+          expenseTypeId: automaticDefault('savings_settlement').expenseTypeId,
+          paymentMethodId: automaticDefault('savings_settlement').paymentMethodId,
           sourceReference: `asset:savings:${account.id}:settlement`,
         });
         const interestMovementId = parsed.data.interestAmount > 0 ? newLocalId('savings-settlement-interest') : undefined;
@@ -597,9 +605,9 @@ export function Assets() {
               transactionType: 'Thu nhập',
               description: `Lãi tất toán sổ tiết kiệm: ${account.bankName} - ${account.name}`,
               amount: parsed.data.interestAmount,
-              purposeId: investmentPurposeId,
-              expenseTypeId: savingsExpenseTypeId('Lãi tiền gửi'),
-              paymentMethodId: parsed.data.paymentMethodId || cashPaymentMethodId,
+              purposeId: automaticDefault('savings_interest').purposeId,
+              expenseTypeId: automaticDefault('savings_interest').expenseTypeId,
+              paymentMethodId: automaticDefault('savings_interest').paymentMethodId,
               sourceReference: `asset:savings:${account.id}:settlement-interest`,
             })
           : null;
@@ -669,9 +677,9 @@ export function Assets() {
           transactionType: 'Thu nhập',
           description: `Bán vàng: ${formatQuantity(parsed.data.quantityChi)} chỉ`,
           amount,
-          purposeId: investmentPurposeId,
-          expenseTypeId: goldExpenseTypeId,
-          paymentMethodId: parsed.data.paymentMethodId || cashPaymentMethodId,
+          purposeId: automaticDefault('gold_sale').purposeId,
+          expenseTypeId: automaticDefault('gold_sale').expenseTypeId,
+          paymentMethodId: automaticDefault('gold_sale').paymentMethodId,
           sourceReference: `asset:gold:${asset.id}:sale:${saleId}`,
         });
         recordLocalGoldSale(familyId, asset.id, parsed.data, transaction.id, saleId);
