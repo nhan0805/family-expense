@@ -423,6 +423,11 @@ export function Transactions() {
   }, [query]);
   useEffect(() => {
     if (!filtersInitialized) return;
+    // A filter initialization can finish in the same tick that the user
+    // navigates to another page (for example, the add-transaction form).
+    // Do not let a stale search-param update take the browser back to this
+    // list after that navigation has already started.
+    if (window.location.pathname !== '/giao-dich') return;
     const params = new URLSearchParams();
     if (debouncedQuery) params.set('query', debouncedQuery);
     if (transactionType) params.set('transactionType', transactionType);
