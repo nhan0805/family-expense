@@ -187,7 +187,10 @@ describe('Tài sản', () => {
 
     expect(screen.getByText('Số vàng hiện có')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Bán vàng' }));
-    await screen.findByRole('heading', { name: 'Bán theo tổng số vàng hiện có' });
+    const saleHeading = await screen.findByRole('heading', { name: 'Bán theo tổng số vàng hiện có' });
+    const saleForm = saleHeading.closest('section');
+    const goldSection = screen.getByRole('region', { name: 'Vàng' });
+    expect(saleForm?.nextElementSibling).toBe(goldSection);
     fireEvent.change(screen.getByLabelText('Số lượng (chỉ)', { exact: false }), { target: { value: '1.5' } });
     fireEvent.change(screen.getByLabelText('Giá bán / chỉ (VND)', { exact: false }), { target: { value: '9000000' } });
     fireEvent.click(screen.getByRole('button', { name: 'Bán và ghi thu nhập' }));
@@ -231,6 +234,15 @@ describe('Tài sản', () => {
     expect(within(goldPanel).getByText('1 / 1 chỉ')).toBeInTheDocument();
   });
 
+  it('phân biệt màu nút thêm sổ và thêm vàng theo loại tài sản', () => {
+    renderAssets([]);
+
+    const header = screen.getByRole('heading', { name: 'Tài sản' }).closest('header');
+    expect(header).not.toBeNull();
+    expect(within(header!).getByRole('button', { name: 'Thêm sổ' })).toHaveClass('asset-add-button', 'asset-add-savings');
+    expect(within(header!).getByRole('button', { name: 'Thêm vàng' })).toHaveClass('asset-add-button', 'asset-add-gold');
+  });
+
   it('căn đều hai nút thao tác vàng', () => {
     localStorage.setItem(`family-expense:gold-assets:${familyId}`, JSON.stringify([goldAsset]));
     renderAssets([]);
@@ -263,7 +275,11 @@ describe('Tài sản', () => {
     const savingsArticle = screen.getByText('ACB · Sổ cần xóa').closest('article')!;
 
     expect(savingsArticle).toHaveClass('p-3', 'sm:p-4');
-    expect(savingsArticle.querySelectorAll('.asset-stat-card')).toHaveLength(4);
+    expect(savingsArticle.querySelectorAll('.asset-stat-card')).toHaveLength(3);
+    const interestProgress = within(savingsArticle).getByRole('progressbar', { name: 'Tiến độ lãi ACB · Sổ cần xóa' });
+    expect(interestProgress).toHaveAttribute('aria-valuemin', '0');
+    expect(interestProgress).toHaveAttribute('aria-valuemax', '100');
+    expect(interestProgress).toHaveAttribute('aria-valuenow', '100');
     expect(within(savingsArticle).queryByText(/Lịch sử sổ/)).not.toBeInTheDocument();
     const savingsActions = within(savingsArticle).getByRole('group', { name: 'Thao tác sổ tiết kiệm' });
     expect(savingsActions.parentElement).toHaveClass('asset-stat-row', 'grid-cols-2');

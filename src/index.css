@@ -521,6 +521,58 @@ body {
   opacity: .55;
 }
 
+.asset-add-button {
+  box-shadow: none;
+}
+
+.asset-add-savings {
+  border-color: #34d399;
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.asset-add-savings:hover:not(:disabled) {
+  border-color: #059669;
+  background: #a7f3d0;
+  color: #064e3b;
+}
+
+.asset-add-gold {
+  border-color: #f59e0b;
+  background: #fef3c7;
+  color: #78350f;
+}
+
+.asset-add-gold:hover:not(:disabled) {
+  border-color: #d97706;
+  background: #fde68a;
+  color: #451a03;
+}
+
+.dark .asset-add-savings {
+  border-color: #50fa7b;
+  background: #174c34;
+  color: #d1fae5;
+}
+
+.dark .asset-add-savings:hover:not(:disabled) {
+  border-color: #86efac;
+  background: #1f6445;
+  color: #ecfdf5;
+}
+
+.dark .asset-add-gold {
+  border-color: #ffb86c;
+  background: #4d3826;
+  color: #ffedb5;
+}
+
+.dark .asset-add-gold:hover:not(:disabled) {
+  border-color: #fbbf24;
+  background: #694a25;
+  color: #fff7d6;
+}
+
 .recurring-toolbar-button {
   min-height: 2.5rem;
   padding: .55rem .7rem;
