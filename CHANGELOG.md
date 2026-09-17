@@ -2,6 +2,14 @@
 
 ## 2026-09-17
 
+### Sửa lỗi không tạo được lô vàng khi catalog chưa sẵn sàng
+
+- Nguyên nhân: RPC mua vàng vẫn tự tìm catalog gốc và kiểm tra catalog ngay cả khi người dùng tắt tùy chọn tự tạo giao dịch; phần mapping giao dịch tự động đã có nhưng chưa được áp dụng đầy đủ cho nhánh này.
+- Migration `202609170006_gold_asset_save_recovery.sql` khôi phục các catalog mặc định cần thiết cho gia đình cũ, bổ sung mapping còn thiếu và tách việc lưu lô vàng khỏi yêu cầu catalog khi không tạo giao dịch liên kết.
+- Thông báo lỗi được sửa để nói đúng là có thể chỉ lưu tài sản; thêm regression test cho luồng Supabase lưu lô vàng không kèm giao dịch.
+- Kiểm thử: local Vitest 48 file/221 test, TypeScript, ESLint, Vite build và `git diff --check` pass; CI main [run 35203445103](https://github.com/nhan0805/family-expense/actions/runs/35203445103) pass quality, E2E, db-security và performance budget.
+- Deployment: PR [#181](https://github.com/nhan0805/family-expense/pull/181) đã merge vào `main` với commit `33355e31d55ae6e9ef21d46f59bb7c8e06ad6297`; Supabase Production Deploy [run 35203445107](https://github.com/nhan0805/family-expense/actions/runs/35203445107) pass; [Cloudflare Pages production](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/7402dc21-541f-4f31-88eb-de90d6aa0ec4) pass; smoke `https://family-expense-8fo.pages.dev/` trả HTTP 200 và bundle live chứa recovery copy mới.
+
 ### Thu gọn trải nghiệm Tài sản và Cài đặt
 
 - Các PR [#170](https://github.com/nhan0805/family-expense/pull/170)–[#179](https://github.com/nhan0805/family-expense/pull/179) đã hoàn tất chuỗi follow-up cho Tài sản và Cài đặt: bán vàng từ tổng số đang giữ, dọn cấu hình giao dịch tự động cũ, khôi phục Dracula dark mode, tách hai màn hình thành tab và thu gọn các dòng tài sản.
