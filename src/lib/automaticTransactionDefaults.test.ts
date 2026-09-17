@@ -24,12 +24,18 @@ describe('mặc định giao dịch tự động', () => {
     expect(defaults.find((item) => item.automationKey === 'savings_interest')).toMatchObject({
       purposeId: 'purpose-invest',
       expenseTypeId: 'expense-interest',
-      paymentMethodId: 'payment-cash',
+      paymentMethodId: 'payment-transfer',
+    });
+    expect(defaults.find((item) => item.automationKey === 'savings_settlement')).toMatchObject({
+      purposeId: 'purpose-invest',
+      expenseTypeId: 'expense-settlement',
+      paymentMethodId: 'payment-transfer',
     });
     expect(defaults.find((item) => item.automationKey === 'gold_sale')).toMatchObject({
       expenseTypeId: 'expense-gold',
-      paymentMethodId: 'payment-cash',
+      paymentMethodId: 'payment-transfer',
     });
+    expect(defaults.every((item) => item.paymentMethodId === 'payment-transfer')).toBe(true);
     expect(defaults.map((item) => item.automationKey)).toEqual([
       'savings_opening',
       'savings_interest',

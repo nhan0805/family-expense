@@ -1,6 +1,6 @@
 -- Structural tests for family-level automatic transaction catalog defaults.
 begin;
-select plan(17);
+select plan(18);
 
 select ok(
   exists(
@@ -94,6 +94,12 @@ select ok(
 select ok(
   exists(select 1 from pg_proc where oid = 'public.seed_automatic_transaction_defaults(uuid)'::regprocedure and prosecdef),
   'automatic default seeding is protected'
+);
+select ok(
+  pg_get_functiondef('public.seed_automatic_transaction_defaults(uuid)'::regprocedure) ilike '%(''savings_interest'', ''Lãi tiền gửi'', ''Chuyển khoản'')%'
+  and pg_get_functiondef('public.seed_automatic_transaction_defaults(uuid)'::regprocedure) ilike '%(''savings_settlement'', ''Tất toán tiết kiệm'', ''Chuyển khoản'')%'
+  and pg_get_functiondef('public.seed_automatic_transaction_defaults(uuid)'::regprocedure) ilike '%(''gold_sale'', ''Đầu tư vàng'', ''Chuyển khoản'')%',
+  'system automatic defaults use transfer for savings interest, settlement and gold sale'
 );
 select ok(
   pg_get_functiondef('public.guard_catalog_delete_in_use()'::regprocedure) ilike '%automatic_transaction_defaults%',
