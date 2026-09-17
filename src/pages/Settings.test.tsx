@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { FeedbackProvider } from '../components/Feedback';
@@ -16,7 +16,7 @@ describe('màn hình Cài đặt', () => {
     vi.clearAllMocks();
   });
 
-  it('gom bộ lọc mặc định và cấu hình giao dịch tự động trên cùng màn hình', async () => {
+  it('hiển thị hai nhóm cài đặt bằng tab', async () => {
     vi.mocked(useApp).mockReturnValue({
       familyId: 'family-settings',
       currentUserId: 'user-settings',
@@ -42,7 +42,18 @@ describe('màn hình Cài đặt', () => {
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: 'Cài đặt' })).toBeInTheDocument();
       expect(screen.getByRole('heading', { name: 'Bộ lọc giao dịch mặc định' })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: 'Bộ lọc mặc định' })).toHaveAttribute('aria-selected', 'true');
+      expect(screen.getByRole('tabpanel', { name: 'Bộ lọc mặc định' })).toBeInTheDocument();
+    });
+
+    const filtersTab = screen.getByRole('tab', { name: 'Bộ lọc mặc định' });
+    const automaticTab = screen.getByRole('tab', { name: 'Giao dịch tự động' });
+    fireEvent.keyDown(filtersTab, { key: 'ArrowRight' });
+    await waitFor(() => {
+      expect(automaticTab).toHaveAttribute('aria-selected', 'true');
+      expect(automaticTab).toHaveFocus();
       expect(screen.getByRole('heading', { name: 'Mặc định giao dịch tự động' })).toBeInTheDocument();
+      expect(screen.getByRole('tabpanel', { name: 'Giao dịch tự động' })).toBeInTheDocument();
     });
   });
 });
