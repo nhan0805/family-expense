@@ -60,7 +60,7 @@ describe('cấu hình giao dịch tự động', () => {
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Mặc định giao dịch tự động' })).toBeInTheDocument());
     expect(screen.getByLabelText('Mục đích', { selector: '#gold_sale-purpose' })).toHaveValue('purpose-investment');
     expect(screen.getByLabelText('Danh mục', { selector: '#savings_interest-expense-type' })).toHaveValue('expense-interest');
-    expect(screen.getByLabelText('Phương thức thanh toán', { selector: '#gold_sale-payment-method' })).toHaveValue('payment-cash');
+    expect(screen.getByLabelText('Phương thức thanh toán', { selector: '#gold_sale-payment-method' })).toHaveValue('payment-bank');
     expect(screen.queryByRole('heading', { name: 'Rút tiền tiết kiệm' })).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Phí sổ tiết kiệm' })).not.toBeInTheDocument();
 

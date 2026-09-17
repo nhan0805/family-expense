@@ -79,14 +79,8 @@ const findByName = (items: CatalogItem[], names: string[]) =>
   || items[0]?.id
   || '';
 
-const cashPaymentKeys = new Set<AutomaticTransactionKey>([
-  'savings_interest',
-  'savings_settlement',
-  'gold_sale',
-]);
-
-const defaultPaymentMethodId = (catalogs: AutomaticTransactionCatalogs, key: AutomaticTransactionKey) =>
-  findByName(catalogs.paymentMethods, cashPaymentKeys.has(key) ? ['Tiền mặt'] : ['Chuyển khoản']);
+const defaultPaymentMethodId = (catalogs: AutomaticTransactionCatalogs) =>
+  findByName(catalogs.paymentMethods, ['Chuyển khoản']);
 
 const defaultExpenseTypeNames: Record<AutomaticTransactionKey, string[]> = {
   savings_opening: ['Gửi tiết kiệm'],
@@ -101,7 +95,7 @@ export const createSystemAutomaticTransactionDefaults = (catalogs: AutomaticTran
     automationKey,
     purposeId: findByName(catalogs.purposes, ['Đầu tư']),
     expenseTypeId: findByName(catalogs.expenseTypes, defaultExpenseTypeNames[automationKey]),
-    paymentMethodId: defaultPaymentMethodId(catalogs, automationKey),
+    paymentMethodId: defaultPaymentMethodId(catalogs),
   }));
 
 export const sanitizeAutomaticTransactionDefaults = (
