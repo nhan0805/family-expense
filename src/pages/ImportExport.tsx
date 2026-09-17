@@ -446,7 +446,7 @@ export function ImportExport() {
   return (
     <div className="data-page space-y-6">
       <div className="page-header">
-        <p className="page-kicker">{en ? 'Data center' : 'Trung tâm dữ liệu'}</p>
+        <p className="page-kicker"><Database size={16} aria-hidden="true" />{en ? 'Data center' : 'Trung tâm dữ liệu'}</p>
         <h2 className="page-title">{en ? 'Data' : 'Dữ liệu'}</h2>
         <p className="page-subtitle">{en ? 'Excel currently uses Vietnamese templates for compatibility with existing files.' : 'Excel hiện dùng template tiếng Việt để tương thích với các file hiện có.'}</p>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -457,7 +457,7 @@ export function ImportExport() {
       <section aria-labelledby="data-tools-title">
         <div className="section-header mb-3 items-end">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#137050] dark:text-[#bd93f9]">{en ? 'Data tools' : 'Công cụ dữ liệu'}</p>
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--primary)]">{en ? 'Data tools' : 'Công cụ dữ liệu'}</p>
             <h3 id="data-tools-title" className="mt-1 text-lg font-extrabold">{en ? 'Import, export and share' : 'Nhập, xuất và chia sẻ'}</h3>
           </div>
           <span className="hidden text-xs text-gray-500 dark:text-gray-400 sm:inline">{en ? 'Family data' : 'Dữ liệu của gia đình'}</span>
@@ -470,6 +470,7 @@ export function ImportExport() {
           tone="green"
         >
           <button
+            type="button"
             className="btn-secondary inline-flex items-center justify-center gap-2"
             disabled={templateBusy}
             onClick={() => void downloadTemplate()}
@@ -486,6 +487,7 @@ export function ImportExport() {
           tone="blue"
         >
           <button
+            type="button"
             className="btn-secondary inline-flex items-center justify-center gap-2"
             disabled={exporting}
             onClick={exportData}
@@ -510,6 +512,7 @@ export function ImportExport() {
             {en ? 'Recipient: ' : 'Người nhận: '}{currentUserEmail || (en ? 'unknown' : 'chưa xác định')}
           </p>
           <button
+            type="button"
             className="btn-secondary mt-3 inline-flex items-center justify-center gap-2"
             disabled={
               emailBusy ||
@@ -532,14 +535,14 @@ export function ImportExport() {
       </section>
 
       <section className="data-import-card card overflow-hidden">
-        <div className="data-import-header flex items-start gap-3 border-b border-black/10 bg-[#fbfdfb] p-4 dark:border-white/10 dark:bg-white/[0.02] sm:p-5">
-          <span className="data-card-icon rounded-xl bg-[#e3f2e9] p-3 text-[#145c43] dark:bg-[#50fa7b1f] dark:text-[#50fa7b]">
+        <div className="data-import-header flex items-start gap-3 border-b border-black/10 bg-[var(--surface-subtle)] p-4 dark:border-white/10 dark:bg-white/[0.02] sm:p-5">
+          <span className="data-card-icon rounded-xl bg-[var(--success-soft)] p-3 text-[var(--success-strong)]">
             <Upload size={24} />
           </span>
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="font-bold">{en ? 'Import transactions' : 'Import giao dịch'}</h3>
-              <span className="rounded-full bg-[#e3f2e9] px-2 py-0.5 text-[11px] font-bold text-[#145c43] dark:bg-[#50fa7b1f] dark:text-[#50fa7b]">{en ? 'Safe · confirmation required' : 'An toàn · cần xác nhận'}</span>
+              <span className="rounded-full bg-[var(--success-soft)] px-2 py-0.5 text-[11px] font-bold text-[var(--success-strong)]">{en ? 'Safe · confirmation required' : 'An toàn · cần xác nhận'}</span>
             </div>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               {en ? 'Choose an .xlsx file downloaded from the app. Data is saved only after you review and confirm it.' : 'Chọn file .xlsx được tải từ ứng dụng. Dữ liệu chỉ được ghi sau khi bạn kiểm tra và xác nhận.'}
@@ -548,7 +551,9 @@ export function ImportExport() {
         </div>
         <div className="space-y-4 p-4 sm:p-5">
           <div
-            className="data-upload-zone flex min-h-56 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#b8c9bf] bg-[#f7faf7] px-5 py-7 text-center transition hover:border-[#145c43] hover:bg-[#eef5f0] dark:border-[#6272a4] dark:bg-[#303241] dark:hover:border-[#50fa7b] dark:hover:bg-[#50fa7b0d]"
+            role="group"
+            aria-labelledby="import-upload-title"
+            className="data-upload-zone flex min-h-56 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--border-strong)] bg-[var(--surface-subtle)] px-5 py-7 text-center transition hover:border-[var(--primary)] hover:bg-[var(--primary-soft)]"
             onDragOver={(event) => {
               event.preventDefault();
               event.dataTransfer.dropEffect = 'copy';
@@ -559,14 +564,14 @@ export function ImportExport() {
               if (file) void processImportFile(file);
             }}
           >
-            <FileCheck2 className="text-[#145c43] dark:text-[#50fa7b]" size={30} />
-            <span className="font-semibold">{en ? 'Choose an Excel file to validate' : 'Chọn file Excel để kiểm tra'}</span>
+            <FileCheck2 className="text-[var(--primary)]" size={30} />
+            <span id="import-upload-title" className="font-semibold">{en ? 'Choose an Excel file to validate' : 'Chọn file Excel để kiểm tra'}</span>
             <span className="text-xs text-gray-500 dark:text-gray-400">
               {en ? 'Only .xlsx files using the Family Finance template are accepted; you can drag a file here.' : 'Chỉ nhận file .xlsx đúng template Family Finance; có thể kéo file từ Finder và thả vào đây'}
             </span>
             <button
               type="button"
-              className="rounded-lg border border-[#b8c9bf] bg-white px-4 py-2 text-sm font-semibold dark:border-[#6272a4] dark:bg-[#343746]"
+              className="btn-secondary"
               onClick={() => void chooseImportFile()}
             >
               {en ? 'Choose Excel file' : 'Chọn file Excel'}
@@ -588,7 +593,7 @@ export function ImportExport() {
               className={`data-file-status min-h-14 rounded-xl border p-4 text-sm ${
                 fileError
                   ? 'border-red-200 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200'
-                  : 'border-[#cfe0d4] bg-[#f5faf6] text-[#245743] dark:border-[#50fa7b66] dark:bg-[#50fa7b0d] dark:text-[#50fa7b]'
+                  : 'border-[var(--border)] bg-[var(--surface-subtle)] text-[var(--success-strong)]'
               }`}
               role={fileError ? 'alert' : 'status'}
               aria-live="polite"
@@ -642,9 +647,11 @@ export function ImportExport() {
                   {en ? 'Import rows that may be duplicates anyway' : 'Vẫn import các dòng có thể trùng'}
                 </label>
               )}
-              <div className="data-preview max-h-80 overflow-auto rounded-xl border">
+              <div className="data-preview-wrap">
+                <p className="mb-2 text-xs text-gray-500 dark:text-gray-400 sm:hidden">{en ? 'Swipe horizontally to review all columns.' : 'Vuốt ngang để xem đủ các cột.'}</p>
+                <div className="data-preview max-h-80 overflow-auto rounded-xl border" role="region" aria-label={en ? 'Import preview table' : 'Bảng xem trước dữ liệu import'} tabIndex={0}>
                 <table className="w-full min-w-[700px] text-left text-sm">
-                  <thead className="bg-[#eef2ed]">
+                  <thead className="bg-[var(--surface-muted)]">
                     <tr>
                       <th className="p-2">{en ? 'Row' : 'Dòng'}</th>
                       <th>{en ? 'Description' : 'Nội dung'}</th>
@@ -672,6 +679,7 @@ export function ImportExport() {
                     ))}
                   </tbody>
                 </table>
+                </div>
               </div>
               <button
                 className="btn-primary"
@@ -708,8 +716,8 @@ function DataCard({
 }) {
   const iconClass =
     tone === 'green'
-      ? 'bg-[#e3f2e9] text-[#145c43] dark:bg-[#50fa7b1f] dark:text-[#50fa7b]'
-      : 'bg-blue-50 text-blue-700 dark:bg-[#8be9fd1f] dark:text-[#8be9fd]';
+      ? 'bg-[var(--success-soft)] text-[var(--success-strong)]'
+      : 'bg-[var(--info-soft)] text-[var(--info-strong)]';
   return (
     <section className="data-card card p-4 sm:p-5">
       <div className="flex items-start gap-3">

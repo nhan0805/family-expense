@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Check, ChevronDown, LoaderCircle, Mic, MicOff, Sparkles, Trash2, X } from 'lucide-react';
+import { ArrowLeftRight, Check, ChevronDown, LoaderCircle, Mic, MicOff, Sparkles, Trash2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -553,7 +553,7 @@ export function TransactionForm() {
   return (
     <div className="transaction-form-page mx-auto max-w-3xl space-y-5">
       <div className="page-header">
-        <p className="page-kicker">{en ? 'Transaction' : 'Giao dịch'}</p>
+        <p className="page-kicker"><ArrowLeftRight size={16} aria-hidden="true" />{en ? 'Transaction' : 'Giao dịch'}</p>
         <h2 className="page-title">
           {id ? (en ? 'Edit transaction' : 'Sửa giao dịch') : (en ? 'Add transaction' : 'Thêm giao dịch')}
         </h2>
