@@ -10,7 +10,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useApp } from '../context/AppContext';
 import type { Transaction } from '../lib/domain';
-import { Dashboard, formatPieLabel, summarizePieData } from './Dashboard';
+import { buildDashboardDrilldownLink, Dashboard, formatPieLabel, summarizePieData } from './Dashboard';
 
 vi.mock('../context/AppContext', () => ({ useApp: vi.fn() }));
 vi.mock('../lib/supabase', () => ({ isSupabaseConfigured: false }));
@@ -97,15 +97,15 @@ describe('Dashboard', () => {
     expect(screen.queryByText(/có mức chi thấp nhất trong kỳ xem/)).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Mở giao dịch theo Tổng thu' })).toHaveAttribute(
       'href',
-      '/giao-dich?transactionType=Thu nhập&month=02&year=2026',
+      buildDashboardDrilldownLink('Thu nhập', { from: '2026-02-01', to: '2026-02-28' }),
     );
     expect(screen.getByRole('link', { name: 'Mở giao dịch theo Tổng chi' })).toHaveAttribute(
       'href',
-      '/giao-dich?transactionType=Chi tiêu&month=02&year=2026',
+      buildDashboardDrilldownLink('Chi tiêu', { from: '2026-02-01', to: '2026-02-28' }),
     );
     expect(screen.getByRole('link', { name: 'Mở giao dịch theo Giá trị ròng' })).toHaveAttribute(
       'href',
-      '/giao-dich?month=02&year=2026',
+      buildDashboardDrilldownLink(undefined, { from: '2026-02-01', to: '2026-02-28' }),
     );
     const netKpi = screen.getByRole('link', { name: 'Mở giao dịch theo Giá trị ròng' });
     expect(netKpi).toHaveClass('block', 'h-full', 'kpi-card');
@@ -114,6 +114,20 @@ describe('Dashboard', () => {
     expect(screen.queryByText('Giao dịch gần đây')).not.toBeInTheDocument();
     expect(screen.queryByText('Chi tháng 2')).not.toBeInTheDocument();
     expect(screen.queryByText('Chi tháng 1')).not.toBeInTheDocument();
+  });
+
+  it('giữ đúng khoảng ngày và bao gồm mọi mục đích khi mở giao dịch từ cột xu hướng', () => {
+    const link = buildDashboardDrilldownLink('Chi tiêu', {
+      from: '2026-02-10',
+      to: '2026-02-28',
+    });
+    const params = new URLSearchParams(link.slice(link.indexOf('?') + 1));
+
+    expect(params.get('transactionType')).toBe('Chi tiêu');
+    expect(params.get('status')).toBe('Thực tế');
+    expect(params.get('dateFrom')).toBe('2026-02-10');
+    expect(params.get('dateTo')).toBe('2026-02-28');
+    expect(params.get('includeAllPurposes')).toBe('1');
   });
 
   it('hiển thị trạng thái trống khi tháng không có giao dịch', () => {
@@ -224,6 +238,27 @@ describe('Dashboard', () => {
     expect(insights?.querySelector('summary')).toHaveClass('min-h-11');
   });
 
+  it('giữ đúng bộ lọc khi mở giao dịch từ dòng top danh mục', () => {
+    vi.mocked(useApp).mockReturnValue({
+      transactions: [{
+        ...transaction('Gửi tiết kiệm tháng hiện tại', '2026-09-10', 35_000_000),
+        purposeId: 'investment-purpose',
+        expenseTypeId: 'savings-category',
+      }],
+      purposes: [{ id: 'investment-purpose', name: 'Đầu tư' }],
+      expenseTypes: [{ id: 'savings-category', name: 'Gửi tiết kiệm' }],
+      confirmPlannedTransaction,
+    } as unknown as ReturnType<typeof useApp>);
+    renderDashboard();
+
+    const topCategories = screen.getByText('Top danh mục theo thời gian').closest('details');
+    fireEvent.click(topCategories?.querySelector('summary') as HTMLElement);
+    const categoryLink = within(topCategories as HTMLElement).getByRole('link', { name: /Gửi tiết kiệm/ });
+
+    expect(categoryLink).toHaveAttribute('href', expect.stringContaining('includeAllPurposes=1'));
+    expect(categoryLink).toHaveAttribute('href', expect.stringContaining('expenseTypeId=savings-category'));
+  });
+
   it('không hiển thị khu vực xác nhận giao dịch dự kiến trên Tổng quan', () => {
     vi.mocked(useApp).mockReturnValue({
       transactions: [transaction('Tiền điện dự kiến', '2020-01-10', 500_000, 'Dự kiến')],
@@ -264,6 +299,21 @@ describe('Dashboard', () => {
     expect(summarized).toHaveLength(6);
     expect(summarized.at(-1)).toMatchObject({ id: 'other', name: 'Khác', value: 14_000 });
     expect(summarized.at(-1)?.hiddenItems).toHaveLength(4);
+  });
+
+  it('giữ nhóm chưa phân loại ngoài lát Khác để drill-down không bị thiếu giao dịch', () => {
+    const summarized = summarizePieData([
+      { id: 'uncategorized', name: 'Chưa phân loại', value: 500_000, fill: '#155e46' },
+      ...Array.from({ length: 6 }, (_, index) => ({
+        id: `e${index + 1}`,
+        name: `Danh mục ${index + 1}`,
+        value: 100_000 - index * 1_000,
+        fill: '#155e46',
+      })),
+    ]);
+
+    expect(summarized.find((item) => item.id === 'uncategorized')).toMatchObject({ value: 500_000 });
+    expect(summarized.find((item) => item.id === 'other')?.hiddenItems?.some((item) => item.id === 'uncategorized')).toBe(false);
   });
 
   it('cho phép ẩn và hiện từng chuỗi dữ liệu từ legend xu hướng', () => {
