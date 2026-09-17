@@ -65,6 +65,10 @@ describe('sắp xếp giao dịch theo ngày', () => {
     expect(getInitialExcludePurposeIds(new URLSearchParams('excludePurposeId=550e8400-e29b-41d4-a716-446655440000'), [regular, investment])).toEqual([
       '550e8400-e29b-41d4-a716-446655440000',
     ]);
+    expect(getInitialExcludePurposeIds(new URLSearchParams('excludePurposeId=investment-purpose'), [regular, investment])).toEqual([
+      'investment-purpose',
+    ]);
+    expect(getInitialExcludePurposeIds(new URLSearchParams('includeAllPurposes=1'), [regular, investment])).toEqual([]);
   });
 
   it('dùng màu riêng cho hai loại giao dịch trong danh sách', () => {

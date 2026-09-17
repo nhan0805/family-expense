@@ -182,6 +182,16 @@ const rangeForPeriod = (period: Period, mode: DashboardMode, customFrom: string,
   to: mode === 'custom' ? (customTo < monthEnd(period.key) ? customTo : monthEnd(period.key)) : monthEnd(period.key),
 });
 
+export const buildDashboardDrilldownLink = (type: string | undefined, range: DateRange) => {
+  const params = new URLSearchParams();
+  if (type) params.set('transactionType', type);
+  params.set('status', 'Thực tế');
+  if (range.from) params.set('dateFrom', range.from);
+  if (range.to) params.set('dateTo', range.to);
+  params.set('includeAllPurposes', '1');
+  return `/giao-dich?${params.toString()}`;
+};
+
 const previousRange = (periods: Period[], mode: DashboardMode, customFrom: string, customTo: string): DateRange => {
   if (mode === 'custom' && customFrom && customTo) {
     const duration = dateRangeDuration({ from: customFrom, to: customTo }) ?? 0;
@@ -269,9 +279,14 @@ export const formatPieLabel = ({ percent, value }: Pick<PieLabelRenderProps, 'pe
 export const summarizePieData = (data: ExpenseChartItem[], language: CatalogLanguage = 'vi'): PieChartItem[] => {
   const sorted = data.filter((item) => item.value > 0).sort((a, b) => b.value - a.value);
   if (sorted.length <= pieMaxSlices) return sorted;
-  const visible = sorted.slice(0, pieMaxSlices - 1);
-  const hiddenItems = sorted.slice(pieMaxSlices - 1);
-  return [...visible, {
+  const uncategorized = sorted.find((item) => item.id === 'uncategorized');
+  const categorized = uncategorized ? sorted.filter((item) => item.id !== 'uncategorized') : sorted;
+  const visible = categorized.slice(0, uncategorized ? pieMaxSlices - 2 : pieMaxSlices - 1);
+  const hiddenItems = categorized.slice(visible.length);
+  const visibleItems = uncategorized
+    ? [...visible, uncategorized].sort((a, b) => b.value - a.value)
+    : visible;
+  return [...visibleItems, {
     id: 'other',
     name: language === 'en' ? 'Other' : 'Khác',
     value: hiddenItems.reduce((total, item) => total + item.value, 0),
@@ -453,17 +468,7 @@ export function Dashboard() {
       : mode === 'custom'
         ? (validRange ? `${formatDate(customFrom)} – ${formatDate(customTo)}` : (en ? 'Invalid custom range' : 'Khoảng tùy chỉnh không hợp lệ'))
         : `${modeLabels[mode][en ? 'en' : 'vi']} ${en ? 'to' : 'đến'} T${selectedMonth}/${selectedYear}`;
-  const periodFilterLink = (type?: string, range = selectedRange) => {
-    if (mode === 'month') {
-      const targetMonth = range.from ? range.from.slice(0, 7) : anchorKey;
-      return `/giao-dich?${type ? `transactionType=${type}&` : ''}month=${targetMonth.slice(5, 7)}&year=${targetMonth.slice(0, 4)}`;
-    }
-    const params = new URLSearchParams();
-    if (type) params.set('transactionType', type);
-    params.set('dateFrom', range.from);
-    params.set('dateTo', range.to);
-    return `/giao-dich?${params.toString()}`;
-  };
+  const periodFilterLink = (type?: string, range = selectedRange) => buildDashboardDrilldownLink(type, range);
   const budgetSummary = isSupabaseConfigured
     ? budgetQuery.data
     : buildLocalBudgetSummary(purposes, transactions, Number(selectedYear), Number(selectedMonth));
@@ -620,7 +625,7 @@ export function Dashboard() {
         </div>
         {trend.some((item) => item.expense || item.income) && <div className="mb-2 border-t border-black/5 pt-2 dark:border-white/10"><TrendLegend en={en} hiddenSeries={hiddenTrendSeries} onToggle={toggleTrendSeries} /></div>}
         <div className="h-80 min-w-0 max-w-full">
-          {trend.some((item) => item.expense || item.income) ? <ResponsiveContainer><ComposedChart data={trend} margin={{ top: 20, right: 12, left: 4, bottom: 6 }}><CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" /><XAxis dataKey="label" /><YAxis tickFormatter={(value) => formatCompactVnd(Number(value)).replace(' ₫', '')} width={54} /><Tooltip labelFormatter={(label) => formatPeriodKey(String(trend.find((item) => item.label === label)?.key || ''), en)} formatter={(value) => formatVnd(Number(value))} /><Bar name={en ? 'Expenses' : 'Chi tiêu'} dataKey="expense" fill="var(--chart-expense)" hide={hiddenTrendSeries.includes('expense')} radius={[8, 8, 0, 0]} cursor="pointer" onClick={(_, index) => { const period = trend[index]; if (period) navigate(`/giao-dich?transactionType=Chi tiêu&month=${period.key.slice(5, 7)}&year=${period.key.slice(0, 4)}`); }}><LabelList dataKey="expense" position="top" formatter={(value) => Number(value) > 0 ? formatCompactVnd(Number(value)).replace(' ₫', '') : ''} /></Bar><Line name={en ? 'Income' : 'Thu nhập'} type="monotone" dataKey="income" hide={hiddenTrendSeries.includes('income')} stroke="var(--chart-income)" strokeWidth={3} dot={{ r: 4 }} /><Line name={en ? 'Net value' : 'Thu ròng'} type="monotone" dataKey="net" hide={hiddenTrendSeries.includes('net')} stroke="var(--chart-net)" strokeWidth={2} strokeDasharray="5 5" dot={false} /></ComposedChart></ResponsiveContainer> : <EmptyState title={en ? 'No trend data' : 'Chưa có dữ liệu xu hướng'} description={en ? 'The trend will appear when the selected period has actual transactions.' : 'Xu hướng sẽ xuất hiện khi kỳ đang chọn có giao dịch thực tế.'} />}
+          {trend.some((item) => item.expense || item.income) ? <ResponsiveContainer><ComposedChart data={trend} margin={{ top: 20, right: 12, left: 4, bottom: 6 }}><CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" /><XAxis dataKey="label" /><YAxis tickFormatter={(value) => formatCompactVnd(Number(value)).replace(' ₫', '')} width={54} /><Tooltip labelFormatter={(label) => formatPeriodKey(String(trend.find((item) => item.label === label)?.key || ''), en)} formatter={(value) => formatVnd(Number(value))} /><Bar name={en ? 'Expenses' : 'Chi tiêu'} dataKey="expense" fill="var(--chart-expense)" hide={hiddenTrendSeries.includes('expense')} radius={[8, 8, 0, 0]} cursor="pointer" onClick={(_, index) => { const period = trend[index]; if (period) navigate(buildDashboardDrilldownLink('Chi tiêu', rangeForPeriod(period, mode, customFrom, customTo))); }}><LabelList dataKey="expense" position="top" formatter={(value) => Number(value) > 0 ? formatCompactVnd(Number(value)).replace(' ₫', '') : ''} /></Bar><Line name={en ? 'Income' : 'Thu nhập'} type="monotone" dataKey="income" hide={hiddenTrendSeries.includes('income')} stroke="var(--chart-income)" strokeWidth={3} dot={{ r: 4 }} /><Line name={en ? 'Net value' : 'Thu ròng'} type="monotone" dataKey="net" hide={hiddenTrendSeries.includes('net')} stroke="var(--chart-net)" strokeWidth={2} strokeDasharray="5 5" dot={false} /></ComposedChart></ResponsiveContainer> : <EmptyState title={en ? 'No trend data' : 'Chưa có dữ liệu xu hướng'} description={en ? 'The trend will appear when the selected period has actual transactions.' : 'Xu hướng sẽ xuất hiện khi kỳ đang chọn có giao dịch thực tế.'} />}
         </div>
         {showTrendTable && trend.some((item) => item.expense || item.income) && <div id="dashboard-trend-table" className="mt-3 overflow-x-auto rounded-xl border border-black/10 dark:border-white/10"><table className="w-full min-w-[34rem] text-left text-xs"><caption className="sr-only">{en ? 'Spending and income by period' : 'Thu chi theo từng kỳ'}</caption><thead className="bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-300"><tr><th scope="col" className="px-3 py-2 font-semibold">{en ? 'Period' : 'Kỳ'}</th><th scope="col" className="px-3 py-2 text-right font-semibold">{en ? 'Expenses' : 'Chi tiêu'}</th><th scope="col" className="px-3 py-2 text-right font-semibold">{en ? 'Income' : 'Thu nhập'}</th><th scope="col" className="px-3 py-2 text-right font-semibold">{en ? 'Net' : 'Thu ròng'}</th></tr></thead><tbody className="divide-y divide-black/10 dark:divide-white/10">{trend.map((item) => <tr key={item.key}><th scope="row" className="px-3 py-2 font-medium">{formatPeriodKey(item.key, en)}</th><td className="px-3 py-2 text-right tabular-nums">{formatVnd(item.expense)}</td><td className="px-3 py-2 text-right tabular-nums">{formatVnd(item.income)}</td><td className="px-3 py-2 text-right tabular-nums">{formatVnd(item.net)}</td></tr>)}</tbody></table></div>}
       </section>
