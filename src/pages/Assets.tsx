@@ -12,7 +12,7 @@ import {
   WalletCards,
   X,
 } from 'lucide-react';
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { EmptyState, PageSkeleton } from '../components/AsyncStates';
 import { useFeedback } from '../components/Feedback';
@@ -125,6 +125,14 @@ type SaleForm = {
   note: string;
 };
 
+type AssetTab = 'savings' | 'gold';
+
+const assetTabs: AssetTab[] = ['savings', 'gold'];
+const assetTabIds: Record<AssetTab, string> = {
+  savings: 'assets-tab-savings',
+  gold: 'assets-tab-gold',
+};
+
 const newLocalId = (prefix: string) =>
   typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
     ? crypto.randomUUID()
@@ -220,6 +228,7 @@ export function Assets() {
   const { askConfirm, notify } = useFeedback();
   const queryClient = useQueryClient();
   const canManage = canManageAssets(currentUserRole);
+  const [activeTab, setActiveTab] = useState<AssetTab>('savings');
   const [savingsEditor, setSavingsEditorState] = useState<SavingsForm | null>(null);
   const [goldEditor, setGoldEditorState] = useState<GoldForm | null>(null);
   const [settlementEditor, setSettlementEditorState] = useState<SettlementForm | null>(null);
@@ -356,7 +365,27 @@ export function Assets() {
     setFormError('');
   };
 
+  const handleAssetTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+    const currentIndex = assetTabs.indexOf(activeTab);
+    const nextIndex = event.key === 'ArrowRight' || event.key === 'ArrowDown'
+      ? (currentIndex + 1) % assetTabs.length
+      : event.key === 'ArrowLeft' || event.key === 'ArrowUp'
+        ? (currentIndex - 1 + assetTabs.length) % assetTabs.length
+        : event.key === 'Home'
+          ? 0
+          : event.key === 'End'
+            ? assetTabs.length - 1
+            : -1;
+    if (nextIndex < 0) return;
+    event.preventDefault();
+    const nextTab = assetTabs[nextIndex];
+    if (!nextTab) return;
+    setActiveTab(nextTab);
+    document.getElementById(assetTabIds[nextTab])?.focus();
+  };
+
   const openSavingsEditor = (item?: SavingsAccount) => {
+    setActiveTab('savings');
     const today = todayInVietnam();
     setFormError('');
     setSavingsEditor(item
@@ -390,6 +419,7 @@ export function Assets() {
   };
 
   const openGoldEditor = (item?: GoldAsset) => {
+    setActiveTab('gold');
     setFormError('');
     setGoldEditor(item
       ? {
@@ -412,6 +442,7 @@ export function Assets() {
   };
 
   const openSettlementEditor = (account: SavingsAccount) => {
+    setActiveTab('savings');
     setFormError('');
     setSettlementEditor({
       accountId: account.id,
@@ -423,6 +454,7 @@ export function Assets() {
   };
 
   const openSaleEditor = () => {
+    setActiveTab('gold');
     setFormError('');
     const defaultSalePrice = goldBuybackPricePerChi
       ?? (goldHoldingSummary.averageCostPerChi === null ? '' : Math.round(goldHoldingSummary.averageCostPerChi));
@@ -842,7 +874,41 @@ export function Assets() {
       <AssetKpi label={en ? 'Net cash' : 'Tiền ròng'} value={summary?.netCash || 0} icon={WalletCards} tone="sky" meta={en ? 'Actual transactions' : 'Giao dịch thực tế'} />
     </section>
 
-    {savingsEditor && canManage && <SavingsForm editor={savingsEditor} setEditor={setSavingsEditor} onSubmit={saveSavings} onCancel={closeEditors} paymentMethods={paymentMethods} busy={busy === 'savings-save'} error={formError} en={en} />}
+    <div className="card overflow-hidden">
+      <div role="tablist" aria-label={en ? 'Asset types' : 'Loại tài sản'} aria-orientation="horizontal" className="grid grid-cols-2 gap-1 p-1.5 sm:p-2">
+        <button
+          id={assetTabIds.savings}
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'savings'}
+          aria-controls="assets-panel-savings"
+          tabIndex={activeTab === 'savings' ? 0 : -1}
+          onClick={() => setActiveTab('savings')}
+          onKeyDown={handleAssetTabKeyDown}
+          className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-bold transition-colors ${activeTab === 'savings' ? 'bg-[var(--primary)] text-[var(--primary-contrast)] shadow-sm' : 'text-[var(--muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--text)]'}`}
+        >
+          <Landmark size={18} aria-hidden="true" />
+          <span>{en ? 'Savings books' : 'Sổ tiết kiệm'}</span>
+        </button>
+        <button
+          id={assetTabIds.gold}
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'gold'}
+          aria-controls="assets-panel-gold"
+          tabIndex={activeTab === 'gold' ? 0 : -1}
+          onClick={() => setActiveTab('gold')}
+          onKeyDown={handleAssetTabKeyDown}
+          className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-bold transition-colors ${activeTab === 'gold' ? 'bg-[var(--primary)] text-[var(--primary-contrast)] shadow-sm' : 'text-[var(--muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--text)]'}`}
+        >
+          <Coins size={18} aria-hidden="true" />
+          <span>{en ? 'Gold' : 'Vàng'}</span>
+        </button>
+      </div>
+    </div>
+
+    <div id="assets-panel-savings" role="tabpanel" aria-labelledby={assetTabIds.savings} hidden={activeTab !== 'savings'} className="space-y-5">
+      {savingsEditor && canManage && <SavingsForm editor={savingsEditor} setEditor={setSavingsEditor} onSubmit={saveSavings} onCancel={closeEditors} paymentMethods={paymentMethods} busy={busy === 'savings-save'} error={formError} en={en} />}
 
     <section className="card overflow-hidden" aria-labelledby="savings-title">
       <div className="flex flex-col gap-3 border-b border-black/10 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5 dark:border-white/10">
@@ -854,6 +920,10 @@ export function Assets() {
 
     {settlementEditor && canManage && <SavingsSettlementForm editor={settlementEditor} setEditor={setSettlementEditor} onSubmit={saveSettlement} onCancel={closeEditors} paymentMethods={paymentMethods} busy={busy === 'settlement'} error={formError} en={en} account={data?.savingsAccounts.find((item) => item.id === settlementEditor.accountId)} />}
 
+    {archivedSavings.length > 0 && <details className="card overflow-hidden"><summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 p-4 font-bold [&::-webkit-details-marker]:hidden"><span>{en ? 'Archived savings books' : 'Sổ tiết kiệm đã lưu trữ'} ({archivedSavings.length})</span><ChevronDown size={18} aria-hidden="true" /><span className="sr-only">{en ? 'Open archived savings books' : 'Mở sổ tiết kiệm đã lưu trữ'}</span></summary><div className="divide-y divide-black/10 dark:divide-white/10">{archivedSavings.map((account) => <SavingsRow key={account.id} account={account} movements={allSavingsMovements.filter((item) => item.savingsAccountId === account.id)} paymentMethods={paymentMethods} canManage={canManage} busy={busy} en={en} language={language} onEdit={() => undefined} onSettle={() => undefined} onArchive={() => undefined} onDelete={() => void deleteSavings(account)} archived />)}</div></details>}
+    </div>
+
+    <div id="assets-panel-gold" role="tabpanel" aria-labelledby={assetTabIds.gold} hidden={activeTab !== 'gold'} className="space-y-5">
     {goldEditor && canManage && <GoldForm editor={goldEditor} setEditor={setGoldEditor} onSubmit={saveGold} onCancel={closeEditors} paymentMethods={paymentMethods} busy={busy === 'gold-save'} error={formError} en={en} hasSales={Boolean(allGoldSales.find((item) => item.goldAssetId === goldEditor.id))} />}
 
     <section className="card overflow-hidden" aria-labelledby="gold-title">
@@ -884,7 +954,7 @@ export function Assets() {
     </section>
 
     {saleEditor && canManage && <GoldSaleForm editor={saleEditor} setEditor={setSaleEditor} onSubmit={saveSale} onCancel={closeEditors} paymentMethods={paymentMethods} busy={busy === 'sale'} error={formError} en={en} holding={goldHoldingSummary} />}
-    {archivedSavings.length > 0 && <details className="card overflow-hidden"><summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 p-4 font-bold [&::-webkit-details-marker]:hidden"><span>{en ? 'Archived savings books' : 'Sổ tiết kiệm đã lưu trữ'} ({archivedSavings.length})</span><ChevronDown size={18} aria-hidden="true" /><span className="sr-only">{en ? 'Open archived savings books' : 'Mở sổ tiết kiệm đã lưu trữ'}</span></summary><div className="divide-y divide-black/10 dark:divide-white/10">{archivedSavings.map((account) => <SavingsRow key={account.id} account={account} movements={allSavingsMovements.filter((item) => item.savingsAccountId === account.id)} paymentMethods={paymentMethods} canManage={canManage} busy={busy} en={en} language={language} onEdit={() => undefined} onSettle={() => undefined} onArchive={() => undefined} onDelete={() => void deleteSavings(account)} archived />)}</div></details>}
+    </div>
   </div>;
 }
 
