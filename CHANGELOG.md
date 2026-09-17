@@ -2,6 +2,14 @@
 
 ## 2026-09-17
 
+### Dùng icon Gem cho khu vực Tài sản
+
+- Dùng icon `Gem` thống nhất cho mục Tài sản trong menu điều hướng, tiêu đề trang Tài sản, Asset Snapshot trên Dashboard và thẻ Tổng tài sản; các khu vực riêng của Vàng vẫn dùng `Crown` để giữ phân biệt ngữ nghĩa.
+- Điều chỉnh tiêu đề danh sách vàng trên Dashboard để icon Crown dễ nhận diện hơn và bỏ thông tin lãi/lỗ bị lặp ở tiêu đề khi danh sách đã thu gọn/mở rộng.
+- Files: `src/components/Layout.tsx`, `src/pages/Assets.tsx`, `src/pages/Dashboard.tsx`, `src/pages/Dashboard.test.tsx`. Không đổi schema, RLS/RPC, Edge Function hoặc dữ liệu.
+- Kiểm thử: focused Vitest 25/25 pass; TypeScript, ESLint, Vite build và `git diff --check` pass; CI main [run 35244826912](https://github.com/nhan0805/family-expense/actions/runs/35244826912) pass quality, E2E, db-security và performance budget.
+- Deployment: PR [#193](https://github.com/nhan0805/family-expense/pull/193) đã merge vào `main` với commit `b09f17881e916a76d7a3703217baf949e22c70a6`; [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/124a25af-c9ea-4177-bef5-ff8db18b2e97) pass; smoke `https://family-expense-8fo.pages.dev/` trả HTTP 200.
+
 ### Đưa form Bán vàng lên gần đầu trang
 
 - Form Bán vàng được hiển thị ngay sau form Thêm vàng và trước danh sách vàng, cùng khu vực thao tác để dễ quan sát hơn.
