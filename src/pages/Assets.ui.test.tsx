@@ -295,9 +295,11 @@ describe('Tài sản', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Vàng' }));
     const goldArticle = screen.getByText('1 / 1 chỉ').closest('article')!;
 
+    expect(goldArticle.querySelectorAll('.asset-stat-card')).toHaveLength(0);
+    expect(goldArticle).not.toHaveTextContent('Giá tiệm mua vào');
+    expect(goldArticle).toHaveTextContent('Giá mua8.000.000 ₫/chỉ');
     const goldActions = within(goldArticle).getByRole('group', { name: 'Thao tác lô vàng' });
-    expect(goldActions.parentElement).toHaveClass('asset-stat-row', 'grid-cols-2');
-    expect(goldActions).toHaveClass('col-span-2');
+    expect(goldActions.parentElement).toHaveClass('asset-row-footer');
     expect(within(goldActions).getAllByRole('button')).toHaveLength(2);
     expect(within(goldActions).getByRole('button', { name: 'Sửa' })).toHaveClass('asset-icon-action');
     expect(within(goldActions).getByRole('button', { name: 'Xóa' })).toHaveClass('asset-icon-action');
