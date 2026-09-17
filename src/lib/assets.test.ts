@@ -6,6 +6,7 @@ import {
   expectedSavingsInterest,
   expectedSavingsInterestToDate,
   formatAssetMoneyInput,
+  sanitizeDecimalInput,
   goldEstimatedValue,
   goldPurchaseAmount,
   goldAssetInputSchema,
@@ -26,6 +27,13 @@ describe('asset domain', () => {
     expect(formatAssetMoneyInput('5000000')).toBe('5.000.000');
     expect(formatAssetMoneyInput('5.000.000')).toBe('5.000.000');
     expect(formatAssetMoneyInput('')).toBe('');
+  });
+
+  it('keeps only one decimal separator and numeric characters while typing', () => {
+    expect(sanitizeDecimalInput('8sda')).toBe('8');
+    expect(sanitizeDecimalInput('8,25')).toBe('8.25');
+    expect(sanitizeDecimalInput('1.2.3')).toBe('1.23');
+    expect(sanitizeDecimalInput('8.')).toBe('8.');
   });
 
   it('allows both owners and members to manage assets', () => {

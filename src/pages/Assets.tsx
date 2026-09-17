@@ -61,6 +61,7 @@ import {
   archiveLocalGoldAsset,
   archiveLocalSavingsAccount,
   setLocalGoldBuybackPrice,
+  sanitizeDecimalInput,
   type GoldAsset,
   type SavingsAccount,
   type SavingsAccountInput,
@@ -128,7 +129,7 @@ const todayInVietnam = () =>
   }).format(new Date());
 
 const inputAmount = (value: string) => value.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
-const inputDecimal = (value: string) => value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+const inputDecimal = sanitizeDecimalInput;
 const formatQuantity = (value: number) => value.toLocaleString('vi-VN', { maximumFractionDigits: 3 });
 const formatRate = (value: number) => value.toLocaleString('vi-VN', { maximumFractionDigits: 4 });
 const calculatedMaturityDate = (openedOn: string, termMonths: string) => {
@@ -771,13 +772,13 @@ export function Assets() {
         {canManage && <button type="button" className="btn-secondary inline-flex items-center gap-2 self-start text-sm" onClick={() => openGoldEditor()}><Plus size={16} aria-hidden="true" />{en ? 'Add gold' : 'Thêm vàng'}</button>}
       </div>
       <div className="border-b border-black/10 p-4 dark:border-white/10 sm:p-5">
-        <form className="flex flex-col gap-3 sm:flex-row sm:items-end" onSubmit={saveGoldBuybackPrice}>
-          <label className="block min-w-0 flex-1 sm:max-w-md">
+        <form className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start" onSubmit={saveGoldBuybackPrice}>
+          <label className="block min-w-0">
             <span className="label">{en ? 'Shared shop buy-back price / mace (VND)' : 'Giá tiệm mua vào dùng chung / chỉ (VND)'}</span>
             <input className="field" inputMode="numeric" value={goldBuybackPriceInput} disabled={!canManage || busy === 'gold-price'} onChange={(event) => setGoldBuybackPriceInput(formatAssetMoneyInput(event.target.value))} placeholder={en ? 'Optional' : 'Không bắt buộc'} />
             <span className="mt-1 block text-xs text-gray-500">{en ? 'Used for all gold and estimated P/L. Leave empty to hide the estimate.' : 'Áp dụng cho tất cả vàng và lãi/lỗ tạm tính. Để trống nếu chưa muốn tính.'}</span>
           </label>
-          {canManage && <button type="submit" className="btn-primary inline-flex items-center justify-center gap-2" disabled={Boolean(busy)}>{busy === 'gold-price' && <LoaderCircle size={16} className="animate-spin" aria-hidden="true" />}{en ? 'Save shared price' : 'Lưu giá dùng chung'}</button>}
+          {canManage && <button type="submit" className="btn-primary inline-flex w-full items-center justify-center gap-2 sm:mt-6 sm:w-auto" disabled={Boolean(busy)}>{busy === 'gold-price' && <LoaderCircle size={16} className="animate-spin" aria-hidden="true" />}{en ? 'Save shared price' : 'Lưu giá dùng chung'}</button>}
         </form>
         {formError && <div role="alert" className="inline-feedback inline-feedback-error mt-3">{formError}</div>}
       </div>
@@ -886,7 +887,7 @@ function SavingsForm({ editor, setEditor, onSubmit, onCancel, paymentMethods, bu
         <label><span className="label">{en ? 'Bank' : 'Ngân hàng'}</span><input className="field" value={editor.bankName} onChange={(event) => setEditor({ ...editor, bankName: event.target.value })} /></label>
         <label><span className="label">{en ? 'Book name' : 'Tên sổ'}</span><input className="field" value={editor.name} onChange={(event) => setEditor({ ...editor, name: event.target.value })} /></label>
         <label><span className="label">{en ? 'Opening principal (VND)' : 'Tiền gốc (VND)'}</span><input className="field" inputMode="numeric" disabled={Boolean(editor.id)} value={editor.principal} onChange={(event) => setEditor({ ...editor, principal: event.target.value })} /><span className="mt-1 block text-xs text-gray-500">{editor.id ? (en ? 'Opening principal cannot be edited.' : 'Tiền gốc không sửa sau khi tạo.') : (en ? 'This is also the opening cash expense when enabled.' : 'Khoản này cũng là giao dịch chi mở sổ nếu bật bên dưới.')}</span></label>
-        <label><span className="label">{en ? 'Annual rate (%)' : 'Lãi suất năm (%)'}</span><input className="field" inputMode="decimal" step="0.0001" value={editor.annualInterestRate} onChange={(event) => setEditor({ ...editor, annualInterestRate: event.target.value })} /></label>
+        <label><span className="label">{en ? 'Annual rate (%)' : 'Lãi suất năm (%)'}</span><input className="field" type="number" inputMode="decimal" min="0" max="100" step="0.0001" value={editor.annualInterestRate} onChange={(event) => setEditor({ ...editor, annualInterestRate: sanitizeDecimalInput(event.target.value) })} /></label>
         <label><span className="label">{en ? 'Term (months)' : 'Kỳ hạn (tháng)'}</span><input className="field" inputMode="numeric" type="number" min="1" max="120" value={editor.termMonths} onChange={(event) => setEditor({ ...editor, termMonths: event.target.value })} /></label>
         <PaymentSelect id="savings-payment" value={editor.paymentMethodId} onChange={(value) => setEditor({ ...editor, paymentMethodId: value })} paymentMethods={paymentMethods} en={en} />
         <label><span className="label">{en ? 'Opened on' : 'Ngày mở'}</span><input className="field" type="date" value={editor.openedOn} onChange={(event) => setEditor({ ...editor, openedOn: event.target.value })} /></label>
