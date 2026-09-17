@@ -26,11 +26,6 @@ import {
 } from '../lib/catalogIcons';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { userFacingError } from '../lib/errorRecovery';
-import {
-  loadLocalCatalogTemplate,
-  saveLocalCatalogTemplate,
-  saveSystemCatalogTemplate,
-} from '../lib/systemCatalogDefaultsApi';
 
 type AppState = {
   familyId: string;
@@ -65,7 +60,6 @@ type AppState = {
     budgetEnabled?: boolean,
   ) => Promise<string | null>;
   deleteCatalogItem: (kind: CatalogKind, id: string) => Promise<string | null>;
-  saveCurrentCatalogsAsSystemDefault: () => Promise<string | null>;
   confirmPlannedTransaction: (id: string) => Promise<string | null>;
   updateFamilyName: (name: string) => Promise<string | null>;
   createFamily: (name: string) => Promise<string | null>;
@@ -529,27 +523,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [familyId, transactions],
   );
 
-  const saveCurrentCatalogsAsSystemDefault = useCallback(async () => {
-    if (!familyId) return 'Không tìm thấy gia đình hiện tại.';
-    if (currentUserRole !== 'owner') return 'Chỉ chủ gia đình mới có quyền đặt mặc định hệ thống.';
-    if (!isSupabaseConfigured) {
-      saveLocalCatalogTemplate({ purposes, expenseTypes, paymentMethods });
-      return null;
-    }
-    if (!online) return 'Hãy kết nối lại trước khi lưu mặc định cho gia đình mới.';
-    try {
-      await saveSystemCatalogTemplate(familyId);
-      return null;
-    } catch (saveError) {
-      if (saveError && typeof saveError === 'object' && 'message' in saveError) {
-        const message = String((saveError as { message?: unknown }).message || '');
-        if (message.includes('FORBIDDEN')) return 'Chỉ chủ gia đình mới có quyền đặt mặc định hệ thống.';
-        if (message.includes('INVALID_CATALOG_TEMPLATE')) return 'Cần có ít nhất một mục đang hoạt động ở mỗi nhóm danh mục.';
-      }
-      return userFacingError(saveError, 'Không thể lưu danh mục mặc định cho gia đình mới.');
-    }
-  }, [currentUserRole, expenseTypes, familyId, online, paymentMethods, purposes]);
-
   const confirmPlannedTransaction = useCallback(
     async (id: string) => {
       const markAsActual = () =>
@@ -610,7 +583,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (!name) return 'Vui lòng nhập tên gia đình.';
     if (name.length > 100) return 'Tên gia đình không được dài quá 100 ký tự.';
     if (!isSupabaseConfigured) {
-      const localTemplate = loadLocalCatalogTemplate();
       setFamilyId(localFamilyId);
       setFamilyName(name);
       setCurrentUserId('local-user');
@@ -618,9 +590,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setCurrentUserDisplayName(localDemoDisplayName);
       setCurrentUserRole('owner');
       setAuthenticated(true);
-      setPurposes(localTemplate?.purposes || fallbackPurposes);
-      setExpenseTypes(localTemplate?.expenseTypes || fallbackExpenseTypes);
-      setPaymentMethods(localTemplate?.paymentMethods || fallbackPaymentMethods);
+      setPurposes(fallbackPurposes);
+      setExpenseTypes(fallbackExpenseTypes);
+      setPaymentMethods(fallbackPaymentMethods);
       setError(null);
       return null;
     }
@@ -688,7 +660,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addCatalogItem,
       updateCatalogItem,
       deleteCatalogItem,
-      saveCurrentCatalogsAsSystemDefault,
       confirmPlannedTransaction,
       updateFamilyName,
       createFamily,
@@ -713,7 +684,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addCatalogItem,
       updateCatalogItem,
       deleteCatalogItem,
-      saveCurrentCatalogsAsSystemDefault,
       confirmPlannedTransaction,
       updateFamilyName,
       createFamily,
