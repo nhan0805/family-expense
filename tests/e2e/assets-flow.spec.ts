@@ -18,6 +18,8 @@ test('luồng demo thêm và bán vàng', async ({ page }) => {
   await page.goto('/cai-dat');
   await expect(page.getByRole('heading', { name: /^Cài đặt$/i })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Bộ lọc giao dịch mặc định' })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Bộ lọc mặc định' })).toHaveAttribute('aria-selected', 'true');
+  await page.getByRole('tab', { name: 'Giao dịch tự động' }).click();
   await expect(page.getByRole('heading', { name: 'Mặc định giao dịch tự động' })).toBeVisible();
   await page.locator('#gold_sale-payment-method').selectOption({ label: 'Chuyển khoản' });
   await page.getByRole('button', { name: 'Lưu mặc định tự động' }).click();
