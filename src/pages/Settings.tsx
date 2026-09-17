@@ -1,7 +1,8 @@
-import { Settings2, SlidersHorizontal } from 'lucide-react';
+import { BookCopy, Settings2, SlidersHorizontal } from 'lucide-react';
 import { useRef, useState, type KeyboardEvent } from 'react';
 import { useOptionalLanguage } from '../context/LanguageContext';
 import { AutomaticTransactionSettings } from './AutomaticTransactionSettings';
+import { SystemCatalogDefaultsSettings } from './SystemCatalogDefaultsSettings';
 import { TransactionFilterSettings } from './TransactionFilterSettings';
 
 const settingsTabs = [
@@ -17,6 +18,12 @@ const settingsTabs = [
     labelVi: 'Giao dịch tự động',
     labelEn: 'Automatic transactions',
   },
+  {
+    id: 'catalogs',
+    icon: BookCopy,
+    labelVi: 'Mặc định danh mục',
+    labelEn: 'Catalog defaults',
+  },
 ] as const;
 
 type SettingsTab = (typeof settingsTabs)[number]['id'];
@@ -25,7 +32,7 @@ export function Settings() {
   const { language } = useOptionalLanguage();
   const en = language === 'en';
   const [activeTab, setActiveTab] = useState<SettingsTab>('filters');
-  const tabRefs = useRef<Record<SettingsTab, HTMLButtonElement | null>>({ filters: null, automatic: null });
+  const tabRefs = useRef<Record<SettingsTab, HTMLButtonElement | null>>({ filters: null, automatic: null, catalogs: null });
 
   const handleTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>, currentTab: SettingsTab) => {
     const currentIndex = settingsTabs.findIndex((tab) => tab.id === currentTab);
@@ -51,7 +58,7 @@ export function Settings() {
       <header className="page-header">
         <p className="page-kicker"><Settings2 size={16} aria-hidden="true" />{en ? 'Preferences' : 'Tùy chọn'}</p>
         <h2 className="page-title">{en ? 'Settings' : 'Cài đặt'}</h2>
-        <p className="page-subtitle">{en ? 'Control your first view and the catalogs used by automatic transactions.' : 'Quản lý màn hình mở đầu và danh mục dùng cho các giao dịch tự động.'}</p>
+        <p className="page-subtitle">{en ? 'Control your first view, automatic transaction catalogs and new-family defaults.' : 'Quản lý màn hình mở đầu, danh mục giao dịch tự động và mặc định cho gia đình mới.'}</p>
       </header>
 
       <div className="catalog-tabs settings-tabs" role="tablist" aria-label={en ? 'Settings sections' : 'Nhóm cài đặt'}>
@@ -86,6 +93,10 @@ export function Settings() {
 
         <div id="settings-panel-automatic" role="tabpanel" aria-labelledby="settings-tab-automatic" hidden={activeTab !== 'automatic'} className="settings-tab-panel">
           <AutomaticTransactionSettings />
+        </div>
+
+        <div id="settings-panel-catalogs" role="tabpanel" aria-labelledby="settings-tab-catalogs" hidden={activeTab !== 'catalogs'} className="settings-tab-panel">
+          <SystemCatalogDefaultsSettings />
         </div>
       </div>
     </div>

@@ -158,11 +158,28 @@ Supabase pg_cron
   → user confirmation
 ```
 
+### New-family catalog defaults
+
+```text
+Family owner confirms active catalogs in Settings
+  → save_system_catalog_template() guarded RPC
+  → system catalog template tables
+  → create_family()/seed_family_defaults()
+  → new family receives a copied catalog snapshot
+```
+
+The system catalog template is configuration rather than tenant data. It has
+RLS with no direct client table privileges and can only be replaced by the
+owner-guarded RPC. Before a template is promoted, new-family onboarding keeps
+using the built-in catalog fallback; required savings/gold codes remain
+present even when a promoted family has customized labels.
+
 ## Core entities and relationships
 
 - `families` owns the tenant boundary.
 - `family_members` links authenticated users to a family with owner/member role and active status.
 - `purposes`, `expense_types`, `payment_methods` and `beneficiaries` are family-scoped catalogs.
+- `system_catalog_template_items` and `system_catalog_template_meta` store the global catalog snapshot used for future family onboarding; they are only writable through the owner-guarded promotion RPC.
 - `transactions` belongs to a family and references catalogs; soft deletion uses `deleted_at`. Amount is positive; `transaction_type` determines income/expense net meaning.
 - `budgets` belongs to a family/month/purpose and is guarded by budget visibility rules.
 - `recurring_transactions` stores templates; `recurring_transaction_runs` records idempotent occurrences; generated `transactions` link back with `recurring_transaction_id`.
