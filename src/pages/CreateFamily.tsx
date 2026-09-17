@@ -58,7 +58,7 @@ export function CreateFamily() {
         </div>
         <div>
           <p className="text-xs font-bold tracking-widest text-[var(--primary)]">
-            FAMILY EXPENSE
+            FAMILY FINANCE
           </p>
           <h1 className="mt-1 text-2xl font-extrabold">{en ? 'Create a new family' : 'Tạo gia đình mới'}</h1>
           <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">

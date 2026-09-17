@@ -159,7 +159,7 @@ export function ImportExport() {
         rowLimit
           ? (en ? 'This file contains more than 1,000 data rows. Split it into smaller files.' : 'File có hơn 1.000 dòng dữ liệu. Hãy tách thành các file nhỏ hơn.')
           : wrongTemplate
-          ? (en ? 'This file does not use the Family Expense template. Download a new template and do not rename the “Giao dịch” sheet or column headers.' : 'File không đúng template Family Expense. Hãy tải template mới từ ứng dụng và không đổi tên sheet “Giao dịch” hoặc tiêu đề cột.')
+          ? (en ? 'This file does not use the Family Finance template. Download a new template and do not rename the “Giao dịch” sheet or column headers.' : 'File không đúng template Family Finance. Hãy tải template mới từ ứng dụng và không đổi tên sheet “Giao dịch” hoặc tiêu đề cột.')
           : detail
             ? (en ? `Could not read Excel file: ${detail}` : `Không thể đọc file Excel: ${detail}`)
             : (en ? 'Could not read the Excel file. It may be corrupted or not a valid .xlsx file.' : 'Không thể đọc file Excel. File có thể bị hỏng hoặc không phải định dạng .xlsx hợp lệ.'),
@@ -562,7 +562,7 @@ export function ImportExport() {
             <FileCheck2 className="text-[#145c43] dark:text-[#50fa7b]" size={30} />
             <span className="font-semibold">{en ? 'Choose an Excel file to validate' : 'Chọn file Excel để kiểm tra'}</span>
             <span className="text-xs text-gray-500 dark:text-gray-400">
-              {en ? 'Only .xlsx files using the Family Expense template are accepted; you can drag a file here.' : 'Chỉ nhận file .xlsx đúng template Family Expense; có thể kéo file từ Finder và thả vào đây'}
+              {en ? 'Only .xlsx files using the Family Finance template are accepted; you can drag a file here.' : 'Chỉ nhận file .xlsx đúng template Family Finance; có thể kéo file từ Finder và thả vào đây'}
             </span>
             <button
               type="button"

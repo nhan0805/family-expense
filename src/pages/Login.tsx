@@ -88,7 +88,7 @@ export function Login() {
 
   return <main className="grid min-h-dvh place-items-center bg-[var(--app-bg)] p-4">
     <form className="card w-full max-w-md space-y-4 p-7" onSubmit={submit}>
-      <p className="text-xs font-bold tracking-widest text-[var(--primary)]">FAMILY EXPENSE</p>
+      <p className="text-xs font-bold tracking-widest text-[var(--primary)]">FAMILY FINANCE</p>
       <h1 className="text-2xl font-extrabold">{title}</h1>
       {(mode === 'login' || mode === 'signup') && <p className="text-sm text-[var(--muted)]">{en ? 'A clear view of your family’s money, one transaction at a time.' : 'Theo dõi tài chính gia đình rõ ràng, từng giao dịch một.'}</p>}
       {(mode === 'login' || mode === 'signup') && <div className="grid grid-cols-2 gap-1 rounded-xl bg-[var(--surface-muted)] p-1" role="group" aria-label={en ? 'Authentication mode' : 'Chế độ xác thực'}><button type="button" aria-pressed={mode === 'login'} className={`min-h-11 rounded-lg px-3 text-sm font-bold transition ${mode === 'login' ? 'bg-[var(--surface)] text-[var(--primary)] shadow-sm' : 'text-[var(--muted)]'}`} onClick={() => changeMode('login')}>{en ? 'Log in' : 'Đăng nhập'}</button><button type="button" aria-pressed={mode === 'signup'} className={`min-h-11 rounded-lg px-3 text-sm font-bold transition ${mode === 'signup' ? 'bg-[var(--surface)] text-[var(--primary)] shadow-sm' : 'text-[var(--muted)]'}`} onClick={() => changeMode('signup')}>{en ? 'Create account' : 'Tạo tài khoản'}</button></div>}

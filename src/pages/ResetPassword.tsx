@@ -71,7 +71,7 @@ export function ResetPassword() {
 
   return <main className="grid min-h-dvh place-items-center bg-[var(--app-bg)] p-4">
     <form className="card w-full max-w-md space-y-4 p-7" onSubmit={submit}>
-      <p className="text-xs font-bold tracking-widest text-[var(--primary)]">FAMILY EXPENSE</p>
+      <p className="text-xs font-bold tracking-widest text-[var(--primary)]">FAMILY FINANCE</p>
       <h1 className="text-2xl font-extrabold">{en ? 'Reset password' : 'Đặt lại mật khẩu'}</h1>
       {ready && <>
         <label><span className="label">Mật khẩu mới</span><input className="field" type="password" autoComplete="new-password" minLength={8} required value={password} onChange={(event) => setPassword(event.target.value)} /></label>

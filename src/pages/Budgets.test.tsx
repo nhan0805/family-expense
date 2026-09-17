@@ -78,11 +78,20 @@ describe('Quản lý ngân sách V1', () => {
     renderBudgets();
 
     expect(screen.getByRole('heading', { name: 'Ngân sách', level: 2 })).toHaveClass('page-title');
-    fireEvent.click(screen.getByRole('button', { name: 'Đặt ngân sách' }));
+    const setBudgetButton = screen.getByRole('button', { name: 'Đặt ngân sách' });
+    expect(setBudgetButton).toHaveClass('asset-action-button', 'asset-icon-action');
+    expect(setBudgetButton).toHaveAttribute('title', 'Đặt ngân sách');
+    fireEvent.click(setBudgetButton);
     fireEvent.change(screen.getByLabelText('Số tiền ngân sách Sinh hoạt'), { target: { value: '1.000.000' } });
     fireEvent.click(screen.getByRole('button', { name: 'Lưu ngân sách' }));
 
     await waitFor(() => expect(screen.getAllByText(/1\.000\.000 ₫/).length).toBeGreaterThan(0));
+    const editBudgetButton = screen.getByRole('button', { name: 'Sửa ngân sách' });
+    expect(editBudgetButton).toHaveClass('asset-action-button', 'asset-icon-action');
+    expect(editBudgetButton).toHaveAttribute('title', 'Sửa ngân sách');
+    const deleteBudgetButton = screen.getByRole('button', { name: 'Xóa ngân sách Sinh hoạt' });
+    expect(deleteBudgetButton).toHaveClass('asset-action-button', 'asset-icon-action', 'danger-button');
+    expect(deleteBudgetButton).toHaveAttribute('title', 'Xóa ngân sách');
     expect(screen.getByRole('link', { name: 'Giao dịch' })).toHaveAttribute(
       'href',
       expect.stringContaining('purposeId=p1'),
