@@ -119,4 +119,24 @@ describe('Tài sản — luồng Supabase', () => {
     await waitFor(() => expect(screen.getByText('Đã lưu sổ tiết kiệm.')).toBeInTheDocument());
     expect(screen.queryByRole('button', { name: 'Lưu sổ' })).not.toBeInTheDocument();
   });
+
+  it('cho phép lưu lô vàng mà không cần tạo giao dịch tự động', async () => {
+    mocks.upsertGoldAsset.mockResolvedValue({ asset: {} });
+    renderAssets();
+    fireEvent.click(await screen.findByRole('tab', { name: 'Vàng' }));
+    fireEvent.click(within(screen.getByRole('tabpanel', { name: 'Vàng' })).getAllByRole('button', { name: 'Thêm vàng' })[0]!);
+
+    fireEvent.change(screen.getByLabelText('Số lượng (chỉ)'), { target: { value: '1' } });
+    fireEvent.change(screen.getByLabelText('Giá mua / chỉ (VND)'), { target: { value: '10000000' } });
+    fireEvent.click(screen.getByLabelText('Tự tạo giao dịch chi tiền mua vàng'));
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu vàng' }));
+
+    await waitFor(() => expect(mocks.upsertGoldAsset).toHaveBeenCalledWith(
+      familyId,
+      expect.objectContaining({ quantityChi: 1, purchasePricePerChi: 10_000_000 }),
+      undefined,
+      false,
+    ));
+    await waitFor(() => expect(screen.getByText('Đã lưu vàng.')).toBeInTheDocument());
+  });
 });
