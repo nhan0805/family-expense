@@ -304,8 +304,8 @@ describe('Tài sản', () => {
     expect(within(goldArticle).getByText('8.000.000 ₫/chỉ')).toBeInTheDocument();
     const goldActions = within(goldArticle).getByRole('group', { name: 'Thao tác lô vàng' });
     expect(goldArticle.querySelector('.asset-row-footer')).not.toBeInTheDocument();
-    expect(goldActions.closest('.asset-row-main')).toHaveClass('asset-row-main', 'grid', 'gap-3');
-    expect(goldActions).toHaveClass('border-t', 'lg:border-l');
+    expect(goldActions.closest('.asset-row-main')).toHaveClass('asset-row-main', 'grid', 'gap-3', 'md:grid-cols-[minmax(0,1fr)_minmax(18rem,0.75fr)_auto]');
+    expect(goldActions).toHaveClass('border-t', 'md:border-l', 'md:border-t-0');
     expect(within(goldActions).getAllByRole('button')).toHaveLength(2);
     expect(within(goldActions).getByRole('button', { name: 'Sửa' })).toHaveClass('asset-icon-action');
     expect(within(goldActions).getByRole('button', { name: 'Xóa' })).toHaveClass('asset-icon-action');
