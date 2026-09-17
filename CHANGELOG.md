@@ -1,5 +1,14 @@
 # Nhật ký thay đổi Family Expense
 
+## 2026-09-18
+
+### Rút gọn nhãn danh sách tài sản trên Dashboard
+
+- Trên Dashboard, tiêu đề hai khu vực tài sản được đổi thành `Sổ tiết kiệm` và `Vàng`, bỏ tiền tố `Danh sách`; icon `Landmark` và `Crown` cùng kích thước 22px và giữ `shrink-0` để cân đối trên mobile.
+- Files: `src/pages/Dashboard.tsx`, `src/pages/Dashboard.test.tsx`. Không đổi schema, RLS/RPC, Edge Function hoặc dữ liệu.
+- Kiểm thử: local Vitest 48 file/222 test, TypeScript, ESLint, Vite build và `git diff --check` pass; E2E local chạy theo harness và 6 test được skip bởi guard demo/đăng nhập hiện có; CI main [run 35249616072](https://github.com/nhan0805/family-expense/actions/runs/35249616072) pass quality, E2E, db-security và performance budget.
+- Deployment: PR [#199](https://github.com/nhan0805/family-expense/pull/199) đã merge vào `main` với commit `13f4b2ddc7b629817794997a85c7fdb4dfc25a10`; [Cloudflare Pages check](https://github.com/nhan0805/family-expense/runs/105298793479) pass; smoke `https://family-expense-8fo.pages.dev/` trả HTTP 200 và bundle live chứa `Sổ tiết kiệm`/`Vàng` mà không còn `Danh sách sổ tiết kiệm`/`Danh sách vàng`.
+
 ## 2026-09-17
 
 ### Mở rộng định vị Family Finance và đồng bộ thao tác ngân sách
