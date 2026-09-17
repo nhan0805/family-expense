@@ -1,6 +1,6 @@
 -- Structural tests for savings-book and gold asset management.
 begin;
-select plan(40);
+select plan(41);
 
 select ok(
   exists(
@@ -167,14 +167,14 @@ select ok(
 select ok(
   pg_get_functiondef('public.upsert_savings_account(uuid,uuid,text,text,numeric,numeric,integer,date,date,text,uuid,text,boolean)'::regprocedure) ilike '%p.code = ''purpose-8''%'
   and pg_get_functiondef('public.record_savings_movement(uuid,uuid,text,numeric,date,uuid,text,boolean)'::regprocedure) ilike '%p.code = ''purpose-8''%'
-  and pg_get_functiondef('public.upsert_gold_asset(uuid,uuid,date,numeric,numeric,numeric,uuid,text,boolean)'::regprocedure) ilike '%p.code = ''purpose-8''%'
+  and pg_get_functiondef('public.upsert_gold_asset(uuid,uuid,date,numeric,numeric,numeric,uuid,text,boolean)'::regprocedure) ilike '%gold_purchase%'
   and pg_get_functiondef('public.record_gold_sale(uuid,uuid,date,numeric,numeric,uuid,text)'::regprocedure) ilike '%p.code = ''purpose-8''%',
-  'asset RPCs resolve the stable investment purpose code'
+  'asset RPCs resolve or honor the stable investment purpose code'
 );
 select ok(
-  pg_get_functiondef('public.upsert_gold_asset(uuid,uuid,date,numeric,numeric,numeric,uuid,text,boolean)'::regprocedure) ilike '%e.code = ''expense-25''%'
+  pg_get_functiondef('public.upsert_gold_asset(uuid,uuid,date,numeric,numeric,numeric,uuid,text,boolean)'::regprocedure) ilike '%gold_purchase%'
   and pg_get_functiondef('public.record_gold_sale(uuid,uuid,date,numeric,numeric,uuid,text)'::regprocedure) ilike '%e.code = ''expense-25''%',
-  'gold RPCs resolve the stable gold category code'
+  'gold RPCs resolve or honor the stable gold category code'
 );
 select ok(
   pg_get_functiondef('public.upsert_savings_account(uuid,uuid,text,text,numeric,numeric,integer,date,date,text,uuid,text,boolean)'::regprocedure) ilike '%if p_create_transaction then%public.automatic_transaction_defaults%'
@@ -183,9 +183,15 @@ select ok(
   'savings opening honors automatic transaction settings and keeps book-only save available'
 );
 select ok(
-  pg_get_functiondef('public.upsert_gold_asset(uuid,uuid,date,numeric,numeric,numeric,uuid,text,boolean)'::regprocedure) ilike '%if p_create_transaction or linked_transaction_id is not null then%if p_create_transaction then%select p.id into purpose_id%select e.id into expense_type_id%if purpose_id is null or expense_type_id is null or resolved_payment_method_id is null then%catalog_not_ready%'
+  pg_get_functiondef('public.upsert_gold_asset(uuid,uuid,date,numeric,numeric,numeric,uuid,text,boolean)'::regprocedure) ilike '%if p_create_transaction then%select d.purpose_id%public.automatic_transaction_defaults%gold_purchase%'
+  and pg_get_functiondef('public.upsert_gold_asset(uuid,uuid,date,numeric,numeric,numeric,uuid,text,boolean)'::regprocedure) ilike '%if p_create_transaction or linked_transaction_id is not null then%'
   ,
   'gold lot-only save does not require transaction catalogs'
+);
+select ok(
+  pg_get_functiondef('public.upsert_gold_asset(uuid,uuid,date,numeric,numeric,numeric,uuid,text,boolean)'::regprocedure) ilike '%public.automatic_transaction_defaults%'
+  and pg_get_functiondef('public.upsert_gold_asset(uuid,uuid,date,numeric,numeric,numeric,uuid,text,boolean)'::regprocedure) ilike '%gold_purchase%',
+  'gold purchase honors the configured automatic mapping'
 );
 select ok(
   not exists(
@@ -195,11 +201,12 @@ select ok(
       select 1
       from public.expense_types e
       where e.family_id = f.id
-        and e.name = 'Đầu tư vàng'
+        and e.code = 'expense-25'
+        and e.name = 'Vàng'
         and e.active
-    )
+      )
   ),
-  'every family has an active gold investment expense category'
+  'every family has an active gold expense category'
 );
 
 select * from finish();
