@@ -122,6 +122,7 @@ describe('Tài sản', () => {
       { id: 'other', source: 'asset', sourceReference: 'asset:gold:other:purchase' },
     ];
     const { setTransactions } = renderAssets(linkedTransactions);
+    fireEvent.click(screen.getByRole('tab', { name: 'Vàng' }));
     const goldArticle = screen.getByText('1 / 1 chỉ').closest('article')!;
 
     fireEvent.click(within(goldArticle).getByRole('button', { name: 'Xóa' }));
@@ -151,8 +152,9 @@ describe('Tài sản', () => {
       paymentMethodId: 'payment-bank',
     }));
     const { setTransactions } = renderAssets([], vi.fn(), automaticDefaults);
+    fireEvent.click(screen.getByRole('tab', { name: 'Vàng' }));
 
-    fireEvent.click(screen.getAllByRole('button', { name: 'Thêm vàng' })[0]!);
+    fireEvent.click(within(screen.getByRole('tabpanel', { name: 'Vàng' })).getAllByRole('button', { name: 'Thêm vàng' })[0]!);
     fireEvent.change(screen.getByLabelText('Số lượng (chỉ)'), { target: { value: '1' } });
     fireEvent.change(screen.getByLabelText('Giá mua / chỉ (VND)'), { target: { value: '8.000.000' } });
     fireEvent.click(screen.getByRole('button', { name: 'Lưu vàng' }));
@@ -180,6 +182,7 @@ describe('Tài sản', () => {
     };
     localStorage.setItem(`family-expense:gold-assets:${familyId}`, JSON.stringify([goldAsset, secondGoldAsset]));
     const { setTransactions } = renderAssets([]);
+    fireEvent.click(screen.getByRole('tab', { name: 'Vàng' }));
 
     expect(screen.getByText('Số vàng hiện có')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Bán vàng' }));
@@ -205,9 +208,32 @@ describe('Tài sản', () => {
     expect(update([])[0]).toMatchObject({ transactionType: 'Thu nhập', amount: 13_500_000, sourceReference: expect.stringContaining('asset:gold:aggregate:sale:') });
   });
 
+  it('hiển thị sổ tiết kiệm và vàng trong hai tab riêng', () => {
+    localStorage.setItem(`family-expense:savings-accounts:${familyId}`, JSON.stringify([savingsAccount]));
+    localStorage.setItem(`family-expense:gold-assets:${familyId}`, JSON.stringify([goldAsset]));
+    renderAssets([]);
+
+    const savingsTab = screen.getByRole('tab', { name: 'Sổ tiết kiệm' });
+    const goldTab = screen.getByRole('tab', { name: 'Vàng' });
+    const savingsPanel = screen.getByRole('tabpanel', { name: 'Sổ tiết kiệm' });
+    const goldPanel = document.getElementById('assets-panel-gold')!;
+
+    expect(savingsTab).toHaveAttribute('aria-selected', 'true');
+    expect(goldTab).toHaveAttribute('aria-selected', 'false');
+    expect(within(savingsPanel).getByText('ACB · Sổ cần xóa')).toBeInTheDocument();
+    expect(goldPanel).toHaveAttribute('hidden');
+
+    fireEvent.click(goldTab);
+
+    expect(goldTab).toHaveAttribute('aria-selected', 'true');
+    expect(savingsPanel).toHaveAttribute('hidden');
+    expect(within(goldPanel).getByText('1 / 1 chỉ')).toBeInTheDocument();
+  });
+
   it('căn đều hai nút thao tác vàng', () => {
     localStorage.setItem(`family-expense:gold-assets:${familyId}`, JSON.stringify([goldAsset]));
     renderAssets([]);
+    fireEvent.click(screen.getByRole('tab', { name: 'Vàng' }));
 
     const sellButton = screen.getByRole('button', { name: 'Bán vàng' });
     const goldSection = screen.getByRole('region', { name: 'Vàng' });
@@ -234,7 +260,6 @@ describe('Tài sản', () => {
     renderAssets([]);
 
     const savingsArticle = screen.getByText('ACB · Sổ cần xóa').closest('article')!;
-    const goldArticle = screen.getByText('1 / 1 chỉ').closest('article')!;
 
     expect(savingsArticle).toHaveClass('p-3', 'sm:p-4');
     expect(savingsArticle.querySelectorAll('.asset-stat-card')).toHaveLength(4);
@@ -247,6 +272,10 @@ describe('Tài sản', () => {
     expect(within(savingsActions).getByRole('button', { name: 'Xóa' })).toHaveClass('asset-action-button', 'asset-icon-action');
     expect(within(savingsActions).getByRole('button', { name: 'Sửa' }).textContent).toBe('');
     expect(within(savingsActions).getByRole('button', { name: 'Sửa' })).toHaveAttribute('title', 'Sửa sổ tiết kiệm');
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Vàng' }));
+    const goldArticle = screen.getByText('1 / 1 chỉ').closest('article')!;
+
     const goldActions = within(goldArticle).getByRole('group', { name: 'Thao tác lô vàng' });
     expect(goldActions.parentElement).toHaveClass('asset-stat-row');
     expect(within(goldActions).getAllByRole('button')).toHaveLength(2);
