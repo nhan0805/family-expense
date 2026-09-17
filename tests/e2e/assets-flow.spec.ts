@@ -9,6 +9,7 @@ test('luồng demo thêm và bán vàng', async ({ page }) => {
     test.skip(true, 'Môi trường E2E đang trỏ tới Supabase; bỏ qua luồng demo local.');
   }
 
+  await page.getByRole('tab', { name: 'Vàng' }).click();
   const goldSection = page.getByRole('region', { name: 'Vàng' });
   const sellButton = goldSection.getByRole('button', { name: 'Bán vàng' });
   const addButton = goldSection.getByRole('button', { name: 'Thêm vàng' }).first();
@@ -25,6 +26,7 @@ test('luồng demo thêm và bán vàng', async ({ page }) => {
 
   await page.goto('/tai-san');
   await expect(assetsHeading).toBeVisible();
+  await page.getByRole('tab', { name: 'Vàng' }).click();
   await page.getByLabel('Giá tiệm mua vào dùng chung / chỉ (VND)').fill('8500000');
   await page.getByRole('button', { name: 'Lưu giá dùng chung' }).click();
   await expect(page.getByText('Đã lưu giá tiệm mua vào dùng chung.')).toBeVisible();
