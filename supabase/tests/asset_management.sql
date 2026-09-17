@@ -1,6 +1,6 @@
 -- Structural tests for savings-book and gold asset management.
 begin;
-select plan(36);
+select plan(38);
 
 select ok(
   exists(
@@ -72,7 +72,7 @@ select ok(
     'public.archive_gold_asset(uuid,uuid)'::regprocedure
   )
   and pg_get_functiondef(oid) ilike '%public.is_family_member(%'
-  and pg_get_functiondef(oid) not ilike '%public.is_family_owner(%') = 7,
+  and pg_get_functiondef(oid) not ilike '%public.is_family_owner(%') = 8,
   'asset mutation RPCs allow all active family members'
 );
 
@@ -97,7 +97,7 @@ select ok(
     'public.record_gold_sale_aggregate(uuid,date,numeric,numeric,uuid,text)'::regprocedure,
     'public.archive_gold_asset(uuid,uuid)'::regprocedure,
     'public.get_asset_summary(uuid)'::regprocedure
-  )) = 8,
+  )) = 9,
   'asset RPCs use security definer'
 );
 select ok(
@@ -115,6 +115,11 @@ select ok(
   and pg_get_functiondef('public.record_gold_sale_aggregate(uuid,date,numeric,numeric,uuid,text)'::regprocedure) ilike '%for update%'
   and pg_get_functiondef('public.record_gold_sale_aggregate(uuid,date,numeric,numeric,uuid,text)'::regprocedure) ilike '%asset:gold:aggregate:sale:%',
   'aggregate gold sale uses member guard, row locks and one ledger reference'
+);
+select ok(
+  pg_get_functiondef('public.record_gold_sale_aggregate(uuid,date,numeric,numeric,uuid,text)'::regprocedure) ilike '%public.automatic_transaction_defaults%'
+  and pg_get_functiondef('public.record_gold_sale_aggregate(uuid,date,numeric,numeric,uuid,text)'::regprocedure) ilike '%gold_sale%',
+  'aggregate gold sale reads the configured gold-sale catalogs'
 );
 select ok(
   not has_table_privilege('authenticated', 'public.savings_accounts', 'INSERT')

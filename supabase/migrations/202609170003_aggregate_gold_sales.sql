@@ -21,6 +21,9 @@ declare
   purpose_id uuid;
   expense_type_id uuid;
   resolved_payment_method_id uuid;
+  configured_purpose_id uuid;
+  configured_expense_type_id uuid;
+  configured_payment_method_id uuid;
   linked_transaction_id uuid;
   sale_batch_id uuid := gen_random_uuid();
   sale_amount numeric;
@@ -57,21 +60,45 @@ begin
     raise exception 'INVALID_AMOUNT';
   end if;
 
-  select p.id
-  into purpose_id
-  from public.purposes as p
-  where p.family_id = p_family_id
-    and p.active
-    and p.name = 'Đầu tư'
+  select d.purpose_id, d.expense_type_id, d.payment_method_id
+  into configured_purpose_id, configured_expense_type_id, configured_payment_method_id
+  from public.automatic_transaction_defaults as d
+  join public.purposes as configured_purpose
+    on configured_purpose.family_id = d.family_id
+   and configured_purpose.id = d.purpose_id
+   and configured_purpose.active
+  join public.expense_types as configured_expense_type
+    on configured_expense_type.family_id = d.family_id
+   and configured_expense_type.id = d.expense_type_id
+   and configured_expense_type.active
+  join public.payment_methods as configured_payment_method
+    on configured_payment_method.family_id = d.family_id
+   and configured_payment_method.id = d.payment_method_id
+   and configured_payment_method.active
+  where d.family_id = p_family_id
+    and d.automation_key = 'gold_sale'
   limit 1;
 
-  select e.id
-  into expense_type_id
-  from public.expense_types as e
-  where e.family_id = p_family_id
-    and e.active
-    and e.name = 'Đầu tư vàng'
-  limit 1;
+  purpose_id := configured_purpose_id;
+  expense_type_id := configured_expense_type_id;
+  if purpose_id is null then
+    select p.id
+    into purpose_id
+    from public.purposes as p
+    where p.family_id = p_family_id
+      and p.active
+      and p.name = 'Đầu tư'
+    limit 1;
+  end if;
+  if expense_type_id is null then
+    select e.id
+    into expense_type_id
+    from public.expense_types as e
+    where e.family_id = p_family_id
+      and e.active
+      and e.name = 'Đầu tư vàng'
+    limit 1;
+  end if;
 
   if p_payment_method_id is not null then
     select pm.id
@@ -84,13 +111,16 @@ begin
       raise exception 'PAYMENT_METHOD_NOT_FOUND';
     end if;
   else
-    select pm.id
-    into resolved_payment_method_id
-    from public.payment_methods as pm
-    where pm.family_id = p_family_id
-      and pm.active
-    order by (pm.name = 'Tiền mặt') desc, pm.sort_order, pm.id
-    limit 1;
+    resolved_payment_method_id := configured_payment_method_id;
+    if resolved_payment_method_id is null then
+      select pm.id
+      into resolved_payment_method_id
+      from public.payment_methods as pm
+      where pm.family_id = p_family_id
+        and pm.active
+      order by (pm.name = 'Tiền mặt') desc, pm.sort_order, pm.id
+      limit 1;
+    end if;
   end if;
   if purpose_id is null or expense_type_id is null or resolved_payment_method_id is null then
     raise exception 'CATALOG_NOT_READY';
@@ -278,3 +308,5 @@ $$;
 
 revoke all on function public.delete_gold_asset(uuid, uuid) from public;
 grant execute on function public.delete_gold_asset(uuid, uuid) to authenticated;
+
+select pg_notify('pgrst', 'reload schema');
