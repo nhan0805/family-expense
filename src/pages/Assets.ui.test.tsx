@@ -205,6 +205,18 @@ describe('Tài sản', () => {
     expect(update([])[0]).toMatchObject({ transactionType: 'Thu nhập', amount: 13_500_000, sourceReference: expect.stringContaining('asset:gold:aggregate:sale:') });
   });
 
+  it('căn đều hai nút thao tác vàng', () => {
+    localStorage.setItem(`family-expense:gold-assets:${familyId}`, JSON.stringify([goldAsset]));
+    renderAssets([]);
+
+    const sellButton = screen.getByRole('button', { name: 'Bán vàng' });
+    const goldSection = screen.getByRole('region', { name: 'Vàng' });
+    const addButton = within(goldSection).getByRole('button', { name: 'Thêm vàng' });
+    expect(sellButton).toHaveClass('w-full', 'justify-center');
+    expect(addButton).toHaveClass('w-full', 'justify-center');
+    expect(sellButton.parentElement).toHaveClass('grid', 'w-full', 'sm:w-64');
+  });
+
   it('cho phép nhập lãi suất thập phân trên bàn phím điện thoại', () => {
     renderAssets([]);
     fireEvent.click(screen.getAllByRole('button', { name: /^Thêm sổ$/ })[0]!);

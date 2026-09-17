@@ -9,6 +9,12 @@ test('luồng demo thêm và bán vàng', async ({ page }) => {
     test.skip(true, 'Môi trường E2E đang trỏ tới Supabase; bỏ qua luồng demo local.');
   }
 
+  const goldSection = page.getByRole('region', { name: 'Vàng' });
+  const sellButton = goldSection.getByRole('button', { name: 'Bán vàng' });
+  const addButton = goldSection.getByRole('button', { name: 'Thêm vàng' }).first();
+  const [sellBox, addBox] = await Promise.all([sellButton.boundingBox(), addButton.boundingBox()]);
+  expect(sellBox?.width).toBeCloseTo(addBox?.width, 1);
+
   await page.goto('/cai-dat');
   await expect(page.getByRole('heading', { name: /^Cài đặt$/i })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Bộ lọc giao dịch mặc định' })).toBeVisible();
