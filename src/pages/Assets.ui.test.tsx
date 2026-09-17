@@ -256,7 +256,7 @@ describe('Tài sản', () => {
     expect(sellButton.parentElement).toHaveClass('grid', 'w-full', 'sm:w-64');
   });
 
-  it('giữ dòng tài sản gọn, ẩn lịch sử sổ và dùng nút icon cùng hàng số liệu', () => {
+  it('hiển thị lô vàng theo holding card gọn, có phân cấp số liệu và nút icon', () => {
     localStorage.setItem(`family-expense:savings-accounts:${familyId}`, JSON.stringify([savingsAccount]));
     localStorage.setItem(`family-expense:savings-movements:${familyId}`, JSON.stringify([{
       id: 'movement-hidden-ui',
@@ -295,12 +295,17 @@ describe('Tài sản', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Vàng' }));
     const goldArticle = screen.getByText('1 / 1 chỉ').closest('article')!;
 
+    expect(goldArticle).toHaveClass('asset-gold-row', 'rounded-2xl', 'p-3', 'sm:p-4');
     expect(goldArticle.querySelectorAll('.asset-stat-card')).toHaveLength(0);
     expect(goldArticle).not.toHaveTextContent('Giá tiệm mua vào');
-    expect(goldArticle).toHaveTextContent('Giá mua8.000.000 ₫/chỉ');
+    expect(within(goldArticle).getByText('Giá mua / chỉ')).toBeInTheDocument();
+    expect(within(goldArticle).getByText('Giá bán ước tính')).toBeInTheDocument();
+    expect(within(goldArticle).queryByText('Giá trị bán ước tính')).not.toBeInTheDocument();
+    expect(within(goldArticle).getByText('8.000.000 ₫/chỉ')).toBeInTheDocument();
     const goldActions = within(goldArticle).getByRole('group', { name: 'Thao tác lô vàng' });
     expect(goldArticle.querySelector('.asset-row-footer')).not.toBeInTheDocument();
-    expect(goldActions.closest('.asset-row-main')).toHaveClass('asset-row-main', 'flex-wrap', 'items-center');
+    expect(goldActions.closest('.asset-row-main')).toHaveClass('asset-row-main', 'grid', 'gap-3');
+    expect(goldActions).toHaveClass('border-t', 'lg:border-l');
     expect(within(goldActions).getAllByRole('button')).toHaveLength(2);
     expect(within(goldActions).getByRole('button', { name: 'Sửa' })).toHaveClass('asset-icon-action');
     expect(within(goldActions).getByRole('button', { name: 'Xóa' })).toHaveClass('asset-icon-action');
