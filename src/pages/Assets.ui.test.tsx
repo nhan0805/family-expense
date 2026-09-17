@@ -249,12 +249,15 @@ describe('Tài sản', () => {
     renderAssets([]);
 
     const savingsArticle = screen.getByText('ACB · Sổ cần xóa').closest('article')!;
-    const goldArticle = screen.getByText('1 / 1 chỉ').closest('article')!;
 
     expect(savingsArticle).toHaveClass('p-3', 'sm:p-4');
     expect(savingsArticle.querySelectorAll('.asset-stat-card')).toHaveLength(4);
     expect(within(savingsArticle).getByRole('button', { name: 'Sửa' })).toHaveClass('asset-action-button');
     expect(within(savingsArticle).getByRole('button', { name: 'Tất toán' })).toHaveClass('asset-action-button');
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Vàng' }));
+    const goldArticle = screen.getByText('1 / 1 chỉ').closest('article')!;
+
     expect(within(goldArticle).getByRole('button', { name: 'Sửa' })).toHaveClass('asset-action-button');
     expect(within(goldArticle).getByRole('button', { name: 'Xóa' })).toHaveClass('asset-action-button');
   });
