@@ -101,7 +101,7 @@ begin
 end;
 $$;
 
-revoke all on function public.save_system_catalog_template(uuid) from public;
+revoke all on function public.save_system_catalog_template(uuid) from anon, authenticated, public;
 grant execute on function public.save_system_catalog_template(uuid) to authenticated;
 
 -- New families use the promoted template when one exists. Built-in defaults
