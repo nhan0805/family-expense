@@ -1,5 +1,15 @@
 # Nhật ký thay đổi Family Expense
 
+## 2026-09-17
+
+### Thu gọn trải nghiệm Tài sản và Cài đặt
+
+- Các PR [#170](https://github.com/nhan0805/family-expense/pull/170)–[#179](https://github.com/nhan0805/family-expense/pull/179) đã hoàn tất chuỗi follow-up cho Tài sản và Cài đặt: bán vàng từ tổng số đang giữ, dọn cấu hình giao dịch tự động cũ, khôi phục Dracula dark mode, tách hai màn hình thành tab và thu gọn các dòng tài sản.
+- Trên Tài sản, các thao tác Sửa/Xóa/Tất toán/Lưu trữ chuyển thành nút icon có tên truy cập và tooltip, đặt cùng hàng với các ô số liệu; phần “Lịch sử sổ” được ẩn để giảm chiều cao, còn lịch sử bán vàng vẫn giữ nguyên. Menu bên cạnh chỉ còn “Cài đặt”; route bộ lọc mặc định vẫn được giữ để không làm hỏng deep link.
+- Files chính: `src/pages/Assets.tsx`, `src/pages/Assets.ui.test.tsx`, `src/components/Layout.tsx`, `src/components/Layout.test.tsx`, `src/index.css`, `tests/e2e/assets-flow.spec.ts`. Không có thay đổi schema/RLS/RPC trong PR #179.
+- Kiểm thử: local Vitest 48 file/220 test, TypeScript, ESLint, Vite build, `git diff --check`; CI main [run 35197596017](https://github.com/nhan0805/family-expense/actions/runs/35197596017) pass quality, E2E, db-security và performance budget.
+- Deployment: PR #179 đã merge vào `main` với commit `6c293f5d2617693f866d7b3110e5970b164bab40`; [Cloudflare Pages production](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/f065ea1d-4d3d-45a2-9df3-d848cf93bf6e) báo deploy thành công; smoke `https://family-expense-8fo.pages.dev/` trả HTTP 200 và bundle live chứa các control icon mới.
+
 ## 2026-09-16
 
 ### Sắp xếp form giao dịch
