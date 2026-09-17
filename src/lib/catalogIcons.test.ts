@@ -13,6 +13,8 @@ describe('catalog icons', () => {
     [...purposeNames, ...expenseTypeNames, ...paymentMethodNames].forEach((name) => {
       expect(getDefaultCatalogIcon(name)).toBeTruthy();
     });
+    expect(getDefaultCatalogIcon('Vàng')).toBe('crown');
+    expect(getDefaultCatalogIcon('Đầu tư vàng')).toBe('crown');
   });
 
   it('searches by Vietnamese keyword and icon name', () => {
