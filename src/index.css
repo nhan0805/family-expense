@@ -747,6 +747,18 @@ summary:focus-visible {
   justify-content: center;
 }
 
+.asset-icon-action.btn-secondary {
+  border-color: color-mix(in srgb, var(--primary) 62%, var(--border-strong));
+  background: color-mix(in srgb, var(--primary) 8%, var(--surface));
+  color: var(--primary-strong);
+}
+
+.asset-icon-action.btn-secondary:hover:not(:disabled) {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 14%, var(--surface));
+  color: var(--text);
+}
+
 .transaction-card-tag {
   display: inline-flex;
   align-items: center;
@@ -976,6 +988,16 @@ summary:focus-visible {
 .danger-button:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
+}
+
+.asset-icon-action.danger-button {
+  border-color: color-mix(in srgb, var(--danger) 52%, var(--border-strong));
+  background: color-mix(in srgb, var(--danger) 8%, var(--surface));
+}
+
+.asset-icon-action.danger-button:hover:not(:disabled) {
+  border-color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 14%, var(--surface));
 }
 
 .inline-feedback {
