@@ -311,6 +311,7 @@ describe('Tài sản', () => {
     const rateInput = screen.getByLabelText('Lãi suất năm (%)');
     expect(rateInput).toHaveAttribute('type', 'text');
     expect(rateInput).toHaveAttribute('inputmode', 'decimal');
+    expect(rateInput).not.toHaveAttribute('placeholder');
 
     fireEvent.change(rateInput, { target: { value: '8,2' } });
     expect(rateInput).toHaveValue('8.2');

@@ -1,8 +1,8 @@
-# Family Expense
+# Family Finance
 
 > Trước khi thay đổi project, đọc `AGENTS.md` và mục mới nhất trong `CHANGELOG.md`. Thay đổi quan trọng được ghi vào changelog trong release/status update; feature PR dùng PR body để tránh nhiều branch cùng sửa tài liệu canonical.
 
-Web app quản lý chi tiêu gia đình bằng tiếng Việt, mobile-first, có PWA và luồng nhập giao dịch bằng Gemini. AI chỉ điền đề xuất vào form; người dùng luôn phải kiểm tra và bấm **Xác nhận và lưu**.
+Web app quản lý tài chính gia đình bằng tiếng Việt, mobile-first, có PWA và luồng nhập giao dịch bằng Gemini. AI chỉ điền đề xuất vào form; người dùng luôn phải kiểm tra và bấm **Xác nhận và lưu**.
 
 ## Kiến trúc
 
@@ -73,7 +73,7 @@ Tính năng **Dữ liệu → Gửi danh sách giao dịch** gọi Edge Function
 Tạo API key có quyền gửi trong Brevo, xác minh sender email, rồi lưu secret ở Supabase:
 
 ```bash
-supabase secrets set BREVO_API_KEY=<key> BREVO_SENDER_EMAIL=<sender-email> BREVO_SENDER_NAME="Family Expense"
+supabase secrets set BREVO_API_KEY=<key> BREVO_SENDER_EMAIL=<sender-email> BREVO_SENDER_NAME="Family Finance"
 ```
 
 Production deploy `email-transactions` chạy qua workflow Supabase sau khi thay đổi được merge vào `main`. Gói Brevo Free có giới hạn gửi hằng ngày; kiểm tra quota và lỗi provider trước khi dùng dữ liệu thật.
@@ -125,7 +125,7 @@ Script thực hiện theo batch 200 dòng, chỉ cho owner chạy, tái sử d�
 
 ## Thành viên gia đình
 
-Owner vào **Thành viên**, nhập email của người cần thêm và tên hiển thị tùy chọn. Email đó phải đăng ký tài khoản Family Expense trước. Sau khi được thêm, member đăng nhập lại sẽ thấy cùng Dashboard, giao dịch và dữ liệu của gia đình; member không có quyền thêm người khác. Mỗi người có thể đổi tên hiển thị của chính mình; owner có thể đổi tên gia đình, đổi tên mọi thành viên và xóa member. Các thao tác sửa tên dùng icon bút chì có tooltip. Xóa member chỉ thu hồi quyền truy cập, không xóa giao dịch cũ. Phiên bản hiện tại chỉ hỗ trợ một tài khoản thuộc một gia đình đang hoạt động.
+Owner vào **Thành viên**, nhập email của người cần thêm và tên hiển thị tùy chọn. Email đó phải đăng ký tài khoản Family Finance trước. Sau khi được thêm, member đăng nhập lại sẽ thấy cùng Dashboard, giao dịch và dữ liệu của gia đình; member không có quyền thêm người khác. Mỗi người có thể đổi tên hiển thị của chính mình; owner có thể đổi tên gia đình, đổi tên mọi thành viên và xóa member. Các thao tác sửa tên dùng icon bút chì có tooltip. Xóa member chỉ thu hồi quyền truy cập, không xóa giao dịch cũ. Phiên bản hiện tại chỉ hỗ trợ một tài khoản thuộc một gia đình đang hoạt động.
 
 Tài khoản mới chưa thuộc gia đình nào sẽ tự chuyển đến màn hình **Tạo gia đình mới**. Sau khi nhập tên, hệ thống tạo gia đình, gán tài khoản làm owner và seed toàn bộ danh mục mặc định trong cùng một RPC transaction. Tài khoản đã thuộc gia đình không thể tạo thêm gia đình khác.
 

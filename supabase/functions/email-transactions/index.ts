@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
 
     const apiKey = Deno.env.get('BREVO_API_KEY');
     const senderEmail = Deno.env.get('BREVO_SENDER_EMAIL');
-    const senderName = Deno.env.get('BREVO_SENDER_NAME') || 'Family Expense';
+    const senderName = Deno.env.get('BREVO_SENDER_NAME') || 'Family Finance';
     const url = Deno.env.get('SUPABASE_URL');
     const anon = Deno.env.get('SUPABASE_ANON_KEY');
     if (!apiKey || !senderEmail || !url || !anon)
