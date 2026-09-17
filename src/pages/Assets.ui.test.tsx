@@ -217,6 +217,22 @@ describe('Tài sản', () => {
     expect(sellButton.parentElement).toHaveClass('grid', 'w-full', 'sm:w-64');
   });
 
+  it('giữ dòng tài sản gọn và nút thao tác không xuống dòng', () => {
+    localStorage.setItem(`family-expense:savings-accounts:${familyId}`, JSON.stringify([savingsAccount]));
+    localStorage.setItem(`family-expense:gold-assets:${familyId}`, JSON.stringify([goldAsset]));
+    renderAssets([]);
+
+    const savingsArticle = screen.getByText('ACB · Sổ cần xóa').closest('article')!;
+    const goldArticle = screen.getByText('1 / 1 chỉ').closest('article')!;
+
+    expect(savingsArticle).toHaveClass('p-3', 'sm:p-4');
+    expect(savingsArticle.querySelectorAll('.asset-stat-card')).toHaveLength(4);
+    expect(within(savingsArticle).getByRole('button', { name: 'Sửa' })).toHaveClass('asset-action-button');
+    expect(within(savingsArticle).getByRole('button', { name: 'Tất toán' })).toHaveClass('asset-action-button');
+    expect(within(goldArticle).getByRole('button', { name: 'Sửa' })).toHaveClass('asset-action-button');
+    expect(within(goldArticle).getByRole('button', { name: 'Xóa' })).toHaveClass('asset-action-button');
+  });
+
   it('cho phép nhập lãi suất thập phân trên bàn phím điện thoại', () => {
     renderAssets([]);
     fireEvent.click(screen.getAllByRole('button', { name: /^Thêm sổ$/ })[0]!);
