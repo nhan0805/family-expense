@@ -79,6 +79,8 @@ describe('Layout mobile navigation', () => {
     expect(within(bottomNav!).queryByRole('link', { name: 'Thành viên' })).not.toBeInTheDocument();
     expect(within(bottomNav!).getByRole('link', { name: 'Tài sản' })).toHaveAttribute('href', '/tai-san');
     expect(within(bottomNav!).queryByRole('link', { name: 'Chi phí định kỳ' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Cài đặt' })).toHaveAttribute('href', '/cai-dat');
+    expect(screen.queryByRole('link', { name: 'Bộ lọc mặc định' })).not.toBeInTheDocument();
 
     const memberLinks = screen.getAllByRole('link', { name: 'Mở màn hình thành viên của Chủ gia đình' });
     expect(memberLinks).toHaveLength(2);

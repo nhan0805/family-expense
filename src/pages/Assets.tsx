@@ -78,7 +78,6 @@ import {
   type GoldHoldingSummary,
   type SavingsAccount,
   type SavingsAccountInput,
-  type SavingsMovementType,
 } from '../lib/assets';
 import { isSupabaseConfigured } from '../lib/supabase';
 import { errorText, userFacingError } from '../lib/errorRecovery';
@@ -156,14 +155,6 @@ const interestMethodLabel = (value: SavingsAccount['interestMethod'], en: boolea
   return en ? 'At maturity' : 'Cuối kỳ';
 };
 
-const movementLabel = (value: SavingsMovementType, en: boolean) => {
-  if (value === 'interest') return en ? 'Interest received' : 'Lãi nhận về';
-  if (value === 'withdrawal') return en ? 'Withdrawal' : 'Rút tiền';
-  if (value === 'fee') return en ? 'Fee' : 'Phí';
-  if (value === 'settlement') return en ? 'Settlement' : 'Tất toán';
-  return en ? 'Opening deposit' : 'Mở sổ';
-};
-
 export function assetError(error: unknown, en: boolean, fallback: string) {
   const raw = errorText(error).toLowerCase();
   if (raw.includes('forbidden') || raw.includes('42501'))
@@ -197,10 +188,6 @@ export function assetError(error: unknown, en: boolean, fallback: string) {
   if (raw.includes('account_not_active') || raw.includes('asset_not_active'))
     return en ? 'This asset is no longer active.' : 'Tài sản này không còn ở trạng thái hoạt động.';
   return en ? fallback : userFacingError(error, fallback);
-}
-
-function paymentName(paymentMethodId: string, paymentMethods: ReturnType<typeof useApp>['paymentMethods'], language: 'vi' | 'en') {
-  return getCatalogDisplayName(paymentMethods.find((item) => item.id === paymentMethodId), language) || '—';
 }
 
 export function Assets() {
@@ -817,7 +804,6 @@ export function Assets() {
   if (assetQuery.isError && !data)
     return <div role="alert" className="card border-red-200 bg-red-50 p-5 text-sm text-red-800 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-200"><p className="font-semibold">{en ? 'Could not load assets.' : 'Không thể tải dữ liệu tài sản.'}</p><button type="button" className="btn-secondary mt-3" onClick={() => void assetQuery.refetch()}>{en ? 'Retry' : 'Thử lại'}</button></div>;
 
-  const allSavingsMovements = data?.savingsMovements || [];
   const allGoldSales = data?.goldSales || [];
 
   return <div className="assets-page space-y-5">
@@ -849,7 +835,7 @@ export function Assets() {
         <div><h3 id="savings-title" className="flex items-center gap-2 text-lg font-extrabold"><Landmark size={19} aria-hidden="true" />{en ? 'Savings books' : 'Sổ tiết kiệm'}</h3><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{en ? 'Opening a book can create an expense transaction automatically.' : 'Khi mở sổ, hệ thống có thể tự tạo giao dịch chi để trừ tiền.'}</p></div>
         {canManage && <button type="button" className="btn-secondary inline-flex items-center gap-2 self-start text-sm" onClick={() => openSavingsEditor()}><Plus size={16} aria-hidden="true" />{en ? 'Add book' : 'Thêm sổ'}</button>}
       </div>
-      {activeSavings.length ? <div className="divide-y divide-black/10 dark:divide-white/10">{activeSavings.map((account) => <SavingsRow key={account.id} account={account} movements={allSavingsMovements.filter((item) => item.savingsAccountId === account.id)} paymentMethods={paymentMethods} canManage={canManage} busy={busy} en={en} language={language} onEdit={() => openSavingsEditor(account)} onSettle={() => openSettlementEditor(account)} onArchive={() => void archiveSavings(account)} onDelete={() => void deleteSavings(account)} />)}</div> : <EmptyState title={en ? 'No savings books yet' : 'Chưa có sổ tiết kiệm'} description={en ? 'Add a book to start tracking principal, maturity and actual interest.' : 'Thêm một sổ để theo dõi tiền gốc, đáo hạn và lãi thực tế.'} action={canManage ? <button type="button" className="btn-primary inline-flex items-center gap-2" onClick={() => openSavingsEditor()}><Plus size={16} aria-hidden="true" />{en ? 'Add savings book' : 'Thêm sổ tiết kiệm'}</button> : undefined} />}
+      {activeSavings.length ? <div className="divide-y divide-black/10 dark:divide-white/10">{activeSavings.map((account) => <SavingsRow key={account.id} account={account} canManage={canManage} busy={busy} en={en} onEdit={() => openSavingsEditor(account)} onSettle={() => openSettlementEditor(account)} onArchive={() => void archiveSavings(account)} onDelete={() => void deleteSavings(account)} />)}</div> : <EmptyState title={en ? 'No savings books yet' : 'Chưa có sổ tiết kiệm'} description={en ? 'Add a book to start tracking principal, maturity and actual interest.' : 'Thêm một sổ để theo dõi tiền gốc, đáo hạn và lãi thực tế.'} action={canManage ? <button type="button" className="btn-primary inline-flex items-center gap-2" onClick={() => openSavingsEditor()}><Plus size={16} aria-hidden="true" />{en ? 'Add savings book' : 'Thêm sổ tiết kiệm'}</button> : undefined} />}
     </section>
 
     {settlementEditor && canManage && <SavingsSettlementForm editor={settlementEditor} setEditor={setSettlementEditor} onSubmit={saveSettlement} onCancel={closeEditors} paymentMethods={paymentMethods} busy={busy === 'settlement'} error={formError} en={en} account={data?.savingsAccounts.find((item) => item.id === settlementEditor.accountId)} />}
@@ -884,7 +870,7 @@ export function Assets() {
     </section>
 
     {saleEditor && canManage && <GoldSaleForm editor={saleEditor} setEditor={setSaleEditor} onSubmit={saveSale} onCancel={closeEditors} paymentMethods={paymentMethods} busy={busy === 'sale'} error={formError} en={en} holding={goldHoldingSummary} />}
-    {archivedSavings.length > 0 && <details className="card overflow-hidden"><summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 p-4 font-bold [&::-webkit-details-marker]:hidden"><span>{en ? 'Archived savings books' : 'Sổ tiết kiệm đã lưu trữ'} ({archivedSavings.length})</span><ChevronDown size={18} aria-hidden="true" /><span className="sr-only">{en ? 'Open archived savings books' : 'Mở sổ tiết kiệm đã lưu trữ'}</span></summary><div className="divide-y divide-black/10 dark:divide-white/10">{archivedSavings.map((account) => <SavingsRow key={account.id} account={account} movements={allSavingsMovements.filter((item) => item.savingsAccountId === account.id)} paymentMethods={paymentMethods} canManage={canManage} busy={busy} en={en} language={language} onEdit={() => undefined} onSettle={() => undefined} onArchive={() => undefined} onDelete={() => void deleteSavings(account)} archived />)}</div></details>}
+    {archivedSavings.length > 0 && <details className="card overflow-hidden"><summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 p-4 font-bold [&::-webkit-details-marker]:hidden"><span>{en ? 'Archived savings books' : 'Sổ tiết kiệm đã lưu trữ'} ({archivedSavings.length})</span><ChevronDown size={18} aria-hidden="true" /><span className="sr-only">{en ? 'Open archived savings books' : 'Mở sổ tiết kiệm đã lưu trữ'}</span></summary><div className="divide-y divide-black/10 dark:divide-white/10">{archivedSavings.map((account) => <SavingsRow key={account.id} account={account} canManage={canManage} busy={busy} en={en} onEdit={() => undefined} onSettle={() => undefined} onArchive={() => undefined} onDelete={() => void deleteSavings(account)} archived />)}</div></details>}
   </div>;
 }
 
@@ -903,12 +889,9 @@ function GoldHoldingStat({ label, value, tone = 'neutral' }: { label: string; va
 
 function SavingsRow({
   account,
-  movements,
-  paymentMethods,
   canManage,
   busy,
   en,
-  language,
   onEdit,
   onSettle,
   onArchive,
@@ -916,12 +899,9 @@ function SavingsRow({
   archived = false,
 }: {
   account: SavingsAccount;
-  movements: ReturnType<typeof getLocalAssetData>['savingsMovements'];
-  paymentMethods: ReturnType<typeof useApp>['paymentMethods'];
   canManage: boolean;
   busy: string;
   en: boolean;
-  language: 'vi' | 'en';
   onEdit: () => void;
   onSettle: () => void;
   onArchive: () => void;
@@ -949,17 +929,16 @@ function SavingsRow({
         </div>
         <div className="text-left lg:text-right"><p className="whitespace-nowrap text-lg font-extrabold text-[var(--primary)]">{formatVnd(account.currentBalance)}</p><p className="text-xs text-gray-500 dark:text-gray-400">{en ? 'Current balance' : 'Số dư hiện tại'}</p></div>
       </div>
-      <div className="mt-2 grid gap-1.5 text-sm sm:grid-cols-2 lg:grid-cols-4">
+      <div className={`asset-stat-row mt-2 grid gap-1.5 text-sm sm:grid-cols-2 lg:items-stretch ${canManage ? 'lg:grid-cols-[repeat(4,minmax(0,1fr))_auto]' : 'lg:grid-cols-4'}`}>
         <div className="asset-stat-card rounded-xl bg-black/[.025] dark:bg-white/[.04]"><p className="asset-stat-card-label text-gray-500 dark:text-gray-400">{en ? 'Opened' : 'Ngày mở'}</p><p className="asset-stat-card-value font-semibold">{formatDateOnlyVi(account.openedOn)}</p></div>
         <div className={`asset-stat-card rounded-xl bg-black/[.025] dark:bg-white/[.04] ${maturityClass}`}><p className="asset-stat-card-label">{en ? 'Maturity' : 'Đáo hạn'}</p><p className="asset-stat-card-value font-semibold">{formatDateOnlyVi(account.maturityOn)}</p><p className="asset-stat-card-hint">{days < 0 ? (en ? 'Past due' : 'Đã quá hạn') : days === 0 ? (en ? 'Today' : 'Hôm nay') : (en ? `${days} day(s) left` : `Còn ${days} ngày`)}</p></div>
         <div className="asset-stat-card rounded-xl bg-black/[.025] dark:bg-white/[.04]"><p className="asset-stat-card-label text-gray-500 dark:text-gray-400">{en ? 'Interest to date' : 'Lãi đến hiện tại'}</p><p className="asset-stat-card-value font-semibold">{formatVnd(expectedInterestToDate)}</p><p className="asset-stat-card-hint text-gray-500 dark:text-gray-400" title={en ? 'estimated through today' : 'ước tính đến hôm nay'}>{en ? 'estimated through today' : 'ước tính đến hôm nay'}</p></div>
         <div className="asset-stat-card rounded-xl bg-black/[.025] dark:bg-white/[.04]"><p className="asset-stat-card-label text-gray-500 dark:text-gray-400">{en ? 'Full-term interest' : 'Lãi dự kiến toàn kỳ'}</p><p className="asset-stat-card-value font-semibold">{formatVnd(expectedInterestFullTerm)}</p><p className="asset-stat-card-hint text-gray-500 dark:text-gray-400" title={en ? 'if held until maturity' : 'nếu giữ đến đáo hạn'}>{en ? 'if held until maturity' : 'nếu giữ đến đáo hạn'}</p></div>
+        {canManage && !archived && account.status === 'active' && <div role="group" className="flex items-center gap-1.5 sm:col-span-2 lg:col-span-1 lg:justify-end" aria-label={en ? 'Savings book actions' : 'Thao tác sổ tiết kiệm'}><button type="button" className="asset-action-button asset-icon-action btn-secondary inline-flex items-center justify-center" aria-label={en ? 'Edit' : 'Sửa'} title={en ? 'Edit savings book' : 'Sửa sổ tiết kiệm'} disabled={Boolean(busy)} onClick={onEdit}><Pencil size={18} aria-hidden="true" /></button><button type="button" className="asset-action-button asset-icon-action btn-primary inline-flex items-center justify-center" aria-label={en ? 'Settle' : 'Tất toán'} title={en ? 'Settle savings book' : 'Tất toán sổ tiết kiệm'} disabled={Boolean(busy) || account.currentBalance <= 0} onClick={onSettle}><Banknote size={18} aria-hidden="true" /></button><button type="button" className="asset-action-button asset-icon-action danger-button inline-flex items-center justify-center" aria-label={en ? 'Delete' : 'Xóa'} title={en ? 'Delete savings book' : 'Xóa sổ tiết kiệm'} disabled={Boolean(busy)} onClick={onDelete}>{busy === account.id ? <LoaderCircle size={18} className="animate-spin" aria-hidden="true" /> : <Trash2 size={18} aria-hidden="true" />}</button></div>}
+        {canManage && !archived && account.status === 'closed' && <div role="group" className="flex items-center gap-1.5 sm:col-span-2 lg:col-span-1 lg:justify-end" aria-label={en ? 'Savings book actions' : 'Thao tác sổ tiết kiệm'}><button type="button" className="asset-action-button asset-icon-action btn-secondary inline-flex items-center justify-center" aria-label={en ? 'Archive' : 'Lưu trữ'} title={en ? 'Archive savings book' : 'Lưu trữ sổ tiết kiệm'} disabled={Boolean(busy)} onClick={onArchive}><Archive size={18} aria-hidden="true" /></button><button type="button" className="asset-action-button asset-icon-action danger-button inline-flex items-center justify-center" aria-label={en ? 'Delete' : 'Xóa'} title={en ? 'Delete savings book' : 'Xóa sổ tiết kiệm'} disabled={Boolean(busy)} onClick={onDelete}>{busy === account.id ? <LoaderCircle size={18} className="animate-spin" aria-hidden="true" /> : <Trash2 size={18} aria-hidden="true" />}</button></div>}
+        {canManage && archived && <div role="group" className="flex items-center gap-1.5 sm:col-span-2 lg:col-span-1 lg:justify-end" aria-label={en ? 'Savings book actions' : 'Thao tác sổ tiết kiệm'}><button type="button" className="asset-action-button asset-icon-action danger-button inline-flex items-center justify-center" aria-label={en ? 'Delete permanently' : 'Xóa vĩnh viễn'} title={en ? 'Delete savings book permanently' : 'Xóa vĩnh viễn sổ tiết kiệm'} disabled={Boolean(busy)} onClick={onDelete}>{busy === account.id ? <LoaderCircle size={18} className="animate-spin" aria-hidden="true" /> : <Trash2 size={18} aria-hidden="true" />}</button></div>}
       </div>
       {account.note && <p className="mt-2 text-sm leading-tight text-gray-600 dark:text-gray-300">{account.note}</p>}
-      {movements.length > 0 && <details className="mt-2 rounded-xl border border-black/10 dark:border-white/10"><summary className="asset-history-toggle flex cursor-pointer list-none items-center justify-between gap-3 px-3 text-sm font-semibold [&::-webkit-details-marker]:hidden"><span className="min-w-0 truncate">{en ? 'Book history' : 'Lịch sử sổ'} ({movements.length})</span><ChevronDown size={17} aria-hidden="true" /></summary><div className="divide-y divide-black/10 border-t border-black/10 text-sm dark:divide-white/10 dark:border-white/10">{movements.map((movement) => <div key={movement.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-1.5"><span className="min-w-0 break-words">{movementLabel(movement.movementType, en)} · {formatDateOnlyVi(movement.movementDate)}<span className="ml-2 text-xs text-gray-500">{paymentName(movement.paymentMethodId || '', paymentMethods, language)}</span></span><span className={movement.movementType === 'fee' ? 'whitespace-nowrap font-semibold text-rose-700 dark:text-rose-300' : 'whitespace-nowrap font-semibold text-emerald-700 dark:text-emerald-300'}>{movement.movementType === 'fee' ? '-' : '+'}{formatVnd(movement.amount)}</span></div>)}</div></details>}
-      {canManage && !archived && account.status === 'active' && <div className="mt-3 flex flex-wrap items-center gap-2"><button type="button" className="asset-action-button btn-secondary inline-flex items-center gap-2" disabled={Boolean(busy)} onClick={onEdit}><Pencil size={15} aria-hidden="true" />{en ? 'Edit' : 'Sửa'}</button><button type="button" className="asset-action-button btn-primary inline-flex items-center gap-2" disabled={Boolean(busy) || account.currentBalance <= 0} onClick={onSettle}>{en ? 'Settle' : 'Tất toán'}</button><button type="button" className="asset-action-button danger-button inline-flex items-center gap-2" disabled={Boolean(busy)} onClick={onDelete}>{busy === account.id ? <LoaderCircle size={15} className="animate-spin" aria-hidden="true" /> : <Trash2 size={15} aria-hidden="true" />}{en ? 'Delete' : 'Xóa'}</button></div>}
-      {canManage && !archived && account.status === 'closed' && <div className="mt-3 flex flex-wrap items-center gap-2"><button type="button" className="asset-action-button btn-secondary inline-flex items-center gap-2" disabled={Boolean(busy)} onClick={onArchive}><Archive size={15} aria-hidden="true" />{en ? 'Archive' : 'Lưu trữ'}</button><button type="button" className="asset-action-button danger-button inline-flex items-center gap-2" disabled={Boolean(busy)} onClick={onDelete}>{busy === account.id ? <LoaderCircle size={15} className="animate-spin" aria-hidden="true" /> : <Trash2 size={15} aria-hidden="true" />}{en ? 'Delete' : 'Xóa'}</button></div>}
-      {canManage && archived && <button type="button" className="asset-action-button danger-button mt-3 inline-flex items-center gap-2" disabled={Boolean(busy)} onClick={onDelete}>{busy === account.id ? <LoaderCircle size={15} className="animate-spin" aria-hidden="true" /> : <Trash2 size={15} aria-hidden="true" />}{en ? 'Delete permanently' : 'Xóa vĩnh viễn'}</button>}
     </article>
   );
 }
@@ -1000,15 +979,15 @@ function GoldRow({
         </div>
         <div className="text-left lg:text-right"><p className="whitespace-nowrap text-lg font-extrabold text-[var(--primary)]">{hasEstimate ? formatVnd(currentValue) : '—'}</p><p className="text-xs text-gray-500 dark:text-gray-400">{en ? 'Estimated sell value' : 'Giá trị bán ước tính'}</p></div>
       </div>
-      <div className="mt-2 grid gap-1.5 text-sm sm:grid-cols-2">
+      <div className={`asset-stat-row mt-2 grid gap-1.5 text-sm sm:grid-cols-2 lg:items-stretch ${canManage ? 'lg:grid-cols-[repeat(2,minmax(0,1fr))_auto]' : 'lg:grid-cols-2'}`}>
         <div className="asset-stat-card rounded-xl bg-black/[.025] dark:bg-white/[.04]"><p className="asset-stat-card-label text-gray-500 dark:text-gray-400">{en ? 'Purchase price' : 'Giá mua'}</p><p className="asset-stat-card-value font-semibold">{formatVnd(asset.purchasePricePerChi)}/{unit}</p></div>
         <div className="asset-stat-card rounded-xl bg-black/[.025] dark:bg-white/[.04]"><p className="asset-stat-card-label text-gray-500 dark:text-gray-400">{en ? 'Shop buy-back estimate' : 'Giá tiệm mua vào'}</p><p className="asset-stat-card-value font-semibold">{asset.estimatedSellPricePerChi === null ? (en ? 'Not entered' : 'Chưa nhập') : `${formatVnd(asset.estimatedSellPricePerChi)}/${unit}`}</p></div>
+        {canManage && !sold && asset.status === 'active' && <div role="group" className="flex items-center gap-1.5 sm:col-span-2 lg:col-span-1 lg:justify-end" aria-label={en ? 'Gold holding actions' : 'Thao tác lô vàng'}><button type="button" className="asset-action-button asset-icon-action btn-secondary inline-flex items-center justify-center" aria-label={en ? 'Edit' : 'Sửa'} title={en ? 'Edit gold lot' : 'Sửa lô vàng'} disabled={Boolean(busy)} onClick={onEdit}><Pencil size={18} aria-hidden="true" /></button><button type="button" className="asset-action-button asset-icon-action danger-button inline-flex items-center justify-center" aria-label={en ? 'Delete' : 'Xóa'} title={en ? 'Delete gold lot' : 'Xóa lô vàng'} disabled={Boolean(busy)} onClick={onDelete}>{busy === asset.id ? <LoaderCircle size={18} className="animate-spin" aria-hidden="true" /> : <Trash2 size={18} aria-hidden="true" />}</button></div>}
+        {canManage && sold && asset.status === 'sold' && onArchive && <div role="group" className="flex items-center gap-1.5 sm:col-span-2 lg:col-span-1 lg:justify-end" aria-label={en ? 'Gold holding actions' : 'Thao tác lô vàng'}><button type="button" className="asset-action-button asset-icon-action btn-secondary inline-flex items-center justify-center" aria-label={en ? 'Archive' : 'Lưu trữ'} title={en ? 'Archive gold lot' : 'Lưu trữ lô vàng'} disabled={Boolean(busy)} onClick={onArchive}><Archive size={18} aria-hidden="true" /></button><button type="button" className="asset-action-button asset-icon-action danger-button inline-flex items-center justify-center" aria-label={en ? 'Delete' : 'Xóa'} title={en ? 'Delete gold lot' : 'Xóa lô vàng'} disabled={Boolean(busy)} onClick={onDelete}>{busy === asset.id ? <LoaderCircle size={18} className="animate-spin" aria-hidden="true" /> : <Trash2 size={18} aria-hidden="true" />}</button></div>}
+        {canManage && asset.status === 'archived' && <div role="group" className="flex items-center gap-1.5 sm:col-span-2 lg:col-span-1 lg:justify-end" aria-label={en ? 'Gold holding actions' : 'Thao tác lô vàng'}><button type="button" className="asset-action-button asset-icon-action danger-button inline-flex items-center justify-center" aria-label={en ? 'Delete permanently' : 'Xóa vĩnh viễn'} title={en ? 'Delete gold lot permanently' : 'Xóa vĩnh viễn lô vàng'} disabled={Boolean(busy)} onClick={onDelete}>{busy === asset.id ? <LoaderCircle size={18} className="animate-spin" aria-hidden="true" /> : <Trash2 size={18} aria-hidden="true" />}</button></div>}
       </div>
       {asset.note && <p className="mt-2 text-sm leading-tight text-gray-600 dark:text-gray-300">{asset.note}</p>}
       {sales.length > 0 && <details className="mt-2 rounded-xl border border-black/10 dark:border-white/10"><summary className="asset-history-toggle flex cursor-pointer list-none items-center justify-between gap-3 px-3 text-sm font-semibold [&::-webkit-details-marker]:hidden"><span className="min-w-0 truncate">{en ? 'Sale history' : 'Lịch sử bán'} ({sales.length})</span><ChevronDown size={17} aria-hidden="true" /></summary><div className="divide-y divide-black/10 border-t border-black/10 text-sm dark:divide-white/10 dark:border-white/10">{sales.map((sale) => <div key={sale.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-1.5"><span className="min-w-0 break-words">{formatDateOnlyVi(sale.saleDate)} · {formatQuantity(sale.quantityChi)} {unit} · {formatVnd(sale.salePricePerChi)}/{unit}</span><span className="whitespace-nowrap font-semibold text-emerald-700 dark:text-emerald-300">+{formatVnd(sale.amount)}</span></div>)}</div></details>}
-      {canManage && !sold && asset.status === 'active' && <div className="mt-3 flex flex-wrap items-center gap-2"><button type="button" className="asset-action-button btn-secondary inline-flex items-center gap-2" disabled={Boolean(busy)} onClick={onEdit}><Pencil size={15} aria-hidden="true" />{en ? 'Edit' : 'Sửa'}</button><button type="button" className="asset-action-button danger-button inline-flex items-center gap-2" disabled={Boolean(busy)} onClick={onDelete}>{busy === asset.id ? <LoaderCircle size={15} className="animate-spin" aria-hidden="true" /> : <Trash2 size={15} aria-hidden="true" />}{en ? 'Delete' : 'Xóa'}</button></div>}
-      {canManage && sold && asset.status === 'sold' && onArchive && <div className="mt-3 flex flex-wrap items-center gap-2"><button type="button" className="asset-action-button btn-secondary inline-flex items-center gap-2" disabled={Boolean(busy)} onClick={onArchive}><Archive size={15} aria-hidden="true" />{en ? 'Archive' : 'Lưu trữ'}</button><button type="button" className="asset-action-button danger-button inline-flex items-center gap-2" disabled={Boolean(busy)} onClick={onDelete}>{busy === asset.id ? <LoaderCircle size={15} className="animate-spin" aria-hidden="true" /> : <Trash2 size={15} aria-hidden="true" />}{en ? 'Delete' : 'Xóa'}</button></div>}
-      {canManage && asset.status === 'archived' && <button type="button" className="asset-action-button danger-button mt-3 inline-flex items-center gap-2" disabled={Boolean(busy)} onClick={onDelete}>{busy === asset.id ? <LoaderCircle size={15} className="animate-spin" aria-hidden="true" /> : <Trash2 size={15} aria-hidden="true" />}{en ? 'Delete permanently' : 'Xóa vĩnh viễn'}</button>}
     </article>
   );
 }

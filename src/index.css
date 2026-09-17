@@ -739,6 +739,14 @@ summary:focus-visible {
   }
 }
 
+.asset-icon-action {
+  width: 2.75rem;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  padding-inline: 0;
+  justify-content: center;
+}
+
 .transaction-card-tag {
   display: inline-flex;
   align-items: center;
@@ -1049,6 +1057,13 @@ summary:focus-visible {
   background: var(--surface);
   color: var(--text);
   box-shadow: 0 1px 2px #00000012;
+}
+
+.settings-tabs .catalog-tab[aria-selected='true'] {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--primary-contrast);
+  box-shadow: 0 5px 12px color-mix(in srgb, var(--primary) 25%, transparent);
 }
 
 .catalog-tab-panels,
