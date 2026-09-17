@@ -683,6 +683,60 @@ summary:focus-visible {
   color: var(--muted);
   font-size: .7rem;
   font-weight: 650;
+  white-space: nowrap;
+}
+
+.asset-action-button {
+  min-height: 2.75rem;
+  border-radius: .7rem;
+  padding: .5rem .75rem;
+  font-size: .875rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.asset-action-button svg {
+  flex: 0 0 auto;
+}
+
+.asset-stat-card {
+  min-width: 0;
+  padding: .65rem .75rem;
+}
+
+.asset-stat-card-label,
+.asset-stat-card-hint {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.asset-stat-card-label {
+  font-size: .7rem;
+}
+
+.asset-stat-card-value {
+  margin-top: .25rem;
+  line-height: 1.2;
+}
+
+.asset-stat-card-hint {
+  margin-top: .25rem;
+  font-size: .7rem;
+}
+
+.asset-history-toggle {
+  min-height: 2.75rem;
+  padding-block: .55rem;
+}
+
+@media (min-width: 768px) {
+  .asset-action-button {
+    min-height: 2.5rem;
+    padding-block: .4rem;
+  }
 }
 
 .transaction-card-tag {
