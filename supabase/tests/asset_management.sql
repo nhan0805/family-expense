@@ -1,6 +1,6 @@
 -- Structural tests for savings-book and gold asset management.
 begin;
-select plan(34);
+select plan(35);
 
 select ok(
   exists(
@@ -153,6 +153,12 @@ select ok(
   pg_get_functiondef('public.upsert_gold_asset(uuid,uuid,date,numeric,numeric,numeric,uuid,text,boolean)'::regprocedure) ilike '%e.code = ''expense-25''%'
   and pg_get_functiondef('public.record_gold_sale(uuid,uuid,date,numeric,numeric,uuid,text)'::regprocedure) ilike '%e.code = ''expense-25''%',
   'gold RPCs resolve the stable gold category code'
+);
+select ok(
+  pg_get_functiondef('public.upsert_savings_account(uuid,uuid,text,text,numeric,numeric,integer,date,date,text,uuid,text,boolean)'::regprocedure) ilike '%if p_create_transaction then%public.automatic_transaction_defaults%'
+  and pg_get_functiondef('public.upsert_savings_account(uuid,uuid,text,text,numeric,numeric,integer,date,date,text,uuid,text,boolean)'::regprocedure) ilike '%catalog_not_ready%'
+  ,
+  'savings opening honors automatic transaction settings and keeps book-only save available'
 );
 select ok(
   not exists(

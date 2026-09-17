@@ -1,12 +1,16 @@
-const messageOf = (error: unknown) => {
+export const errorText = (error: unknown) => {
   if (typeof error === 'string') return error;
-  if (error && typeof error === 'object' && 'message' in error)
-    return String(error.message || '');
-  return '';
+  if (!error || typeof error !== 'object') return '';
+
+  const candidate = error as Record<string, unknown>;
+  return [candidate.code, candidate.message, candidate.details, candidate.hint]
+    .filter((part) => typeof part === 'string' || typeof part === 'number')
+    .map(String)
+    .join(' ');
 };
 
 export function authErrorMessage(error: unknown, english = false) {
-  const normalized = messageOf(error).toLowerCase();
+  const normalized = errorText(error).toLowerCase();
   const message = (vi: string, en: string) => english ? en : vi;
   if (
     isOffline() ||
@@ -49,7 +53,7 @@ export function userFacingError(
   error: unknown,
   fallback = 'Đã xảy ra lỗi. Vui lòng thử lại.',
 ) {
-  const message = messageOf(error);
+  const message = errorText(error);
   const normalized = message.toLowerCase();
   if (
     normalized.includes('supabase_request_timeout') ||
@@ -89,7 +93,7 @@ export function userFacingError(
 
 export function shouldRetryQuery(failureCount: number, error: unknown) {
   if (failureCount >= 2) return false;
-  const normalized = messageOf(error).toLowerCase();
+  const normalized = errorText(error).toLowerCase();
   if (
     normalized.includes('jwt') ||
     normalized.includes('permission') ||

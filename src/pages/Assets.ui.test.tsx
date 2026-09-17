@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { FeedbackProvider } from '../components/Feedback';
 import { useApp } from '../context/AppContext';
 import type { AutomaticTransactionDefault } from '../lib/automaticTransactionDefaults';
-import { Assets } from './Assets';
+import { Assets, assetError } from './Assets';
 
 vi.mock('../context/AppContext', () => ({ useApp: vi.fn() }));
 vi.mock('../lib/supabase', () => ({ isSupabaseConfigured: false }));
@@ -64,6 +64,10 @@ describe('Tài sản', () => {
     cleanup();
     localStorage.clear();
     vi.clearAllMocks();
+  });
+
+  it('dịch đúng lỗi RPC catalog từ object Supabase', () => {
+    expect(assetError({ code: 'P0001', message: 'CATALOG_NOT_READY' }, false, 'fallback')).toContain('bỏ chọn tự tạo giao dịch');
   });
 
   it('xóa sổ tiết kiệm cùng giao dịch liên kết sau khi xác nhận', async () => {
