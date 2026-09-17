@@ -4,10 +4,10 @@
 
 ## Current state
 
-- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; deployment cho merge commit `df0c25f83664a9b395a20a553dcd5f8437762885` đã pass qua [Cloudflare Pages](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/00260fb1-ad44-4ab8-9e48-b9f67110e602), smoke HTTP 200 và kiểm tra bundle live đã được xác nhận.
-- Code trên `main` mới nhất: PR [#188](https://github.com/nhan0805/family-expense/pull/188), merge commit `df0c25f83664a9b395a20a553dcd5f8437762885`; giao diện Tài sản trên mobile đã thu gọn các ô số liệu sổ tiết kiệm/vàng thành lưới 2 cột.
-- CI main [run 35213578884](https://github.com/nhan0805/family-expense/actions/runs/35213578884) pass với quality, E2E, db-security và performance budget; không có thay đổi Supabase nên không phát sinh workflow production database.
-- Nhánh workspace cho release/status: `codex/release-status-20260917-compact-mobile`, được tạo từ `origin/main` sau khi PR #188 merge; thay đổi chỉ cập nhật tài liệu trạng thái/link, không ghi đè thay đổi ngoài phạm vi release.
+- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; deployment cho merge commit `61235771d0337a496d414b2bca157a1c9b9e3d0b` đã pass qua [Cloudflare Pages check](https://github.com/nhan0805/family-expense/runs/105186386734), smoke HTTP 200 và kiểm tra bundle live đã được xác nhận.
+- Code trên `main` mới nhất: PR [#190](https://github.com/nhan0805/family-expense/pull/190), merge commit `61235771d0337a496d414b2bca157a1c9b9e3d0b`; form Bán vàng xuất hiện ngay sau form Thêm vàng, trước danh sách vàng.
+- CI main [run 35216516603](https://github.com/nhan0805/family-expense/actions/runs/35216516603) pass với quality, E2E, db-security và performance budget; không có thay đổi Supabase nên không phát sinh workflow production database.
+- Nhánh workspace cho release/status: `codex/release-status-20260917-gold-sale-form`, được tạo từ `origin/main` sau khi PR #190 merge; thay đổi chỉ cập nhật tài liệu trạng thái/link, không ghi đè thay đổi ngoài phạm vi release.
 - Release/status chỉ cập nhật tài liệu trạng thái/link sau deploy, không thay đổi artifact, schema hay dữ liệu.
 - Đã cập nhật CI/preview cho `merge_group`, thu hẹp trigger Supabase và chuẩn hóa single-writer cho tài liệu release; chưa bật Merge Queue/branch protection trên GitHub.
 - Bản đồ kiến trúc ổn định nằm trong [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md); quy tắc phân loại tài liệu nằm trong [`docs/AI_CONTEXT_GUIDE.md`](docs/AI_CONTEXT_GUIDE.md).
@@ -83,11 +83,11 @@
 
 ## Current work
 
-PR #188 đã hoàn tất quality gate, merge vào `main` và deploy production thành công. Trên mobile, các card sổ tiết kiệm/vàng đã chuyển sang bố cục số liệu 2 cột, nhóm action nằm riêng một hàng; desktop vẫn giữ bố cục gọn cùng hàng. Các thay đổi trước đó về danh mục vàng, action icon, lịch sử sổ và menu cài đặt vẫn được giữ nguyên. Không còn feature code đang chờ trong workspace; nếu cần chỉnh tiếp, bắt đầu từ `origin/main`.
+PR #190 đã hoàn tất quality gate, merge vào `main` và deploy production thành công. Form Bán vàng hiện nằm ngay sau form Thêm vàng, giúp người dùng quan sát và thao tác ở cùng khu vực; thống kê sổ tiết kiệm vẫn giữ bố cục mobile gọn với tiến độ lãi và các nút icon. Các thay đổi trước đó về danh mục vàng, action icon, lịch sử sổ và menu cài đặt vẫn được giữ nguyên. Không còn feature code đang chờ trong workspace; nếu cần chỉnh tiếp, bắt đầu từ `origin/main`.
 
 ## Pending tasks
 
-- [x] Xác minh Cloudflare Pages production cho release #188, merge commit `df0c25f8`; smoke production HTTP 200 và bundle responsive live.
+- [x] Xác minh Cloudflare Pages production cho release #190, merge commit `61235771`; smoke production HTTP 200 và bundle live chứa form Bán vàng.
 - [ ] Chạy backup/restore và rollback drill trên staging bằng secrets riêng.
 - [ ] Hoàn tất synthetic E2E trên staging bằng tài khoản test riêng (`E2E_EMAIL`/`E2E_PASSWORD`).
 - [ ] Xác nhận monitoring/alert routing production và retention của telemetry trước khi mở rộng vận hành.

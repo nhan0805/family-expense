@@ -2,6 +2,14 @@
 
 ## 2026-09-17
 
+### Đưa form Bán vàng lên gần đầu trang
+
+- Form Bán vàng được hiển thị ngay sau form Thêm vàng và trước danh sách vàng, cùng khu vực thao tác để dễ quan sát hơn.
+- Giữ bố cục thống kê tài sản gọn trên mobile, bổ sung thanh tiến độ lãi sổ tiết kiệm và đồng bộ icon/màu nút cho khu vực vàng.
+- Files: `src/pages/Assets.tsx`, `src/pages/Assets.ui.test.tsx`, `src/index.css`, `src/lib/catalogIcons.ts`, `src/pages/Dashboard.tsx`, `src/pages/AutomaticTransactionSettings.tsx`. Không đổi schema, RLS/RPC, Edge Function hoặc dữ liệu.
+- Kiểm thử: local Vitest 48 file/222 test, TypeScript, ESLint, Vite build và `git diff --check` pass; CI main [run 35216516603](https://github.com/nhan0805/family-expense/actions/runs/35216516603) pass quality, E2E, db-security và performance budget.
+- Deployment: PR [#190](https://github.com/nhan0805/family-expense/pull/190) đã merge vào `main` với commit `61235771d0337a496d414b2bca157a1c9b9e3d0b`; [Cloudflare Pages check](https://github.com/nhan0805/family-expense/runs/105186386734) pass; smoke `https://family-expense-8fo.pages.dev/` trả HTTP 200 và bundle live chứa form Bán vàng.
+
 ### Thu gọn giao diện Tài sản trên điện thoại
 
 - Trên mobile, các ô số liệu của sổ tiết kiệm và vàng dùng lưới 2 cột; nhóm nút thao tác xuống hàng riêng để card dễ đọc hơn, còn bố cục desktop được giữ nguyên.
