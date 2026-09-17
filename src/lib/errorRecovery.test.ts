@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { authErrorMessage, shouldRetryQuery, userFacingError } from './errorRecovery';
+import { authErrorMessage, errorText, shouldRetryQuery, userFacingError } from './errorRecovery';
 
 describe('xử lý lỗi và retry', () => {
   it('đổi lỗi mạng thành thông báo tiếng Việt', () => {
@@ -13,6 +13,12 @@ describe('xử lý lỗi và retry', () => {
   it('phân biệt lỗi quyền và phiên đăng nhập', () => {
     expect(userFacingError(new Error('42501 permission denied'))).toContain('quyền');
     expect(userFacingError(new Error('JWT expired'))).toContain('Phiên đăng nhập');
+  });
+
+  it('đọc được mã lỗi từ object Supabase thay vì chỉ nhận Error', () => {
+    const error = { code: '42501', message: 'permission denied', details: 'row policy' };
+    expect(errorText(error)).toBe('42501 permission denied row policy');
+    expect(userFacingError(error)).toContain('quyền');
   });
 
   it('không retry lỗi cố định hoặc quá số lần', () => {

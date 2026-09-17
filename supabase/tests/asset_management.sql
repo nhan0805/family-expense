@@ -1,6 +1,6 @@
 -- Structural tests for savings-book and gold asset management.
 begin;
-select plan(28);
+select plan(29);
 
 select ok(
   exists(
@@ -127,6 +127,14 @@ select ok(
   pg_get_functiondef('public.upsert_gold_asset(uuid,uuid,date,numeric,numeric,numeric,uuid,text,boolean)'::regprocedure) ilike '%purpose_id, expense_type_id, payment_method_id, note%'
   and pg_get_functiondef('public.upsert_gold_asset(uuid,uuid,date,numeric,numeric,numeric,uuid,text,boolean)'::regprocedure) not ilike '%purpose_id, expense_type_id, resolved_payment_method_id, note%',
   'gold purchase transaction uses the payment_method_id column'
+);
+select ok(
+  pg_get_functiondef('public.upsert_savings_account(uuid,uuid,text,text,numeric,numeric,integer,date,date,text,uuid,text,boolean)'::regprocedure) ilike '%if p_create_transaction then%select p.id into purpose_id%'
+  and pg_get_functiondef('public.upsert_savings_account(uuid,uuid,text,text,numeric,numeric,integer,date,date,text,uuid,text,boolean)'::regprocedure) ilike '%p.code = ''purpose-8'' or p.name = ''Đầu tư''%'
+  and pg_get_functiondef('public.upsert_savings_account(uuid,uuid,text,text,numeric,numeric,integer,date,date,text,uuid,text,boolean)'::regprocedure) ilike '%e.code = ''asset-savings-deposit'' or e.name = ''Gửi tiết kiệm''%'
+  and pg_get_functiondef('public.upsert_savings_account(uuid,uuid,text,text,numeric,numeric,integer,date,date,text,uuid,text,boolean)'::regprocedure) ilike '%catalog_not_ready%'
+  ,
+  'savings book catalog validation is limited to automatic transaction creation'
 );
 select ok(
   not exists(

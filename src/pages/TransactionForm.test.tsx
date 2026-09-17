@@ -17,7 +17,7 @@ vi.mock('../lib/supabase', () => ({
 const appValue = {
   transactions: [], setTransactions: vi.fn(), familyId: 'f1', currentUserId: 'u1', currentUserRole: 'owner',
   purposes: [{ id: 'p1', name: 'Sinh hoạt' }], expenseTypes: [{ id: 'e1', name: 'Thực phẩm' }],
-  paymentMethods: [{ id: 'm1', name: 'Chuyển khoản' }, { id: 'm2', name: 'Thẻ tín dụng' }],
+  paymentMethods: [{ id: 'm1', name: 'Chuyển khoản' }, { id: 'm2', name: 'Thẻ tín dụng' }, { id: 'm3', name: 'Trả góp' }],
 } as unknown as ReturnType<typeof useApp>;
 
 describe('Form giao dịch hợp nhất', () => {
@@ -39,6 +39,8 @@ describe('Form giao dịch hợp nhất', () => {
     expect(screen.getByLabelText(/Nội dung/)).not.toHaveAttribute('placeholder');
     expect(screen.getByLabelText(/Nội dung/)).toHaveClass('field-with-trailing-action');
     expect(screen.getByLabelText(/Số tiền/)).not.toHaveAttribute('placeholder');
+    expect(screen.getByLabelText(/Nội dung/)).toHaveFocus();
+    expect(screen.getByLabelText(/Số tiền/)).not.toHaveFocus();
     const aiButton = screen.getByRole('button', { name: 'Phân tích nội dung bằng AI' });
     expect(aiButton).toBeDisabled();
     fireEvent.change(screen.getByLabelText(/Nội dung/), { target: { value: 'Hôm nay mua sữa 450 nghìn' } });
@@ -50,6 +52,16 @@ describe('Form giao dịch hợp nhất', () => {
     render(<FeedbackProvider><QueryClientProvider client={new QueryClient()}><MemoryRouter><TransactionForm/></MemoryRouter></QueryClientProvider></FeedbackProvider>);
 
     fireEvent.change(screen.getByLabelText(/Phương thức thanh toán/), { target: { value: 'm2' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Tùy chọn nâng cao' }));
+
+    expect(screen.getByLabelText(/Trạng thái/)).toHaveValue('Dự kiến');
+  });
+
+  it('mặc định giao dịch mới bằng trả góp là dự kiến', () => {
+    vi.mocked(useApp).mockReturnValue(appValue);
+    render(<FeedbackProvider><QueryClientProvider client={new QueryClient()}><MemoryRouter><TransactionForm/></MemoryRouter></QueryClientProvider></FeedbackProvider>);
+
+    fireEvent.change(screen.getByLabelText(/Phương thức thanh toán/), { target: { value: 'm3' } });
     fireEvent.click(screen.getByRole('button', { name: 'Tùy chọn nâng cao' }));
 
     expect(screen.getByLabelText(/Trạng thái/)).toHaveValue('Dự kiến');

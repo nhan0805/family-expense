@@ -68,7 +68,7 @@ import {
   type SavingsMovementType,
 } from '../lib/assets';
 import { isSupabaseConfigured } from '../lib/supabase';
-import { userFacingError } from '../lib/errorRecovery';
+import { errorText, userFacingError } from '../lib/errorRecovery';
 import { reportClientError } from '../lib/telemetry';
 
 type SavingsForm = {
@@ -152,8 +152,8 @@ const movementLabel = (value: SavingsMovementType, en: boolean) => {
   return en ? 'Opening deposit' : 'Mở sổ';
 };
 
-function assetError(error: unknown, en: boolean, fallback: string) {
-  const raw = error instanceof Error ? error.message.toLowerCase() : '';
+export function assetError(error: unknown, en: boolean, fallback: string) {
+  const raw = errorText(error).toLowerCase();
   if (raw.includes('forbidden') || raw.includes('42501'))
     return en ? 'You must be a family member to change assets.' : 'Bạn phải là thành viên gia đình để thay đổi tài sản.';
   if (raw.includes('insufficient_balance'))
@@ -170,10 +170,20 @@ function assetError(error: unknown, en: boolean, fallback: string) {
     return en ? 'Sell all remaining gold before archiving it.' : 'Hãy bán hết vàng còn lại trước khi lưu trữ.';
   if (raw.includes('principal_edit_not_allowed'))
     return en ? 'The opening principal cannot be edited after the book is created.' : 'Không thể sửa tiền gốc sau khi đã tạo sổ.';
+  if (raw.includes('catalog_not_ready'))
+    return en
+      ? 'The automatic transaction categories are not ready. Uncheck automatic transaction creation to save the book only, or restore the asset categories and try again.'
+      : 'Danh mục tự động cho giao dịch mở sổ chưa sẵn sàng. Hãy bỏ chọn tự tạo giao dịch để chỉ lưu sổ, hoặc khôi phục danh mục rồi thử lại.';
+  if (raw.includes('pgrst202') || raw.includes('could not find the function') || raw.includes('upsert_savings_account'))
+    return en
+      ? 'The savings-book service has not been updated yet. Reload the app and try again.'
+      : 'Chức năng lưu sổ chưa được cập nhật. Hãy tải lại ứng dụng rồi thử lại.';
+  if (raw.includes('payment_method_not_found'))
+    return en ? 'The selected payment method is no longer available. Reload and choose another one.' : 'Phương thức thanh toán đã chọn không còn khả dụng. Hãy tải lại và chọn phương thức khác.';
+  if (raw.includes('invalid_'))
+    return en ? 'Some savings-book details are invalid. Review the form and try again.' : 'Một số thông tin sổ tiết kiệm không hợp lệ. Hãy kiểm tra lại biểu mẫu rồi thử lại.';
   if (raw.includes('account_not_active') || raw.includes('asset_not_active'))
     return en ? 'This asset is no longer active.' : 'Tài sản này không còn ở trạng thái hoạt động.';
-  if (raw.includes('catalog_not_ready'))
-    return en ? 'The family is missing a category needed to record the gold transaction. Please refresh after the update.' : 'Gia đình đang thiếu danh mục cần thiết để ghi giao dịch mua vàng. Vui lòng tải lại sau khi cập nhật hệ thống.';
   return en ? fallback : userFacingError(error, fallback);
 }
 
@@ -284,7 +294,7 @@ export function Assets() {
 
   const refreshRelated = async () => {
     if (!isSupabaseConfigured) return;
-    await Promise.all([
+    const results = await Promise.allSettled([
       queryClient.invalidateQueries({ queryKey: ['assets', familyId] }),
       queryClient.invalidateQueries({ queryKey: ['asset-summary', familyId] }),
       queryClient.invalidateQueries({ queryKey: ['transactions', familyId] }),
@@ -292,6 +302,9 @@ export function Assets() {
       queryClient.invalidateQueries({ queryKey: ['budgets', familyId] }),
       queryClient.invalidateQueries({ queryKey: ['transaction-years', familyId] }),
     ]);
+    results.forEach((result) => {
+      if (result.status === 'rejected') reportClientError(result.reason, 'query');
+    });
   };
 
   const saveGoldBuybackPrice = async (event: FormEvent<HTMLFormElement>) => {
@@ -716,7 +729,7 @@ export function Assets() {
   const allSavingsMovements = data?.savingsMovements || [];
   const allGoldSales = data?.goldSales || [];
 
-  return <div className="space-y-5">
+  return <div className="assets-page space-y-5">
     <header className="page-header flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
       <div>
         <p className="page-kicker"><Coins size={16} aria-hidden="true" />{en ? 'Family balance sheet' : 'Tài sản gia đình'}</p>
@@ -779,7 +792,7 @@ export function Assets() {
 }
 
 function AssetKpi({ label, value, icon: Icon, tone, meta }: { label: string; value: number; icon: typeof Landmark; tone: 'emerald' | 'amber' | 'violet' | 'sky'; meta: string }) {
-  return <div className="card min-w-0 p-3 sm:p-4"><div className="flex items-center gap-2"><span className={`grid size-9 shrink-0 place-items-center rounded-xl kpi-tone-${tone}`}><Icon size={18} aria-hidden="true" /></span><p className="min-w-0 truncate text-xs font-semibold text-gray-500 dark:text-gray-400">{label}</p></div><p className="mt-2 break-words text-lg font-extrabold leading-tight sm:text-xl">{formatVnd(value)}</p><p className="mt-2 truncate text-xs text-gray-500 dark:text-gray-400">{meta}</p></div>;
+  return <div className="card min-w-0 p-3 sm:p-4"><div className="flex items-start gap-2"><span className={`grid size-9 shrink-0 place-items-center rounded-xl kpi-tone-${tone}`}><Icon size={18} aria-hidden="true" /></span><p className="min-w-0 flex-1 break-words text-xs font-semibold leading-tight text-gray-500 dark:text-gray-400">{label}</p></div><p className="mt-2 break-words text-lg font-extrabold leading-tight sm:text-xl">{formatVnd(value)}</p><p className="mt-2 break-words text-xs leading-tight text-gray-500 dark:text-gray-400">{meta}</p></div>;
 }
 
 function SavingsRow({
@@ -818,7 +831,7 @@ function SavingsRow({
       : (en ? 'Active' : 'Đang hoạt động');
   return <article className="p-4 sm:p-5">
     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-      <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h4 className="truncate text-base font-bold">{account.bankName} · {account.name}</h4><span className="ui-chip">{status}</span></div><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{en ? 'Principal' : 'Tiền gốc'} {formatVnd(account.principal)} · {formatRate(account.annualInterestRate)}% · {account.termMonths} {en ? 'mo.' : 'tháng'} · {interestMethodLabel(account.interestMethod, en)}</p></div>
+      <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h4 className="min-w-0 break-words text-base font-bold [overflow-wrap:anywhere]">{account.bankName} · {account.name}</h4><span className="ui-chip">{status}</span></div><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{en ? 'Principal' : 'Tiền gốc'} {formatVnd(account.principal)} · {formatRate(account.annualInterestRate)}% · {account.termMonths} {en ? 'mo.' : 'tháng'} · {interestMethodLabel(account.interestMethod, en)}</p></div>
       <div className="text-left lg:text-right"><p className="text-lg font-extrabold text-[var(--primary)]">{formatVnd(account.currentBalance)}</p><p className="text-xs text-gray-500 dark:text-gray-400">{en ? 'Current balance' : 'Số dư hiện tại'}</p></div>
     </div>
     <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-4"><div className="rounded-xl bg-black/[.025] p-3 dark:bg-white/[.04]"><p className="text-xs text-gray-500">{en ? 'Opened' : 'Ngày mở'}</p><p className="mt-1 font-semibold">{formatDateOnlyVi(account.openedOn)}</p></div><div className={`rounded-xl bg-black/[.025] p-3 dark:bg-white/[.04] ${maturityClass}`}><p className="text-xs">{en ? 'Maturity' : 'Đáo hạn'}</p><p className="mt-1 font-semibold">{formatDateOnlyVi(account.maturityOn)}</p><p className="text-xs">{days < 0 ? (en ? 'Past due' : 'Đã quá hạn') : days === 0 ? (en ? 'Today' : 'Hôm nay') : (en ? `${days} day(s) left` : `Còn ${days} ngày`)}</p></div><div className="rounded-xl bg-black/[.025] p-3 dark:bg-white/[.04]"><p className="text-xs text-gray-500">{en ? 'Interest to date' : 'Lãi đến hiện tại'}</p><p className="mt-1 font-semibold">{formatVnd(expectedInterestToDate)}</p><p className="text-xs text-gray-500">{en ? 'estimated through today' : 'ước tính đến hôm nay'}</p></div><div className="rounded-xl bg-black/[.025] p-3 dark:bg-white/[.04]"><p className="text-xs text-gray-500">{en ? 'Full-term interest' : 'Lãi dự kiến toàn kỳ'}</p><p className="mt-1 font-semibold">{formatVnd(expectedInterestFullTerm)}</p><p className="text-xs text-gray-500">{en ? 'if held until maturity' : 'nếu giữ đến đáo hạn'}</p></div></div>
@@ -867,7 +880,7 @@ function SavingsForm({ editor, setEditor, onSubmit, onCancel, paymentMethods, bu
     <section className="card border-[var(--primary)] p-4 sm:p-5" aria-labelledby="savings-form-title">
       <div className="flex items-start justify-between gap-3">
         <div><p className="page-kicker"><Landmark size={15} aria-hidden="true" />{en ? 'Savings book form' : 'Thông tin sổ tiết kiệm'}</p><h3 id="savings-form-title" className="text-lg font-extrabold">{editor.id ? (en ? 'Edit savings book' : 'Sửa sổ tiết kiệm') : (en ? 'Add savings book' : 'Thêm sổ tiết kiệm')}</h3></div>
-        <button type="button" className="icon-button" onClick={onCancel} aria-label={en ? 'Close savings form' : 'Đóng biểu mẫu sổ'}><X size={18} /></button>
+        <button type="button" className="icon-button" onClick={onCancel} aria-label={en ? 'Close savings form' : 'Đóng biểu mẫu sổ'}><X size={18} aria-hidden="true" /></button>
       </div>
       <form className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" onSubmit={onSubmit}>
         <label><span className="label">{en ? 'Bank' : 'Ngân hàng'}</span><input className="field" value={editor.bankName} onChange={(event) => setEditor({ ...editor, bankName: event.target.value })} /></label>
@@ -889,7 +902,7 @@ function SavingsForm({ editor, setEditor, onSubmit, onCancel, paymentMethods, bu
 }
 
 function SavingsMovementForm({ editor, setEditor, onSubmit, onCancel, paymentMethods, busy, error, en, account }: { editor: MovementForm; setEditor: (value: MovementForm | null) => void; onSubmit: (event: FormEvent<HTMLFormElement>) => void; onCancel: () => void; paymentMethods: ReturnType<typeof useApp>['paymentMethods']; busy: boolean; error: string; en: boolean; account?: SavingsAccount }) {
-  return <section className="card border-[var(--primary)] p-4 sm:p-5" aria-labelledby="movement-form-title"><div className="flex items-start justify-between gap-3"><div><p className="page-kicker"><ReceiptText size={15} aria-hidden="true" />{en ? 'Savings movement' : 'Phát sinh sổ tiết kiệm'}</p><h3 id="movement-form-title" className="text-lg font-extrabold">{movementLabel(editor.type, en)}{account ? ` · ${account.bankName} - ${account.name}` : ''}</h3></div><button type="button" className="icon-button" onClick={onCancel} aria-label={en ? 'Close movement form' : 'Đóng biểu mẫu phát sinh'}><X size={18} /></button></div><form className="mt-4 grid gap-4 sm:grid-cols-2" onSubmit={onSubmit}><label><span className="label">{en ? 'Amount (VND)' : 'Số tiền (VND)'}</span><input className="field" inputMode="numeric" value={editor.amount} readOnly={editor.type === 'settlement'} onChange={(event) => setEditor({ ...editor, amount: event.target.value })} /><span className="mt-1 block text-xs text-gray-500">{editor.type === 'interest' ? (en ? 'Interest is recorded as income; the savings balance stays unchanged because it is received in cash.' : 'Lãi được ghi là thu nhập; số dư sổ giữ nguyên vì khoản lãi nhận về tiền.') : editor.type === 'settlement' ? (en ? 'Settlement closes the book and must equal its current balance.' : 'Tất toán đóng sổ và phải bằng đúng số dư hiện tại.') : ''}</span></label><PaymentSelect id="movement-payment" value={editor.paymentMethodId} onChange={(value) => setEditor({ ...editor, paymentMethodId: value })} paymentMethods={paymentMethods} en={en} /><label><span className="label">{en ? 'Date' : 'Ngày'}</span><input className="field" type="date" value={editor.movementDate} onChange={(event) => setEditor({ ...editor, movementDate: event.target.value })} /></label><label><span className="label">{en ? 'Note' : 'Ghi chú'}</span><input className="field" value={editor.note} onChange={(event) => setEditor({ ...editor, note: event.target.value })} /></label>{error && <div role="alert" className="inline-feedback inline-feedback-error sm:col-span-2">{error}</div>}<div className="flex flex-wrap justify-end gap-2 sm:col-span-2"><button type="button" className="btn-secondary" onClick={onCancel}>{en ? 'Cancel' : 'Hủy'}</button><button type="submit" className="btn-primary inline-flex items-center gap-2" disabled={busy}>{busy && <LoaderCircle size={16} className="animate-spin" aria-hidden="true" />}{en ? 'Record movement' : 'Ghi nhận'}</button></div></form></section>;
+  return <section className="card border-[var(--primary)] p-4 sm:p-5" aria-labelledby="movement-form-title"><div className="flex items-start justify-between gap-3"><div><p className="page-kicker"><ReceiptText size={15} aria-hidden="true" />{en ? 'Savings movement' : 'Phát sinh sổ tiết kiệm'}</p><h3 id="movement-form-title" className="text-lg font-extrabold">{movementLabel(editor.type, en)}{account ? ` · ${account.bankName} - ${account.name}` : ''}</h3></div><button type="button" className="icon-button" onClick={onCancel} aria-label={en ? 'Close movement form' : 'Đóng biểu mẫu phát sinh'}><X size={18} aria-hidden="true" /></button></div><form className="mt-4 grid gap-4 sm:grid-cols-2" onSubmit={onSubmit}><label><span className="label">{en ? 'Amount (VND)' : 'Số tiền (VND)'}</span><input className="field" inputMode="numeric" value={editor.amount} readOnly={editor.type === 'settlement'} onChange={(event) => setEditor({ ...editor, amount: event.target.value })} /><span className="mt-1 block text-xs text-gray-500">{editor.type === 'interest' ? (en ? 'Interest is recorded as income; the savings balance stays unchanged because it is received in cash.' : 'Lãi được ghi là thu nhập; số dư sổ giữ nguyên vì khoản lãi nhận về tiền.') : editor.type === 'settlement' ? (en ? 'Settlement closes the book and must equal its current balance.' : 'Tất toán đóng sổ và phải bằng đúng số dư hiện tại.') : ''}</span></label><PaymentSelect id="movement-payment" value={editor.paymentMethodId} onChange={(value) => setEditor({ ...editor, paymentMethodId: value })} paymentMethods={paymentMethods} en={en} /><label><span className="label">{en ? 'Date' : 'Ngày'}</span><input className="field" type="date" value={editor.movementDate} onChange={(event) => setEditor({ ...editor, movementDate: event.target.value })} /></label><label><span className="label">{en ? 'Note' : 'Ghi chú'}</span><input className="field" value={editor.note} onChange={(event) => setEditor({ ...editor, note: event.target.value })} /></label>{error && <div role="alert" className="inline-feedback inline-feedback-error sm:col-span-2">{error}</div>}<div className="flex flex-wrap justify-end gap-2 sm:col-span-2"><button type="button" className="btn-secondary" onClick={onCancel}>{en ? 'Cancel' : 'Hủy'}</button><button type="submit" className="btn-primary inline-flex items-center gap-2" disabled={busy}>{busy && <LoaderCircle size={16} className="animate-spin" aria-hidden="true" />}{en ? 'Record movement' : 'Ghi nhận'}</button></div></form></section>;
 }
 
 function GoldForm({ editor, setEditor, onSubmit, onCancel, paymentMethods, busy, error, en, hasSales }: { editor: GoldForm; setEditor: (value: GoldForm | null) => void; onSubmit: (event: FormEvent<HTMLFormElement>) => void; onCancel: () => void; paymentMethods: ReturnType<typeof useApp>['paymentMethods']; busy: boolean; error: string; en: boolean; hasSales: boolean }) {
@@ -897,7 +910,7 @@ function GoldForm({ editor, setEditor, onSubmit, onCancel, paymentMethods, busy,
     <section className="card border-[var(--primary)] p-4 sm:p-5" aria-labelledby="gold-form-title">
       <div className="flex items-start justify-between gap-3">
         <div><p className="page-kicker"><Coins size={15} aria-hidden="true" />{en ? 'Gold form' : 'Thông tin vàng'}</p><h3 id="gold-form-title" className="text-lg font-extrabold">{editor.id ? (en ? 'Edit gold' : 'Sửa vàng') : (en ? 'Add gold' : 'Thêm vàng')}</h3></div>
-        <button type="button" className="icon-button" onClick={onCancel} aria-label={en ? 'Close gold form' : 'Đóng biểu mẫu vàng'}><X size={18} /></button>
+        <button type="button" className="icon-button" onClick={onCancel} aria-label={en ? 'Close gold form' : 'Đóng biểu mẫu vàng'}><X size={18} aria-hidden="true" /></button>
       </div>
       <form className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" onSubmit={onSubmit}>
         <label><span className="label">{en ? 'Purchase date' : 'Ngày mua'}</span><input className="field" type="date" value={editor.purchaseDate} onChange={(event) => setEditor({ ...editor, purchaseDate: event.target.value })} /></label>
@@ -915,5 +928,5 @@ function GoldForm({ editor, setEditor, onSubmit, onCancel, paymentMethods, busy,
 
 function GoldSaleForm({ editor, setEditor, onSubmit, onCancel, paymentMethods, busy, error, en, asset }: { editor: SaleForm; setEditor: (value: SaleForm | null) => void; onSubmit: (event: FormEvent<HTMLFormElement>) => void; onCancel: () => void; paymentMethods: ReturnType<typeof useApp>['paymentMethods']; busy: boolean; error: string; en: boolean; asset?: GoldAsset }) {
   const amount = goldPurchaseAmount(Number(inputDecimal(editor.quantityChi)), Number(inputAmount(editor.salePricePerChi)));
-  return <section className="card border-[var(--primary)] p-4 sm:p-5" aria-labelledby="gold-sale-form-title"><div className="flex items-start justify-between gap-3"><div><p className="page-kicker"><Banknote size={15} aria-hidden="true" />{en ? 'Gold sale' : 'Bán vàng'}</p><h3 id="gold-sale-form-title" className="text-lg font-extrabold">{asset ? (en ? `${formatQuantity(asset.remainingQuantityChi)} mace remaining` : `${formatQuantity(asset.remainingQuantityChi)} chỉ còn lại`) : (en ? 'Sell gold' : 'Bán vàng')}</h3></div><button type="button" className="icon-button" onClick={onCancel} aria-label={en ? 'Close sale form' : 'Đóng biểu mẫu bán vàng'}><X size={18} /></button></div><form className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" onSubmit={onSubmit}><label><span className="label">{en ? 'Sale date' : 'Ngày bán'}</span><input className="field" type="date" value={editor.saleDate} onChange={(event) => setEditor({ ...editor, saleDate: event.target.value })} /></label><label><span className="label">{en ? 'Quantity (mace)' : 'Số lượng (chỉ)'}</span><input className="field" inputMode="decimal" step="0.001" value={editor.quantityChi} onChange={(event) => setEditor({ ...editor, quantityChi: event.target.value })} /><span className="mt-1 block text-xs text-gray-500">{asset ? (en ? `Maximum ${formatQuantity(asset.remainingQuantityChi)} mace` : `Tối đa ${formatQuantity(asset.remainingQuantityChi)} chỉ`) : ''}</span></label><label><span className="label">{en ? 'Sale price per mace (VND)' : 'Giá bán / chỉ (VND)'}</span><input className="field" inputMode="numeric" value={editor.salePricePerChi} onChange={(event) => setEditor({ ...editor, salePricePerChi: event.target.value })} /></label><PaymentSelect id="sale-payment" value={editor.paymentMethodId} onChange={(value) => setEditor({ ...editor, paymentMethodId: value })} paymentMethods={paymentMethods} en={en} /><label><span className="label">{en ? 'Note' : 'Ghi chú'}</span><input className="field" value={editor.note} onChange={(event) => setEditor({ ...editor, note: event.target.value })} /></label><div className="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-200"><p className="text-xs">{en ? 'Income created' : 'Thu nhập sẽ tạo'}</p><p className="mt-1 font-bold">{formatVnd(Number.isFinite(amount) ? amount : 0)}</p><p className="mt-1 text-xs">{en ? 'No selling fee' : 'Không tính phí bán'}</p></div>{error && <div role="alert" className="inline-feedback inline-feedback-error sm:col-span-2 lg:col-span-3">{error}</div>}<div className="flex flex-wrap justify-end gap-2 sm:col-span-2 lg:col-span-3"><button type="button" className="btn-secondary" onClick={onCancel}>{en ? 'Cancel' : 'Hủy'}</button><button type="submit" className="btn-primary inline-flex items-center gap-2" disabled={busy}>{busy && <LoaderCircle size={16} className="animate-spin" aria-hidden="true" />}{en ? 'Sell and record income' : 'Bán và ghi thu nhập'}</button></div></form></section>;
+  return <section className="card border-[var(--primary)] p-4 sm:p-5" aria-labelledby="gold-sale-form-title"><div className="flex items-start justify-between gap-3"><div><p className="page-kicker"><Banknote size={15} aria-hidden="true" />{en ? 'Gold sale' : 'Bán vàng'}</p><h3 id="gold-sale-form-title" className="text-lg font-extrabold">{asset ? (en ? `${formatQuantity(asset.remainingQuantityChi)} mace remaining` : `${formatQuantity(asset.remainingQuantityChi)} chỉ còn lại`) : (en ? 'Sell gold' : 'Bán vàng')}</h3></div><button type="button" className="icon-button" onClick={onCancel} aria-label={en ? 'Close sale form' : 'Đóng biểu mẫu bán vàng'}><X size={18} aria-hidden="true" /></button></div><form className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" onSubmit={onSubmit}><label><span className="label">{en ? 'Sale date' : 'Ngày bán'}</span><input className="field" type="date" value={editor.saleDate} onChange={(event) => setEditor({ ...editor, saleDate: event.target.value })} /></label><label><span className="label">{en ? 'Quantity (mace)' : 'Số lượng (chỉ)'}</span><input className="field" inputMode="decimal" step="0.001" value={editor.quantityChi} onChange={(event) => setEditor({ ...editor, quantityChi: event.target.value })} /><span className="mt-1 block text-xs text-gray-500">{asset ? (en ? `Maximum ${formatQuantity(asset.remainingQuantityChi)} mace` : `Tối đa ${formatQuantity(asset.remainingQuantityChi)} chỉ`) : ''}</span></label><label><span className="label">{en ? 'Sale price per mace (VND)' : 'Giá bán / chỉ (VND)'}</span><input className="field" inputMode="numeric" value={editor.salePricePerChi} onChange={(event) => setEditor({ ...editor, salePricePerChi: event.target.value })} /></label><PaymentSelect id="sale-payment" value={editor.paymentMethodId} onChange={(value) => setEditor({ ...editor, paymentMethodId: value })} paymentMethods={paymentMethods} en={en} /><label><span className="label">{en ? 'Note' : 'Ghi chú'}</span><input className="field" value={editor.note} onChange={(event) => setEditor({ ...editor, note: event.target.value })} /></label><div className="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-200"><p className="text-xs">{en ? 'Income created' : 'Thu nhập sẽ tạo'}</p><p className="mt-1 font-bold">{formatVnd(Number.isFinite(amount) ? amount : 0)}</p><p className="mt-1 text-xs">{en ? 'No selling fee' : 'Không tính phí bán'}</p></div>{error && <div role="alert" className="inline-feedback inline-feedback-error sm:col-span-2 lg:col-span-3">{error}</div>}<div className="flex flex-wrap justify-end gap-2 sm:col-span-2 lg:col-span-3"><button type="button" className="btn-secondary" onClick={onCancel}>{en ? 'Cancel' : 'Hủy'}</button><button type="submit" className="btn-primary inline-flex items-center gap-2" disabled={busy}>{busy && <LoaderCircle size={16} className="animate-spin" aria-hidden="true" />}{en ? 'Sell and record income' : 'Bán và ghi thu nhập'}</button></div></form></section>;
 }

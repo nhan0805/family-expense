@@ -1,4 +1,4 @@
-import { CalendarDays, ChevronLeft, RotateCcw, Save, Settings2 } from 'lucide-react';
+import { CalendarDays, ChevronLeft, LoaderCircle, RotateCcw, Save, Settings2 } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
@@ -45,6 +45,12 @@ const optionNames = (
 ) => options
   .filter((option) => ids.includes(option.id))
   .map((option) => language === 'en' ? option.nameEn || option.name : option.name);
+
+const formatPresetDate = (value: string, en: boolean) => {
+  if (!value) return '…';
+  const [year, month, day] = value.split('-');
+  return en ? `${month}/${day}/${year}` : `${day}/${month}/${year}`;
+};
 
 export function TransactionFilterSettings() {
   const { language } = useOptionalLanguage();
@@ -94,7 +100,7 @@ export function TransactionFilterSettings() {
   }, [catalogs, currentUserId, familyId, initializedScope, preferenceQuery.data, preferenceQuery.isPending, preferenceScope, systemDefault]);
 
   const periodLabel = draft.period === 'custom' && (draft.dateFrom || draft.dateTo)
-    ? `${draft.dateFrom || '…'} → ${draft.dateTo || '…'}`
+    ? `${formatPresetDate(draft.dateFrom, en)} → ${formatPresetDate(draft.dateTo, en)}`
     : periodLabels[draft.period][en ? 'en' : 'vi'];
   const purposeNames = optionNames(draft.purposeIds, purposes, en ? 'en' : 'vi');
   const excludedPurposeNames = optionNames(draft.excludePurposeIds, purposes, en ? 'en' : 'vi');
@@ -102,16 +108,19 @@ export function TransactionFilterSettings() {
   const excludedExpenseTypeNames = optionNames(draft.excludeExpenseTypeIds, expenseTypes, en ? 'en' : 'vi');
   const paymentMethodNames = optionNames(draft.paymentMethodIds, paymentMethods, en ? 'en' : 'vi');
   const excludedPaymentMethodNames = optionNames(draft.excludePaymentMethodIds, paymentMethods, en ? 'en' : 'vi');
+  const previewSelection = (label: string, names: string[]) => names.length
+    ? `${label}: ${names.length > 1 ? `${names.length} ${en ? 'selected' : 'đã chọn'}` : names[0]}`
+    : '';
   const previewItems = [
     draft.transactionType || (en ? 'All types' : 'Tất cả loại'),
     draft.status || (en ? 'All statuses' : 'Tất cả trạng thái'),
     periodLabel,
-    purposeNames.length ? `${en ? 'Purpose' : 'Mục đích'}: ${purposeNames.join(', ')}` : '',
-    excludedPurposeNames.length ? `${en ? 'Exclude purpose' : 'Trừ mục đích'}: ${excludedPurposeNames.join(', ')}` : '',
-    expenseTypeNames.length ? `${en ? 'Category' : 'Danh mục'}: ${expenseTypeNames.join(', ')}` : '',
-    excludedExpenseTypeNames.length ? `${en ? 'Exclude category' : 'Trừ danh mục'}: ${excludedExpenseTypeNames.join(', ')}` : '',
-    paymentMethodNames.length ? `${en ? 'Payment' : 'Phương thức'}: ${paymentMethodNames.join(', ')}` : '',
-    excludedPaymentMethodNames.length ? `${en ? 'Exclude payment' : 'Trừ phương thức'}: ${excludedPaymentMethodNames.join(', ')}` : '',
+    previewSelection(en ? 'Purpose' : 'Mục đích', purposeNames),
+    previewSelection(en ? 'Exclude purpose' : 'Trừ mục đích', excludedPurposeNames),
+    previewSelection(en ? 'Category' : 'Danh mục', expenseTypeNames),
+    previewSelection(en ? 'Exclude category' : 'Trừ danh mục', excludedExpenseTypeNames),
+    previewSelection(en ? 'Payment' : 'Phương thức', paymentMethodNames),
+    previewSelection(en ? 'Exclude payment' : 'Trừ phương thức', excludedPaymentMethodNames),
     draft.amountMin ? `${en ? 'From' : 'Từ'} ${formatAmountFilterInput(draft.amountMin)}` : '',
     draft.amountMax ? `${en ? 'Up to' : 'Đến'} ${formatAmountFilterInput(draft.amountMax)}` : '',
     sortLabels[draft.sort][en ? 'en' : 'vi'],
@@ -246,7 +255,7 @@ export function TransactionFilterSettings() {
         </p>
       </section>
 
-      <form onSubmit={(event) => void save(event)} className="flex flex-col gap-5">
+      <form onSubmit={(event) => void save(event)} className="flex flex-col gap-5" aria-busy={saving || resetting}>
         <section className="card space-y-4 p-4 sm:p-5" aria-labelledby="filter-preference-main-title">
           <div>
             <h3 id="filter-preference-main-title" className="text-lg font-extrabold">{en ? 'Main filters' : 'Bộ lọc chính'}</h3>
@@ -334,7 +343,7 @@ export function TransactionFilterSettings() {
             <div className="min-w-0">
               <h3 id="filter-preference-preview-title" className="font-extrabold">{en ? 'Preview when Transactions opens' : 'Xem trước khi mở Giao dịch'}</h3>
               <div className="mt-3 flex flex-wrap gap-2">
-                {previewItems.map((item) => <span key={item} className="ui-chip max-w-full break-words">{item}</span>)}
+                {previewItems.map((item, index) => <span key={`${item}-${index}`} className="ui-chip max-w-full break-words">{item}</span>)}
               </div>
               <p className="mt-3 text-xs text-emerald-900/75 dark:text-emerald-100/75">{en ? 'Explicit filters in Dashboard links or shared URLs take precedence over this preset.' : 'Bộ lọc truyền từ Dashboard hoặc đường dẫn chia sẻ sẽ được ưu tiên hơn cài đặt này.'}</p>
             </div>
@@ -344,11 +353,11 @@ export function TransactionFilterSettings() {
         {formError && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">{formError}</p>}
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
           <button type="button" className="btn-secondary inline-flex items-center justify-center gap-2" disabled={saving || resetting} onClick={() => void resetToSystemDefault()}>
-            <RotateCcw size={17} aria-hidden="true" />
+            {resetting ? <LoaderCircle size={17} className="animate-spin" aria-hidden="true" /> : <RotateCcw size={17} aria-hidden="true" />}
             {resetting ? (en ? 'Restoring…' : 'Đang khôi phục…') : (en ? 'Restore system defaults' : 'Khôi phục mặc định hệ thống')}
           </button>
           <button type="submit" className="btn-primary inline-flex items-center justify-center gap-2" disabled={saving || resetting}>
-            <Save size={17} aria-hidden="true" />
+            {saving ? <LoaderCircle size={17} className="animate-spin" aria-hidden="true" /> : <Save size={17} aria-hidden="true" />}
             {saving ? (en ? 'Saving…' : 'Đang lưu…') : (en ? 'Save default filters' : 'Lưu bộ lọc mặc định')}
           </button>
         </div>
