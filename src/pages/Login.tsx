@@ -16,10 +16,12 @@ export function Login() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState('');
+  const [fieldError, setFieldError] = useState<'email' | 'password' | null>(null);
   const [busy, setBusy] = useState(false);
 
   const changeMode = (nextMode: Mode) => {
     setMessage('');
+    setFieldError(null);
     setShowPassword(false);
     setMode(nextMode);
   };
@@ -27,13 +29,16 @@ export function Login() {
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!email.trim()) {
+      setFieldError('email');
       setMessage(en ? 'Enter your email.' : 'Vui lòng nhập email.');
       return;
     }
     if (mode !== 'magic' && mode !== 'forgot' && password.length < 6) {
+      setFieldError('password');
       setMessage(en ? 'Password must be at least 6 characters.' : 'Mật khẩu phải có ít nhất 6 ký tự.');
       return;
     }
+    setFieldError(null);
     setBusy(true);
     setMessage(en ? 'Processing…' : 'Đang xử lý…');
 
@@ -85,7 +90,6 @@ export function Login() {
   };
 
   const title = en ? (mode === 'login' ? 'Log in' : mode === 'signup' ? 'Create account' : mode === 'magic' ? 'Magic link' : 'Forgot password') : (mode === 'login' ? 'Đăng nhập' : mode === 'signup' ? 'Tạo tài khoản' : mode === 'magic' ? 'Liên kết đăng nhập' : 'Quên mật khẩu');
-
   const modeEyebrow = en
     ? mode === 'login' ? 'Welcome back' : mode === 'signup' ? 'Start simply' : mode === 'magic' ? 'Passwordless sign in' : 'Recover access'
     : mode === 'login' ? 'Chào mừng bạn trở lại' : mode === 'signup' ? 'Bắt đầu thật đơn giản' : mode === 'magic' ? 'Đăng nhập không cần mật khẩu' : 'Khôi phục quyền truy cập';
@@ -163,7 +167,7 @@ export function Login() {
               <span className="label">Email</span>
               <span className="relative block">
                 <Mail className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" size={17} aria-hidden="true" />
-                <input id="auth-email" name="email" className="field min-h-12 pl-10" type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} />
+                <input id="auth-email" name="email" className="field min-h-12 pl-10" type="email" autoComplete="email" required aria-invalid={fieldError === 'email'} aria-describedby={fieldError === 'email' ? 'auth-message' : undefined} value={email} onChange={(event) => { setEmail(event.target.value); setFieldError(null); }} />
               </span>
             </label>
             {mode !== 'magic' && mode !== 'forgot' && (
@@ -171,20 +175,20 @@ export function Login() {
                 <span className="label">{en ? 'Password' : 'Mật khẩu'}</span>
                 <span className="relative block">
                   <LockKeyhole className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" size={17} aria-hidden="true" />
-                  <input id="auth-password" name="password" className="field min-h-12 pl-10 pr-12" type={showPassword ? 'text' : 'password'} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} minLength={6} required value={password} onChange={(event) => setPassword(event.target.value)} />
+                  <input id="auth-password" name="password" className="field min-h-12 pl-10 pr-12" type={showPassword ? 'text' : 'password'} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} minLength={6} required aria-invalid={fieldError === 'password'} aria-describedby={fieldError === 'password' ? 'auth-message' : undefined} value={password} onChange={(event) => { setPassword(event.target.value); setFieldError(null); }} />
                   <button type="button" className="icon-button absolute inset-y-0 right-1" aria-label={showPassword ? (en ? 'Hide password' : 'Ẩn mật khẩu') : (en ? 'Show password' : 'Hiện mật khẩu')} aria-pressed={showPassword} onClick={() => setShowPassword((value) => !value)}>{showPassword ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}</button>
                 </span>
               </label>
             )}
             <div className="pt-1">
-              <button className="btn-primary inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl text-base" disabled={busy} aria-busy={busy}>
+              <button type="submit" className="btn-primary inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl text-base" disabled={busy} aria-busy={busy}>
                 {busy && <LoaderCircle className="animate-spin" size={18} aria-hidden="true" />}
                 {busy ? (en ? 'Processing…' : 'Đang xử lý…') : mode === 'forgot' ? (en ? 'Send reset link' : 'Gửi liên kết đặt lại') : (en ? 'Continue' : 'Tiếp tục')}
               </button>
             </div>
           </form>
 
-          {message && <p role="status" aria-live="polite" className="mt-5 rounded-xl border border-[var(--border)] bg-[var(--surface-subtle)] px-3 py-2.5 text-sm leading-6 text-[var(--muted)]">{message}</p>}
+          {message && <p id="auth-message" role="status" aria-live="polite" className="mt-5 rounded-xl border border-[var(--border)] bg-[var(--surface-subtle)] px-3 py-2.5 text-sm leading-6 text-[var(--muted)]">{message}</p>}
           <div className="mt-6 flex flex-wrap items-center justify-between gap-2 border-t border-[var(--border)] pt-4 text-sm">
             {mode === 'login' && <><button className="min-h-11 rounded-lg px-2 font-semibold text-[var(--muted)] transition hover:bg-[var(--surface-subtle)] hover:text-[var(--primary)]" type="button" onClick={() => changeMode('forgot')}>{en ? 'Forgot password?' : 'Quên mật khẩu?'}</button><button className="min-h-11 rounded-lg px-2 font-semibold text-[var(--primary)] transition hover:bg-[var(--primary-soft)]" type="button" onClick={() => changeMode('magic')}>Magic link</button></>}
             {(mode === 'signup' || mode === 'magic' || mode === 'forgot') && <button className="min-h-11 rounded-lg px-2 font-semibold text-[var(--primary)] transition hover:bg-[var(--primary-soft)]" type="button" onClick={() => changeMode('login')}>{en ? 'Back to log in' : 'Về đăng nhập'}</button>}

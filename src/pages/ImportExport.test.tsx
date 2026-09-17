@@ -38,10 +38,10 @@ describe('Gửi danh sách giao dịch qua email', () => {
     expect(document.querySelectorAll('.data-card')).toHaveLength(3);
     expect(document.querySelectorAll('.data-card-actions')).toHaveLength(3);
     expect(screen.getByText('Nhập, xuất và quản lý dữ liệu giao dịch của gia đình.')).toHaveClass('text-gray-500', 'dark:text-gray-400');
-    expect(screen.getByText('Công cụ dữ liệu')).toHaveClass('dark:text-[#bd93f9]');
+    expect(screen.getByText('Công cụ dữ liệu')).toHaveClass('text-[var(--primary)]');
     const dataCards = document.querySelectorAll('.data-card');
-    expect(dataCards[0]?.querySelector('.data-card-icon')).toHaveClass('dark:bg-[#50fa7b1f]', 'dark:text-[#50fa7b]');
-    expect(dataCards[1]?.querySelector('.data-card-icon')).toHaveClass('dark:bg-[#8be9fd1f]', 'dark:text-[#8be9fd]');
+    expect(dataCards[0]?.querySelector('.data-card-icon')).toHaveClass('bg-[var(--success-soft)]', 'text-[var(--success-strong)]');
+    expect(dataCards[1]?.querySelector('.data-card-icon')).toHaveClass('bg-[var(--info-soft)]', 'text-[var(--info-strong)]');
     fireEvent.click(
       screen.getByRole('button', { name: 'Gửi danh sách giao dịch' }),
     );

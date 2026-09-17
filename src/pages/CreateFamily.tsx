@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { HousePlus, LogOut } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useOptionalLanguage } from '../context/LanguageContext';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { userFacingError } from '../lib/errorRecovery';
+import { AuthShell } from '../components/AuthShell';
 
 export function CreateFamily() {
   const { language, t } = useOptionalLanguage();
@@ -16,7 +17,7 @@ export function CreateFamily() {
   const [signingOut, setSigningOut] = useState(false);
   if (loading)
     return (
-      <main className="grid min-h-screen place-items-center">{en ? 'Loading…' : 'Đang tải…'}</main>
+      <main className="grid min-h-dvh place-items-center bg-[var(--app-bg)] p-4">{en ? 'Loading…' : 'Đang tải…'}</main>
     );
   if (!authenticated)
     return (
@@ -51,15 +52,9 @@ export function CreateFamily() {
     window.location.assign('/dang-nhap');
   };
   return (
-    <main className="grid min-h-dvh place-items-center bg-[var(--app-bg)] p-4">
-      <form className="card w-full max-w-lg space-y-5 p-7" onSubmit={submit}>
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--primary-soft)] text-[var(--primary)]">
-          <HousePlus />
-        </div>
+    <AuthShell maxWidth="max-w-lg">
+      <form className="space-y-5" onSubmit={submit}>
         <div>
-          <p className="text-xs font-bold tracking-widest text-[var(--primary)]">
-            FAMILY FINANCE
-          </p>
           <h1 className="mt-1 text-2xl font-extrabold">{en ? 'Create a new family' : 'Tạo gia đình mới'}</h1>
           <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
             {en ? 'You will become the family owner and can add members after setup.' : 'Bạn sẽ là Chủ gia đình và có thể thêm thành viên sau khi hoàn tất.'}
@@ -77,7 +72,7 @@ export function CreateFamily() {
             placeholder={en ? 'Example: Nhan family' : 'Ví dụ: Gia đình Nhân'}
           />
         </label>
-        <button className="btn-primary w-full" disabled={busy}>
+        <button type="submit" className="btn-primary w-full" disabled={busy}>
           {busy ? (en ? 'Creating…' : 'Đang tạo…') : (en ? 'Create family' : 'Tạo gia đình')}
         </button>
         <button
@@ -101,6 +96,6 @@ export function CreateFamily() {
           {en ? 'The system will create default purposes, expense types and payment methods.' : 'Hệ thống sẽ tạo sẵn mục đích chi, loại chi phí và phương thức thanh toán mặc định.'}
         </p>
       </form>
-    </main>
+    </AuthShell>
   );
 }

@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useApp } from '../context/AppContext';
+import { FeedbackProvider } from '../components/Feedback';
 import { Catalogs } from './Catalogs';
 
 vi.mock('../context/AppContext', () => ({ useApp: vi.fn() }));
@@ -26,6 +27,8 @@ function appState(role: 'owner' | 'member') {
 }
 
 describe('Quản lý danh mục', () => {
+  const renderCatalogs = () => render(<FeedbackProvider><Catalogs /></FeedbackProvider>);
+
   afterEach(() => {
     cleanup();
     vi.restoreAllMocks();
@@ -40,7 +43,7 @@ describe('Quản lý danh mục', () => {
 
   it('cho owner thêm danh mục', async () => {
     mockedUseApp.mockReturnValue(appState('owner'));
-    render(<Catalogs />);
+    renderCatalogs();
 
     expect(screen.getByRole('heading', { name: 'Danh mục', level: 2 })).toHaveClass('page-title');
     expect(screen.getAllByRole('tab')).toHaveLength(3);
@@ -63,7 +66,7 @@ describe('Quản lý danh mục', () => {
 
   it('cho phép chuyển giữa các nhóm bằng tab', () => {
     mockedUseApp.mockReturnValue(appState('member'));
-    render(<Catalogs />);
+    renderCatalogs();
 
     fireEvent.click(screen.getByRole('tab', { name: 'Danh mục' }));
 
@@ -76,8 +79,7 @@ describe('Quản lý danh mục', () => {
 
   it('cho owner đổi tên và xóa danh mục', async () => {
     mockedUseApp.mockReturnValue(appState('owner'));
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
-    render(<Catalogs />);
+    renderCatalogs();
 
     fireEvent.click(screen.getByRole('button', { name: 'Sửa Sinh hoạt' }));
     fireEvent.change(screen.getByLabelText('Đổi tên mục đích'), { target: { value: 'Gia đình' } });
@@ -85,12 +87,13 @@ describe('Quản lý danh mục', () => {
     await waitFor(() => expect(updateCatalogItem).toHaveBeenCalledWith('purpose', 'p1', 'Gia đình', '', 'house', true));
 
     fireEvent.click(screen.getByRole('button', { name: 'Xóa Sinh hoạt' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Xóa danh mục' }));
     await waitFor(() => expect(deleteCatalogItem).toHaveBeenCalledWith('purpose', 'p1'));
   });
 
   it('chỉ cho member xem danh mục', () => {
     mockedUseApp.mockReturnValue(appState('member'));
-    render(<Catalogs />);
+    renderCatalogs();
 
     expect(screen.getByText('Chỉ chủ gia đình mới có quyền chỉnh sửa.', { exact: false })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Thêm' })).not.toBeInTheDocument();
@@ -100,7 +103,7 @@ describe('Quản lý danh mục', () => {
 
   it('cho owner ẩn mục đích khỏi ngân sách nhưng vẫn giữ mục đích', async () => {
     mockedUseApp.mockReturnValue(appState('owner'));
-    render(<Catalogs />);
+    renderCatalogs();
 
     fireEvent.click(screen.getByRole('button', { name: 'Sửa Sinh hoạt' }));
     const budgetToggle = screen.getByRole('checkbox', { name: 'Theo dõi trong ngân sách' });
@@ -114,10 +117,10 @@ describe('Quản lý danh mục', () => {
   it('hiển thị lỗi nghiệp vụ từ database', async () => {
     mockedUseApp.mockReturnValue(appState('owner'));
     deleteCatalogItem.mockResolvedValue('Không thể xóa vì danh mục đã được sử dụng trong bảng giao dịch.');
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
-    render(<Catalogs />);
+    renderCatalogs();
 
     fireEvent.click(screen.getByRole('button', { name: 'Xóa Sinh hoạt' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Xóa danh mục' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Không thể xóa vì danh mục đã được sử dụng');
   });
 });
