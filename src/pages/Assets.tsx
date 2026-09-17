@@ -8,8 +8,7 @@ import {
   Pencil,
   Plus,
   ReceiptText,
-  TrendingDown,
-  TrendingUp,
+  Trash2,
   WalletCards,
   X,
 } from 'lucide-react';
@@ -27,14 +26,24 @@ import {
 import {
   archiveGoldAsset,
   archiveSavingsAccount,
+  deleteGoldAsset,
+  deleteSavingsAccount,
   fetchAssetData,
   fetchAssetSummary,
   recordGoldSale,
-  recordSavingsMovement,
+  settleSavingsAccount,
   setGoldBuybackPrice,
   upsertGoldAsset,
   upsertSavingsAccount,
 } from '../lib/assetsApi';
+import {
+  fetchAutomaticTransactionDefaults,
+} from '../lib/automaticTransactionDefaultsApi';
+import {
+  createSystemAutomaticTransactionDefaults,
+  sanitizeAutomaticTransactionDefaults,
+  type AutomaticTransactionKey,
+} from '../lib/automaticTransactionDefaults';
 import {
   buildLocalAssetSummary,
   canManageAssets,
@@ -42,7 +51,6 @@ import {
   daysUntilMaturity,
   expectedSavingsInterest,
   expectedSavingsInterestToDate,
-  goldCostValue,
   goldEstimatedValue,
   goldPurchaseAmount,
   goldSaleInputSchema,
@@ -51,21 +59,25 @@ import {
   formatAssetMoneyInput,
   getLocalAssetData,
   makeLocalAssetTransaction,
-  recordLocalGoldSale,
-  recordLocalSavingsMovement,
+  recordLocalGoldSaleAggregate,
+  settleLocalSavingsAccount,
   savingsAccountInputSchema,
   savingsInterestMethods,
-  savingsMovementInputSchema,
+  savingsSettlementInputSchema,
   upsertLocalGoldAsset,
   upsertLocalSavingsAccount,
   archiveLocalGoldAsset,
   archiveLocalSavingsAccount,
+  deleteLocalGoldAsset,
+  deleteLocalSavingsAccount,
+  isLocalAssetTransaction,
   setLocalGoldBuybackPrice,
   sanitizeDecimalInput,
+  summarizeGoldHoldings,
   type GoldAsset,
+  type GoldHoldingSummary,
   type SavingsAccount,
   type SavingsAccountInput,
-  type SavingsMovementInput,
   type SavingsMovementType,
 } from '../lib/assets';
 import { isSupabaseConfigured } from '../lib/supabase';
@@ -97,17 +109,15 @@ type GoldForm = {
   createTransaction: boolean;
 };
 
-type MovementForm = {
+type SettlementForm = {
   accountId: string;
-  type: SavingsMovementInput['type'];
-  amount: string;
-  movementDate: string;
+  interestAmount: string;
+  settlementDate: string;
   paymentMethodId: string;
   note: string;
 };
 
 type SaleForm = {
-  assetId: string;
   saleDate: string;
   quantityChi: string;
   salePricePerChi: string;
@@ -132,6 +142,7 @@ const inputAmount = (value: string) => value.replace(/\D/g, '').replace(/^0+(?=\
 const inputDecimal = sanitizeDecimalInput;
 const formatQuantity = (value: number) => value.toLocaleString('vi-VN', { maximumFractionDigits: 3 });
 const formatRate = (value: number) => value.toLocaleString('vi-VN', { maximumFractionDigits: 4 });
+const formatSignedVnd = (value: number) => `${value > 0 ? '+' : ''}${formatVnd(value)}`;
 const calculatedMaturityDate = (openedOn: string, termMonths: string) => {
   const months = Number(inputAmount(termMonths));
   return calculateSavingsMaturityDate(openedOn, months);
@@ -146,7 +157,7 @@ const interestMethodLabel = (value: SavingsAccount['interestMethod'], en: boolea
 };
 
 const movementLabel = (value: SavingsMovementType, en: boolean) => {
-  if (value === 'interest') return en ? 'Interest received' : 'Ghi lãi';
+  if (value === 'interest') return en ? 'Interest received' : 'Lãi nhận về';
   if (value === 'withdrawal') return en ? 'Withdrawal' : 'Rút tiền';
   if (value === 'fee') return en ? 'Fee' : 'Phí';
   if (value === 'settlement') return en ? 'Settlement' : 'Tất toán';
@@ -173,8 +184,8 @@ export function assetError(error: unknown, en: boolean, fallback: string) {
     return en ? 'The opening principal cannot be edited after the book is created.' : 'Không thể sửa tiền gốc sau khi đã tạo sổ.';
   if (raw.includes('catalog_not_ready'))
     return en
-      ? 'The automatic transaction categories are not ready. Uncheck automatic transaction creation to save the book only, or restore the asset categories and try again.'
-      : 'Danh mục tự động cho giao dịch mở sổ chưa sẵn sàng. Hãy bỏ chọn tự tạo giao dịch để chỉ lưu sổ, hoặc khôi phục danh mục rồi thử lại.';
+      ? 'The automatic transaction categories are not ready. Uncheck automatic transaction creation to save the book only, or update the automatic transaction settings and try again.'
+      : 'Danh mục giao dịch tự động chưa sẵn sàng. Hãy bỏ chọn tự tạo giao dịch để chỉ lưu sổ, hoặc cập nhật cài đặt giao dịch tự động rồi thử lại.';
   if (raw.includes('pgrst202') || raw.includes('could not find the function') || raw.includes('upsert_savings_account'))
     return en
       ? 'The savings-book service has not been updated yet. Reload the app and try again.'
@@ -211,7 +222,7 @@ export function Assets() {
   const canManage = canManageAssets(currentUserRole);
   const [savingsEditor, setSavingsEditorState] = useState<SavingsForm | null>(null);
   const [goldEditor, setGoldEditorState] = useState<GoldForm | null>(null);
-  const [movementEditor, setMovementEditorState] = useState<MovementForm | null>(null);
+  const [settlementEditor, setSettlementEditorState] = useState<SettlementForm | null>(null);
   const [saleEditor, setSaleEditorState] = useState<SaleForm | null>(null);
   const [goldBuybackPriceInput, setGoldBuybackPriceInput] = useState('');
   const [formError, setFormError] = useState('');
@@ -228,8 +239,8 @@ export function Assets() {
       ...value,
       purchasePricePerChi: formatAssetMoneyInput(value.purchasePricePerChi),
     } : null);
-  const setMovementEditor = (value: MovementForm | null) =>
-    setMovementEditorState(value ? { ...value, amount: formatAssetMoneyInput(value.amount) } : null);
+  const setSettlementEditor = (value: SettlementForm | null) =>
+    setSettlementEditorState(value ? { ...value, interestAmount: formatAssetMoneyInput(value.interestAmount) } : null);
   const setSaleEditor = (value: SaleForm | null) =>
     setSaleEditorState(value ? { ...value, salePricePerChi: formatAssetMoneyInput(value.salePricePerChi) } : null);
 
@@ -247,6 +258,25 @@ export function Assets() {
     retry: false,
     staleTime: 30_000,
   });
+  const catalogs = useMemo(() => ({ purposes, expenseTypes, paymentMethods }), [expenseTypes, paymentMethods, purposes]);
+  const systemAutomaticDefaults = useMemo(() => createSystemAutomaticTransactionDefaults(catalogs), [catalogs]);
+  const automaticDefaultsQuery = useQuery({
+    queryKey: ['automatic-transaction-defaults', familyId],
+    queryFn: () => fetchAutomaticTransactionDefaults(familyId),
+    enabled: Boolean(familyId),
+    retry: false,
+    staleTime: 30_000,
+  });
+  const automaticDefaults = useMemo(
+    () => automaticDefaultsQuery.data?.length
+      ? sanitizeAutomaticTransactionDefaults(automaticDefaultsQuery.data, catalogs)
+      : systemAutomaticDefaults,
+    [automaticDefaultsQuery.data, catalogs, systemAutomaticDefaults],
+  );
+  const automaticDefault = (automationKey: AutomaticTransactionKey) =>
+    automaticDefaults.find((item) => item.automationKey === automationKey)
+    || systemAutomaticDefaults.find((item) => item.automationKey === automationKey)
+    || { automationKey, purposeId: '', expenseTypeId: '', paymentMethodId: '' };
   const data = isSupabaseConfigured
     ? assetQuery.data
     : getLocalAssetData(familyId);
@@ -257,25 +287,6 @@ export function Assets() {
     setGoldBuybackPriceInput(goldBuybackPricePerChi === null ? '' : formatAssetMoneyInput(goldBuybackPricePerChi));
   }, [goldBuybackPricePerChi]);
 
-  const defaultPaymentMethodId =
-    paymentMethods.find((item) => item.name === 'Chuyển khoản')?.id ||
-    paymentMethods[0]?.id ||
-    '';
-  const cashPaymentMethodId =
-    paymentMethods.find((item) => item.name === 'Tiền mặt')?.id ||
-    defaultPaymentMethodId;
-  const investmentPurposeId =
-    purposes.find((item) => item.name === 'Đầu tư')?.id || purposes[0]?.id || '';
-  const goldExpenseTypeId =
-    expenseTypes.find((item) => item.name === 'Đầu tư vàng')?.id ||
-    expenseTypes[0]?.id ||
-    '';
-  const savingsExpenseTypeId = (name: string) =>
-    expenseTypes.find((item) => item.name === name)?.id ||
-    expenseTypes.find((item) => item.name === 'Khác')?.id ||
-    expenseTypes[0]?.id ||
-    '';
-
   const activeSavings = (data?.savingsAccounts || []).filter((item) => item.status !== 'archived');
   const activeGold = (data?.goldAssets || []).filter((item) => item.status === 'active');
   const soldGold = (data?.goldAssets || []).filter((item) => item.status === 'sold');
@@ -285,8 +296,9 @@ export function Assets() {
   const overdueSavingsCount = maturityAlerts.filter((item) => daysUntilMaturity(item.maturityOn) < 0).length;
   const dueSoonSavingsCount = maturityAlerts.length - overdueSavingsCount;
   const savingsTotal = activeSavings.reduce((total, item) => total + item.currentBalance, 0);
-  const goldQuantity = activeGold.reduce((total, item) => total + item.remainingQuantityChi, 0);
-  const goldValue = activeGold.reduce((total, item) => total + goldEstimatedValue(item), 0);
+  const goldHoldingSummary = summarizeGoldHoldings(activeGold, goldBuybackPricePerChi ?? null);
+  const goldQuantity = goldHoldingSummary.quantityChi;
+  const goldValue = goldHoldingSummary.estimatedValue ?? 0;
   const localSummary = useMemo(
     () => buildLocalAssetSummary(familyId, transactions),
     [familyId, transactions],
@@ -339,7 +351,7 @@ export function Assets() {
   const closeEditors = () => {
     setSavingsEditor(null);
     setGoldEditor(null);
-    setMovementEditor(null);
+    setSettlementEditor(null);
     setSaleEditor(null);
     setFormError('');
   };
@@ -358,7 +370,7 @@ export function Assets() {
           openedOn: item.openedOn,
           maturityOn: calculatedMaturityDate(item.openedOn, String(item.termMonths)),
           interestMethod: item.interestMethod,
-          paymentMethodId: defaultPaymentMethodId,
+          paymentMethodId: automaticDefault('savings_opening').paymentMethodId,
           note: item.note || '',
           createTransaction: false,
         }
@@ -371,7 +383,7 @@ export function Assets() {
           openedOn: today,
           maturityOn: calculateSavingsMaturityDate(today, 6),
           interestMethod: 'end_of_term',
-          paymentMethodId: defaultPaymentMethodId,
+          paymentMethodId: automaticDefault('savings_opening').paymentMethodId,
           note: '',
           createTransaction: true,
         });
@@ -385,7 +397,7 @@ export function Assets() {
           purchaseDate: item.purchaseDate,
           quantityChi: String(item.quantityChi),
           purchasePricePerChi: formatAssetMoneyInput(item.purchasePricePerChi),
-          paymentMethodId: defaultPaymentMethodId,
+          paymentMethodId: automaticDefault('gold_purchase').paymentMethodId,
           note: item.note || '',
           createTransaction: false,
         }
@@ -393,36 +405,32 @@ export function Assets() {
           purchaseDate: todayInVietnam(),
           quantityChi: '',
           purchasePricePerChi: '',
-          paymentMethodId: defaultPaymentMethodId,
+          paymentMethodId: automaticDefault('gold_purchase').paymentMethodId,
           note: '',
           createTransaction: true,
         });
   };
 
-  const openMovementEditor = (account: SavingsAccount, type: SavingsMovementInput['type']) => {
+  const openSettlementEditor = (account: SavingsAccount) => {
     setFormError('');
-    setMovementEditor({
+    setSettlementEditor({
       accountId: account.id,
-      type,
-      amount: type === 'settlement' ? formatAssetMoneyInput(account.currentBalance) : '',
-      movementDate: todayInVietnam(),
-      paymentMethodId: type === 'interest' || type === 'withdrawal' || type === 'settlement'
-        ? cashPaymentMethodId
-        : defaultPaymentMethodId,
+      interestAmount: formatAssetMoneyInput(expectedSavingsInterest(account)),
+      settlementDate: todayInVietnam(),
+      paymentMethodId: automaticDefault('savings_settlement').paymentMethodId,
       note: '',
     });
   };
 
-  const openSaleEditor = (asset: GoldAsset) => {
+  const openSaleEditor = () => {
     setFormError('');
+    const defaultSalePrice = goldBuybackPricePerChi
+      ?? (goldHoldingSummary.averageCostPerChi === null ? '' : Math.round(goldHoldingSummary.averageCostPerChi));
     setSaleEditor({
-      assetId: asset.id,
       saleDate: todayInVietnam(),
-      quantityChi: String(asset.remainingQuantityChi),
-      salePricePerChi: asset.estimatedSellPricePerChi === null
-        ? formatAssetMoneyInput(asset.purchasePricePerChi)
-        : formatAssetMoneyInput(asset.estimatedSellPricePerChi),
-      paymentMethodId: cashPaymentMethodId,
+      quantityChi: String(goldHoldingSummary.quantityChi),
+      salePricePerChi: formatAssetMoneyInput(defaultSalePrice),
+      paymentMethodId: automaticDefault('gold_sale').paymentMethodId,
       note: '',
     });
   };
@@ -471,9 +479,9 @@ export function Assets() {
               transactionType: 'Chi tiêu',
               description: `Gửi tiết kiệm: ${parsed.data.bankName} - ${parsed.data.name}`,
               amount: parsed.data.principal,
-              purposeId: investmentPurposeId,
-              expenseTypeId: savingsExpenseTypeId('Gửi tiết kiệm'),
-              paymentMethodId: parsed.data.paymentMethodId || defaultPaymentMethodId,
+              purposeId: automaticDefault('savings_opening').purposeId,
+              expenseTypeId: automaticDefault('savings_opening').expenseTypeId,
+              paymentMethodId: automaticDefault('savings_opening').paymentMethodId,
               sourceReference: `asset:savings:${accountId}:opening`,
             })
           : null;
@@ -532,9 +540,9 @@ export function Assets() {
               transactionType: 'Chi tiêu',
               description: `Mua vàng: ${formatQuantity(parsed.data.quantityChi)} chỉ`,
               amount,
-              purposeId: investmentPurposeId,
-              expenseTypeId: goldExpenseTypeId,
-              paymentMethodId: parsed.data.paymentMethodId || defaultPaymentMethodId,
+              purposeId: automaticDefault('gold_purchase').purposeId,
+              expenseTypeId: automaticDefault('gold_purchase').expenseTypeId,
+              paymentMethodId: automaticDefault('gold_purchase').paymentMethodId,
               sourceReference: `asset:gold:${assetId}:purchase`,
             })
           : null;
@@ -552,70 +560,88 @@ export function Assets() {
     }
   };
 
-  const saveMovement = async (event: FormEvent<HTMLFormElement>) => {
+  const saveSettlement = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!movementEditor) return;
-    const parsed = savingsMovementInputSchema.safeParse({
-      type: movementEditor.type,
-      amount: Number(inputAmount(movementEditor.amount)),
-      movementDate: movementEditor.movementDate,
-      paymentMethodId: movementEditor.paymentMethodId || null,
-      note: movementEditor.note,
+    if (!settlementEditor) return;
+    const parsed = savingsSettlementInputSchema.safeParse({
+      interestAmount: Number(inputAmount(settlementEditor.interestAmount)),
+      settlementDate: settlementEditor.settlementDate,
+      paymentMethodId: settlementEditor.paymentMethodId || null,
+      note: settlementEditor.note,
     });
     if (!parsed.success) {
-      setFormError(parsed.error.issues[0]?.message || (en ? 'Review the movement form.' : 'Hãy kiểm tra lại thông tin phát sinh.'));
+      setFormError(parsed.error.issues[0]?.message || (en ? 'Review the settlement form.' : 'Hãy kiểm tra lại thông tin tất toán.'));
       return;
     }
-    const account = data?.savingsAccounts.find((item) => item.id === movementEditor.accountId);
+    const account = data?.savingsAccounts.find((item) => item.id === settlementEditor.accountId);
     if (!account) return;
     if (isSupabaseConfigured && !online) {
       setFormError(en ? 'Reconnect before saving.' : 'Hãy kết nối lại trước khi lưu.');
       return;
     }
-    const income = parsed.data.type !== 'fee';
+    const totalReceived = account.currentBalance + parsed.data.interestAmount;
     if (!await askConfirm({
-      title: en ? `${movementLabel(parsed.data.type, true)} and create a transaction?` : `${movementLabel(parsed.data.type, false)} và tự tạo giao dịch?`,
-      description: income
-        ? (en ? `This creates a ${formatVnd(parsed.data.amount)} income transaction.` : `Hệ thống sẽ tạo giao dịch thu nhập ${formatVnd(parsed.data.amount)}.`)
-        : (en ? `This creates a ${formatVnd(parsed.data.amount)} expense transaction.` : `Hệ thống sẽ tạo giao dịch chi ${formatVnd(parsed.data.amount)}.`),
-      confirmLabel: en ? 'Record' : 'Ghi nhận',
+      title: en ? 'Settle the savings book and record the cash received?' : 'Tất toán sổ và ghi nhận tiền nhận về?',
+      description: en
+        ? `This closes the book and creates income transactions for ${formatVnd(account.currentBalance)} principal and ${formatVnd(parsed.data.interestAmount)} interest (${formatVnd(totalReceived)} total).`
+        : `Hệ thống sẽ đóng sổ và tạo giao dịch thu nhập gồm ${formatVnd(account.currentBalance)} tiền gốc và ${formatVnd(parsed.data.interestAmount)} tiền lãi (${formatVnd(totalReceived)} tổng nhận về).`,
+      confirmLabel: en ? 'Settle and record' : 'Tất toán và ghi nhận',
     })) return;
-    setBusy('movement');
+    setBusy('settlement');
     setFormError('');
     try {
       if (isSupabaseConfigured) {
-        await recordSavingsMovement(familyId, movementEditor.accountId, parsed.data);
+        await settleSavingsAccount(familyId, settlementEditor.accountId, parsed.data);
       } else {
-        const movementId = newLocalId('savings-movement');
-        const transaction = makeLocalAssetTransaction({
+        const settlementMovementId = newLocalId('savings-settlement');
+        const settlementTransaction = makeLocalAssetTransaction({
           familyId,
           currentUserId,
-          date: parsed.data.movementDate,
-          transactionType: income ? 'Thu nhập' : 'Chi tiêu',
-          description: `${movementLabel(parsed.data.type, false)}: ${account.bankName} - ${account.name}`,
-          amount: parsed.data.amount,
-          purposeId: investmentPurposeId,
-          expenseTypeId: savingsExpenseTypeId(
-            parsed.data.type === 'interest'
-              ? 'Lãi tiền gửi'
-              : parsed.data.type === 'withdrawal'
-                ? 'Rút tiết kiệm'
-                : parsed.data.type === 'fee'
-                  ? 'Phí tiết kiệm'
-                  : 'Tất toán tiết kiệm',
-          ),
-          paymentMethodId: parsed.data.paymentMethodId || defaultPaymentMethodId,
-          sourceReference: `asset:savings:${account.id}:movement:${movementId}`,
+          date: parsed.data.settlementDate,
+          transactionType: 'Thu nhập',
+          description: `Tất toán tiết kiệm: ${account.bankName} - ${account.name}`,
+          amount: account.currentBalance,
+          purposeId: automaticDefault('savings_settlement').purposeId,
+          expenseTypeId: automaticDefault('savings_settlement').expenseTypeId,
+          paymentMethodId: automaticDefault('savings_settlement').paymentMethodId,
+          sourceReference: `asset:savings:${account.id}:settlement`,
         });
-        recordLocalSavingsMovement(familyId, account.id, parsed.data, transaction.id, movementId);
-        setTransactions((items) => [transaction, ...items]);
+        const interestMovementId = parsed.data.interestAmount > 0 ? newLocalId('savings-settlement-interest') : undefined;
+        const interestTransaction = parsed.data.interestAmount > 0
+          ? makeLocalAssetTransaction({
+              familyId,
+              currentUserId,
+              date: parsed.data.settlementDate,
+              transactionType: 'Thu nhập',
+              description: `Lãi tất toán sổ tiết kiệm: ${account.bankName} - ${account.name}`,
+              amount: parsed.data.interestAmount,
+              purposeId: automaticDefault('savings_interest').purposeId,
+              expenseTypeId: automaticDefault('savings_interest').expenseTypeId,
+              paymentMethodId: automaticDefault('savings_interest').paymentMethodId,
+              sourceReference: `asset:savings:${account.id}:settlement-interest`,
+            })
+          : null;
+        settleLocalSavingsAccount(
+          familyId,
+          account.id,
+          parsed.data,
+          settlementTransaction.id,
+          interestTransaction?.id || null,
+          settlementMovementId,
+          interestMovementId,
+        );
+        setTransactions((items) => [
+          ...(interestTransaction ? [interestTransaction] : []),
+          settlementTransaction,
+          ...items,
+        ]);
       }
       await refreshRelated();
       closeEditors();
-      notify(en ? 'Savings movement recorded.' : 'Đã ghi nhận phát sinh sổ tiết kiệm.');
+      notify(en ? 'Savings book settled and cash recorded.' : 'Đã tất toán sổ và ghi nhận tiền gốc, tiền lãi.');
     } catch (error) {
       reportClientError(error, 'mutation');
-      setFormError(assetError(error, en, en ? 'Could not record the savings movement.' : 'Không thể ghi nhận phát sinh sổ tiết kiệm.'));
+      setFormError(assetError(error, en, en ? 'Could not settle the savings book.' : 'Không thể tất toán sổ tiết kiệm.'));
     } finally {
       setBusy('');
     }
@@ -635,8 +661,10 @@ export function Assets() {
       setFormError(parsed.error.issues[0]?.message || (en ? 'Review the sale form.' : 'Hãy kiểm tra lại thông tin bán.'));
       return;
     }
-    const asset = data?.goldAssets.find((item) => item.id === saleEditor.assetId);
-    if (!asset) return;
+    if (parsed.data.quantityChi > goldHoldingSummary.quantityChi) {
+      setFormError(en ? 'The quantity is greater than the remaining gold.' : 'Số lượng vượt quá số vàng còn lại.');
+      return;
+    }
     if (isSupabaseConfigured && !online) {
       setFormError(en ? 'Reconnect before saving.' : 'Hãy kết nối lại trước khi lưu.');
       return;
@@ -651,9 +679,9 @@ export function Assets() {
     setFormError('');
     try {
       if (isSupabaseConfigured) {
-        await recordGoldSale(familyId, saleEditor.assetId, parsed.data);
+        await recordGoldSale(familyId, parsed.data);
       } else {
-        const saleId = newLocalId('gold-sale');
+        const saleBatchId = newLocalId('gold-sale');
         const transaction = makeLocalAssetTransaction({
           familyId,
           currentUserId,
@@ -661,12 +689,12 @@ export function Assets() {
           transactionType: 'Thu nhập',
           description: `Bán vàng: ${formatQuantity(parsed.data.quantityChi)} chỉ`,
           amount,
-          purposeId: investmentPurposeId,
-          expenseTypeId: goldExpenseTypeId,
-          paymentMethodId: parsed.data.paymentMethodId || cashPaymentMethodId,
-          sourceReference: `asset:gold:${asset.id}:sale:${saleId}`,
+          purposeId: automaticDefault('gold_sale').purposeId,
+          expenseTypeId: automaticDefault('gold_sale').expenseTypeId,
+          paymentMethodId: automaticDefault('gold_sale').paymentMethodId,
+          sourceReference: `asset:gold:aggregate:sale:${saleBatchId}`,
         });
-        recordLocalGoldSale(familyId, asset.id, parsed.data, transaction.id, saleId);
+        recordLocalGoldSaleAggregate(familyId, parsed.data, transaction.id);
         setTransactions((items) => [transaction, ...items]);
       }
       await refreshRelated();
@@ -720,6 +748,68 @@ export function Assets() {
     }
   };
 
+  const deleteSavings = async (account: SavingsAccount) => {
+    if (!await askConfirm({
+      title: en ? 'Delete this savings book permanently?' : 'Xóa vĩnh viễn sổ tiết kiệm này?',
+      description: en
+        ? 'The book, its movement history and every transaction created for it will be permanently deleted.'
+        : 'Sổ, toàn bộ lịch sử phát sinh và các giao dịch được tự tạo cho sổ này sẽ bị xóa vĩnh viễn.',
+      confirmLabel: en ? 'Delete savings book' : 'Xóa sổ',
+      danger: true,
+    })) return;
+    if (isSupabaseConfigured && !online) {
+      notify(en ? 'Reconnect before deleting.' : 'Hãy kết nối lại trước khi xóa.', 'error');
+      return;
+    }
+    setBusy(account.id);
+    try {
+      if (isSupabaseConfigured) {
+        await deleteSavingsAccount(familyId, account.id);
+      } else {
+        const linkedTransactionIds = deleteLocalSavingsAccount(familyId, account.id);
+        setTransactions((items) => items.filter((item) => !linkedTransactionIds.includes(item.id) && !isLocalAssetTransaction(item, 'savings', account.id)));
+      }
+      await refreshRelated();
+      if (savingsEditor?.id === account.id) closeEditors();
+      notify(en ? 'Savings book deleted.' : 'Đã xóa sổ tiết kiệm.');
+    } catch (error) {
+      reportClientError(error, 'mutation');
+      notify(assetError(error, en, en ? 'Could not delete the savings book.' : 'Không thể xóa sổ tiết kiệm.'), 'error');
+    } finally {
+      setBusy('');
+    }
+  };
+
+  const deleteGold = async (asset: GoldAsset) => {
+    if (!await askConfirm({
+      title: en ? 'Delete this gold lot permanently?' : 'Xóa vĩnh viễn lô vàng này?',
+      description: en
+        ? 'The gold lot, sale history and every transaction created for it will be permanently deleted.'
+        : 'Lô vàng, toàn bộ lịch sử bán và các giao dịch được tự tạo cho lô này sẽ bị xóa vĩnh viễn.',
+      confirmLabel: en ? 'Delete gold' : 'Xóa vàng',
+      danger: true,
+    })) return;
+    if (isSupabaseConfigured && !online) {
+      notify(en ? 'Reconnect before deleting.' : 'Hãy kết nối lại trước khi xóa.', 'error');
+      return;
+    }
+    setBusy(asset.id);
+    try {
+      if (isSupabaseConfigured) {
+        await deleteGoldAsset(familyId, asset.id);
+      } else {
+        const linkedTransactionIds = deleteLocalGoldAsset(familyId, asset.id);
+        setTransactions((items) => items.filter((item) => !linkedTransactionIds.includes(item.id) && !isLocalAssetTransaction(item, 'gold', asset.id)));
+      }
+      await refreshRelated();
+      if (goldEditor?.id === asset.id) closeEditors();
+      notify(en ? 'Gold deleted.' : 'Đã xóa vàng.');
+    } catch (error) {
+      reportClientError(error, 'mutation');
+      notify(assetError(error, en, en ? 'Could not delete gold.' : 'Không thể xóa vàng.'), 'error');
+    }
+  };
+
   if (isSupabaseConfigured && !familyId)
     return <p role="alert" className="rounded-xl bg-red-50 p-4 text-red-700 dark:bg-red-950/30 dark:text-red-300">{en ? 'No active family was found. Please reload and try again.' : 'Không tìm thấy gia đình đang hoạt động. Vui lòng tải lại rồi thử lại.'}</p>;
   if (isSupabaseConfigured && assetQuery.isPending)
@@ -748,7 +838,7 @@ export function Assets() {
     <section className="grid grid-cols-2 gap-3 sm:grid-cols-4" aria-label={en ? 'Asset totals' : 'Tổng tài sản'}>
       <AssetKpi label={en ? 'Savings balance' : 'Số dư tiết kiệm'} value={savingsTotal} icon={Landmark} tone="emerald" meta={`${activeSavings.length} ${en ? 'book(s)' : 'sổ'}`} />
       <AssetKpi label={en ? 'Gold estimate' : 'Giá trị vàng ước tính'} value={goldValue} icon={Coins} tone="amber" meta={`${formatQuantity(goldQuantity)} ${goldUnitLabel(en)}`} />
-      <AssetKpi label={en ? 'Gold cost' : 'Giá vốn vàng'} value={activeGold.reduce((total, item) => total + goldCostValue(item), 0)} icon={ReceiptText} tone="violet" meta={en ? 'Remaining gold' : 'Phần còn lại'} />
+      <AssetKpi label={en ? 'Gold cost' : 'Giá vốn vàng'} value={goldHoldingSummary.cost} icon={ReceiptText} tone="violet" meta={en ? 'Remaining gold' : 'Phần còn lại'} />
       <AssetKpi label={en ? 'Net cash' : 'Tiền ròng'} value={summary?.netCash || 0} icon={WalletCards} tone="sky" meta={en ? 'Actual transactions' : 'Giao dịch thực tế'} />
     </section>
 
@@ -759,17 +849,23 @@ export function Assets() {
         <div><h3 id="savings-title" className="flex items-center gap-2 text-lg font-extrabold"><Landmark size={19} aria-hidden="true" />{en ? 'Savings books' : 'Sổ tiết kiệm'}</h3><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{en ? 'Opening a book can create an expense transaction automatically.' : 'Khi mở sổ, hệ thống có thể tự tạo giao dịch chi để trừ tiền.'}</p></div>
         {canManage && <button type="button" className="btn-secondary inline-flex items-center gap-2 self-start text-sm" onClick={() => openSavingsEditor()}><Plus size={16} aria-hidden="true" />{en ? 'Add book' : 'Thêm sổ'}</button>}
       </div>
-      {activeSavings.length ? <div className="divide-y divide-black/10 dark:divide-white/10">{activeSavings.map((account) => <SavingsRow key={account.id} account={account} movements={allSavingsMovements.filter((item) => item.savingsAccountId === account.id)} paymentMethods={paymentMethods} canManage={canManage} busy={busy} en={en} language={language} onEdit={() => openSavingsEditor(account)} onAction={(type) => openMovementEditor(account, type)} onArchive={() => void archiveSavings(account)} />)}</div> : <EmptyState title={en ? 'No savings books yet' : 'Chưa có sổ tiết kiệm'} description={en ? 'Add a book to start tracking principal, maturity and actual interest.' : 'Thêm một sổ để theo dõi tiền gốc, đáo hạn và lãi thực tế.'} action={canManage ? <button type="button" className="btn-primary inline-flex items-center gap-2" onClick={() => openSavingsEditor()}><Plus size={16} aria-hidden="true" />{en ? 'Add savings book' : 'Thêm sổ tiết kiệm'}</button> : undefined} />}
+      {activeSavings.length ? <div className="divide-y divide-black/10 dark:divide-white/10">{activeSavings.map((account) => <SavingsRow key={account.id} account={account} movements={allSavingsMovements.filter((item) => item.savingsAccountId === account.id)} paymentMethods={paymentMethods} canManage={canManage} busy={busy} en={en} language={language} onEdit={() => openSavingsEditor(account)} onSettle={() => openSettlementEditor(account)} onArchive={() => void archiveSavings(account)} onDelete={() => void deleteSavings(account)} />)}</div> : <EmptyState title={en ? 'No savings books yet' : 'Chưa có sổ tiết kiệm'} description={en ? 'Add a book to start tracking principal, maturity and actual interest.' : 'Thêm một sổ để theo dõi tiền gốc, đáo hạn và lãi thực tế.'} action={canManage ? <button type="button" className="btn-primary inline-flex items-center gap-2" onClick={() => openSavingsEditor()}><Plus size={16} aria-hidden="true" />{en ? 'Add savings book' : 'Thêm sổ tiết kiệm'}</button> : undefined} />}
     </section>
 
-    {movementEditor && canManage && <SavingsMovementForm editor={movementEditor} setEditor={setMovementEditor} onSubmit={saveMovement} onCancel={closeEditors} paymentMethods={paymentMethods} busy={busy === 'movement'} error={formError} en={en} account={data?.savingsAccounts.find((item) => item.id === movementEditor.accountId)} />}
+    {settlementEditor && canManage && <SavingsSettlementForm editor={settlementEditor} setEditor={setSettlementEditor} onSubmit={saveSettlement} onCancel={closeEditors} paymentMethods={paymentMethods} busy={busy === 'settlement'} error={formError} en={en} account={data?.savingsAccounts.find((item) => item.id === settlementEditor.accountId)} />}
 
     {goldEditor && canManage && <GoldForm editor={goldEditor} setEditor={setGoldEditor} onSubmit={saveGold} onCancel={closeEditors} paymentMethods={paymentMethods} busy={busy === 'gold-save'} error={formError} en={en} hasSales={Boolean(allGoldSales.find((item) => item.goldAssetId === goldEditor.id))} />}
 
     <section className="card overflow-hidden" aria-labelledby="gold-title">
       <div className="flex flex-col gap-3 border-b border-black/10 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5 dark:border-white/10">
-        <div><h3 id="gold-title" className="flex items-center gap-2 text-lg font-extrabold"><Coins size={19} aria-hidden="true" />{en ? 'Gold' : 'Vàng'}</h3><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{en ? 'Prices are per mace. Estimate uses the shared shop buy-back price; no selling fee is included.' : 'Giá tính theo chỉ. Giá trị ước tính dùng giá tiệm mua vào dùng chung; không tính phí bán.'}</p></div>
-        {canManage && <button type="button" className="btn-secondary inline-flex items-center gap-2 self-start text-sm" onClick={() => openGoldEditor()}><Plus size={16} aria-hidden="true" />{en ? 'Add gold' : 'Thêm vàng'}</button>}
+        <div><h3 id="gold-title" className="flex items-center gap-2 text-lg font-extrabold"><Coins size={19} aria-hidden="true" />{en ? 'Gold' : 'Vàng'}</h3><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{en ? 'Purchases stay in history, but selling uses the total holding. Average cost and P/L are shown below; no selling fee is included.' : 'Các lần mua vẫn được lưu lịch sử, nhưng bán theo tổng số vàng đang giữ. Giá vốn bình quân và lãi/lỗ được tổng hợp bên dưới; không tính phí bán.'}</p></div>
+        {canManage && <div className="flex flex-wrap gap-2 self-start"><button type="button" className="btn-primary inline-flex items-center gap-2 text-sm" onClick={() => openSaleEditor()} disabled={!activeGold.length || Boolean(busy)}><Banknote size={16} aria-hidden="true" />{en ? 'Sell gold' : 'Bán vàng'}</button><button type="button" className="btn-secondary inline-flex items-center gap-2 text-sm" onClick={() => openGoldEditor()}><Plus size={16} aria-hidden="true" />{en ? 'Add gold' : 'Thêm vàng'}</button></div>}
+      </div>
+      <div className="grid grid-cols-2 gap-2 border-b border-black/10 p-4 dark:border-white/10 sm:grid-cols-4 sm:p-5">
+        <GoldHoldingStat label={en ? 'Current quantity' : 'Số vàng hiện có'} value={`${formatQuantity(goldHoldingSummary.quantityChi)} ${goldUnitLabel(en)}`} />
+        <GoldHoldingStat label={en ? 'Average cost' : 'Giá vốn bình quân'} value={goldHoldingSummary.averageCostPerChi === null ? '—' : `${formatVnd(goldHoldingSummary.averageCostPerChi)}/${goldUnitLabel(en)}`} />
+        <GoldHoldingStat label={en ? 'Estimated value' : 'Giá trị ước tính'} value={goldHoldingSummary.estimatedValue === null ? '—' : formatVnd(goldHoldingSummary.estimatedValue)} />
+        <GoldHoldingStat label={en ? 'Estimated P/L' : 'Lãi/lỗ tạm tính'} value={goldHoldingSummary.unrealizedPnl === null ? '—' : formatSignedVnd(goldHoldingSummary.unrealizedPnl)} tone={goldHoldingSummary.unrealizedPnl === null ? 'neutral' : goldHoldingSummary.unrealizedPnl >= 0 ? 'positive' : 'negative'} />
       </div>
       <div className="border-b border-black/10 p-4 dark:border-white/10 sm:p-5">
         <form className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start" onSubmit={saveGoldBuybackPrice}>
@@ -782,18 +878,27 @@ export function Assets() {
         </form>
         {formError && <div role="alert" className="inline-feedback inline-feedback-error mt-3">{formError}</div>}
       </div>
-      {activeGold.length ? <div className="divide-y divide-black/10 dark:divide-white/10">{activeGold.map((asset) => <GoldRow key={asset.id} asset={asset} sales={allGoldSales.filter((item) => item.goldAssetId === asset.id)} canManage={canManage} busy={busy} en={en} onEdit={() => openGoldEditor(asset)} onSell={() => openSaleEditor(asset)} />)}</div> : <EmptyState title={en ? 'No gold yet' : 'Chưa có vàng'} description={en ? 'Add each purchase separately so purchase date and cost stay clear.' : 'Mỗi lần mua được lưu riêng để rõ ngày mua và giá vốn.'} action={canManage ? <button type="button" className="btn-primary inline-flex items-center gap-2" onClick={() => openGoldEditor()}><Plus size={16} aria-hidden="true" />{en ? 'Add gold' : 'Thêm vàng'}</button> : undefined} />}
-      {soldGold.length > 0 && <details className="border-t border-black/10 dark:border-white/10"><summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 p-4 font-bold [&::-webkit-details-marker]:hidden"><span>{en ? 'Sold gold' : 'Vàng đã bán'} ({soldGold.length})</span><ChevronDown size={18} aria-hidden="true" /></summary><div className="divide-y divide-black/10 dark:divide-white/10">{soldGold.map((asset) => <GoldRow key={asset.id} asset={asset} sales={allGoldSales.filter((item) => item.goldAssetId === asset.id)} canManage={canManage} busy={busy} en={en} onEdit={() => undefined} onSell={() => undefined} onArchive={() => void archiveGold(asset)} sold />)}</div></details>}
-      {archivedGold.length > 0 && <details className="border-t border-black/10 dark:border-white/10"><summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 p-4 text-sm font-bold [&::-webkit-details-marker]:hidden"><span>{en ? 'Archived gold' : 'Vàng đã lưu trữ'} ({archivedGold.length})</span><ChevronDown size={18} aria-hidden="true" /></summary><div className="divide-y divide-black/10 dark:divide-white/10">{archivedGold.map((asset) => <GoldRow key={asset.id} asset={asset} sales={allGoldSales.filter((item) => item.goldAssetId === asset.id)} canManage={false} busy="" en={en} onEdit={() => undefined} onSell={() => undefined} sold />)}</div></details>}
+      {activeGold.length ? <div className="divide-y divide-black/10 dark:divide-white/10">{activeGold.map((asset) => <GoldRow key={asset.id} asset={asset} sales={allGoldSales.filter((item) => item.goldAssetId === asset.id)} canManage={canManage} busy={busy} en={en} onEdit={() => openGoldEditor(asset)} onDelete={() => void deleteGold(asset)} />)}</div> : <EmptyState title={en ? 'No gold yet' : 'Chưa có vàng'} description={en ? 'Add each purchase separately so purchase date and cost stay clear.' : 'Mỗi lần mua được lưu riêng để rõ ngày mua và giá vốn.'} action={canManage ? <button type="button" className="btn-primary inline-flex items-center gap-2" onClick={() => openGoldEditor()}><Plus size={16} aria-hidden="true" />{en ? 'Add gold' : 'Thêm vàng'}</button> : undefined} />}
+      {soldGold.length > 0 && <details className="border-t border-black/10 dark:border-white/10"><summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 p-4 font-bold [&::-webkit-details-marker]:hidden"><span>{en ? 'Sold gold' : 'Vàng đã bán'} ({soldGold.length})</span><ChevronDown size={18} aria-hidden="true" /></summary><div className="divide-y divide-black/10 dark:divide-white/10">{soldGold.map((asset) => <GoldRow key={asset.id} asset={asset} sales={allGoldSales.filter((item) => item.goldAssetId === asset.id)} canManage={canManage} busy={busy} en={en} onEdit={() => undefined} onArchive={() => void archiveGold(asset)} onDelete={() => void deleteGold(asset)} sold />)}</div></details>}
+      {archivedGold.length > 0 && <details className="border-t border-black/10 dark:border-white/10"><summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 p-4 text-sm font-bold [&::-webkit-details-marker]:hidden"><span>{en ? 'Archived gold' : 'Vàng đã lưu trữ'} ({archivedGold.length})</span><ChevronDown size={18} aria-hidden="true" /></summary><div className="divide-y divide-black/10 dark:divide-white/10">{archivedGold.map((asset) => <GoldRow key={asset.id} asset={asset} sales={allGoldSales.filter((item) => item.goldAssetId === asset.id)} canManage={canManage} busy={busy} en={en} onEdit={() => undefined} onDelete={() => void deleteGold(asset)} sold />)}</div></details>}
     </section>
 
-    {saleEditor && canManage && <GoldSaleForm editor={saleEditor} setEditor={setSaleEditor} onSubmit={saveSale} onCancel={closeEditors} paymentMethods={paymentMethods} busy={busy === 'sale'} error={formError} en={en} asset={data?.goldAssets.find((item) => item.id === saleEditor.assetId)} />}
-    {archivedSavings.length > 0 && <details className="card overflow-hidden"><summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 p-4 font-bold [&::-webkit-details-marker]:hidden"><span>{en ? 'Archived savings books' : 'Sổ tiết kiệm đã lưu trữ'} ({archivedSavings.length})</span><ChevronDown size={18} aria-hidden="true" /><span className="sr-only">{en ? 'Open archived savings books' : 'Mở sổ tiết kiệm đã lưu trữ'}</span></summary><div className="divide-y divide-black/10 dark:divide-white/10">{archivedSavings.map((account) => <SavingsRow key={account.id} account={account} movements={allSavingsMovements.filter((item) => item.savingsAccountId === account.id)} paymentMethods={paymentMethods} canManage={false} busy="" en={en} language={language} onEdit={() => undefined} onAction={() => undefined} onArchive={() => undefined} archived />)}</div></details>}
+    {saleEditor && canManage && <GoldSaleForm editor={saleEditor} setEditor={setSaleEditor} onSubmit={saveSale} onCancel={closeEditors} paymentMethods={paymentMethods} busy={busy === 'sale'} error={formError} en={en} holding={goldHoldingSummary} />}
+    {archivedSavings.length > 0 && <details className="card overflow-hidden"><summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 p-4 font-bold [&::-webkit-details-marker]:hidden"><span>{en ? 'Archived savings books' : 'Sổ tiết kiệm đã lưu trữ'} ({archivedSavings.length})</span><ChevronDown size={18} aria-hidden="true" /><span className="sr-only">{en ? 'Open archived savings books' : 'Mở sổ tiết kiệm đã lưu trữ'}</span></summary><div className="divide-y divide-black/10 dark:divide-white/10">{archivedSavings.map((account) => <SavingsRow key={account.id} account={account} movements={allSavingsMovements.filter((item) => item.savingsAccountId === account.id)} paymentMethods={paymentMethods} canManage={canManage} busy={busy} en={en} language={language} onEdit={() => undefined} onSettle={() => undefined} onArchive={() => undefined} onDelete={() => void deleteSavings(account)} archived />)}</div></details>}
   </div>;
 }
 
 function AssetKpi({ label, value, icon: Icon, tone, meta }: { label: string; value: number; icon: typeof Landmark; tone: 'emerald' | 'amber' | 'violet' | 'sky'; meta: string }) {
   return <div className="card min-w-0 p-3 sm:p-4"><div className="flex items-start gap-2"><span className={`grid size-9 shrink-0 place-items-center rounded-xl kpi-tone-${tone}`}><Icon size={18} aria-hidden="true" /></span><p className="min-w-0 flex-1 break-words text-xs font-semibold leading-tight text-gray-500 dark:text-gray-400">{label}</p></div><p className="mt-2 break-words text-lg font-extrabold leading-tight sm:text-xl">{formatVnd(value)}</p><p className="mt-2 break-words text-xs leading-tight text-gray-500 dark:text-gray-400">{meta}</p></div>;
+}
+
+function GoldHoldingStat({ label, value, tone = 'neutral' }: { label: string; value: string; tone?: 'neutral' | 'positive' | 'negative' }) {
+  const valueClass = tone === 'positive'
+    ? 'text-emerald-700 dark:text-emerald-300'
+    : tone === 'negative'
+      ? 'text-rose-700 dark:text-rose-300'
+      : 'text-gray-900 dark:text-gray-100';
+  return <div className="min-w-0 rounded-xl bg-black/[.025] p-3 dark:bg-white/[.04]"><p className="truncate text-xs text-gray-500 dark:text-gray-400">{label}</p><p className={`mt-1 break-words text-sm font-bold tabular-nums ${valueClass}`}>{value}</p></div>;
 }
 
 function SavingsRow({
@@ -805,8 +910,9 @@ function SavingsRow({
   en,
   language,
   onEdit,
-  onAction,
+  onSettle,
   onArchive,
+  onDelete,
   archived = false,
 }: {
   account: SavingsAccount;
@@ -817,8 +923,9 @@ function SavingsRow({
   en: boolean;
   language: 'vi' | 'en';
   onEdit: () => void;
-  onAction: (type: SavingsMovementInput['type']) => void;
+  onSettle: () => void;
   onArchive: () => void;
+  onDelete: () => void;
   archived?: boolean;
 }) {
   const days = daysUntilMaturity(account.maturityOn);
@@ -838,8 +945,9 @@ function SavingsRow({
     <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-4"><div className="rounded-xl bg-black/[.025] p-3 dark:bg-white/[.04]"><p className="text-xs text-gray-500">{en ? 'Opened' : 'Ngày mở'}</p><p className="mt-1 font-semibold">{formatDateOnlyVi(account.openedOn)}</p></div><div className={`rounded-xl bg-black/[.025] p-3 dark:bg-white/[.04] ${maturityClass}`}><p className="text-xs">{en ? 'Maturity' : 'Đáo hạn'}</p><p className="mt-1 font-semibold">{formatDateOnlyVi(account.maturityOn)}</p><p className="text-xs">{days < 0 ? (en ? 'Past due' : 'Đã quá hạn') : days === 0 ? (en ? 'Today' : 'Hôm nay') : (en ? `${days} day(s) left` : `Còn ${days} ngày`)}</p></div><div className="rounded-xl bg-black/[.025] p-3 dark:bg-white/[.04]"><p className="text-xs text-gray-500">{en ? 'Interest to date' : 'Lãi đến hiện tại'}</p><p className="mt-1 font-semibold">{formatVnd(expectedInterestToDate)}</p><p className="text-xs text-gray-500">{en ? 'estimated through today' : 'ước tính đến hôm nay'}</p></div><div className="rounded-xl bg-black/[.025] p-3 dark:bg-white/[.04]"><p className="text-xs text-gray-500">{en ? 'Full-term interest' : 'Lãi dự kiến toàn kỳ'}</p><p className="mt-1 font-semibold">{formatVnd(expectedInterestFullTerm)}</p><p className="text-xs text-gray-500">{en ? 'if held until maturity' : 'nếu giữ đến đáo hạn'}</p></div></div>
     {account.note && <p className="mt-3 text-sm text-gray-600 dark:text-gray-300">{account.note}</p>}
     {movements.length > 0 && <details className="mt-3 rounded-xl border border-black/10 dark:border-white/10"><summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 text-sm font-semibold [&::-webkit-details-marker]:hidden"><span>{en ? 'Book history' : 'Lịch sử sổ'} ({movements.length})</span><ChevronDown size={17} aria-hidden="true" /></summary><div className="divide-y divide-black/10 border-t border-black/10 text-sm dark:divide-white/10 dark:border-white/10">{movements.map((movement) => <div key={movement.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2"><span>{movementLabel(movement.movementType, en)} · {formatDateOnlyVi(movement.movementDate)}<span className="ml-2 text-xs text-gray-500">{paymentName(movement.paymentMethodId || '', paymentMethods, language)}</span></span><span className={movement.movementType === 'fee' ? 'font-semibold text-rose-700 dark:text-rose-300' : 'font-semibold text-emerald-700 dark:text-emerald-300'}>{movement.movementType === 'fee' ? '-' : '+'}{formatVnd(movement.amount)}</span></div>)}</div></details>}
-    {canManage && !archived && account.status === 'active' && <div className="mt-4 flex flex-wrap gap-2"><button type="button" className="btn-secondary inline-flex items-center gap-2 text-sm" disabled={Boolean(busy)} onClick={onEdit}><Pencil size={15} aria-hidden="true" />{en ? 'Edit' : 'Sửa'}</button><button type="button" className="btn-secondary text-sm" disabled={Boolean(busy)} onClick={() => onAction('interest')}>{en ? 'Record interest' : 'Ghi lãi'}</button><button type="button" className="btn-secondary text-sm" disabled={Boolean(busy)} onClick={() => onAction('withdrawal')}>{en ? 'Withdraw' : 'Rút tiền'}</button><button type="button" className="btn-secondary text-sm" disabled={Boolean(busy)} onClick={() => onAction('fee')}>{en ? 'Fee' : 'Phí'}</button><button type="button" className="btn-primary text-sm" disabled={Boolean(busy) || account.currentBalance <= 0} onClick={() => onAction('settlement')}>{en ? 'Settle' : 'Tất toán'}</button></div>}
-    {canManage && !archived && account.status === 'closed' && <button type="button" className="btn-secondary mt-4 inline-flex items-center gap-2 text-sm" disabled={Boolean(busy)} onClick={onArchive}><Archive size={15} aria-hidden="true" />{en ? 'Archive' : 'Lưu trữ'}</button>}
+    {canManage && !archived && account.status === 'active' && <div className="mt-4 flex flex-wrap gap-2"><button type="button" className="btn-secondary inline-flex items-center gap-2 text-sm" disabled={Boolean(busy)} onClick={onEdit}><Pencil size={15} aria-hidden="true" />{en ? 'Edit' : 'Sửa'}</button><button type="button" className="btn-primary text-sm" disabled={Boolean(busy) || account.currentBalance <= 0} onClick={onSettle}>{en ? 'Settle' : 'Tất toán'}</button><button type="button" className="danger-button inline-flex items-center gap-2 px-3 text-sm" disabled={Boolean(busy)} onClick={onDelete}>{busy === account.id ? <LoaderCircle size={15} className="animate-spin" aria-hidden="true" /> : <Trash2 size={15} aria-hidden="true" />}{en ? 'Delete' : 'Xóa'}</button></div>}
+    {canManage && !archived && account.status === 'closed' && <div className="mt-4 flex flex-wrap gap-2"><button type="button" className="btn-secondary inline-flex items-center gap-2 text-sm" disabled={Boolean(busy)} onClick={onArchive}><Archive size={15} aria-hidden="true" />{en ? 'Archive' : 'Lưu trữ'}</button><button type="button" className="danger-button inline-flex items-center gap-2 px-3 text-sm" disabled={Boolean(busy)} onClick={onDelete}>{busy === account.id ? <LoaderCircle size={15} className="animate-spin" aria-hidden="true" /> : <Trash2 size={15} aria-hidden="true" />}{en ? 'Delete' : 'Xóa'}</button></div>}
+    {canManage && archived && <button type="button" className="danger-button mt-4 inline-flex items-center gap-2 px-3 text-sm" disabled={Boolean(busy)} onClick={onDelete}>{busy === account.id ? <LoaderCircle size={15} className="animate-spin" aria-hidden="true" /> : <Trash2 size={15} aria-hidden="true" />}{en ? 'Delete permanently' : 'Xóa vĩnh viễn'}</button>}
   </article>;
 }
 
@@ -850,8 +958,8 @@ function GoldRow({
   busy,
   en,
   onEdit,
-  onSell,
   onArchive,
+  onDelete,
   sold = false,
 }: {
   asset: GoldAsset;
@@ -860,16 +968,14 @@ function GoldRow({
   busy: string;
   en: boolean;
   onEdit: () => void;
-  onSell: () => void;
   onArchive?: () => void;
+  onDelete: () => void;
   sold?: boolean;
 }) {
   const currentValue = goldEstimatedValue(asset);
-  const cost = goldCostValue(asset);
   const hasEstimate = asset.estimatedSellPricePerChi !== null;
-  const pnl = currentValue - cost;
   const unit = goldUnitLabel(en);
-  return <article className="p-4 sm:p-5"><div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between"><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h4 className="text-base font-bold">{formatQuantity(asset.remainingQuantityChi)} / {formatQuantity(asset.quantityChi)} {unit}</h4><span className="ui-chip">{sold || asset.status === 'archived' ? (en ? 'Sold' : 'Đã bán') : (en ? 'Active' : 'Đang giữ')}</span></div><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{en ? 'Purchased' : 'Ngày mua'} {formatDateOnlyVi(asset.purchaseDate)} · {en ? 'Cost' : 'Giá mua'} {formatVnd(asset.purchasePricePerChi)}/{unit}</p></div><div className="text-left lg:text-right"><p className="text-lg font-extrabold text-[var(--primary)]">{hasEstimate ? formatVnd(currentValue) : '—'}</p><p className="text-xs text-gray-500 dark:text-gray-400">{en ? 'Estimated sell value' : 'Giá trị bán ước tính'}</p></div></div><div className="mt-3 grid gap-2 text-sm sm:grid-cols-3"><div className="rounded-xl bg-black/[.025] p-3 dark:bg-white/[.04]"><p className="text-xs text-gray-500">{en ? 'Purchase price' : 'Giá mua'}</p><p className="mt-1 font-semibold">{formatVnd(asset.purchasePricePerChi)}/{unit}</p></div><div className="rounded-xl bg-black/[.025] p-3 dark:bg-white/[.04]"><p className="text-xs text-gray-500">{en ? 'Shop buy-back estimate' : 'Giá tiệm mua vào'}</p><p className="mt-1 font-semibold">{asset.estimatedSellPricePerChi === null ? (en ? 'Not entered' : 'Chưa nhập') : `${formatVnd(asset.estimatedSellPricePerChi)}/${unit}`}</p></div><div className={`rounded-xl p-3 ${!hasEstimate ? 'bg-black/[.025] text-gray-500 dark:bg-white/[.04]' : pnl >= 0 ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-200' : 'bg-rose-50 text-rose-800 dark:bg-rose-950/20 dark:text-rose-200'}`}><p className="text-xs">{en ? 'Estimated P/L' : 'Lãi/lỗ tạm tính'}</p><p className="mt-1 flex items-center gap-1 font-semibold">{!hasEstimate ? '—' : <>{pnl >= 0 ? <TrendingUp size={15} aria-hidden="true" /> : <TrendingDown size={15} aria-hidden="true" />}{pnl >= 0 ? '+' : ''}{formatVnd(pnl)}</>}</p></div></div>{asset.note && <p className="mt-3 text-sm text-gray-600 dark:text-gray-300">{asset.note}</p>}{sales.length > 0 && <details className="mt-3 rounded-xl border border-black/10 dark:border-white/10"><summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 text-sm font-semibold [&::-webkit-details-marker]:hidden"><span>{en ? 'Sale history' : 'Lịch sử bán'} ({sales.length})</span><ChevronDown size={17} aria-hidden="true" /></summary><div className="divide-y divide-black/10 border-t border-black/10 text-sm dark:divide-white/10 dark:border-white/10">{sales.map((sale) => <div key={sale.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2"><span>{formatDateOnlyVi(sale.saleDate)} · {formatQuantity(sale.quantityChi)} {unit} · {formatVnd(sale.salePricePerChi)}/{unit}</span><span className="font-semibold text-emerald-700 dark:text-emerald-300">+{formatVnd(sale.amount)}</span></div>)}</div></details>}{canManage && !sold && asset.status === 'active' && <div className="mt-4 flex flex-wrap gap-2"><button type="button" className="btn-secondary inline-flex items-center gap-2 text-sm" disabled={Boolean(busy)} onClick={onEdit}><Pencil size={15} aria-hidden="true" />{en ? 'Edit' : 'Sửa'}</button><button type="button" className="btn-primary text-sm" disabled={Boolean(busy)} onClick={onSell}>{en ? 'Sell gold' : 'Bán vàng'}</button></div>}{canManage && sold && asset.status === 'sold' && onArchive && <button type="button" className="btn-secondary mt-4 inline-flex items-center gap-2 text-sm" disabled={Boolean(busy)} onClick={onArchive}><Archive size={15} aria-hidden="true" />{en ? 'Archive' : 'Lưu trữ'}</button>}</article>;
+  return <article className="p-4 sm:p-5"><div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between"><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h4 className="text-base font-bold">{formatQuantity(asset.remainingQuantityChi)} / {formatQuantity(asset.quantityChi)} {unit}</h4><span className="ui-chip">{sold || asset.status === 'archived' ? (en ? 'Sold' : 'Đã bán') : (en ? 'Active' : 'Đang giữ')}</span></div><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{en ? 'Purchased' : 'Ngày mua'} {formatDateOnlyVi(asset.purchaseDate)} · {en ? 'Cost' : 'Giá mua'} {formatVnd(asset.purchasePricePerChi)}/{unit}</p></div><div className="text-left lg:text-right"><p className="text-lg font-extrabold text-[var(--primary)]">{hasEstimate ? formatVnd(currentValue) : '—'}</p><p className="text-xs text-gray-500 dark:text-gray-400">{en ? 'Estimated sell value' : 'Giá trị bán ước tính'}</p></div></div><div className="mt-3 grid gap-2 text-sm sm:grid-cols-2"><div className="rounded-xl bg-black/[.025] p-3 dark:bg-white/[.04]"><p className="text-xs text-gray-500">{en ? 'Purchase price' : 'Giá mua'}</p><p className="mt-1 font-semibold">{formatVnd(asset.purchasePricePerChi)}/{unit}</p></div><div className="rounded-xl bg-black/[.025] p-3 dark:bg-white/[.04]"><p className="text-xs text-gray-500">{en ? 'Shop buy-back estimate' : 'Giá tiệm mua vào'}</p><p className="mt-1 font-semibold">{asset.estimatedSellPricePerChi === null ? (en ? 'Not entered' : 'Chưa nhập') : `${formatVnd(asset.estimatedSellPricePerChi)}/${unit}`}</p></div></div>{asset.note && <p className="mt-3 text-sm text-gray-600 dark:text-gray-300">{asset.note}</p>}{sales.length > 0 && <details className="mt-3 rounded-xl border border-black/10 dark:border-white/10"><summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 text-sm font-semibold [&::-webkit-details-marker]:hidden"><span>{en ? 'Sale history' : 'Lịch sử bán'} ({sales.length})</span><ChevronDown size={17} aria-hidden="true" /></summary><div className="divide-y divide-black/10 border-t border-black/10 text-sm dark:divide-white/10 dark:border-white/10">{sales.map((sale) => <div key={sale.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2"><span>{formatDateOnlyVi(sale.saleDate)} · {formatQuantity(sale.quantityChi)} {unit} · {formatVnd(sale.salePricePerChi)}/{unit}</span><span className="font-semibold text-emerald-700 dark:text-emerald-300">+{formatVnd(sale.amount)}</span></div>)}</div></details>}{canManage && !sold && asset.status === 'active' && <div className="mt-4 flex flex-wrap gap-2"><button type="button" className="btn-secondary inline-flex items-center gap-2 text-sm" disabled={Boolean(busy)} onClick={onEdit}><Pencil size={15} aria-hidden="true" />{en ? 'Edit' : 'Sửa'}</button><button type="button" className="danger-button inline-flex items-center gap-2 px-3 text-sm" disabled={Boolean(busy)} onClick={onDelete}>{busy === asset.id ? <LoaderCircle size={15} className="animate-spin" aria-hidden="true" /> : <Trash2 size={15} aria-hidden="true" />}{en ? 'Delete' : 'Xóa'}</button></div>}{canManage && sold && asset.status === 'sold' && onArchive && <div className="mt-4 flex flex-wrap gap-2"><button type="button" className="btn-secondary inline-flex items-center gap-2 text-sm" disabled={Boolean(busy)} onClick={onArchive}><Archive size={15} aria-hidden="true" />{en ? 'Archive' : 'Lưu trữ'}</button><button type="button" className="danger-button inline-flex items-center gap-2 px-3 text-sm" disabled={Boolean(busy)} onClick={onDelete}>{busy === asset.id ? <LoaderCircle size={15} className="animate-spin" aria-hidden="true" /> : <Trash2 size={15} aria-hidden="true" />}{en ? 'Delete' : 'Xóa'}</button></div>}{canManage && asset.status === 'archived' && <button type="button" className="danger-button mt-4 inline-flex items-center gap-2 px-3 text-sm" disabled={Boolean(busy)} onClick={onDelete}>{busy === asset.id ? <LoaderCircle size={15} className="animate-spin" aria-hidden="true" /> : <Trash2 size={15} aria-hidden="true" />}{en ? 'Delete permanently' : 'Xóa vĩnh viễn'}</button>}</article>;
 }
 
 function PaymentSelect({ id, value, onChange, paymentMethods, en, label = 'Phương thức thanh toán' }: { id: string; value: string; onChange: (value: string) => void; paymentMethods: ReturnType<typeof useApp>['paymentMethods']; en: boolean; label?: string }) {
@@ -887,7 +993,7 @@ function SavingsForm({ editor, setEditor, onSubmit, onCancel, paymentMethods, bu
         <label><span className="label">{en ? 'Bank' : 'Ngân hàng'}</span><input className="field" value={editor.bankName} onChange={(event) => setEditor({ ...editor, bankName: event.target.value })} /></label>
         <label><span className="label">{en ? 'Book name' : 'Tên sổ'}</span><input className="field" value={editor.name} onChange={(event) => setEditor({ ...editor, name: event.target.value })} /></label>
         <label><span className="label">{en ? 'Opening principal (VND)' : 'Tiền gốc (VND)'}</span><input className="field" inputMode="numeric" disabled={Boolean(editor.id)} value={editor.principal} onChange={(event) => setEditor({ ...editor, principal: event.target.value })} /><span className="mt-1 block text-xs text-gray-500">{editor.id ? (en ? 'Opening principal cannot be edited.' : 'Tiền gốc không sửa sau khi tạo.') : (en ? 'This is also the opening cash expense when enabled.' : 'Khoản này cũng là giao dịch chi mở sổ nếu bật bên dưới.')}</span></label>
-        <label><span className="label">{en ? 'Annual rate (%)' : 'Lãi suất năm (%)'}</span><input className="field" type="number" inputMode="decimal" min="0" max="100" step="0.0001" value={editor.annualInterestRate} onChange={(event) => setEditor({ ...editor, annualInterestRate: sanitizeDecimalInput(event.target.value) })} /></label>
+        <label><span className="label">{en ? 'Annual rate (%)' : 'Lãi suất năm (%)'}</span><input className="field" type="text" inputMode="decimal" value={editor.annualInterestRate} onChange={(event) => setEditor({ ...editor, annualInterestRate: sanitizeDecimalInput(event.target.value) })} placeholder={en ? 'e.g. 8.2' : 'Ví dụ: 8,2'} autoComplete="off" /></label>
         <label><span className="label">{en ? 'Term (months)' : 'Kỳ hạn (tháng)'}</span><input className="field" inputMode="numeric" type="number" min="1" max="120" value={editor.termMonths} onChange={(event) => setEditor({ ...editor, termMonths: event.target.value })} /></label>
         <PaymentSelect id="savings-payment" value={editor.paymentMethodId} onChange={(value) => setEditor({ ...editor, paymentMethodId: value })} paymentMethods={paymentMethods} en={en} />
         <label><span className="label">{en ? 'Opened on' : 'Ngày mở'}</span><input className="field" type="date" value={editor.openedOn} onChange={(event) => setEditor({ ...editor, openedOn: event.target.value })} /></label>
@@ -902,8 +1008,10 @@ function SavingsForm({ editor, setEditor, onSubmit, onCancel, paymentMethods, bu
   );
 }
 
-function SavingsMovementForm({ editor, setEditor, onSubmit, onCancel, paymentMethods, busy, error, en, account }: { editor: MovementForm; setEditor: (value: MovementForm | null) => void; onSubmit: (event: FormEvent<HTMLFormElement>) => void; onCancel: () => void; paymentMethods: ReturnType<typeof useApp>['paymentMethods']; busy: boolean; error: string; en: boolean; account?: SavingsAccount }) {
-  return <section className="card border-[var(--primary)] p-4 sm:p-5" aria-labelledby="movement-form-title"><div className="flex items-start justify-between gap-3"><div><p className="page-kicker"><ReceiptText size={15} aria-hidden="true" />{en ? 'Savings movement' : 'Phát sinh sổ tiết kiệm'}</p><h3 id="movement-form-title" className="text-lg font-extrabold">{movementLabel(editor.type, en)}{account ? ` · ${account.bankName} - ${account.name}` : ''}</h3></div><button type="button" className="icon-button" onClick={onCancel} aria-label={en ? 'Close movement form' : 'Đóng biểu mẫu phát sinh'}><X size={18} aria-hidden="true" /></button></div><form className="mt-4 grid gap-4 sm:grid-cols-2" onSubmit={onSubmit}><label><span className="label">{en ? 'Amount (VND)' : 'Số tiền (VND)'}</span><input className="field" inputMode="numeric" value={editor.amount} readOnly={editor.type === 'settlement'} onChange={(event) => setEditor({ ...editor, amount: event.target.value })} /><span className="mt-1 block text-xs text-gray-500">{editor.type === 'interest' ? (en ? 'Interest is recorded as income; the savings balance stays unchanged because it is received in cash.' : 'Lãi được ghi là thu nhập; số dư sổ giữ nguyên vì khoản lãi nhận về tiền.') : editor.type === 'settlement' ? (en ? 'Settlement closes the book and must equal its current balance.' : 'Tất toán đóng sổ và phải bằng đúng số dư hiện tại.') : ''}</span></label><PaymentSelect id="movement-payment" value={editor.paymentMethodId} onChange={(value) => setEditor({ ...editor, paymentMethodId: value })} paymentMethods={paymentMethods} en={en} /><label><span className="label">{en ? 'Date' : 'Ngày'}</span><input className="field" type="date" value={editor.movementDate} onChange={(event) => setEditor({ ...editor, movementDate: event.target.value })} /></label><label><span className="label">{en ? 'Note' : 'Ghi chú'}</span><input className="field" value={editor.note} onChange={(event) => setEditor({ ...editor, note: event.target.value })} /></label>{error && <div role="alert" className="inline-feedback inline-feedback-error sm:col-span-2">{error}</div>}<div className="flex flex-wrap justify-end gap-2 sm:col-span-2"><button type="button" className="btn-secondary" onClick={onCancel}>{en ? 'Cancel' : 'Hủy'}</button><button type="submit" className="btn-primary inline-flex items-center gap-2" disabled={busy}>{busy && <LoaderCircle size={16} className="animate-spin" aria-hidden="true" />}{en ? 'Record movement' : 'Ghi nhận'}</button></div></form></section>;
+function SavingsSettlementForm({ editor, setEditor, onSubmit, onCancel, paymentMethods, busy, error, en, account }: { editor: SettlementForm; setEditor: (value: SettlementForm | null) => void; onSubmit: (event: FormEvent<HTMLFormElement>) => void; onCancel: () => void; paymentMethods: ReturnType<typeof useApp>['paymentMethods']; busy: boolean; error: string; en: boolean; account?: SavingsAccount }) {
+  const principal = account?.currentBalance || 0;
+  const interest = Number(inputAmount(editor.interestAmount)) || 0;
+  return <section className="card border-[var(--primary)] p-4 sm:p-5" aria-labelledby="settlement-form-title"><div className="flex items-start justify-between gap-3"><div><p className="page-kicker"><Landmark size={15} aria-hidden="true" />{en ? 'Savings settlement' : 'Tất toán sổ tiết kiệm'}</p><h3 id="settlement-form-title" className="text-lg font-extrabold">{en ? 'Settle and record cash received' : 'Tất toán và ghi nhận tiền nhận về'}{account ? ` · ${account.bankName} - ${account.name}` : ''}</h3></div><button type="button" className="icon-button" onClick={onCancel} aria-label={en ? 'Close settlement form' : 'Đóng biểu mẫu tất toán'}><X size={18} /></button></div><form className="mt-4 grid gap-4 sm:grid-cols-2" onSubmit={onSubmit}><div className="rounded-xl bg-[var(--primary-soft)] p-3"><p className="text-xs text-gray-500 dark:text-gray-400">{en ? 'Principal received' : 'Tiền gốc nhận về'}</p><p className="mt-1 text-lg font-extrabold">{formatVnd(principal)}</p><p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{en ? 'The current savings balance will be closed.' : 'Số dư hiện tại sẽ được đóng sổ.'}</p></div><label><span className="label">{en ? 'Interest received (VND)' : 'Lãi thực nhận (VND)'}</span><input className="field" inputMode="numeric" value={editor.interestAmount} onChange={(event) => setEditor({ ...editor, interestAmount: event.target.value })} /><span className="mt-1 block text-xs text-gray-500">{en ? 'Defaults to the estimated full-term interest; adjust it to match the bank statement.' : 'Mặc định là lãi dự kiến toàn kỳ; hãy sửa theo số tiền ngân hàng thực trả.'}</span></label><PaymentSelect id="settlement-payment" value={editor.paymentMethodId} onChange={(value) => setEditor({ ...editor, paymentMethodId: value })} paymentMethods={paymentMethods} en={en} /><label><span className="label">{en ? 'Settlement date' : 'Ngày tất toán'}</span><input className="field" type="date" value={editor.settlementDate} onChange={(event) => setEditor({ ...editor, settlementDate: event.target.value })} /></label><label><span className="label">{en ? 'Note' : 'Ghi chú'}</span><input className="field" value={editor.note} onChange={(event) => setEditor({ ...editor, note: event.target.value })} /></label><div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/20 dark:text-emerald-200 sm:col-span-2"><p className="text-xs">{en ? 'Total income recorded' : 'Tổng thu nhập sẽ ghi nhận'}</p><p className="mt-1 text-lg font-extrabold">{formatVnd(principal + interest)}</p><p className="mt-1 text-xs">{en ? 'Principal and interest are recorded together, then the book is closed.' : 'Tiền gốc và tiền lãi được ghi nhận cùng lúc, sau đó sổ được đóng.'}</p></div>{error && <div role="alert" className="inline-feedback inline-feedback-error sm:col-span-2">{error}</div>}<div className="flex flex-wrap justify-end gap-2 sm:col-span-2"><button type="button" className="btn-secondary" onClick={onCancel}>{en ? 'Cancel' : 'Hủy'}</button><button type="submit" className="btn-primary inline-flex items-center gap-2" disabled={busy || !account}>{busy && <LoaderCircle size={16} className="animate-spin" aria-hidden="true" />}{en ? 'Settle and record' : 'Tất toán và ghi nhận'}</button></div></form></section>;
 }
 
 function GoldForm({ editor, setEditor, onSubmit, onCancel, paymentMethods, busy, error, en, hasSales }: { editor: GoldForm; setEditor: (value: GoldForm | null) => void; onSubmit: (event: FormEvent<HTMLFormElement>) => void; onCancel: () => void; paymentMethods: ReturnType<typeof useApp>['paymentMethods']; busy: boolean; error: string; en: boolean; hasSales: boolean }) {
@@ -927,7 +1035,46 @@ function GoldForm({ editor, setEditor, onSubmit, onCancel, paymentMethods, busy,
   );
 }
 
-function GoldSaleForm({ editor, setEditor, onSubmit, onCancel, paymentMethods, busy, error, en, asset }: { editor: SaleForm; setEditor: (value: SaleForm | null) => void; onSubmit: (event: FormEvent<HTMLFormElement>) => void; onCancel: () => void; paymentMethods: ReturnType<typeof useApp>['paymentMethods']; busy: boolean; error: string; en: boolean; asset?: GoldAsset }) {
-  const amount = goldPurchaseAmount(Number(inputDecimal(editor.quantityChi)), Number(inputAmount(editor.salePricePerChi)));
-  return <section className="card border-[var(--primary)] p-4 sm:p-5" aria-labelledby="gold-sale-form-title"><div className="flex items-start justify-between gap-3"><div><p className="page-kicker"><Banknote size={15} aria-hidden="true" />{en ? 'Gold sale' : 'Bán vàng'}</p><h3 id="gold-sale-form-title" className="text-lg font-extrabold">{asset ? (en ? `${formatQuantity(asset.remainingQuantityChi)} mace remaining` : `${formatQuantity(asset.remainingQuantityChi)} chỉ còn lại`) : (en ? 'Sell gold' : 'Bán vàng')}</h3></div><button type="button" className="icon-button" onClick={onCancel} aria-label={en ? 'Close sale form' : 'Đóng biểu mẫu bán vàng'}><X size={18} aria-hidden="true" /></button></div><form className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" onSubmit={onSubmit}><label><span className="label">{en ? 'Sale date' : 'Ngày bán'}</span><input className="field" type="date" value={editor.saleDate} onChange={(event) => setEditor({ ...editor, saleDate: event.target.value })} /></label><label><span className="label">{en ? 'Quantity (mace)' : 'Số lượng (chỉ)'}</span><input className="field" inputMode="decimal" step="0.001" value={editor.quantityChi} onChange={(event) => setEditor({ ...editor, quantityChi: event.target.value })} /><span className="mt-1 block text-xs text-gray-500">{asset ? (en ? `Maximum ${formatQuantity(asset.remainingQuantityChi)} mace` : `Tối đa ${formatQuantity(asset.remainingQuantityChi)} chỉ`) : ''}</span></label><label><span className="label">{en ? 'Sale price per mace (VND)' : 'Giá bán / chỉ (VND)'}</span><input className="field" inputMode="numeric" value={editor.salePricePerChi} onChange={(event) => setEditor({ ...editor, salePricePerChi: event.target.value })} /></label><PaymentSelect id="sale-payment" value={editor.paymentMethodId} onChange={(value) => setEditor({ ...editor, paymentMethodId: value })} paymentMethods={paymentMethods} en={en} /><label><span className="label">{en ? 'Note' : 'Ghi chú'}</span><input className="field" value={editor.note} onChange={(event) => setEditor({ ...editor, note: event.target.value })} /></label><div className="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-200"><p className="text-xs">{en ? 'Income created' : 'Thu nhập sẽ tạo'}</p><p className="mt-1 font-bold">{formatVnd(Number.isFinite(amount) ? amount : 0)}</p><p className="mt-1 text-xs">{en ? 'No selling fee' : 'Không tính phí bán'}</p></div>{error && <div role="alert" className="inline-feedback inline-feedback-error sm:col-span-2 lg:col-span-3">{error}</div>}<div className="flex flex-wrap justify-end gap-2 sm:col-span-2 lg:col-span-3"><button type="button" className="btn-secondary" onClick={onCancel}>{en ? 'Cancel' : 'Hủy'}</button><button type="submit" className="btn-primary inline-flex items-center gap-2" disabled={busy}>{busy && <LoaderCircle size={16} className="animate-spin" aria-hidden="true" />}{en ? 'Sell and record income' : 'Bán và ghi thu nhập'}</button></div></form></section>;
+function GoldSaleForm({ editor, setEditor, onSubmit, onCancel, paymentMethods, busy, error, en, holding }: { editor: SaleForm; setEditor: (value: SaleForm | null) => void; onSubmit: (event: FormEvent<HTMLFormElement>) => void; onCancel: () => void; paymentMethods: ReturnType<typeof useApp>['paymentMethods']; busy: boolean; error: string; en: boolean; holding: GoldHoldingSummary }) {
+  const quantity = Number(inputDecimal(editor.quantityChi));
+  const salePrice = Number(inputAmount(editor.salePricePerChi));
+  const amount = goldPurchaseAmount(quantity, salePrice);
+  const estimatedPnl = holding.averageCostPerChi === null || !Number.isFinite(quantity) || !Number.isFinite(salePrice)
+    ? null
+    : Math.round(amount - quantity * holding.averageCostPerChi);
+  const pnlClass = estimatedPnl === null
+    ? 'text-gray-500 dark:text-gray-400'
+    : estimatedPnl >= 0
+      ? 'text-emerald-700 dark:text-emerald-300'
+      : 'text-rose-700 dark:text-rose-300';
+  const averageCostLabel = holding.averageCostPerChi === null
+    ? '—'
+    : `${formatVnd(holding.averageCostPerChi)}/${en ? 'mace' : 'chỉ'}`;
+  return (
+    <section className="card border-[var(--primary)] p-4 sm:p-5" aria-labelledby="gold-sale-form-title">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="page-kicker"><Banknote size={15} aria-hidden="true" />{en ? 'Gold sale' : 'Bán vàng'}</p>
+          <h3 id="gold-sale-form-title" className="text-lg font-extrabold">{en ? 'Sell from total holding' : 'Bán theo tổng số vàng hiện có'}</h3>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{en ? `${formatQuantity(holding.quantityChi)} mace available · average cost ${averageCostLabel}` : `${formatQuantity(holding.quantityChi)} chỉ hiện có · giá vốn bình quân ${averageCostLabel}`}</p>
+        </div>
+        <button type="button" className="icon-button" onClick={onCancel} aria-label={en ? 'Close sale form' : 'Đóng biểu mẫu bán vàng'}><X size={18} /></button>
+      </div>
+      <form className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" onSubmit={onSubmit}>
+        <label><span className="label">{en ? 'Sale date' : 'Ngày bán'}</span><input className="field" type="date" value={editor.saleDate} onChange={(event) => setEditor({ ...editor, saleDate: event.target.value })} /></label>
+        <label><span className="label">{en ? 'Quantity (mace)' : 'Số lượng (chỉ)'}</span><input className="field" inputMode="decimal" step="0.001" value={editor.quantityChi} onChange={(event) => setEditor({ ...editor, quantityChi: event.target.value })} /><span className="mt-1 block text-xs text-gray-500">{en ? `Maximum ${formatQuantity(holding.quantityChi)} mace` : `Tối đa ${formatQuantity(holding.quantityChi)} chỉ`}</span></label>
+        <label><span className="label">{en ? 'Sale price per mace (VND)' : 'Giá bán / chỉ (VND)'}</span><input className="field" inputMode="numeric" value={editor.salePricePerChi} onChange={(event) => setEditor({ ...editor, salePricePerChi: event.target.value })} /></label>
+        <PaymentSelect id="sale-payment" value={editor.paymentMethodId} onChange={(value) => setEditor({ ...editor, paymentMethodId: value })} paymentMethods={paymentMethods} en={en} />
+        <label><span className="label">{en ? 'Note' : 'Ghi chú'}</span><input className="field" value={editor.note} onChange={(event) => setEditor({ ...editor, note: event.target.value })} /></label>
+        <div className="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-200">
+          <p className="text-xs">{en ? 'Income created' : 'Thu nhập sẽ tạo'}</p>
+          <p className="mt-1 font-bold">{formatVnd(Number.isFinite(amount) ? amount : 0)}</p>
+          <p className={`mt-1 text-xs font-semibold ${pnlClass}`}>{en ? 'P/L at average cost' : 'Lãi/lỗ theo giá vốn bình quân'}: {estimatedPnl === null ? '—' : `${estimatedPnl >= 0 ? '+' : ''}${formatVnd(estimatedPnl)}`}</p>
+          <p className="mt-1 text-xs">{en ? 'No selling fee' : 'Không tính phí bán'}</p>
+        </div>
+        {error && <div role="alert" className="inline-feedback inline-feedback-error sm:col-span-2 lg:col-span-3">{error}</div>}
+        <div className="flex flex-wrap justify-end gap-2 sm:col-span-2 lg:col-span-3"><button type="button" className="btn-secondary" onClick={onCancel}>{en ? 'Cancel' : 'Hủy'}</button><button type="submit" className="btn-primary inline-flex items-center gap-2" disabled={busy}>{busy && <LoaderCircle size={16} className="animate-spin" aria-hidden="true" />}{en ? 'Sell and record income' : 'Bán và ghi thu nhập'}</button></div>
+      </form>
+    </section>
+  );
 }

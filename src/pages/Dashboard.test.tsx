@@ -179,6 +179,7 @@ describe('Dashboard', () => {
     expect(within(snapshot).getByText(/124\.000\.000/)).toBeInTheDocument();
     expect(within(snapshot).getByText(/Lãi đến hiện tại \+2\.975\.342/)).toBeInTheDocument();
     expect(within(snapshot).getByText(/Toàn kỳ \+2\.975\.342/)).toBeInTheDocument();
+    expect(within(snapshot).getByText(/Giá vốn bình quân 7\.500\.000\s*₫\/chỉ/)).toBeInTheDocument();
     expect(within(snapshot).getByText(/Lãi\/lỗ ước tính \+1\.000\.000/)).toBeInTheDocument();
 
     const savingsToggle = within(snapshot).getByRole('button', { name: 'Mở danh sách sổ tiết kiệm (1)' });

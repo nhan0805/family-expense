@@ -3,6 +3,8 @@ import {
   buildLocalAssetSummary,
   canManageAssets,
   calculateSavingsMaturityDate,
+  deleteLocalGoldAsset,
+  deleteLocalSavingsAccount,
   expectedSavingsInterest,
   expectedSavingsInterestToDate,
   formatAssetMoneyInput,
@@ -11,10 +13,15 @@ import {
   goldPurchaseAmount,
   goldAssetInputSchema,
   getLocalAssetData,
+  isLocalAssetTransaction,
+  recordLocalGoldSaleAggregate,
   recordLocalSavingsMovement,
   recordLocalGoldSale,
+  settleLocalSavingsAccount,
+  summarizeGoldHoldings,
   savingsAccountInputSchema,
   savingsMovementInputSchema,
+  savingsSettlementInputSchema,
   upsertLocalGoldAsset,
   upsertLocalSavingsAccount,
   setLocalGoldBuybackPrice,
@@ -93,6 +100,52 @@ describe('asset domain', () => {
     expect(saved.asset.remainingQuantityChi).toBe(1.5);
     expect(goldEstimatedValue(saved.asset)).toBe(12_000_000);
     expect(saved.sale.amount).toBe(4_000_000);
+  });
+
+  it('summarizes quantity, weighted average cost and estimated P/L across gold lots', () => {
+    const summary = summarizeGoldHoldings([
+      { remainingQuantityChi: 1.5, purchasePricePerChi: 8_000_000 },
+      { remainingQuantityChi: 0.5, purchasePricePerChi: 10_000_000 },
+    ], 9_000_000);
+
+    expect(summary).toEqual({
+      quantityChi: 2,
+      cost: 17_000_000,
+      averageCostPerChi: 8_500_000,
+      estimatedValue: 18_000_000,
+      unrealizedPnl: 1_000_000,
+    });
+  });
+
+  it('records one aggregate local sale while allocating history across FIFO lots', () => {
+    upsertLocalGoldAsset('family-a', goldAssetInputSchema.parse({
+      purchaseDate: '2026-01-01',
+      quantityChi: 1,
+      purchasePricePerChi: 7_500_000,
+    }), 'gold-1', null);
+    upsertLocalGoldAsset('family-a', goldAssetInputSchema.parse({
+      purchaseDate: '2026-02-01',
+      quantityChi: 2,
+      purchasePricePerChi: 8_000_000,
+    }), 'gold-2', null);
+
+    const result = recordLocalGoldSaleAggregate('family-a', {
+      saleDate: '2026-03-01',
+      quantityChi: 1.5,
+      salePricePerChi: 9_000_000,
+      paymentMethodId: 'cash',
+      note: 'Bán tổng hợp',
+    }, 'tx-sale');
+    const data = getLocalAssetData('family-a');
+
+    expect(result.sales).toHaveLength(2);
+    expect(result.sales.map((sale) => sale.quantityChi)).toEqual([1, 0.5]);
+    expect(result.sales.every((sale) => sale.transactionId === 'tx-sale')).toBe(true);
+    expect(result.sales.reduce((total, sale) => total + sale.amount, 0)).toBe(13_500_000);
+    expect(data.goldAssets).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: 'gold-1', remainingQuantityChi: 0, status: 'sold' }),
+      expect.objectContaining({ id: 'gold-2', remainingQuantityChi: 1.5, status: 'active' }),
+    ]));
   });
 
   it('applies one shared buy-back price to every local gold lot', () => {
@@ -175,6 +228,100 @@ describe('asset domain', () => {
     ]);
     expect(summary.netCash).toBe(-48_800_000);
     expect(summary.savingsTotal).toBe(50_000_000);
+  });
+
+  it('deletes local assets, their histories and only their linked transactions', () => {
+    const familyId = 'family-delete';
+    const accountInput = savingsAccountInputSchema.parse({
+      bankName: 'ACB',
+      name: 'Sổ cần xóa',
+      principal: 20_000_000,
+      annualInterestRate: 5,
+      termMonths: 6,
+      openedOn: '2026-01-01',
+      maturityOn: '2026-07-01',
+      interestMethod: 'end_of_term',
+      paymentMethodId: 'bank',
+    });
+    const account = upsertLocalSavingsAccount(familyId, accountInput, 'saving-delete', 'tx-opening');
+    recordLocalSavingsMovement(
+      familyId,
+      account.id,
+      savingsMovementInputSchema.parse({
+        type: 'interest',
+        amount: 500_000,
+        movementDate: '2026-07-01',
+        paymentMethodId: 'bank',
+      }),
+      'tx-interest',
+      'movement-delete',
+    );
+    const gold = upsertLocalGoldAsset(familyId, goldAssetInputSchema.parse({
+      purchaseDate: '2026-01-01',
+      quantityChi: 1,
+      purchasePricePerChi: 8_000_000,
+      estimatedSellPricePerChi: 8_500_000,
+    }), 'gold-delete', 'tx-purchase');
+    recordLocalGoldSale(familyId, gold.id, goldAssetInputToSale({
+      saleDate: '2026-02-01',
+      quantityChi: 0.25,
+      salePricePerChi: 8_500_000,
+      paymentMethodId: 'cash',
+    }), 'tx-sale', 'sale-delete');
+
+    deleteLocalSavingsAccount(familyId, account.id);
+    deleteLocalGoldAsset(familyId, gold.id);
+
+    const data = getLocalAssetData(familyId);
+    expect(data.savingsAccounts).toEqual([]);
+    expect(data.savingsMovements).toEqual([]);
+    expect(data.goldAssets).toEqual([]);
+    expect(data.goldSales).toEqual([]);
+    expect(isLocalAssetTransaction({ source: 'asset', sourceReference: 'asset:savings:saving-delete:movement:movement-delete' }, 'savings', account.id)).toBe(true);
+    expect(isLocalAssetTransaction({ source: 'asset', sourceReference: 'asset:gold:other:purchase' }, 'gold', gold.id)).toBe(false);
+    expect(isLocalAssetTransaction({ source: 'manual', sourceReference: 'asset:savings:saving-delete:opening' }, 'savings', account.id)).toBe(false);
+  });
+
+  it('settles a savings book with principal and interest in one local action', () => {
+    const accountInput = savingsAccountInputSchema.parse({
+      bankName: 'ACB',
+      name: 'Sổ đáo hạn',
+      principal: 50_000_000,
+      annualInterestRate: 5,
+      termMonths: 6,
+      openedOn: '2026-01-01',
+      maturityOn: '2026-07-01',
+      interestMethod: 'end_of_term',
+      paymentMethodId: 'bank',
+    });
+    const account = upsertLocalSavingsAccount('family-a', accountInput, 'saving-2', 'tx-opening-2');
+    const settlement = savingsSettlementInputSchema.parse({
+      interestAmount: 1_200_000,
+      settlementDate: '2026-07-01',
+      paymentMethodId: 'bank',
+      note: 'Đã nhận đủ',
+    });
+
+    const changed = settleLocalSavingsAccount(
+      'family-a',
+      account.id,
+      settlement,
+      'tx-settlement',
+      'tx-settlement-interest',
+      'movement-settlement',
+      'movement-settlement-interest',
+    );
+
+    expect(changed.account.status).toBe('closed');
+    expect(changed.account.currentBalance).toBe(0);
+    expect(changed.settlementMovement.amount).toBe(50_000_000);
+    expect(changed.settlementMovement.balanceAfter).toBe(0);
+    expect(changed.interestMovement?.amount).toBe(1_200_000);
+    expect(getLocalAssetData('family-a').savingsMovements.map((item) => item.movementType)).toEqual([
+      'opening',
+      'settlement',
+      'interest',
+    ]);
   });
 });
 

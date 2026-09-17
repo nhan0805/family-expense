@@ -53,6 +53,14 @@ export const savingsMovementInputSchema = z.object({
 });
 export type SavingsMovementInput = z.infer<typeof savingsMovementInputSchema>;
 
+export const savingsSettlementInputSchema = z.object({
+  interestAmount: z.number().finite().int().nonnegative().max(999_999_999_999_999),
+  settlementDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Vui lòng chọn ngày tất toán'),
+  paymentMethodId: z.string().nullable().optional(),
+  note: z.string().trim().max(500).optional(),
+});
+export type SavingsSettlementInput = z.infer<typeof savingsSettlementInputSchema>;
+
 export const goldAssetInputSchema = z.object({
   purchaseDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Vui lòng chọn ngày mua'),
   quantityChi: z.number().finite().positive().max(999_999),
@@ -143,6 +151,14 @@ export type GoldSale = {
   createdAt?: string;
 };
 
+export type GoldHoldingSummary = {
+  quantityChi: number;
+  cost: number;
+  averageCostPerChi: number | null;
+  estimatedValue: number | null;
+  unrealizedPnl: number | null;
+};
+
 export type AssetData = {
   savingsAccounts: SavingsAccount[];
   savingsMovements: SavingsMovement[];
@@ -175,7 +191,7 @@ export const formatAssetMoneyInput = (value: string | number) => {
 
 export const sanitizeDecimalInput = (value: string) => {
   const normalized = value.replace(/,/g, '.');
-  const [whole, ...fraction] = normalized.split('.');
+  const [whole = '', ...fraction] = normalized.split('.');
   const wholeDigits = whole.replace(/\D/g, '');
   const fractionDigits = fraction.join('').replace(/\D/g, '');
   return fraction.length > 0 ? `${wholeDigits}.${fractionDigits}` : wholeDigits;
@@ -354,6 +370,28 @@ export const goldEstimatedValue = (asset: Pick<GoldAsset, 'remainingQuantityChi'
 export const goldCostValue = (asset: Pick<GoldAsset, 'remainingQuantityChi' | 'purchasePricePerChi'>) =>
   Math.round(asset.remainingQuantityChi * asset.purchasePricePerChi);
 
+export const summarizeGoldHoldings = (
+  assets: Array<Pick<GoldAsset, 'remainingQuantityChi' | 'purchasePricePerChi'>>,
+  buybackPricePerChi: number | null,
+): GoldHoldingSummary => {
+  const quantityChi = assets.reduce((total, asset) => total + asset.remainingQuantityChi, 0);
+  const cost = Math.round(assets.reduce(
+    (total, asset) => total + asset.remainingQuantityChi * asset.purchasePricePerChi,
+    0,
+  ));
+  const averageCostPerChi = quantityChi > 0 ? cost / quantityChi : null;
+  const estimatedValue = buybackPricePerChi === null
+    ? null
+    : Math.round(quantityChi * buybackPricePerChi);
+  return {
+    quantityChi,
+    cost,
+    averageCostPerChi,
+    estimatedValue,
+    unrealizedPnl: estimatedValue === null ? null : estimatedValue - cost,
+  };
+};
+
 export type LocalAssetTransactionInput = {
   familyId: string;
   currentUserId: string;
@@ -386,6 +424,18 @@ export const makeLocalAssetTransaction = (input: LocalAssetTransactionInput): Tr
   createdAt: new Date().toISOString(),
   deletedAt: null,
 });
+
+export type LocalAssetKind = 'savings' | 'gold';
+
+export const assetTransactionReferencePrefix = (kind: LocalAssetKind, assetId: string) =>
+  `asset:${kind}:${assetId}:`;
+
+export const isLocalAssetTransaction = (
+  transaction: Pick<Transaction, 'source' | 'sourceReference'>,
+  kind: LocalAssetKind,
+  assetId: string,
+) => transaction.source === 'asset'
+  && transaction.sourceReference?.startsWith(assetTransactionReferencePrefix(kind, assetId)) === true;
 
 export function upsertLocalSavingsAccount(
   familyId: string,
@@ -488,12 +538,89 @@ export function recordLocalSavingsMovement(
   return { account: nextAccount, movement };
 }
 
+export function settleLocalSavingsAccount(
+  familyId: string,
+  accountId: string,
+  input: SavingsSettlementInput,
+  settlementTransactionId?: string | null,
+  interestTransactionId?: string | null,
+  settlementMovementId?: string,
+  interestMovementId?: string,
+): { account: SavingsAccount; settlementMovement: SavingsMovement; interestMovement: SavingsMovement | null } {
+  const accountKey = localStorageKey(familyId, 'savings-accounts');
+  const accounts = readStored(accountKey, isSavingsAccount);
+  const current = accounts.find((item) => item.id === accountId);
+  if (!current || current.status !== 'active') throw new Error('ACCOUNT_NOT_ACTIVE');
+  if (current.currentBalance <= 0) throw new Error('ACCOUNT_EMPTY');
+  if (!Number.isInteger(input.interestAmount) || input.interestAmount < 0) throw new Error('INVALID_INTEREST_AMOUNT');
+
+  const createdAt = new Date().toISOString();
+  const nextAccount: SavingsAccount = {
+    ...current,
+    currentBalance: 0,
+    status: 'closed',
+    closedAt: createdAt,
+  };
+  const note = input.note?.trim() || null;
+  const settlementMovement: SavingsMovement = {
+    id: settlementMovementId || localId('savings-settlement'),
+    familyId,
+    savingsAccountId: accountId,
+    movementType: 'settlement',
+    amount: current.currentBalance,
+    balanceAfter: 0,
+    movementDate: input.settlementDate,
+    paymentMethodId: input.paymentMethodId || null,
+    transactionId: settlementTransactionId || null,
+    note,
+    createdBy: 'local-user',
+    createdAt,
+  };
+  const interestMovement = input.interestAmount > 0
+    ? {
+        id: interestMovementId || localId('savings-settlement-interest'),
+        familyId,
+        savingsAccountId: accountId,
+        movementType: 'interest' as const,
+        amount: input.interestAmount,
+        balanceAfter: 0,
+        movementDate: input.settlementDate,
+        paymentMethodId: input.paymentMethodId || null,
+        transactionId: interestTransactionId || null,
+        note,
+        createdBy: 'local-user',
+        createdAt,
+      }
+    : null;
+  saveStored(accountKey, accounts.map((item) => item.id === accountId ? nextAccount : item));
+  const movementKey = localStorageKey(familyId, 'savings-movements');
+  const movements = readStored(movementKey, isSavingsMovement);
+  saveStored(movementKey, [...movements, settlementMovement, ...(interestMovement ? [interestMovement] : [])]);
+  return { account: nextAccount, settlementMovement, interestMovement };
+}
+
 export function archiveLocalSavingsAccount(familyId: string, accountId: string) {
   const key = localStorageKey(familyId, 'savings-accounts');
   const items = readStored(key, isSavingsAccount);
   const current = items.find((item) => item.id === accountId);
   if (!current || current.status !== 'closed' || current.currentBalance !== 0) throw new Error('ACCOUNT_NOT_CLOSED');
   saveStored(key, items.map((item) => item.id === accountId ? { ...item, status: 'archived', archivedAt: new Date().toISOString() } : item));
+}
+
+export function deleteLocalSavingsAccount(familyId: string, accountId: string) {
+  const accountKey = localStorageKey(familyId, 'savings-accounts');
+  const accounts = readStored(accountKey, isSavingsAccount);
+  const account = accounts.find((item) => item.id === accountId);
+  if (!account) throw new Error('NOT_FOUND');
+  saveStored(accountKey, accounts.filter((item) => item.id !== accountId));
+
+  const movementKey = localStorageKey(familyId, 'savings-movements');
+  const movements = readStored(movementKey, isSavingsMovement);
+  saveStored(movementKey, movements.filter((item) => item.savingsAccountId !== accountId));
+  return Array.from(new Set(movements
+    .filter((item) => item.savingsAccountId === accountId)
+    .map((item) => item.transactionId)
+    .filter((id): id is string => Boolean(id))));
 }
 
 export function upsertLocalGoldAsset(
@@ -573,6 +700,76 @@ export function recordLocalGoldSale(
   return { asset: nextAsset, sale };
 }
 
+export function recordLocalGoldSaleAggregate(
+  familyId: string,
+  input: GoldSaleInput,
+  transactionId?: string | null,
+): { assets: GoldAsset[]; sales: GoldSale[] } {
+  if (!Number.isFinite(input.quantityChi) || input.quantityChi <= 0 || input.quantityChi > 999_999) {
+    throw new Error('INVALID_QUANTITY');
+  }
+  if (input.quantityChi !== Number(input.quantityChi.toFixed(3))) throw new Error('INVALID_QUANTITY');
+
+  const assetKey = localStorageKey(familyId, 'gold-assets');
+  const assets = readStored(assetKey, isGoldAsset);
+  const active = assets
+    .filter((item) => item.status === 'active' && item.remainingQuantityChi > 0)
+    .sort((left, right) => left.purchaseDate.localeCompare(right.purchaseDate)
+      || (left.createdAt || '').localeCompare(right.createdAt || '')
+      || left.id.localeCompare(right.id));
+  const availableQuantity = active.reduce((total, asset) => total + asset.remainingQuantityChi, 0);
+  if (input.quantityChi > availableQuantity) throw new Error('INSUFFICIENT_QUANTITY');
+
+  const saleAmount = goldPurchaseAmount(input.quantityChi, input.salePricePerChi);
+  if (saleAmount <= 0) throw new Error('INVALID_AMOUNT');
+
+  const remainingByAsset = new Map<string, number>();
+  const sales: GoldSale[] = [];
+  let remainingToSell = input.quantityChi;
+  let allocatedAmount = 0;
+  for (const asset of active) {
+    if (remainingToSell <= 0) break;
+    const isLastAllocation = remainingToSell <= asset.remainingQuantityChi;
+    const quantity = Number(Math.min(remainingToSell, asset.remainingQuantityChi).toFixed(3));
+    const remaining = Math.max(0, Number((asset.remainingQuantityChi - quantity).toFixed(3)));
+    const amount = isLastAllocation
+      ? saleAmount - allocatedAmount
+      : goldPurchaseAmount(quantity, input.salePricePerChi);
+    if (amount <= 0) throw new Error('INVALID_AMOUNT');
+    remainingByAsset.set(asset.id, remaining);
+    sales.push({
+      id: localId('gold-sale'),
+      familyId,
+      goldAssetId: asset.id,
+      saleDate: input.saleDate,
+      quantityChi: quantity,
+      salePricePerChi: input.salePricePerChi,
+      amount,
+      paymentMethodId: input.paymentMethodId || null,
+      transactionId: transactionId || null,
+      note: input.note?.trim() || null,
+      createdBy: 'local-user',
+      createdAt: new Date().toISOString(),
+    });
+    allocatedAmount += amount;
+    remainingToSell = Math.max(0, Number((remainingToSell - quantity).toFixed(3)));
+  }
+
+  const nextAssets = assets.map((asset) => {
+    const remaining = remainingByAsset.get(asset.id);
+    if (remaining === undefined) return asset;
+    return {
+      ...asset,
+      remainingQuantityChi: remaining,
+      status: remaining === 0 ? 'sold' : 'active',
+    } satisfies GoldAsset;
+  });
+  saveStored(assetKey, nextAssets);
+  const saleKey = localStorageKey(familyId, 'gold-sales');
+  saveStored(saleKey, [...readStored(saleKey, isGoldSale), ...sales]);
+  return { assets: nextAssets, sales };
+}
+
 export function archiveLocalGoldAsset(familyId: string, assetId: string) {
   const key = localStorageKey(familyId, 'gold-assets');
   const items = readStored(key, isGoldAsset);
@@ -581,18 +778,36 @@ export function archiveLocalGoldAsset(familyId: string, assetId: string) {
   saveStored(key, items.map((item) => item.id === assetId ? { ...item, status: 'archived', archivedAt: new Date().toISOString() } : item));
 }
 
+export function deleteLocalGoldAsset(familyId: string, assetId: string) {
+  const assetKey = localStorageKey(familyId, 'gold-assets');
+  const assets = readStored(assetKey, isGoldAsset);
+  const asset = assets.find((item) => item.id === assetId);
+  if (!asset) throw new Error('NOT_FOUND');
+  saveStored(assetKey, assets.filter((item) => item.id !== assetId));
+
+  const saleKey = localStorageKey(familyId, 'gold-sales');
+  const sales = readStored(saleKey, isGoldSale);
+  const nextSales = sales.filter((item) => item.goldAssetId !== assetId);
+  saveStored(saleKey, nextSales);
+  return Array.from(new Set([
+    asset.transactionId,
+    ...sales.filter((item) => item.goldAssetId === assetId).map((item) => item.transactionId),
+  ].filter((id): id is string => Boolean(id) && !nextSales.some((sale) => sale.transactionId === id))));
+}
+
 export function buildLocalAssetSummary(familyId: string, transactions: Transaction[]): AssetSummary {
   const data = getLocalAssetData(familyId);
   const savings = data.savingsAccounts.filter((item) => item.status !== 'archived');
   const gold = data.goldAssets.filter((item) => item.status === 'active');
   const actualTransactions = transactions.filter((item) => !item.deletedAt && item.status === 'Thực tế');
   const netCash = actualTransactions.reduce((total, item) => total + (item.transactionType === 'Thu nhập' ? item.amount : -item.amount), 0);
+  const goldSummary = summarizeGoldHoldings(gold, data.goldBuybackPricePerChi);
   return {
     netCash,
     savingsTotal: savings.reduce((total, item) => total + item.currentBalance, 0),
-    goldEstimatedTotal: gold.reduce((total, item) => total + goldEstimatedValue(item), 0),
-    goldCost: gold.reduce((total, item) => total + goldCostValue(item), 0),
-    goldQuantityChi: gold.reduce((total, item) => total + item.remainingQuantityChi, 0),
+    goldEstimatedTotal: goldSummary.estimatedValue ?? 0,
+    goldCost: goldSummary.cost,
+    goldQuantityChi: goldSummary.quantityChi,
     savingsCount: savings.length,
     goldCount: gold.length,
     goldMissingEstimateCount: gold.filter((item) => item.estimatedSellPricePerChi === null).length,

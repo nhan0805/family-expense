@@ -9,6 +9,15 @@ test('luồng demo thêm và bán vàng', async ({ page }) => {
     test.skip(true, 'Môi trường E2E đang trỏ tới Supabase; bỏ qua luồng demo local.');
   }
 
+  await page.goto('/cai-dat');
+  await expect(page.getByRole('heading', { name: /^Cài đặt$/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Bộ lọc giao dịch mặc định' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Mặc định giao dịch tự động' })).toBeVisible();
+  await page.locator('#gold_sale-payment-method').selectOption({ label: 'Chuyển khoản' });
+  await page.getByRole('button', { name: 'Lưu mặc định tự động' }).click();
+  await expect(page.getByText('Đã lưu cấu hình giao dịch tự động.')).toBeVisible();
+
+  await page.goto('/tai-san');
   await expect(assetsHeading).toBeVisible();
   await page.getByLabel('Giá tiệm mua vào dùng chung / chỉ (VND)').fill('8500000');
   await page.getByRole('button', { name: 'Lưu giá dùng chung' }).click();
@@ -28,4 +37,10 @@ test('luồng demo thêm và bán vàng', async ({ page }) => {
   await page.getByRole('alertdialog').getByRole('button', { name: 'Bán và ghi nhận' }).click();
   await expect(page.getByText('Đã ghi nhận bán vàng.')).toBeVisible();
   await expect(page.getByText(/1 \/ 1,5 chỉ/)).toBeVisible();
+
+  await page.getByRole('button', { name: 'Xóa' }).click();
+  await expect(page.getByRole('alertdialog')).toContainText('các giao dịch được tự tạo cho lô này');
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Xóa vàng' }).click();
+  await expect(page.getByText('Đã xóa vàng.')).toBeVisible();
+  await expect(page.getByText('Chưa có vàng')).toBeVisible();
 });

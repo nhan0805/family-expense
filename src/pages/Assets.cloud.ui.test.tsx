@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   useApp: vi.fn(),
   fetchAssetData: vi.fn(),
   fetchAssetSummary: vi.fn(),
+  fetchAutomaticTransactionDefaults: vi.fn(),
   upsertSavingsAccount: vi.fn(),
   archiveGoldAsset: vi.fn(),
   archiveSavingsAccount: vi.fn(),
@@ -15,6 +16,7 @@ const mocks = vi.hoisted(() => ({
   deleteSavingsAccount: vi.fn(),
   recordGoldSale: vi.fn(),
   recordSavingsMovement: vi.fn(),
+  settleSavingsAccount: vi.fn(),
   setGoldBuybackPrice: vi.fn(),
   upsertGoldAsset: vi.fn(),
 }));
@@ -22,6 +24,9 @@ const mocks = vi.hoisted(() => ({
 vi.mock('../context/AppContext', () => ({ useApp: mocks.useApp }));
 vi.mock('../lib/supabase', () => ({ isSupabaseConfigured: true }));
 vi.mock('../lib/assetsApi', () => mocks);
+vi.mock('../lib/automaticTransactionDefaultsApi', () => ({
+  fetchAutomaticTransactionDefaults: mocks.fetchAutomaticTransactionDefaults,
+}));
 
 const familyId = 'family-assets-cloud-ui';
 const assetData = {
@@ -76,6 +81,7 @@ describe('Tài sản — luồng Supabase', () => {
   beforeEach(() => {
     mocks.fetchAssetData.mockResolvedValue(assetData);
     mocks.fetchAssetSummary.mockResolvedValue(assetSummary);
+    mocks.fetchAutomaticTransactionDefaults.mockResolvedValue([]);
     mocks.upsertSavingsAccount.mockReset();
     mocks.useApp.mockReset();
   });

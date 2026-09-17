@@ -10,6 +10,7 @@ import type {
   SavingsAccountInput,
   SavingsMovement,
   SavingsMovementInput,
+  SavingsSettlementInput,
 } from './assets';
 
 type SavingsAccountRow = {
@@ -218,8 +219,34 @@ export async function recordSavingsMovement(
   return data;
 }
 
+export async function settleSavingsAccount(
+  familyId: string,
+  accountId: string,
+  input: SavingsSettlementInput,
+) {
+  const { data, error } = await supabase.rpc('settle_savings_account', {
+    p_family_id: familyId,
+    p_savings_account_id: accountId,
+    p_interest_amount: input.interestAmount,
+    p_settlement_date: input.settlementDate,
+    p_payment_method_id: input.paymentMethodId || null,
+    p_note: input.note || null,
+  });
+  if (error) throw error;
+  return data;
+}
+
 export async function archiveSavingsAccount(familyId: string, id: string) {
   const { data, error } = await supabase.rpc('archive_savings_account', {
+    p_family_id: familyId,
+    p_id: id,
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteSavingsAccount(familyId: string, id: string) {
+  const { data, error } = await supabase.rpc('delete_savings_account', {
     p_family_id: familyId,
     p_id: id,
   });
@@ -250,12 +277,10 @@ export async function upsertGoldAsset(
 
 export async function recordGoldSale(
   familyId: string,
-  assetId: string,
   input: GoldSaleInput,
 ) {
-  const { data, error } = await supabase.rpc('record_gold_sale', {
+  const { data, error } = await supabase.rpc('record_gold_sale_aggregate', {
     p_family_id: familyId,
-    p_gold_asset_id: assetId,
     p_sale_date: input.saleDate,
     p_quantity_chi: input.quantityChi,
     p_sale_price_per_chi: input.salePricePerChi,
@@ -268,6 +293,15 @@ export async function recordGoldSale(
 
 export async function archiveGoldAsset(familyId: string, id: string) {
   const { data, error } = await supabase.rpc('archive_gold_asset', {
+    p_family_id: familyId,
+    p_id: id,
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteGoldAsset(familyId: string, id: string) {
+  const { data, error } = await supabase.rpc('delete_gold_asset', {
     p_family_id: familyId,
     p_id: id,
   });

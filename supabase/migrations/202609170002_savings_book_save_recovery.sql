@@ -1,6 +1,6 @@
 -- Keep saving a book independent from the optional opening transaction.
--- Asset transaction categories are only needed when the caller asks the RPC
--- to create that transaction; a missing category must not block book-only use.
+-- When an opening transaction is requested, use the family-level automatic
+-- transaction mapping first so catalog labels can be changed in Settings.
 
 create or replace function public.upsert_savings_account(
   p_family_id uuid,
@@ -21,6 +21,9 @@ returns jsonb language plpgsql security definer set search_path = '' as $$
 declare
   account_row public.savings_accounts%rowtype;
   movement_row public.savings_movements%rowtype;
+  configured_purpose_id uuid;
+  configured_expense_type_id uuid;
+  configured_payment_method_id uuid;
   purpose_id uuid;
   expense_type_id uuid;
   resolved_payment_method_id uuid;
@@ -36,10 +39,24 @@ begin
   if p_opened_on is null or p_maturity_on is null or p_maturity_on < p_opened_on then raise exception 'INVALID_DATES'; end if;
   if p_interest_method not in ('end_of_term','monthly','upfront','renew') then raise exception 'INVALID_INTEREST_METHOD'; end if;
 
+  if p_create_transaction then
+    -- A saved mapping is authoritative. Require active referenced rows here so
+    -- the trigger can safely apply the same values to the linked transaction.
+    select d.purpose_id, d.expense_type_id, d.payment_method_id
+    into configured_purpose_id, configured_expense_type_id, configured_payment_method_id
+    from public.automatic_transaction_defaults d
+    join public.purposes p on p.family_id = d.family_id and p.id = d.purpose_id and p.active
+    join public.expense_types e on e.family_id = d.family_id and e.id = d.expense_type_id and e.active
+    join public.payment_methods pm on pm.family_id = d.family_id and pm.id = d.payment_method_id and pm.active
+    where d.family_id = p_family_id and d.automation_key = 'savings_opening';
+  end if;
+
   if p_payment_method_id is not null then
     select pm.id into resolved_payment_method_id from public.payment_methods pm
     where pm.id = p_payment_method_id and pm.family_id = p_family_id and pm.active;
     if resolved_payment_method_id is null then raise exception 'PAYMENT_METHOD_NOT_FOUND'; end if;
+  elsif p_create_transaction and configured_payment_method_id is not null then
+    resolved_payment_method_id := configured_payment_method_id;
   else
     select pm.id into resolved_payment_method_id from public.payment_methods pm
     where pm.family_id = p_family_id and pm.active
@@ -47,16 +64,36 @@ begin
   end if;
 
   if p_create_transaction then
-    -- Stable codes survive a label rename; names keep compatibility with old
-    -- catalog rows created before the asset codes were introduced.
-    select p.id into purpose_id from public.purposes p
-    where p.family_id = p_family_id and p.active
-      and (p.code = 'purpose-8' or p.name = 'Đầu tư')
-    order by (p.code = 'purpose-8') desc, p.id limit 1;
-    select e.id into expense_type_id from public.expense_types e
-    where e.family_id = p_family_id and e.active
-      and (e.code = 'asset-savings-deposit' or e.name = 'Gửi tiết kiệm')
-    order by (e.code = 'asset-savings-deposit') desc, e.id limit 1;
+    purpose_id := configured_purpose_id;
+    expense_type_id := configured_expense_type_id;
+
+    -- Keep compatibility for families created before automatic defaults and
+    -- for a partially configured family. The final active-row fallback lets a
+    -- saved Settings mapping use any renamed/custom catalog item.
+    if purpose_id is null then
+      select p.id into purpose_id from public.purposes p
+      where p.family_id = p_family_id and p.active
+        and (p.code = 'purpose-8' or p.name = 'Đầu tư')
+      order by (p.code = 'purpose-8') desc, p.id limit 1;
+    end if;
+    if purpose_id is null then
+      select p.id into purpose_id from public.purposes p
+      where p.family_id = p_family_id and p.active
+      order by p.sort_order, p.id limit 1;
+    end if;
+
+    if expense_type_id is null then
+      select e.id into expense_type_id from public.expense_types e
+      where e.family_id = p_family_id and e.active
+        and (e.code = 'asset-savings-deposit' or e.name = 'Gửi tiết kiệm')
+      order by (e.code = 'asset-savings-deposit') desc, e.id limit 1;
+    end if;
+    if expense_type_id is null then
+      select e.id into expense_type_id from public.expense_types e
+      where e.family_id = p_family_id and e.active
+      order by e.sort_order, e.id limit 1;
+    end if;
+
     if purpose_id is null or expense_type_id is null or resolved_payment_method_id is null then raise exception 'CATALOG_NOT_READY'; end if;
   end if;
 

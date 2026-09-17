@@ -1,6 +1,6 @@
 -- Structural tests for savings-book and gold asset management.
 begin;
-select plan(29);
+select plan(39);
 
 select ok(
   exists(
@@ -64,34 +64,62 @@ select ok(
   (select count(*) from pg_proc where oid in (
     'public.upsert_savings_account(uuid,uuid,text,text,numeric,numeric,integer,date,date,text,uuid,text,boolean)'::regprocedure,
     'public.record_savings_movement(uuid,uuid,text,numeric,date,uuid,text,boolean)'::regprocedure,
+    'public.settle_savings_account(uuid,uuid,numeric,date,uuid,text)'::regprocedure,
     'public.archive_savings_account(uuid,uuid)'::regprocedure,
     'public.upsert_gold_asset(uuid,uuid,date,numeric,numeric,numeric,uuid,text,boolean)'::regprocedure,
     'public.record_gold_sale(uuid,uuid,date,numeric,numeric,uuid,text)'::regprocedure,
+    'public.record_gold_sale_aggregate(uuid,date,numeric,numeric,uuid,text)'::regprocedure,
     'public.archive_gold_asset(uuid,uuid)'::regprocedure
   )
   and pg_get_functiondef(oid) ilike '%public.is_family_member(%'
-  and pg_get_functiondef(oid) not ilike '%public.is_family_owner(%') = 6,
+  and pg_get_functiondef(oid) not ilike '%public.is_family_owner(%') = 8,
   'asset mutation RPCs allow all active family members'
 );
 
 select has_function('public', 'upsert_savings_account', array['uuid','uuid','text','text','numeric','numeric','integer','date','date','text','uuid','text','boolean'], 'savings upsert RPC exists');
 select has_function('public', 'record_savings_movement', array['uuid','uuid','text','numeric','date','uuid','text','boolean'], 'savings movement RPC exists');
+select has_function('public', 'settle_savings_account', array['uuid','uuid','numeric','date','uuid','text'], 'savings settlement RPC exists');
+select has_function('public', 'auto_settle_due_savings_accounts', array['date'], 'automatic savings settlement job function exists');
 select has_function('public', 'archive_savings_account', array['uuid','uuid'], 'savings archive RPC exists');
 select has_function('public', 'upsert_gold_asset', array['uuid','uuid','date','numeric','numeric','numeric','uuid','text','boolean'], 'gold upsert RPC exists');
 select has_function('public', 'record_gold_sale', array['uuid','uuid','date','numeric','numeric','uuid','text'], 'gold sale RPC exists');
+select has_function('public', 'record_gold_sale_aggregate', array['uuid','date','numeric','numeric','uuid','text'], 'aggregate gold sale RPC exists');
 select has_function('public', 'archive_gold_asset', array['uuid','uuid'], 'gold archive RPC exists');
 select has_function('public', 'get_asset_summary', array['uuid'], 'asset summary RPC exists');
 select ok(
   (select count(*) from pg_proc where prosecdef and oid in (
     'public.upsert_savings_account(uuid,uuid,text,text,numeric,numeric,integer,date,date,text,uuid,text,boolean)'::regprocedure,
     'public.record_savings_movement(uuid,uuid,text,numeric,date,uuid,text,boolean)'::regprocedure,
+    'public.settle_savings_account(uuid,uuid,numeric,date,uuid,text)'::regprocedure,
     'public.archive_savings_account(uuid,uuid)'::regprocedure,
     'public.upsert_gold_asset(uuid,uuid,date,numeric,numeric,numeric,uuid,text,boolean)'::regprocedure,
     'public.record_gold_sale(uuid,uuid,date,numeric,numeric,uuid,text)'::regprocedure,
+    'public.record_gold_sale_aggregate(uuid,date,numeric,numeric,uuid,text)'::regprocedure,
     'public.archive_gold_asset(uuid,uuid)'::regprocedure,
     'public.get_asset_summary(uuid)'::regprocedure
-  )) = 7,
+  )) = 9,
   'asset RPCs use security definer'
+);
+select ok(
+  exists(select 1 from pg_proc where oid = 'public.auto_settle_due_savings_accounts(date)'::regprocedure and prosecdef)
+  and exists(select 1 from cron.job where jobname = 'auto-settle-due-savings-accounts' and schedule = '15 17 * * *'),
+  'savings maturity settlement is protected and scheduled at 00:15 Vietnam time'
+);
+select ok(
+  pg_get_functiondef('public.settle_savings_account(uuid,uuid,numeric,date,uuid,text)'::regprocedure) ilike '%settle_savings_account_internal%'
+  and pg_get_functiondef('public.auto_settle_due_savings_accounts(date)'::regprocedure) ilike '%FOR UPDATE SKIP LOCKED%',
+  'manual and automatic savings settlement share an idempotent locked path'
+);
+select ok(
+  pg_get_functiondef('public.record_gold_sale_aggregate(uuid,date,numeric,numeric,uuid,text)'::regprocedure) ilike '%public.is_family_member(%'
+  and pg_get_functiondef('public.record_gold_sale_aggregate(uuid,date,numeric,numeric,uuid,text)'::regprocedure) ilike '%for update%'
+  and pg_get_functiondef('public.record_gold_sale_aggregate(uuid,date,numeric,numeric,uuid,text)'::regprocedure) ilike '%asset:gold:aggregate:sale:%',
+  'aggregate gold sale uses member guard, row locks and one ledger reference'
+);
+select ok(
+  pg_get_functiondef('public.record_gold_sale_aggregate(uuid,date,numeric,numeric,uuid,text)'::regprocedure) ilike '%public.automatic_transaction_defaults%'
+  and pg_get_functiondef('public.record_gold_sale_aggregate(uuid,date,numeric,numeric,uuid,text)'::regprocedure) ilike '%gold_sale%',
+  'aggregate gold sale reads the configured gold-sale catalogs'
 );
 select ok(
   not has_table_privilege('authenticated', 'public.savings_accounts', 'INSERT')
@@ -135,6 +163,24 @@ select ok(
   and pg_get_functiondef('public.upsert_savings_account(uuid,uuid,text,text,numeric,numeric,integer,date,date,text,uuid,text,boolean)'::regprocedure) ilike '%catalog_not_ready%'
   ,
   'savings book catalog validation is limited to automatic transaction creation'
+);
+select ok(
+  pg_get_functiondef('public.upsert_savings_account(uuid,uuid,text,text,numeric,numeric,integer,date,date,text,uuid,text,boolean)'::regprocedure) ilike '%p.code = ''purpose-8''%'
+  and pg_get_functiondef('public.record_savings_movement(uuid,uuid,text,numeric,date,uuid,text,boolean)'::regprocedure) ilike '%p.code = ''purpose-8''%'
+  and pg_get_functiondef('public.upsert_gold_asset(uuid,uuid,date,numeric,numeric,numeric,uuid,text,boolean)'::regprocedure) ilike '%p.code = ''purpose-8''%'
+  and pg_get_functiondef('public.record_gold_sale(uuid,uuid,date,numeric,numeric,uuid,text)'::regprocedure) ilike '%p.code = ''purpose-8''%',
+  'asset RPCs resolve the stable investment purpose code'
+);
+select ok(
+  pg_get_functiondef('public.upsert_gold_asset(uuid,uuid,date,numeric,numeric,numeric,uuid,text,boolean)'::regprocedure) ilike '%e.code = ''expense-25''%'
+  and pg_get_functiondef('public.record_gold_sale(uuid,uuid,date,numeric,numeric,uuid,text)'::regprocedure) ilike '%e.code = ''expense-25''%',
+  'gold RPCs resolve the stable gold category code'
+);
+select ok(
+  pg_get_functiondef('public.upsert_savings_account(uuid,uuid,text,text,numeric,numeric,integer,date,date,text,uuid,text,boolean)'::regprocedure) ilike '%if p_create_transaction then%public.automatic_transaction_defaults%'
+  and pg_get_functiondef('public.upsert_savings_account(uuid,uuid,text,text,numeric,numeric,integer,date,date,text,uuid,text,boolean)'::regprocedure) ilike '%catalog_not_ready%'
+  ,
+  'savings opening honors automatic transaction settings and keeps book-only save available'
 );
 select ok(
   not exists(
