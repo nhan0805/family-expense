@@ -1066,7 +1066,7 @@ function GoldRow({
             <p className="mt-1 break-words text-sm font-bold leading-tight tabular-nums text-gray-900 dark:text-gray-100">{formatVnd(asset.purchasePricePerChi)}/{unit}</p>
           </div>
           <div className="min-w-0 rounded-xl border border-[color-mix(in_srgb,var(--primary)_24%,var(--border))] bg-[color-mix(in_srgb,var(--primary-soft)_60%,transparent)] px-3 py-2.5">
-            <p className="truncate text-[0.68rem] font-semibold uppercase tracking-[0.08em] text-gray-600 dark:text-gray-300">{en ? 'Estimated sell value' : 'Giá trị bán ước tính'}</p>
+            <p className="text-xs font-semibold leading-tight text-gray-600 dark:text-gray-300">{en ? 'Sell estimate' : 'Giá bán ước tính'}</p>
             <p className={`mt-1 break-words text-base font-extrabold leading-tight tabular-nums ${hasEstimate ? 'text-[var(--primary)]' : 'text-gray-500 dark:text-gray-400'}`}>{estimatedValue}</p>
           </div>
         </div>
