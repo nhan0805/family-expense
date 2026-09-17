@@ -4,10 +4,10 @@
 
 ## Current state
 
-- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; `main` hiện ở merge commit `d512126` sau PR [#203](https://github.com/nhan0805/family-expense/pull/203). [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/1adad82c-a505-45f5-8983-5df3e9bc73a8) đã pass và smoke HTTP 200 đã được xác nhận.
-- Code trên `main` đã gồm PR [#203](https://github.com/nhan0805/family-expense/pull/203), giữ drill-down Dashboard đúng khoảng ngày/trạng thái/mục đích và thu gọn nút thao tác giao dịch định kỳ trên một hàng; các thay đổi tài sản của PR [#202](https://github.com/nhan0805/family-expense/pull/202), nhãn Dashboard của PR [#199](https://github.com/nhan0805/family-expense/pull/199), Family Finance/ngân sách của PR [#198](https://github.com/nhan0805/family-expense/pull/198) và icon/giá vàng của PR [#196](https://github.com/nhan0805/family-expense/pull/196) cũng đã có trên `main`.
-- CI main [run 35252912134](https://github.com/nhan0805/family-expense/actions/runs/35252912134) của merge commit `d512126` pass quality, E2E, db-security và performance budget.
-- Nhánh workspace cho release/status: `codex/release-status-20260918-postdeploy`, được tạo từ `origin/main` sau khi PR #203 merge; thay đổi chỉ cập nhật tài liệu trạng thái/link, không ghi đè artifact, schema hoặc dữ liệu.
+- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; `main` hiện ở merge commit `1fca219` sau PR [#207](https://github.com/nhan0805/family-expense/pull/207). [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/3e449fb5-f2c1-482e-a475-3ff60247c338) đã pass và smoke HTTP 200 đã được xác nhận.
+- Code trên `main` đã gồm PR [#207](https://github.com/nhan0805/family-expense/pull/207), đồng bộ UI/UX toàn app: token màu theo theme, auth shell thống nhất, mobile spacing/table preview, vùng chạm và focus state rõ ràng, cùng confirm dialog accessible cho thao tác phá hủy; các thay đổi tài sản của PR [#206](https://github.com/nhan0805/family-expense/pull/206) và [#205](https://github.com/nhan0805/family-expense/pull/205), drill-down Dashboard của PR [#203](https://github.com/nhan0805/family-expense/pull/203) và các release trước cũng đã có trên `main`.
+- CI main [run 35258642148](https://github.com/nhan0805/family-expense/actions/runs/35258642148) của merge commit `1fca219` pass quality, E2E, db-security và performance budget.
+- Nhánh workspace cho release/status: `codex/release-status-20260918-uiux`, được tạo từ `origin/main` sau khi PR #207 merge; thay đổi chỉ cập nhật tài liệu trạng thái/link, không ghi đè artifact, schema hoặc dữ liệu.
 - Release/status chỉ cập nhật tài liệu trạng thái/link sau deploy, không thay đổi artifact, schema hay dữ liệu.
 - Đã cập nhật CI/preview cho `merge_group`, thu hẹp trigger Supabase và chuẩn hóa single-writer cho tài liệu release; chưa bật Merge Queue/branch protection trên GitHub.
 - Bản đồ kiến trúc ổn định nằm trong [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md); quy tắc phân loại tài liệu nằm trong [`docs/AI_CONTEXT_GUIDE.md`](docs/AI_CONTEXT_GUIDE.md).
@@ -28,6 +28,15 @@
 - Semantic embedding/search production path đã bị loại bỏ; không đưa lại nếu chưa có quyết định kiến trúc mới.
 
 ## Recently completed
+
+### Đồng bộ UI/UX toàn app
+
+- Chuẩn hóa token màu semantic cho light/dark mode và các trạng thái success/warning/danger/info; đồng bộ card, toast, confirm dialog, filter chip, KPI, nút nguy hiểm, bảng và form giữa Dashboard, Giao dịch, Tài sản, Ngân sách, Danh mục, Thành viên, Chi phí định kỳ và Dữ liệu.
+- Auth dùng chung `AuthShell` cho Đăng nhập, Đặt lại mật khẩu và Tạo gia đình; bổ sung trạng thái lỗi field, toggle hiện mật khẩu, icon/kicker nhất quán, focus state, vùng chạm tối thiểu 44px và hướng dẫn xem bảng import trên mobile.
+- Thay `window.confirm` ở các thao tác xóa bằng confirm dialog dùng chung có focus management, Escape, restore focus và nhãn tiếng Việt/Anh; sắp xếp lại phần bộ lọc và tổng ròng của Giao dịch theo đúng thứ tự đọc trên mobile.
+- Files chính: `src/components/AuthShell.tsx`, `src/components/Feedback.tsx`, `src/index.css`, `src/pages/{Budgets,Catalogs,CreateFamily,ImportExport,Login,Members,RecurringExpenses,ResetPassword,TransactionForm,Transactions}.tsx` và test liên quan. Không đổi schema, RLS/RPC, Edge Function hoặc dữ liệu.
+- Kiểm thử: local Vitest 48 file/225 test, TypeScript, ESLint, Vite build và `git diff --check` pass; CI main [run 35258642148](https://github.com/nhan0805/family-expense/actions/runs/35258642148) pass quality, E2E, db-security và performance budget; smoke browser production `/dang-nhap` hiển thị layout mới.
+- Deployment: PR [#207](https://github.com/nhan0805/family-expense/pull/207) merge tại commit `1fca21978f46cf96195ed0b94d22a185966cb89b`; [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/3e449fb5-f2c1-482e-a475-3ff60247c338) pass; smoke `https://family-expense-8fo.pages.dev/` trả HTTP 200.
 
 ### Drill-down Dashboard và thu gọn thao tác giao dịch định kỳ
 
