@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { useLanguage } from '../context/LanguageContext';
 import { authErrorMessage } from '../lib/errorRecovery';
+import { AuthShell } from '../components/AuthShell';
 
 type Mode = 'login' | 'signup' | 'magic' | 'forgot';
 
@@ -16,10 +17,12 @@ export function Login() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState('');
+  const [fieldError, setFieldError] = useState<'email' | 'password' | null>(null);
   const [busy, setBusy] = useState(false);
 
   const changeMode = (nextMode: Mode) => {
     setMessage('');
+    setFieldError(null);
     setShowPassword(false);
     setMode(nextMode);
   };
@@ -27,13 +30,16 @@ export function Login() {
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!email.trim()) {
+      setFieldError('email');
       setMessage(en ? 'Enter your email.' : 'Vui lòng nhập email.');
       return;
     }
     if (mode !== 'magic' && mode !== 'forgot' && password.length < 6) {
+      setFieldError('password');
       setMessage(en ? 'Password must be at least 6 characters.' : 'Mật khẩu phải có ít nhất 6 ký tự.');
       return;
     }
+    setFieldError(null);
     setBusy(true);
     setMessage(en ? 'Processing…' : 'Đang xử lý…');
 
@@ -86,20 +92,19 @@ export function Login() {
 
   const title = en ? (mode === 'login' ? 'Log in' : mode === 'signup' ? 'Create account' : mode === 'magic' ? 'Magic link' : 'Forgot password') : (mode === 'login' ? 'Đăng nhập' : mode === 'signup' ? 'Tạo tài khoản' : mode === 'magic' ? 'Liên kết đăng nhập' : 'Quên mật khẩu');
 
-  return <main className="grid min-h-dvh place-items-center bg-[var(--app-bg)] p-4">
-    <form className="card w-full max-w-md space-y-4 p-7" onSubmit={submit}>
-      <p className="text-xs font-bold tracking-widest text-[var(--primary)]">FAMILY FINANCE</p>
+  return <AuthShell>
+    <form className="space-y-4" onSubmit={submit}>
       <h1 className="text-2xl font-extrabold">{title}</h1>
       {(mode === 'login' || mode === 'signup') && <p className="text-sm text-[var(--muted)]">{en ? 'A clear view of your family’s money, one transaction at a time.' : 'Theo dõi tài chính gia đình rõ ràng, từng giao dịch một.'}</p>}
       {(mode === 'login' || mode === 'signup') && <div className="grid grid-cols-2 gap-1 rounded-xl bg-[var(--surface-muted)] p-1" role="group" aria-label={en ? 'Authentication mode' : 'Chế độ xác thực'}><button type="button" aria-pressed={mode === 'login'} className={`min-h-11 rounded-lg px-3 text-sm font-bold transition ${mode === 'login' ? 'bg-[var(--surface)] text-[var(--primary)] shadow-sm' : 'text-[var(--muted)]'}`} onClick={() => changeMode('login')}>{en ? 'Log in' : 'Đăng nhập'}</button><button type="button" aria-pressed={mode === 'signup'} className={`min-h-11 rounded-lg px-3 text-sm font-bold transition ${mode === 'signup' ? 'bg-[var(--surface)] text-[var(--primary)] shadow-sm' : 'text-[var(--muted)]'}`} onClick={() => changeMode('signup')}>{en ? 'Create account' : 'Tạo tài khoản'}</button></div>}
       {mode === 'forgot' && <p className="text-sm text-gray-500 dark:text-gray-400">{en ? 'Enter your account email to receive a password reset link.' : 'Nhập email tài khoản để nhận liên kết đặt lại mật khẩu.'}</p>}
-      <label><span className="label">Email</span><input className="field" type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} /></label>
-      {mode !== 'magic' && mode !== 'forgot' && <label><span className="label">{en ? 'Password' : 'Mật khẩu'}</span><span className="relative block"><input className="field pr-12" type={showPassword ? 'text' : 'password'} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} minLength={6} required value={password} onChange={(event) => setPassword(event.target.value)} /><button type="button" className="icon-button absolute inset-y-0 right-1" aria-label={showPassword ? (en ? 'Hide password' : 'Ẩn mật khẩu') : (en ? 'Show password' : 'Hiện mật khẩu')} aria-pressed={showPassword} onClick={() => setShowPassword((value) => !value)}>{showPassword ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}</button></span></label>}
+      <label><span className="label">Email</span><input className="field" type="email" autoComplete="email" required aria-invalid={fieldError === 'email'} aria-describedby={fieldError === 'email' ? 'auth-message' : undefined} value={email} onChange={(event) => { setEmail(event.target.value); setFieldError(null); }} /></label>
+      {mode !== 'magic' && mode !== 'forgot' && <label><span className="label">{en ? 'Password' : 'Mật khẩu'}</span><span className="relative block"><input className="field pr-12" type={showPassword ? 'text' : 'password'} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} minLength={6} required aria-invalid={fieldError === 'password'} aria-describedby={fieldError === 'password' ? 'auth-message' : undefined} value={password} onChange={(event) => { setPassword(event.target.value); setFieldError(null); }} /><button type="button" className="icon-button absolute inset-y-0 right-1" aria-label={showPassword ? (en ? 'Hide password' : 'Ẩn mật khẩu') : (en ? 'Show password' : 'Hiện mật khẩu')} aria-pressed={showPassword} onClick={() => setShowPassword((value) => !value)}>{showPassword ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}</button></span></label>}
       <div className="pt-2">
-        <button className="btn-primary w-full" disabled={busy}>{busy ? (en ? 'Processing…' : 'Đang xử lý…') : mode === 'forgot' ? (en ? 'Send reset link' : 'Gửi liên kết đặt lại') : (en ? 'Continue' : 'Tiếp tục')}</button>
+        <button type="submit" className="btn-primary w-full" disabled={busy}>{busy ? (en ? 'Processing…' : 'Đang xử lý…') : mode === 'forgot' ? (en ? 'Send reset link' : 'Gửi liên kết đặt lại') : (en ? 'Continue' : 'Tiếp tục')}</button>
       </div>
-      {message && <p role="status" className="text-sm">{message}</p>}
+      {message && <p id="auth-message" role="status" className="rounded-xl bg-[var(--surface-muted)] p-3 text-sm text-[var(--muted)]" aria-live="polite">{message}</p>}
       <div className="flex flex-wrap justify-between gap-3 text-sm">{mode === 'login' && <><button type="button" onClick={() => changeMode('forgot')}>{en ? 'Forgot password?' : 'Quên mật khẩu?'}</button><button type="button" onClick={() => changeMode('magic')}>Magic link</button></>}{mode === 'signup' && <button type="button" onClick={() => changeMode('login')}>{en ? 'Back to log in' : 'Về đăng nhập'}</button>}{(mode === 'magic' || mode === 'forgot') && <button type="button" onClick={() => changeMode('login')}>{en ? 'Back to log in' : 'Về đăng nhập'}</button>}</div>
     </form>
-  </main>;
+  </AuthShell>;
 }

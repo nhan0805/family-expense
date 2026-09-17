@@ -2,6 +2,7 @@ import { cleanup, render, screen, waitFor, within } from '@testing-library/react
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useApp } from '../context/AppContext';
 import { supabase } from '../lib/supabase';
+import { FeedbackProvider } from '../components/Feedback';
 import { Members } from './Members';
 
 vi.mock('../context/AppContext', () => ({ useApp: vi.fn() }));
@@ -11,6 +12,8 @@ vi.mock('../lib/supabase', () => ({
 }));
 
 describe('Members', () => {
+  const renderMembers = () => render(<FeedbackProvider><Members /></FeedbackProvider>);
+
   afterEach(() => {
     cleanup();
     vi.clearAllMocks();
@@ -26,9 +29,9 @@ describe('Members', () => {
       updateFamilyName: vi.fn(),
       deleteFamily: vi.fn(),
     } as unknown as ReturnType<typeof useApp>);
-    render(<Members />);
+    renderMembers();
     expect(
-      screen.getByRole('heading', { name: 'Gia đình của tôi' }),
+      screen.getByRole('heading', { name: 'Thành viên gia đình' }),
     ).toHaveClass('page-title');
     expect(
       screen.getByRole('button', { name: 'Thêm vào gia đình' }),
@@ -38,7 +41,7 @@ describe('Members', () => {
     ).toHaveClass('danger-button');
     expect(
       screen.getByRole('heading', { name: 'Xóa gia đình' }),
-    ).toHaveClass('dark:text-[#ff5555]');
+    ).toHaveClass('text-[var(--danger-strong)]');
     expect(document.querySelector('.danger-zone')).toHaveClass('card');
     await waitFor(() =>
       expect(screen.getByText('Danh sách thành viên (0)')).toBeInTheDocument(),
@@ -55,7 +58,7 @@ describe('Members', () => {
       updateFamilyName: vi.fn(),
       deleteFamily: vi.fn(),
     } as unknown as ReturnType<typeof useApp>);
-    render(<Members />);
+    renderMembers();
     expect(
       screen.queryByRole('button', { name: 'Thêm vào gia đình' }),
     ).not.toBeInTheDocument();
@@ -94,7 +97,7 @@ describe('Members', () => {
       updateFamilyName: vi.fn(),
       deleteFamily: vi.fn(),
     } as unknown as ReturnType<typeof useApp>);
-    render(<Members />);
+    renderMembers();
 
     const avatar = await screen.findByText('N', { selector: '.member-avatar' });
     expect(avatar).toHaveAttribute('aria-hidden', 'true');
@@ -114,7 +117,7 @@ describe('Members', () => {
       deleteFamily: vi.fn(),
     } as unknown as ReturnType<typeof useApp>);
 
-    render(<Members />);
+    renderMembers();
 
     await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Không tìm thấy gia đình đang hoạt động.'));
     expect(screen.queryByLabelText('Đang tải thành viên')).not.toBeInTheDocument();
@@ -132,7 +135,7 @@ describe('Members', () => {
     } as unknown as ReturnType<typeof useApp>);
     vi.mocked(supabase.rpc).mockRejectedValueOnce(new Error('network request failed'));
 
-    render(<Members />);
+    renderMembers();
 
     await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Không thể hoàn tất thao tác thành viên.'));
     expect(screen.queryByLabelText('Đang tải thành viên')).not.toBeInTheDocument();

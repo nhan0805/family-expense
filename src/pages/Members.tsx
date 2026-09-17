@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Pencil, Trash2, UserPlus, X } from 'lucide-react';
+import { Pencil, Trash2, UserPlus, UsersRound, X } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useOptionalLanguage } from '../context/LanguageContext';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { EmptyState, Skeleton } from '../components/AsyncStates';
+import { useFeedback } from '../components/Feedback';
 
 type Member = {
   id: string;
@@ -30,6 +31,7 @@ const friendlyError = (message: string) => {
 export function Members() {
   const { language, t } = useOptionalLanguage();
   const en = language === 'en';
+  const { askConfirm } = useFeedback();
   const {
     familyId,
     familyName,
@@ -193,12 +195,15 @@ export function Members() {
   };
 
   const removeMember = async (member: Member) => {
-    if (
-      !window.confirm(
-        `Xóa ${member.display_name} khỏi gia đình? Người này sẽ mất quyền truy cập nhưng giao dịch cũ vẫn được giữ lại.`,
-      )
-    )
-      return;
+    const confirmed = await askConfirm({
+      title: en ? `Remove ${member.display_name}?` : `Xóa ${member.display_name} khỏi gia đình?`,
+      description: en
+        ? 'This member will lose access, but existing transactions will be kept.'
+        : 'Người này sẽ mất quyền truy cập nhưng giao dịch cũ vẫn được giữ lại.',
+      confirmLabel: en ? 'Remove member' : 'Xóa thành viên',
+      danger: true,
+    });
+    if (!confirmed) return;
     setBusy(true);
     setMessage('');
     if (!isSupabaseConfigured) {
@@ -243,12 +248,15 @@ export function Members() {
       setMessage('Hãy xóa hết giao dịch trước khi xóa gia đình.');
       return;
     }
-    if (
-      !window.confirm(
-        `Xóa gia đình “${familyName}”? Các giao dịch đã xóa mềm sẽ bị xóa vĩnh viễn. Thao tác này không thể hoàn tác.`,
-      )
-    )
-      return;
+    const confirmed = await askConfirm({
+      title: en ? `Delete family “${familyName}”?` : `Xóa gia đình “${familyName}”?`,
+      description: en
+        ? 'Soft-deleted transactions will be permanently removed. This action cannot be undone.'
+        : 'Các giao dịch đã xóa mềm sẽ bị xóa vĩnh viễn. Thao tác này không thể hoàn tác.',
+      confirmLabel: en ? 'Delete family' : 'Xóa gia đình',
+      danger: true,
+    });
+    if (!confirmed) return;
     setBusy(true);
     setMessage('');
     const result = await deleteFamily();
@@ -263,7 +271,7 @@ export function Members() {
   return (
     <section className="members-page space-y-6">
       <div className="page-header">
-        <p className="page-kicker">{en ? 'Family space' : 'Không gian gia đình'}</p>
+        <p className="page-kicker"><UsersRound size={16} aria-hidden="true" />{en ? 'Family space' : 'Không gian gia đình'}</p>
         {editingFamily ? (
           <form className="family-name-editor" onSubmit={saveFamilyName}>
             <input
@@ -289,7 +297,10 @@ export function Members() {
           </form>
         ) : (
           <div className="family-header">
-            <h2 className="page-title mt-0">{familyName}</h2>
+            <div className="min-w-0">
+              <h2 className="page-title mt-0">{en ? 'Family members' : 'Thành viên gia đình'}</h2>
+              <p className="mt-1 truncate text-sm font-semibold text-gray-600 dark:text-gray-300" title={familyName}>{familyName}</p>
+            </div>
             {isOwner && (
               <button
                 type="button"
@@ -426,12 +437,14 @@ export function Members() {
                     {isOwner && member.role === 'member' && (
                       <button
                         type="button"
+                        title={en ? `Remove ${member.display_name}` : `Xóa ${member.display_name}`}
                         aria-label={`${en ? 'Remove' : 'Xóa'} ${member.display_name}`}
-                        className="danger-button flex items-center gap-1 px-3 py-2 text-sm"
+                        className="danger-button flex min-h-11 min-w-11 items-center justify-center gap-1 px-3 py-2 text-sm"
                         disabled={busy}
                         onClick={() => void removeMember(member)}
                       >
-                        <Trash2 size={17} />
+                        <Trash2 size={17} aria-hidden="true" />
+                        <span className="hidden sm:inline">{en ? 'Remove' : 'Xóa'}</span>
                       </button>
                     )}
                   </div>
@@ -456,7 +469,7 @@ export function Members() {
       )}
       {isOwner && (
         <section className="danger-zone card p-5">
-          <h3 className="font-bold text-red-700 dark:text-[#ff5555]">
+          <h3 className="font-bold text-[var(--danger-strong)]">
             {en ? 'Delete family' : 'Xóa gia đình'}
           </h3>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
