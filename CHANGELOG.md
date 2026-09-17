@@ -2,6 +2,14 @@
 
 ## 2026-09-17
 
+### Đặt mặc định hệ thống cho danh mục vàng
+
+- Danh mục built-in giữ nguyên mã nội bộ `expense-25` để không làm hỏng giao dịch cũ, nhưng hiển thị thống nhất là `Vàng`/`Gold`.
+- Migration `202609170007_gold_category_system_default.sql` chuẩn hóa mapping `gold_purchase` và `gold_sale` của các family hiện có về mục đích Đầu tư, danh mục Vàng và phương thức Chuyển khoản; family mới cũng được seed cùng cấu hình.
+- RPC mua vàng đọc mapping `gold_purchase` thay vì hard-code danh mục, còn luồng chỉ lưu tài sản tiếp tục không phụ thuộc catalog. Frontend ưu tiên danh mục Vàng nhưng vẫn nhận alias legacy `Đầu tư vàng`.
+- Kiểm thử: local Vitest 48 file/221 test, TypeScript, ESLint, Vite build và `git diff --check` pass; CI [run 35211865964](https://github.com/nhan0805/family-expense/actions/runs/35211865964) pass quality, E2E, db-security và performance budget.
+- Deployment: PR [#185](https://github.com/nhan0805/family-expense/pull/185) đã merge vào `main` với commit `b4eb1b5b7ca9b46b26084a005cbd069e947cbd3`; Supabase Production Deploy [run 35211866015](https://github.com/nhan0805/family-expense/actions/runs/35211866015) pass; [Cloudflare Pages production](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/5b8d138e-5325-41c6-94fd-7bc90677553f) pass; smoke `https://family-expense-8fo.pages.dev/` trả HTTP 200.
+
 ### Sửa lỗi không tạo được lô vàng khi catalog chưa sẵn sàng
 
 - Nguyên nhân: RPC mua vàng vẫn tự tìm catalog gốc và kiểm tra catalog ngay cả khi người dùng tắt tùy chọn tự tạo giao dịch; phần mapping giao dịch tự động đã có nhưng chưa được áp dụng đầy đủ cho nhánh này.
