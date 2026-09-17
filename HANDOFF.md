@@ -4,10 +4,10 @@
 
 ## Current state
 
-- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; deployment cho merge commit `33355e31d55ae6e9ef21d46f59bb7c8e06ad6297` đã pass qua [Cloudflare Pages](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/7402dc21-541f-4f31-88eb-de90d6aa0ec4), smoke HTTP 200 và kiểm tra bundle live đã được xác nhận.
-- Code trên `main` mới nhất: PR [#181](https://github.com/nhan0805/family-expense/pull/181), merge commit `33355e31d55ae6e9ef21d46f59bb7c8e06ad6297`; lỗi tạo lô vàng khi catalog/mapping chưa sẵn sàng đã được sửa cùng migration `202609170006_gold_asset_save_recovery.sql`.
-- CI main [run 35203445103](https://github.com/nhan0805/family-expense/actions/runs/35203445103) và Supabase Production Deploy [run 35203445107](https://github.com/nhan0805/family-expense/actions/runs/35203445107) đều pass với quality, E2E, db-security, performance budget và migration production.
-- Nhánh workspace cho release/status: `codex/release-status-20260917-gold`, được tạo từ `origin/main` sau khi PR #181 merge; thay đổi CSS chưa commit của workspace được giữ riêng ngoài release commit.
+- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; deployment cho merge commit `b4eb1b5b7ca9b46b26084a005cbd069e947cbd3` đã pass qua [Cloudflare Pages](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/5b8d138e-5325-41c6-94fd-7bc90677553f), smoke HTTP 200 và kiểm tra deployment live đã được xác nhận.
+- Code trên `main` mới nhất: PR [#185](https://github.com/nhan0805/family-expense/pull/185), merge commit `b4eb1b5b7ca9b46b26084a005cbd069e947cbd3`; danh mục hệ thống cho giao dịch vàng hiện mặc định là `Vàng` với migration `202609170007_gold_category_system_default.sql`.
+- CI main [run 35211865964](https://github.com/nhan0805/family-expense/actions/runs/35211865964) và Supabase Production Deploy [run 35211866015](https://github.com/nhan0805/family-expense/actions/runs/35211866015) đều pass với quality, E2E, db-security, performance budget và migration production.
+- Nhánh workspace cho release/status: `codex/release-status-20260917-gold-default`, được tạo từ `origin/main` sau khi PR #185 merge; các stash cũ vẫn được giữ nguyên, không có thay đổi ngoài phạm vi release bị ghi đè.
 - Release/status chỉ cập nhật tài liệu trạng thái/link sau deploy, không thay đổi artifact, schema hay dữ liệu.
 - Đã cập nhật CI/preview cho `merge_group`, thu hẹp trigger Supabase và chuẩn hóa single-writer cho tài liệu release; chưa bật Merge Queue/branch protection trên GitHub.
 - Bản đồ kiến trúc ổn định nằm trong [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md); quy tắc phân loại tài liệu nằm trong [`docs/AI_CONTEXT_GUIDE.md`](docs/AI_CONTEXT_GUIDE.md).
@@ -21,6 +21,7 @@
 - Module Tài sản theo dõi sổ tiết kiệm và từng dòng vàng, liên kết các thay đổi tiền mặt với `transactions` bằng source `asset`; các migration asset, bộ lọc cá nhân và cấu hình giao dịch tự động hiện đã có trên `main` qua các PR tương ứng.
 - `/cai-dat/giao-dich` vẫn là route cài đặt bộ lọc mặc định cá nhân; mục này được ẩn khỏi menu bên cạnh để menu gọn hơn nhưng không xóa tính năng hoặc deep link.
 - Production đã có bảng/cấu hình mặc định giao dịch tự động, migration `202609170002_savings_book_save_recovery.sql` và `202609170006_gold_asset_save_recovery.sql`; RPC lưu sổ/lô vàng chỉ yêu cầu catalog khi thực sự tạo hoặc cập nhật giao dịch liên kết.
+- Mapping `gold_purchase`/`gold_sale` của family hiện có và family mới mặc định dùng mục đích Đầu tư, danh mục Vàng và Chuyển khoản; RPC mua vàng đọc mapping này thay vì hard-code danh mục.
 - Giao dịch định kỳ được tạo bởi RPC/job database với idempotent run history. Các màn hình liên quan tự refetch dữ liệu server mỗi 30 giây và khi quay lại foreground.
 - AI chạy phía Edge Function qua Gemini để đề xuất giao dịch, phân tích bộ lọc tìm kiếm và tóm tắt Dashboard. AI không tự lưu giao dịch.
 - Email export của owner dùng Edge Function `email-transactions` và Brevo. Secret không nằm trong frontend.
@@ -75,11 +76,11 @@
 
 ## Current work
 
-PR #181 đã hoàn tất quality gate, merge vào `main` và deploy production thành công. Lỗi `CATALOG_NOT_READY` khi tạo lô vàng đã được xử lý ở cả migration và giao diện; lưu lô không kèm giao dịch không còn phụ thuộc catalog, còn giao dịch mua vẫn kiểm tra mapping/catalog trước khi ghi. Các dòng tài sản vẫn dùng action icon gọn, phần “Lịch sử sổ” không còn chiếm chỗ, vàng đặt action cùng hàng với hai ô giá, và menu bên cạnh không còn mục “Bộ lọc mặc định”. Không còn feature code đang chờ trong workspace; nếu cần chỉnh tiếp, bắt đầu từ `origin/main`.
+PR #185 đã hoàn tất quality gate, merge vào `main` và deploy production thành công. Danh mục built-in `expense-25` hiện hiển thị là Vàng; mapping giao dịch vàng của family hiện có được chuẩn hóa và family mới được seed cùng mặc định. RPC mua vàng dùng mapping `gold_purchase`, trong khi luồng lưu tài sản không kèm giao dịch vẫn không phụ thuộc catalog. Các dòng tài sản vẫn dùng action icon gọn, phần “Lịch sử sổ” không còn chiếm chỗ, vàng đặt action cùng hàng với hai ô giá, và menu bên cạnh không còn mục “Bộ lọc mặc định”. Không còn feature code đang chờ trong workspace; nếu cần chỉnh tiếp, bắt đầu từ `origin/main`.
 
 ## Pending tasks
 
-- [x] Xác minh Cloudflare Pages production cho release #181, merge commit `33355e31`; smoke production HTTP 200 và bundle live chứa recovery copy của luồng tạo vàng.
+- [x] Xác minh Cloudflare Pages production cho release #185, merge commit `b4eb1b5b`; smoke production HTTP 200.
 - [ ] Chạy backup/restore và rollback drill trên staging bằng secrets riêng.
 - [ ] Hoàn tất synthetic E2E trên staging bằng tài khoản test riêng (`E2E_EMAIL`/`E2E_PASSWORD`).
 - [ ] Xác nhận monitoring/alert routing production và retention của telemetry trước khi mở rộng vận hành.
@@ -91,7 +92,7 @@ PR #181 đã hoàn tất quality gate, merge vào `main` và deploy production t
 - Build có cảnh báo chunk lớn liên quan XLSX/ExcelJS/charts; performance budget CI vẫn là kiểm soát bắt buộc.
 - App không có offline mutation queue; không coi giao dịch là đã lưu nếu request chưa thành công.
 - Cloudflare Pages build settings và Supabase production secrets nằm ngoài repo; chỉ xác minh được qua CI/deployment, không ghi giá trị vào tài liệu.
-- Release #179 local đã pass Vitest 48 file/220 test, TypeScript, ESLint, Vite build, `git diff --check`; E2E local chạy theo harness nhưng 2 case được skip bởi guard môi trường Supabase, còn CI E2E và db-security đều pass.
+- Release #185 local đã pass Vitest 48 file/221 test, TypeScript, ESLint, Vite build, `git diff --check`; CI E2E và db-security đều pass.
 - Backup/restore drill staging chưa có bằng chứng thực tế trong workspace.
 
 ## Important decisions
@@ -126,7 +127,8 @@ PR #181 đã hoàn tất quality gate, merge vào `main` và deploy production t
 - `.github/workflows/ci.yml`, `.github/workflows/cloudflare-preview.yml`, `.github/workflows/supabase-deploy.yml` — merge queue checks và trigger backend chính xác hơn.
 - `src/lib/assets.ts`, `src/lib/assetsApi.ts`, `src/pages/Assets.tsx` — validation, decimal input sanitization, lãi sổ đến hiện tại/toàn kỳ, local/API mapping, shared gold price, maturity calculation và member asset controls.
 - `src/pages/Dashboard.tsx`, `src/lib/domain.ts`, `src/pages/TransactionForm.tsx`, `src/pages/Transactions.tsx` — asset snapshot với danh sách có thể thu gọn, credit-card/installment planned status, transaction-list defaults và focus form.
-- `supabase/migrations/202609160001_asset_management.sql`, `202609160002_fix_asset_transaction_writes.sql`, `202609160003_member_asset_controls.sql`, `202609160005_backfill_gold_expense_type.sql`, `supabase/tests/asset_management.sql` — asset schema, linked-write fix, member controls, category backfill và structural tests.
+- `supabase/migrations/202609160001_asset_management.sql`, `202609160002_fix_asset_transaction_writes.sql`, `202609160003_member_asset_controls.sql`, `202609160005_backfill_gold_expense_type.sql`, `supabase/migrations/202609170007_gold_category_system_default.sql`, `supabase/tests/asset_management.sql` — asset schema, linked-write fix, member controls, category backfill, mặc định danh mục Vàng và structural tests.
+- `src/lib/automaticTransactionDefaults.ts`, `src/lib/catalogIcons.ts`, `src/lib/domain.ts`, `src/pages/AutomaticTransactionSettings.test.tsx`, `src/lib/automaticTransactionDefaults.test.ts` — ưu tiên danh mục Vàng, icon coins và backward-compatible legacy alias.
 - `tests/e2e/assets-flow.spec.ts` cùng test domain/form/transaction/dashboard — regression coverage cho các thay đổi ngày 16/09, gồm focus field mới.
 - `src/App.tsx`, `src/components/Layout.tsx`, `src/lib/transactionFilters.ts`, `src/lib/transactionFilterPreferencesApi.ts`, `src/pages/TransactionFilterSettings.tsx`, `src/pages/Transactions.tsx` — bộ lọc giao dịch mặc định cá nhân và route cài đặt.
 - `supabase/migrations/202609160007_transaction_filter_preferences.sql`, `supabase/tests/transaction_filter_preferences.sql` — persistence/RLS test cho bộ lọc cá nhân.
@@ -142,7 +144,7 @@ PR #181 đã hoàn tất quality gate, merge vào `main` và deploy production t
 
 ## Database state
 
-- Ordered migrations are in `supabase/migrations/`; `main` hiện có các migration asset/bộ lọc/cấu hình giao dịch tự động từ `202609160001` đến `202609170006` theo thứ tự repository. Bảng `transaction_filter_preferences` được scope theo `family_id`/`user_id` và có RLS.
+- Ordered migrations are in `supabase/migrations/`; `main` hiện có các migration asset/bộ lọc/cấu hình giao dịch tự động từ `202609160001` đến `202609170007` theo thứ tự repository. Bảng `transaction_filter_preferences` được scope theo `family_id`/`user_id` và có RLS.
 - Current schema includes families/members, catalogs, transactions, budgets, recurring templates/runs, savings accounts/movements, gold assets/sales, import audit and minimal AI usage logs.
 - RLS/owner-member policies and guarded RPCs are part of the migration contract. Do not infer authorization from frontend checks.
 - Production migration/function deployment is handled by `.github/workflows/supabase-deploy.yml` after matching changes reach `main`.
@@ -159,8 +161,8 @@ PR #181 đã hoàn tất quality gate, merge vào `main` và deploy production t
 
 Latest confirmed validation:
 
-- PR #181: local Vitest 48 file/221 test, TypeScript, ESLint, Vite build và `git diff --check` pass; CI main [run 35203445103](https://github.com/nhan0805/family-expense/actions/runs/35203445103) pass quality, E2E, db-security và performance budget; Supabase Production Deploy [run 35203445107](https://github.com/nhan0805/family-expense/actions/runs/35203445107) pass.
-- Cloudflare Pages production [check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/7402dc21-541f-4f31-88eb-de90d6aa0ec4) pass; smoke `https://family-expense-8fo.pages.dev/` trả HTTP 200 và bundle live chứa chuỗi recovery của luồng tạo vàng.
+- PR #185: local Vitest 48 file/221 test, TypeScript, ESLint, Vite build và `git diff --check` pass; CI main [run 35211865964](https://github.com/nhan0805/family-expense/actions/runs/35211865964) pass quality, E2E, db-security và performance budget; Supabase Production Deploy [run 35211866015](https://github.com/nhan0805/family-expense/actions/runs/35211866015) pass.
+- Cloudflare Pages production [check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/5b8d138e-5325-41c6-94fd-7bc90677553f) pass; smoke `https://family-expense-8fo.pages.dev/` trả HTTP 200.
 
 - Release #179: Vitest 48 file/220 test, TypeScript, ESLint, Vite build và `git diff --check` pass local; CI main [run 35197596017](https://github.com/nhan0805/family-expense/actions/runs/35197596017) pass quality, E2E, db-security và performance budget.
 - Cloudflare Pages production [check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/f065ea1d-4d3d-45a2-9df3-d848cf93bf6e) pass; smoke `https://family-expense-8fo.pages.dev/` trả HTTP 200.
