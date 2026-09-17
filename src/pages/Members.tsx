@@ -329,7 +329,7 @@ export function Members() {
               {en ? 'Add member' : 'Thêm thành viên'}
             </h3>
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              {en ? 'The email must have a Family Expense account before it can be added.' : 'Email phải đăng ký tài khoản Family Expense trước khi được thêm.'}
+              {en ? 'The email must have a Family Finance account before it can be added.' : 'Email phải đăng ký tài khoản Family Finance trước khi được thêm.'}
             </p>
           </div>
           <label>
@@ -443,7 +443,7 @@ export function Members() {
             <EmptyState
               title={en ? 'No members yet' : 'Chưa có thành viên'}
               description={isOwner
-                ? (en ? 'Add a member using an email registered with Family Expense.' : 'Thêm thành viên bằng email đã đăng ký Family Expense.')
+                ? (en ? 'Add a member using an email registered with Family Finance.' : 'Thêm thành viên bằng email đã đăng ký Family Finance.')
                 : (en ? 'There are currently no family members to display.' : 'Gia đình hiện chưa có thành viên để hiển thị.')}
             />
           )}

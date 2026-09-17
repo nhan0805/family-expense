@@ -82,7 +82,7 @@ export function Layout() {
         <div className="flex min-w-0 items-center gap-3">
           <span className="brand-mark" aria-hidden="true"><WalletCards size={21} /></span>
           <div className="min-w-0">
-            <p className="brand-wordmark">FAMILY EXPENSE</p>
+            <p className="brand-wordmark">FAMILY FINANCE</p>
             <h1 className="truncate font-bold leading-tight">{familyName}</h1>
             <NavLink to="/thanh-vien" className="block max-w-full truncate text-xs text-gray-500 hover:underline dark:text-gray-400 md:hidden" aria-label={en ? `Open members for ${userDisplayName}` : `Mở màn hình thành viên của ${userDisplayName}`}>{userDisplayName}</NavLink>
           </div>

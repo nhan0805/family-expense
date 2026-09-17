@@ -12,9 +12,9 @@ export default defineConfig({
       injectRegister: 'script-defer',
       includeAssets: ['icons/icon.svg', 'offline.html'],
       manifest: {
-        name: 'Family Expense',
-        short_name: 'Chi tiêu',
-        description: 'Quản lý chi tiêu gia đình',
+        name: 'Family Finance',
+        short_name: 'Tài chính',
+        description: 'Quản lý tài chính gia đình',
         theme_color: '#124e3b',
         background_color: '#f7f7f2',
         display: 'standalone',
