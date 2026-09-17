@@ -299,7 +299,8 @@ describe('Tài sản', () => {
     expect(goldArticle.querySelectorAll('.asset-stat-card')).toHaveLength(0);
     expect(goldArticle).not.toHaveTextContent('Giá tiệm mua vào');
     expect(within(goldArticle).getByText('Giá mua / chỉ')).toBeInTheDocument();
-    expect(within(goldArticle).getByText('Giá trị bán ước tính')).toBeInTheDocument();
+    expect(within(goldArticle).getByText('Giá bán ước tính')).toBeInTheDocument();
+    expect(within(goldArticle).queryByText('Giá trị bán ước tính')).not.toBeInTheDocument();
     expect(within(goldArticle).getByText('8.000.000 ₫/chỉ')).toBeInTheDocument();
     const goldActions = within(goldArticle).getByRole('group', { name: 'Thao tác lô vàng' });
     expect(goldArticle.querySelector('.asset-row-footer')).not.toBeInTheDocument();
