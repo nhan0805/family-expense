@@ -36,27 +36,25 @@ select ok(
   'clients cannot access template rows directly'
 );
 select ok(
-  to_regprocedure('public.save_system_catalog_template(uuid)') is not null,
-  'catalog template save RPC exists'
+  to_regprocedure('public.save_system_catalog_template(uuid)') is null,
+  'browser catalog template save RPC has been removed'
 );
 select ok(
-  exists(select 1 from pg_proc where oid = 'public.save_system_catalog_template(uuid)'::regprocedure and prosecdef),
-  'catalog template save RPC uses security definer'
-);
-select ok(
-  pg_get_functiondef('public.save_system_catalog_template(uuid)'::regprocedure) ilike '%public.is_family_owner%'
-  and pg_get_functiondef('public.save_system_catalog_template(uuid)'::regprocedure) ilike '%public.system_catalog_template_items%'
-  and pg_get_functiondef('public.save_system_catalog_template(uuid)'::regprocedure) ilike '%active%',
-  'save RPC checks owner and snapshots active catalogs'
-);
-select ok(
-  not has_function_privilege('anon', 'public.save_system_catalog_template(uuid)', 'EXECUTE'),
-  'anonymous clients cannot promote a catalog template'
+  exists(select 1 from pg_proc where oid = 'public.seed_family_defaults(uuid)'::regprocedure and prosecdef),
+  'catalog template seeding stays behind a security definer function'
 );
 select ok(
   pg_get_functiondef('public.seed_family_defaults(uuid)'::regprocedure) ilike '%system_catalog_template_items%'
   and pg_get_functiondef('public.seed_family_defaults(uuid)'::regprocedure) ilike '%has_template%',
-  'family seeding reads the promoted catalog template'
+  'new-family seeding reads the migration-managed catalog template'
+);
+select ok(
+  not has_table_privilege('anon', 'public.system_catalog_template_items', 'SELECT'),
+  'anonymous clients cannot read the internal catalog template'
+);
+select ok(
+  not has_table_privilege('authenticated', 'public.system_catalog_template_items', 'SELECT'),
+  'authenticated clients cannot read the internal catalog template'
 );
 select ok(
   pg_get_functiondef('public.seed_family_defaults(uuid)'::regprocedure) ilike '%asset-savings-deposit%'

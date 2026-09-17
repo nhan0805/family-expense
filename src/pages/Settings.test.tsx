@@ -48,19 +48,13 @@ describe('màn hình Cài đặt', () => {
 
     const filtersTab = screen.getByRole('tab', { name: 'Bộ lọc mặc định' });
     const automaticTab = screen.getByRole('tab', { name: 'Giao dịch tự động' });
+    expect(screen.queryByRole('tab', { name: 'Mặc định danh mục' })).not.toBeInTheDocument();
     fireEvent.keyDown(filtersTab, { key: 'ArrowRight' });
     await waitFor(() => {
       expect(automaticTab).toHaveAttribute('aria-selected', 'true');
       expect(automaticTab).toHaveFocus();
       expect(screen.getByRole('heading', { name: 'Mặc định giao dịch tự động' })).toBeInTheDocument();
       expect(screen.getByRole('tabpanel', { name: 'Giao dịch tự động' })).toBeInTheDocument();
-    });
-
-    const catalogsTab = screen.getByRole('tab', { name: 'Mặc định danh mục' });
-    fireEvent.click(catalogsTab);
-    await waitFor(() => {
-      expect(catalogsTab).toHaveAttribute('aria-selected', 'true');
-      expect(screen.getByRole('heading', { name: 'Mặc định danh mục cho gia đình mới' })).toBeInTheDocument();
     });
   });
 });
