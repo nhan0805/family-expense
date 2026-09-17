@@ -299,7 +299,8 @@ describe('Tài sản', () => {
     expect(goldArticle).not.toHaveTextContent('Giá tiệm mua vào');
     expect(goldArticle).toHaveTextContent('Giá mua8.000.000 ₫/chỉ');
     const goldActions = within(goldArticle).getByRole('group', { name: 'Thao tác lô vàng' });
-    expect(goldActions.parentElement).toHaveClass('asset-row-footer');
+    expect(goldArticle.querySelector('.asset-row-footer')).not.toBeInTheDocument();
+    expect(goldActions.closest('.asset-row-main')).toHaveClass('asset-row-main', 'flex-wrap', 'items-center');
     expect(within(goldActions).getAllByRole('button')).toHaveLength(2);
     expect(within(goldActions).getByRole('button', { name: 'Sửa' })).toHaveClass('asset-icon-action');
     expect(within(goldActions).getByRole('button', { name: 'Xóa' })).toHaveClass('asset-icon-action');
