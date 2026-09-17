@@ -181,6 +181,9 @@ describe('Dashboard', () => {
     expect(within(snapshot).getByText(/Toàn kỳ \+2\.975\.342/)).toBeInTheDocument();
     expect(within(snapshot).getByText(/Giá vốn bình quân 7\.500\.000\s*₫\/chỉ/)).toBeInTheDocument();
     expect(within(snapshot).getByText(/Lãi\/lỗ ước tính \+1\.000\.000/)).toBeInTheDocument();
+    const goldListTitle = within(snapshot).getByRole('heading', { name: 'Danh sách vàng' });
+    expect(goldListTitle.querySelector('svg')).toHaveAttribute('width', '22');
+    expect(goldListTitle.parentElement?.parentElement).not.toHaveTextContent(/Lãi\/lỗ/);
 
     const savingsToggle = within(snapshot).getByRole('button', { name: 'Mở danh sách sổ tiết kiệm (1)' });
     const goldToggle = within(snapshot).getByRole('button', { name: 'Mở danh sách vàng (1)' });

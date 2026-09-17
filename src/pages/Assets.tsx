@@ -2,7 +2,7 @@ import {
   Archive,
   Banknote,
   ChevronDown,
-  Coins,
+  Gem,
   Crown,
   Landmark,
   LoaderCircle,
@@ -842,7 +842,7 @@ export function Assets() {
   return <div className="assets-page space-y-5">
     <header className="page-header flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
       <div>
-        <p className="page-kicker"><Coins size={16} aria-hidden="true" />{en ? 'Family balance sheet' : 'Tài sản gia đình'}</p>
+        <p className="page-kicker"><Gem size={16} aria-hidden="true" />{en ? 'Family balance sheet' : 'Tài sản gia đình'}</p>
         <h2 className="page-title">{en ? 'Assets' : 'Tài sản'}</h2>
         <p className="page-subtitle">{en ? 'Track savings books and physical gold in a simple ledger.' : 'Theo dõi sổ tiết kiệm và vàng theo cách đơn giản.'}</p>
       </div>
