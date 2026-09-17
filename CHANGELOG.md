@@ -2,6 +2,14 @@
 
 ## 2026-09-17
 
+### Mở rộng định vị Family Finance và đồng bộ thao tác ngân sách
+
+- Đổi tên hiển thị của app/PWA và các nội dung sản phẩm sang `Family Finance` / `Quản lý tài chính gia đình`; cập nhật offline page, template import, thành viên và fallback sender của email export.
+- Bỏ placeholder ở trường lãi suất năm của sổ tiết kiệm nhưng vẫn giữ label và nhập số thập phân trên mobile. Nút Sửa/Xóa ngân sách chuyển sang cùng kiểu icon 44×44, tooltip và accessible name như khu vực Vàng/Sổ tiết kiệm; nút Giao dịch vẫn giữ nhãn rõ ràng.
+- Files: `src/components/Layout.tsx`, `src/pages/{Assets,Budgets,CreateFamily,ImportExport,Login,Members,ResetPassword}.tsx`, `index.html`, `vite.config.ts`, `public/offline.html`, `supabase/functions/email-transactions/index.ts` và test liên quan.
+- Kiểm thử: local Vitest 48 file/222 test, TypeScript, ESLint, Vite build, Playwright E2E 4 pass/2 skip do thiếu credential cloud; smoke mobile 375px và desktop 1440px không tràn ngang, nút icon 44×44.
+- Triển khai: PR [#198](https://github.com/nhan0805/family-expense/pull/198) merge tại commit `88630a62f9ee746d85194e9b36cc4c0326852f16`; CI hậu merge [run 35248901155](https://github.com/nhan0805/family-expense/actions/runs/35248901155), [Supabase Production Deploy](https://github.com/nhan0805/family-expense/actions/runs/35248901123) và [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/f7b07458-0d28-4373-a052-eb041e8642ec) pass. Sau đó PR #196 đưa `main` lên `410b22e`; domain production `https://family-expense-8fo.pages.dev/` trả HTTP 200 với title `Family Finance`.
+
 ### Dùng icon Gem cho khu vực Tài sản
 
 - Dùng icon `Gem` thống nhất cho mục Tài sản trong menu điều hướng, tiêu đề trang Tài sản, Asset Snapshot trên Dashboard và thẻ Tổng tài sản; các khu vực riêng của Vàng vẫn dùng `Crown` để giữ phân biệt ngữ nghĩa.
