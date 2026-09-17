@@ -1,13 +1,13 @@
 # Family Expense — Development Handoff
 
-> Cập nhật: **17/09/2026** (`Asia/Ho_Chi_Minh`)
+> Cập nhật: **18/09/2026** (`Asia/Ho_Chi_Minh`)
 
 ## Current state
 
-- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; deployment cho merge commit `b09f17881e916a76d7a3703217baf949e22c70a6` đã pass qua [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/124a25af-c9ea-4177-bef5-ff8db18b2e97), smoke HTTP 200 đã được xác nhận.
-- Code trên `main` mới nhất: PR [#193](https://github.com/nhan0805/family-expense/pull/193), merge commit `b09f17881e916a76d7a3703217baf949e22c70a6`; khu vực Tài sản dùng icon `Gem` thống nhất, còn Vàng giữ icon `Crown`.
-- CI main [run 35244826912](https://github.com/nhan0805/family-expense/actions/runs/35244826912) pass với quality, E2E, db-security và performance budget; không có thay đổi Supabase nên không phát sinh workflow production database.
-- Nhánh workspace cho release/status: `codex/release-status-20260917-gem`, được tạo từ `origin/main` sau khi PR #193 merge; thay đổi chỉ cập nhật tài liệu trạng thái/link, không ghi đè thay đổi ngoài phạm vi release.
+- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; deployment cho merge commit `13f4b2ddc7b629817794997a85c7fdb4dfc25a10` đã pass qua [Cloudflare Pages check](https://github.com/nhan0805/family-expense/runs/105298793479), smoke HTTP 200 đã được xác nhận.
+- Code trên `main` mới nhất: PR [#199](https://github.com/nhan0805/family-expense/pull/199), merge commit `13f4b2ddc7b629817794997a85c7fdb4dfc25a10`; tiêu đề Dashboard dùng `Sổ tiết kiệm`/`Vàng`, icon danh sách tài sản đồng bộ 22px.
+- CI main [run 35249616072](https://github.com/nhan0805/family-expense/actions/runs/35249616072) pass với quality, E2E, db-security và performance budget; không có thay đổi Supabase nên không phát sinh workflow production database.
+- Nhánh workspace cho release/status: `codex/release-status-20260918-dashboard-labels`, được tạo từ `origin/main` sau khi PR #199 merge; thay đổi chỉ cập nhật tài liệu trạng thái/link, không ghi đè thay đổi ngoài phạm vi release.
 - Release/status chỉ cập nhật tài liệu trạng thái/link sau deploy, không thay đổi artifact, schema hay dữ liệu.
 - Đã cập nhật CI/preview cho `merge_group`, thu hẹp trigger Supabase và chuẩn hóa single-writer cho tài liệu release; chưa bật Merge Queue/branch protection trên GitHub.
 - Bản đồ kiến trúc ổn định nằm trong [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md); quy tắc phân loại tài liệu nằm trong [`docs/AI_CONTEXT_GUIDE.md`](docs/AI_CONTEXT_GUIDE.md).
@@ -28,6 +28,12 @@
 - Semantic embedding/search production path đã bị loại bỏ; không đưa lại nếu chưa có quyết định kiến trúc mới.
 
 ## Recently completed
+
+### Rút gọn nhãn danh sách tài sản trên Dashboard
+
+- Trên Dashboard, tiêu đề hai khu vực tài sản được đổi thành `Sổ tiết kiệm` và `Vàng`, bỏ tiền tố `Danh sách`; icon `Landmark` và `Crown` cùng kích thước 22px và giữ `shrink-0` để cân đối trên mobile.
+- Files: `src/pages/Dashboard.tsx`, `src/pages/Dashboard.test.tsx`. Không đổi schema, RLS/RPC, Edge Function hoặc dữ liệu.
+- Deployment: PR [#199](https://github.com/nhan0805/family-expense/pull/199) đã merge vào `main` với commit `13f4b2ddc7b629817794997a85c7fdb4dfc25a10`; CI main [run 35249616072](https://github.com/nhan0805/family-expense/actions/runs/35249616072), [Cloudflare Pages check](https://github.com/nhan0805/family-expense/runs/105298793479) và smoke production HTTP 200 đều pass.
 
 ### Thu gọn giao diện Tài sản trên điện thoại
 
@@ -83,11 +89,11 @@
 
 ## Current work
 
-PR #193 đã hoàn tất quality gate, merge vào `main` và deploy production thành công. Icon `Gem` hiện được dùng nhất quán cho phần Tài sản trên menu, Dashboard và màn hình Tài sản; icon `Crown` tiếp tục nhận diện các khu vực Vàng. Không còn feature code đang chờ trong workspace; nếu cần chỉnh tiếp, bắt đầu từ `origin/main`.
+PR #199 đã hoàn tất quality gate, merge vào `main` và deploy production thành công. Dashboard dùng tiêu đề `Sổ tiết kiệm`/`Vàng` gọn hơn, icon danh sách tài sản đồng bộ 22px; icon `Gem` vẫn được dùng nhất quán cho phần Tài sản và icon `Crown` tiếp tục nhận diện các khu vực Vàng. Không còn feature code đang chờ trong workspace; nếu cần chỉnh tiếp, bắt đầu từ `origin/main`.
 
 ## Pending tasks
 
-- [x] Xác minh Cloudflare Pages production cho release #193, merge commit `b09f1788`; smoke production HTTP 200.
+- [x] Xác minh Cloudflare Pages production cho release #199, merge commit `13f4b2dd`; smoke production HTTP 200.
 - [ ] Chạy backup/restore và rollback drill trên staging bằng secrets riêng.
 - [ ] Hoàn tất synthetic E2E trên staging bằng tài khoản test riêng (`E2E_EMAIL`/`E2E_PASSWORD`).
 - [ ] Xác nhận monitoring/alert routing production và retention của telemetry trước khi mở rộng vận hành.
@@ -167,6 +173,10 @@ PR #193 đã hoàn tất quality gate, merge vào `main` và deploy production t
 ## Testing status
 
 Latest confirmed validation:
+
+- PR #199: local Vitest 48 file/222 test, TypeScript, ESLint, Vite build và `git diff --check` pass; E2E local 6 test skip theo guard demo/đăng nhập hiện có; CI main [run 35249616072](https://github.com/nhan0805/family-expense/actions/runs/35249616072) pass quality, E2E, db-security và performance budget.
+- Cloudflare Pages production [check](https://github.com/nhan0805/family-expense/runs/105298793479) pass cho merge commit `13f4b2dd`; smoke `https://family-expense-8fo.pages.dev/` trả HTTP 200 và bundle live chứa label mới.
+- Không chạy Supabase Production Deploy vì PR #199 chỉ thay đổi frontend/test.
 
 - PR #193: focused Vitest 25/25 pass; TypeScript, ESLint, Vite build và `git diff --check` pass; CI main [run 35244826912](https://github.com/nhan0805/family-expense/actions/runs/35244826912) pass quality, E2E, db-security và performance budget.
 - Cloudflare Pages production [check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/124a25af-c9ea-4177-bef5-ff8db18b2e97) pass cho merge commit `b09f1788`; smoke `https://family-expense-8fo.pages.dev/` trả HTTP 200.
