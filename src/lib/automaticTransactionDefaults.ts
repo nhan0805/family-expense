@@ -4,8 +4,6 @@ import { normalizeText, type CatalogItem } from './domain';
 export const automaticTransactionKeys = [
   'savings_opening',
   'savings_interest',
-  'savings_withdrawal',
-  'savings_fee',
   'savings_settlement',
   'gold_purchase',
   'gold_sale',
@@ -55,18 +53,6 @@ export const automaticTransactionLabels: Record<AutomaticTransactionKey, { vi: s
     descriptionVi: 'Khoản thu khi ghi nhận tiền lãi.',
     descriptionEn: 'Income created when interest is recorded.',
   },
-  savings_withdrawal: {
-    vi: 'Rút tiền tiết kiệm',
-    en: 'Withdraw savings',
-    descriptionVi: 'Khoản thu khi rút một phần tiền khỏi sổ.',
-    descriptionEn: 'Income created when money is withdrawn from a book.',
-  },
-  savings_fee: {
-    vi: 'Phí sổ tiết kiệm',
-    en: 'Savings fee',
-    descriptionVi: 'Khoản chi cho phí liên quan đến sổ.',
-    descriptionEn: 'Expense created for a savings-related fee.',
-  },
   savings_settlement: {
     vi: 'Tất toán tiết kiệm',
     en: 'Settle savings book',
@@ -95,7 +81,6 @@ const findByName = (items: CatalogItem[], names: string[]) =>
 
 const cashPaymentKeys = new Set<AutomaticTransactionKey>([
   'savings_interest',
-  'savings_withdrawal',
   'savings_settlement',
   'gold_sale',
 ]);
@@ -106,8 +91,6 @@ const defaultPaymentMethodId = (catalogs: AutomaticTransactionCatalogs, key: Aut
 const defaultExpenseTypeNames: Record<AutomaticTransactionKey, string[]> = {
   savings_opening: ['Gửi tiết kiệm'],
   savings_interest: ['Lãi tiền gửi'],
-  savings_withdrawal: ['Rút tiết kiệm'],
-  savings_fee: ['Phí tiết kiệm'],
   savings_settlement: ['Tất toán tiết kiệm'],
   gold_purchase: ['Đầu tư vàng'],
   gold_sale: ['Đầu tư vàng'],

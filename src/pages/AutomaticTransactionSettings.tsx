@@ -1,4 +1,4 @@
-import { Coins, Landmark, LockKeyhole, ReceiptText, RotateCcw, Save, Settings2, TrendingUp, WalletCards } from 'lucide-react';
+import { Coins, Landmark, LockKeyhole, RotateCcw, Save, Settings2, TrendingUp, WalletCards } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState, type ComponentType, type FormEvent } from 'react';
 import { PageSkeleton } from '../components/AsyncStates';
@@ -27,7 +27,7 @@ const groups: Array<{ titleVi: string; titleEn: string; icon: ComponentType<{ si
     titleVi: 'Sổ tiết kiệm',
     titleEn: 'Savings books',
     icon: Landmark,
-    keys: ['savings_opening', 'savings_interest', 'savings_withdrawal', 'savings_fee', 'savings_settlement'],
+    keys: ['savings_opening', 'savings_interest', 'savings_settlement'],
   },
   {
     titleVi: 'Vàng',
@@ -183,7 +183,7 @@ export function AutomaticTransactionSettings() {
               const labels = automaticTransactionLabels[automationKey];
               return <div key={automationKey} className="rounded-xl bg-black/[.025] p-3 dark:bg-white/[.04]">
                 <div className="flex items-start gap-3">
-                  <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-[var(--primary-soft)] text-[var(--primary)]" aria-hidden="true">{automationKey.includes('gold') ? <Coins size={17} /> : automationKey === 'savings_interest' ? <TrendingUp size={17} /> : automationKey === 'savings_fee' ? <ReceiptText size={17} /> : automationKey === 'savings_opening' ? <WalletCards size={17} /> : <Landmark size={17} />}</span>
+                  <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-[var(--primary-soft)] text-[var(--primary)]" aria-hidden="true">{automationKey.includes('gold') ? <Coins size={17} /> : automationKey === 'savings_interest' ? <TrendingUp size={17} /> : automationKey === 'savings_opening' ? <WalletCards size={17} /> : <Landmark size={17} />}</span>
                   <div className="min-w-0"><h3 className="font-bold">{en ? labels.en : labels.vi}</h3><p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{en ? labels.descriptionEn : labels.descriptionVi}</p></div>
                 </div>
                 <div className="mt-3 grid gap-3 md:grid-cols-3 [&_.label]:mb-1 [&_.label]:leading-tight">

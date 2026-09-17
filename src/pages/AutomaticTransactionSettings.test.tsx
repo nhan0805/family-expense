@@ -61,6 +61,8 @@ describe('cấu hình giao dịch tự động', () => {
     expect(screen.getByLabelText('Mục đích', { selector: '#gold_sale-purpose' })).toHaveValue('purpose-investment');
     expect(screen.getByLabelText('Danh mục', { selector: '#savings_interest-expense-type' })).toHaveValue('expense-interest');
     expect(screen.getByLabelText('Phương thức thanh toán', { selector: '#gold_sale-payment-method' })).toHaveValue('payment-cash');
+    expect(screen.queryByRole('heading', { name: 'Rút tiền tiết kiệm' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Phí sổ tiết kiệm' })).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Mục đích', { selector: '#gold_sale-purpose' }), { target: { value: 'purpose-family' } });
     fireEvent.change(screen.getByLabelText('Danh mục', { selector: '#gold_sale-expense-type' }), { target: { value: 'expense-other' } });
@@ -83,5 +85,7 @@ describe('cấu hình giao dịch tự động', () => {
     expect(screen.getByText(/Chỉ chủ gia đình có thể thay đổi các mặc định dùng chung/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Lưu mặc định tự động' })).toBeDisabled();
     expect(screen.getByLabelText('Mục đích', { selector: '#gold_sale-purpose' })).toBeDisabled();
+    expect(screen.queryByRole('heading', { name: 'Rút tiền tiết kiệm' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Phí sổ tiết kiệm' })).not.toBeInTheDocument();
   });
 });

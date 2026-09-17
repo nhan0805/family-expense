@@ -30,6 +30,13 @@ describe('mặc định giao dịch tự động', () => {
       expenseTypeId: 'expense-gold',
       paymentMethodId: 'payment-cash',
     });
+    expect(defaults.map((item) => item.automationKey)).toEqual([
+      'savings_opening',
+      'savings_interest',
+      'savings_settlement',
+      'gold_purchase',
+      'gold_sale',
+    ]);
   });
 
   it('loại bỏ id đã bị xóa khỏi cấu hình đã lưu và dùng lại mặc định hệ thống', () => {
@@ -46,6 +53,6 @@ describe('mặc định giao dịch tự động', () => {
       expenseTypeId: 'expense-gold',
       paymentMethodId: 'payment-transfer',
     });
-    expect(sanitized).toHaveLength(7);
+    expect(sanitized).toHaveLength(5);
   });
 });

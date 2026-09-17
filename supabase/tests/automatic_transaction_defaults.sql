@@ -1,6 +1,6 @@
 -- Structural tests for family-level automatic transaction catalog defaults.
 begin;
-select plan(15);
+select plan(17);
 
 select ok(
   exists(
@@ -55,8 +55,25 @@ select ok(
 );
 select ok(
   pg_get_functiondef('public.save_automatic_transaction_defaults(uuid,jsonb)'::regprocedure) ilike '%public.is_family_owner%'
-  and pg_get_functiondef('public.save_automatic_transaction_defaults(uuid,jsonb)'::regprocedure) ilike '%public.automatic_transaction_defaults%',
-  'save RPC checks owner and writes the scoped table'
+  and pg_get_functiondef('public.save_automatic_transaction_defaults(uuid,jsonb)'::regprocedure) ilike '%public.automatic_transaction_defaults%'
+  and pg_get_functiondef('public.save_automatic_transaction_defaults(uuid,jsonb)'::regprocedure) ilike '%jsonb_array_length(p_defaults) <> 5%',
+  'save RPC checks owner, writes the scoped table and accepts five active mappings'
+);
+select ok(
+  coalesce((
+    select pg_get_constraintdef(oid) not ilike '%savings_withdrawal%'
+      and pg_get_constraintdef(oid) not ilike '%savings_fee%'
+    from pg_constraint
+    where conname = 'automatic_transaction_defaults_automation_key_check'
+  ), false),
+  'retired savings withdrawal and fee mappings are not valid defaults'
+);
+select ok(
+  not exists(
+    select 1 from public.automatic_transaction_defaults
+    where automation_key in ('savings_withdrawal', 'savings_fee')
+  ),
+  'retired savings withdrawal and fee mappings are removed'
 );
 select ok(
   exists(select 1 from pg_trigger where tgname = 'transactions_apply_automatic_defaults'),

@@ -14,8 +14,6 @@ import {
 const defaults = [
   { automationKey: 'savings_opening' as const, purposeId: 'p', expenseTypeId: 'e', paymentMethodId: 'm' },
   { automationKey: 'savings_interest' as const, purposeId: 'p', expenseTypeId: 'e', paymentMethodId: 'm' },
-  { automationKey: 'savings_withdrawal' as const, purposeId: 'p', expenseTypeId: 'e', paymentMethodId: 'm' },
-  { automationKey: 'savings_fee' as const, purposeId: 'p', expenseTypeId: 'e', paymentMethodId: 'm' },
   { automationKey: 'savings_settlement' as const, purposeId: 'p', expenseTypeId: 'e', paymentMethodId: 'm' },
   { automationKey: 'gold_purchase' as const, purposeId: 'p', expenseTypeId: 'e', paymentMethodId: 'm' },
   { automationKey: 'gold_sale' as const, purposeId: 'p', expenseTypeId: 'e', paymentMethodId: 'm' },
