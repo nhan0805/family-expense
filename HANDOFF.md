@@ -4,10 +4,10 @@
 
 ## Current state
 
-- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; `main` hiện ở merge commit `1fca219` sau PR [#207](https://github.com/nhan0805/family-expense/pull/207). [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/3e449fb5-f2c1-482e-a475-3ff60247c338) đã pass và smoke HTTP 200 đã được xác nhận.
-- Code trên `main` đã gồm PR [#207](https://github.com/nhan0805/family-expense/pull/207), đồng bộ UI/UX toàn app: token màu theo theme, auth shell thống nhất, mobile spacing/table preview, vùng chạm và focus state rõ ràng, cùng confirm dialog accessible cho thao tác phá hủy; các thay đổi tài sản của PR [#206](https://github.com/nhan0805/family-expense/pull/206) và [#205](https://github.com/nhan0805/family-expense/pull/205), drill-down Dashboard của PR [#203](https://github.com/nhan0805/family-expense/pull/203) và các release trước cũng đã có trên `main`.
-- CI main [run 35258642148](https://github.com/nhan0805/family-expense/actions/runs/35258642148) của merge commit `1fca219` pass quality, E2E, db-security và performance budget.
-- Nhánh workspace cho release/status: `codex/release-status-20260918-uiux`, được tạo từ `origin/main` sau khi PR #207 merge; thay đổi chỉ cập nhật tài liệu trạng thái/link, không ghi đè artifact, schema hoặc dữ liệu.
+- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; `main` hiện ở merge commit `cc411e0` sau PR [#209](https://github.com/nhan0805/family-expense/pull/209). [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/36949a0f-2214-4fe7-8aa5-774be5c85e82) đã pass và smoke HTTP 200 đã được xác nhận.
+- Code trên `main` đã gồm PR [#209](https://github.com/nhan0805/family-expense/pull/209), cân lại card lô vàng trên mobile/tablet rộng; cùng các thay đổi UI/UX toàn app của PR [#207](https://github.com/nhan0805/family-expense/pull/207), tài sản của PR [#206](https://github.com/nhan0805/family-expense/pull/206) và [#205](https://github.com/nhan0805/family-expense/pull/205), drill-down Dashboard của PR [#203](https://github.com/nhan0805/family-expense/pull/203) và các release trước.
+- CI main [run 35259383491](https://github.com/nhan0805/family-expense/actions/runs/35259383491) của merge commit `cc411e0` pass quality, E2E, db-security và performance budget.
+- Nhánh workspace cho release/status: `codex/release-status-20260918-uiux`, được đồng bộ từ `origin/main` sau khi PR #209 merge; thay đổi chỉ cập nhật tài liệu trạng thái/link, không ghi đè artifact, schema hoặc dữ liệu.
 - Release/status chỉ cập nhật tài liệu trạng thái/link sau deploy, không thay đổi artifact, schema hay dữ liệu.
 - Đã cập nhật CI/preview cho `merge_group`, thu hẹp trigger Supabase và chuẩn hóa single-writer cho tài liệu release; chưa bật Merge Queue/branch protection trên GitHub.
 - Bản đồ kiến trúc ổn định nằm trong [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md); quy tắc phân loại tài liệu nằm trong [`docs/AI_CONTEXT_GUIDE.md`](docs/AI_CONTEXT_GUIDE.md).
@@ -28,6 +28,13 @@
 - Semantic embedding/search production path đã bị loại bỏ; không đưa lại nếu chưa có quyết định kiến trúc mới.
 
 ## Recently completed
+
+### Cân lại card lô vàng trên mobile
+
+- Card lô vàng chuyển sang bố cục ba vùng từ breakpoint `md`: thông tin lô, hai giá trị mua/bán ước tính và nhóm thao tác; ở điện thoại nhỏ các vùng vẫn xếp dọc để giữ nhịp đọc và vùng chạm rõ ràng.
+- Files: `src/pages/Assets.tsx`, `src/pages/Assets.ui.test.tsx`. Không đổi schema, RLS/RPC, Edge Function hoặc dữ liệu.
+- Kiểm thử: local Vitest 48 file/225 test, TypeScript, ESLint, Vite build và `git diff --check` pass; CI quality, E2E, db-security và performance budget pass.
+- Deployment: PR [#209](https://github.com/nhan0805/family-expense/pull/209) merge tại commit `cc411e024993906bc4fb5ec7820ce5dccc4e07f6`; [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/36949a0f-2214-4fe7-8aa5-774be5c85e82) pass; smoke `https://family-expense-8fo.pages.dev/` trả HTTP 200.
 
 ### Đồng bộ UI/UX toàn app
 
@@ -114,7 +121,7 @@
 
 ## Current work
 
-PR #203 đã hoàn tất quality gate, merge vào `main` và deploy production thành công. Dashboard giữ drill-down đúng bộ lọc và hiển thị mục `Chưa phân loại` rõ ràng; danh sách giao dịch định kỳ dùng nhóm nút tự co trên một hàng với vùng chạm tối thiểu. Không còn feature code đang chờ trong workspace; nếu cần chỉnh tiếp, bắt đầu từ `origin/main`.
+PR #209 đã hoàn tất quality gate, merge vào `main` và deploy production thành công. Card lô vàng đã cân lại trên mobile/tablet rộng, còn điện thoại nhỏ vẫn xếp dọc; không còn feature code đang chờ trong workspace. Nếu cần chỉnh tiếp, bắt đầu từ `origin/main`.
 
 ## Pending tasks
 

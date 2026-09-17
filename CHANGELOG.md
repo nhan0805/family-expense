@@ -2,6 +2,13 @@
 
 ## 2026-09-18
 
+### Cân lại card lô vàng trên mobile
+
+- Chuyển card lô vàng sang bố cục ngang từ breakpoint `md` để viewport mobile/tablet rộng không còn khoảng trống lớn hoặc cụm nút bị dạt lệch; điện thoại nhỏ vẫn giữ bố cục xếp dọc.
+- Files: `src/pages/Assets.tsx`, `src/pages/Assets.ui.test.tsx`. Không đổi schema, RLS/RPC, Edge Function hoặc dữ liệu.
+- Kiểm thử: local Vitest 48 file/225 test, TypeScript, ESLint, Vite build, performance budget và `git diff --check` pass; CI, E2E và db-security hậu merge pass.
+- Triển khai: PR [#209](https://github.com/nhan0805/family-expense/pull/209) merge vào `main` tại commit `cc411e0`; [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/36949a0f-2214-4fe7-8aa5-774be5c85e82) pass; smoke `https://family-expense-8fo.pages.dev/` trả HTTP 200.
+
 ### Đồng bộ UI/UX toàn app
 
 - Chuẩn hóa semantic color token theo light/dark mode cho trạng thái, KPI, card, toast, confirm dialog, filter chip, bảng và nút thao tác; loại bỏ các màu legacy còn lệch khỏi visual system.
