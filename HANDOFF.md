@@ -1,12 +1,12 @@
-# Family Expense — Development Handoff
+# Family Finance — Development Handoff
 
 > Cập nhật: **18/09/2026** (`Asia/Ho_Chi_Minh`)
 
 ## Current state
 
-- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; deployment cho merge commit `13f4b2ddc7b629817794997a85c7fdb4dfc25a10` đã pass qua [Cloudflare Pages check](https://github.com/nhan0805/family-expense/runs/105298793479), smoke HTTP 200 đã được xác nhận.
-- Code trên `main` mới nhất: PR [#199](https://github.com/nhan0805/family-expense/pull/199), merge commit `13f4b2ddc7b629817794997a85c7fdb4dfc25a10`; tiêu đề Dashboard dùng `Sổ tiết kiệm`/`Vàng`, icon danh sách tài sản đồng bộ 22px.
-- CI main [run 35249616072](https://github.com/nhan0805/family-expense/actions/runs/35249616072) pass với quality, E2E, db-security và performance budget; không có thay đổi Supabase nên không phát sinh workflow production database.
+- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; `main` hiện ở commit `fcc921b` sau PR [#200](https://github.com/nhan0805/family-expense/pull/200), còn deployment cho merge commit [#199](https://github.com/nhan0805/family-expense/pull/199) `13f4b2ddc7b629817794997a85c7fdb4dfc25a10` đã pass qua [Cloudflare Pages check](https://github.com/nhan0805/family-expense/runs/105298793479), smoke HTTP 200 đã được xác nhận.
+- Code trên `main` đã gồm PR [#199](https://github.com/nhan0805/family-expense/pull/199), đổi tiêu đề Dashboard thành `Sổ tiết kiệm`/`Vàng` và đồng bộ icon danh sách tài sản 22px; các thay đổi Family Finance/ngân sách của PR [#198](https://github.com/nhan0805/family-expense/pull/198) và icon/giá vàng của PR [#196](https://github.com/nhan0805/family-expense/pull/196) cũng đã có trên `main`.
+- CI main [run 35249616072](https://github.com/nhan0805/family-expense/actions/runs/35249616072) của PR #199 pass với quality, E2E, db-security và performance budget; PR #198 cũng có CI [run 35249272695](https://github.com/nhan0805/family-expense/actions/runs/35249272695) và Supabase Production Deploy [run 35248901123](https://github.com/nhan0805/family-expense/actions/runs/35248901123) pass.
 - Nhánh workspace cho release/status: `codex/release-status-20260918-dashboard-labels`, được tạo từ `origin/main` sau khi PR #199 merge; thay đổi chỉ cập nhật tài liệu trạng thái/link, không ghi đè thay đổi ngoài phạm vi release.
 - Release/status chỉ cập nhật tài liệu trạng thái/link sau deploy, không thay đổi artifact, schema hay dữ liệu.
 - Đã cập nhật CI/preview cho `merge_group`, thu hẹp trigger Supabase và chuẩn hóa single-writer cho tài liệu release; chưa bật Merge Queue/branch protection trên GitHub.
@@ -34,6 +34,14 @@
 - Trên Dashboard, tiêu đề hai khu vực tài sản được đổi thành `Sổ tiết kiệm` và `Vàng`, bỏ tiền tố `Danh sách`; icon `Landmark` và `Crown` cùng kích thước 22px và giữ `shrink-0` để cân đối trên mobile.
 - Files: `src/pages/Dashboard.tsx`, `src/pages/Dashboard.test.tsx`. Không đổi schema, RLS/RPC, Edge Function hoặc dữ liệu.
 - Deployment: PR [#199](https://github.com/nhan0805/family-expense/pull/199) đã merge vào `main` với commit `13f4b2ddc7b629817794997a85c7fdb4dfc25a10`; CI main [run 35249616072](https://github.com/nhan0805/family-expense/actions/runs/35249616072), [Cloudflare Pages check](https://github.com/nhan0805/family-expense/runs/105298793479) và smoke production HTTP 200 đều pass.
+
+### Mở rộng định vị Family Finance và đồng bộ thao tác ngân sách
+
+- Đổi tên hiển thị của app/PWA và các nội dung sản phẩm sang `Family Finance` / `Quản lý tài chính gia đình`; cập nhật cả offline page, template import, thành viên và fallback sender của email export.
+- Bỏ placeholder ở trường lãi suất năm của sổ tiết kiệm nhưng vẫn giữ label hiển thị và nhập số thập phân trên mobile. Nút Sửa/Xóa ngân sách dùng cùng kiểu icon 44×44, tooltip và accessible name như khu vực Vàng/Sổ tiết kiệm; nút Giao dịch vẫn giữ nhãn rõ ràng.
+- Files: `src/components/Layout.tsx`, `src/pages/{Assets,Budgets,CreateFamily,ImportExport,Login,Members,ResetPassword}.tsx`, `index.html`, `vite.config.ts`, `public/offline.html`, `supabase/functions/email-transactions/index.ts` và test liên quan.
+- Kiểm thử: local Vitest 48 file/222 test, TypeScript, ESLint, Vite build, Playwright E2E 4 pass/2 skip do thiếu credential cloud; smoke mobile 375px và desktop 1440px không tràn ngang, nút icon 44×44.
+- Deployment: PR [#198](https://github.com/nhan0805/family-expense/pull/198) merge tại commit `88630a62f9ee746d85194e9b36cc4c0326852f16`; CI hậu merge [run 35248901155](https://github.com/nhan0805/family-expense/actions/runs/35248901155), [Supabase Production Deploy](https://github.com/nhan0805/family-expense/actions/runs/35248901123) và [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/f7b07458-0d28-4373-a052-eb041e8642ec) pass. Sau đó PR #196 đưa `main` lên `410b22e`; production hiện tại vẫn trả HTTP 200.
 
 ### Thu gọn giao diện Tài sản trên điện thoại
 
