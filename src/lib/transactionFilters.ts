@@ -201,6 +201,7 @@ export const transactionFilterUrlKeys = [
   'year',
   'dateFrom',
   'dateTo',
+  'includeAllPurposes',
   'sort',
 ] as const;
 

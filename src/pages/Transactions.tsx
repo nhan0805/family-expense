@@ -90,8 +90,14 @@ type SpeechRecognitionLike = {
 type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const getInitialFilterIds = (searchParams: URLSearchParams, key: string) =>
-  Array.from(new Set(searchParams.getAll(key).filter((value) => uuidPattern.test(value))));
+const getInitialFilterIds = (
+  searchParams: URLSearchParams,
+  key: string,
+  catalogItems: Array<{ id: string }> = [],
+) => {
+  const knownIds = new Set(catalogItems.map((item) => item.id));
+  return Array.from(new Set(searchParams.getAll(key).filter((value) => uuidPattern.test(value) || knownIds.has(value))));
+};
 const getInitialSort = (value: string | null): SortOption =>
   value === 'date-asc' || value === 'amount-desc' || value === 'amount-asc' || value === 'description-asc'
     ? value
@@ -165,9 +171,12 @@ export const getInitialExcludePurposeIds = (
   searchParams: URLSearchParams,
   purposes: Array<{ id: string; name: string }>,
 ) => {
-  const explicitIds = getInitialFilterIds(searchParams, 'excludePurposeId');
+  const explicitIds = getInitialFilterIds(searchParams, 'excludePurposeId', purposes);
   if (explicitIds.length > 0) return explicitIds;
-  if (searchParams.getAll('purposeId').length > 0) return [];
+  if (
+    searchParams.getAll('purposeId').length > 0 ||
+    searchParams.get('includeAllPurposes') === '1'
+  ) return [];
   return purposes
     .filter((purpose) => purpose.name === 'Đầu tư')
     .map((purpose) => purpose.id);
@@ -336,22 +345,22 @@ export function Transactions() {
     getInitialTransactionStatus(searchParams.get('status')),
   );
   const [purposeIds, setPurposeIds] = useState(() =>
-    getInitialFilterIds(searchParams, 'purposeId'),
+    getInitialFilterIds(searchParams, 'purposeId', purposes),
   );
   const [expenseTypeIds, setExpenseTypeIds] = useState(() =>
-    getInitialFilterIds(searchParams, 'expenseTypeId'),
+    getInitialFilterIds(searchParams, 'expenseTypeId', expenseTypes),
   );
   const [paymentMethodIds, setPaymentMethodIds] = useState(() =>
-    getInitialFilterIds(searchParams, 'paymentMethodId'),
+    getInitialFilterIds(searchParams, 'paymentMethodId', paymentMethods),
   );
   const [excludePurposeIds, setExcludePurposeIds] = useState(() =>
     getInitialExcludePurposeIds(searchParams, purposes),
   );
   const [excludeExpenseTypeIds, setExcludeExpenseTypeIds] = useState(() =>
-    getInitialFilterIds(searchParams, 'excludeExpenseTypeId'),
+    getInitialFilterIds(searchParams, 'excludeExpenseTypeId', expenseTypes),
   );
   const [excludePaymentMethodIds, setExcludePaymentMethodIds] = useState(() =>
-    getInitialFilterIds(searchParams, 'excludePaymentMethodId'),
+    getInitialFilterIds(searchParams, 'excludePaymentMethodId', paymentMethods),
   );
   const [amountMin, setAmountMin] = useState(() => /^\d+$/.test(searchParams.get('amountMin') || '') ? searchParams.get('amountMin') || '' : '');
   const [amountMax, setAmountMax] = useState(() => /^\d+$/.test(searchParams.get('amountMax') || '') ? searchParams.get('amountMax') || '' : '');

@@ -97,7 +97,7 @@
 
 ## Current work
 
-PR #199 đã hoàn tất quality gate, merge vào `main` và deploy production thành công. Dashboard dùng tiêu đề `Sổ tiết kiệm`/`Vàng` gọn hơn, icon danh sách tài sản đồng bộ 22px; icon `Gem` vẫn được dùng nhất quán cho phần Tài sản và icon `Crown` tiếp tục nhận diện các khu vực Vàng. Không còn feature code đang chờ trong workspace; nếu cần chỉnh tiếp, bắt đầu từ `origin/main`.
+PR #199 đã hoàn tất quality gate, merge vào `main` và deploy production thành công. Dashboard dùng tiêu đề `Sổ tiết kiệm`/`Vàng` gọn hơn, icon danh sách tài sản đồng bộ 22px; icon `Gem` vẫn được dùng nhất quán cho phần Tài sản và icon `Crown` tiếp tục nhận diện các khu vực Vàng. Workspace hiện có follow-up UI chưa deploy trên nhánh `codex/release-status-20260918-dashboard-labels`: các nút `Sửa`/`Tạm dừng`/`…` của danh sách giao dịch định kỳ đã bỏ chiều rộng cố định, tự co theo nội dung và giữ trên một hàng; nhóm nút khôi phục/xóa và nút lịch sử cũng được thu gọn tương ứng. Vitest mục tiêu 7/7, TypeScript, ESLint, Vite build và `git diff --check` đều pass.
 
 ## Pending tasks
 
@@ -158,6 +158,7 @@ PR #199 đã hoàn tất quality gate, merge vào `main` và deploy production t
 - `src/components/Layout.tsx`, `src/components/TransactionRow.tsx`, `src/context/ThemeContext.tsx`, `src/index.css` — mobile navigation, transaction cards và design tokens.
 - `src/lib/assets.ts`, `src/lib/assetsApi.ts`, `src/pages/Assets.tsx`, `src/pages/Dashboard.tsx`, `src/pages/Dashboard.test.tsx` — giá vàng dùng chung, quyền member, snapshot tài sản và toggle danh sách.
 - `src/lib/domain.ts`, `src/pages/TransactionForm.tsx`, `src/pages/Transactions.tsx` — mặc định trạng thái thẻ tín dụng và bộ lọc Giao dịch.
+- `src/pages/RecurringExpenses.tsx` — thu gọn nhóm nút thao tác của từng dòng giao dịch định kỳ để tự co và nằm trên cùng một hàng, vẫn giữ vùng chạm tối thiểu.
 - `supabase/migrations/202609160002_fix_asset_transaction_writes.sql`, `supabase/migrations/202609160003_member_asset_controls.sql`, `supabase/tests/asset_management.sql` — sửa ghi giao dịch liên kết và cập nhật contract tài sản.
 - `src/lib/transactionsApi.ts`, `src/lib/errorRecovery.ts`, `src/lib/supabase.ts`, `src/pages/Dashboard.tsx`, `src/pages/Budgets.tsx`, `src/pages/Transactions.tsx`, `src/pages/Members.tsx`, `src/pages/RecurringExpenses.tsx`, `src/pages/TransactionForm.tsx`, `src/components/BudgetNotifications.tsx` — dashboard hierarchy, lỗi/loading recovery, charts, budget semantics, transaction responsive UI và due-transaction notifications.
 - `src/pages/TransactionForm.tsx`, `src/pages/Login.tsx`, `src/pages/ResetPassword.tsx`, `src/pages/CreateFamily.tsx` — form/auth/onboarding UI.
