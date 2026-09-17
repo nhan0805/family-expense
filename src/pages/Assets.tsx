@@ -183,8 +183,8 @@ export function assetError(error: unknown, en: boolean, fallback: string) {
     return en ? 'The opening principal cannot be edited after the book is created.' : 'Không thể sửa tiền gốc sau khi đã tạo sổ.';
   if (raw.includes('catalog_not_ready'))
     return en
-      ? 'The automatic transaction categories are not ready. Uncheck automatic transaction creation to save the book only, or update the automatic transaction settings and try again.'
-      : 'Danh mục giao dịch tự động chưa sẵn sàng. Hãy bỏ chọn tự tạo giao dịch để chỉ lưu sổ, hoặc cập nhật cài đặt giao dịch tự động rồi thử lại.';
+      ? 'The automatic transaction categories are not ready. Uncheck automatic transaction creation to save the asset only, or update the automatic transaction settings and try again.'
+      : 'Danh mục giao dịch tự động chưa sẵn sàng. Hãy bỏ chọn tự tạo giao dịch để chỉ lưu tài sản, hoặc cập nhật cài đặt giao dịch tự động rồi thử lại.';
   if (raw.includes('pgrst202') || raw.includes('could not find the function') || raw.includes('upsert_savings_account'))
     return en
       ? 'The savings-book service has not been updated yet. Reload the app and try again.'
