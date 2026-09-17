@@ -2,6 +2,22 @@
 
 ## 2026-09-18
 
+### Cân lại card lô vàng trên mobile
+
+- Chuyển card lô vàng sang bố cục ngang từ breakpoint `md` để viewport mobile/tablet rộng không còn khoảng trống lớn hoặc cụm nút bị dạt lệch; điện thoại nhỏ vẫn giữ bố cục xếp dọc.
+- Files: `src/pages/Assets.tsx`, `src/pages/Assets.ui.test.tsx`. Không đổi schema, RLS/RPC, Edge Function hoặc dữ liệu.
+- Kiểm thử: local Vitest 48 file/225 test, TypeScript, ESLint, Vite build, performance budget và `git diff --check` pass; CI, E2E và db-security hậu merge pass.
+- Triển khai: PR [#209](https://github.com/nhan0805/family-expense/pull/209) merge vào `main` tại commit `cc411e0`; [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/36949a0f-2214-4fe7-8aa5-774be5c85e82) pass; smoke `https://family-expense-8fo.pages.dev/` trả HTTP 200.
+
+### Đồng bộ UI/UX toàn app
+
+- Chuẩn hóa semantic color token theo light/dark mode cho trạng thái, KPI, card, toast, confirm dialog, filter chip, bảng và nút thao tác; loại bỏ các màu legacy còn lệch khỏi visual system.
+- Dùng chung `AuthShell` cho Đăng nhập, Đặt lại mật khẩu và Tạo gia đình; bổ sung lỗi theo field, toggle hiện mật khẩu, icon/kicker nhất quán, focus state, vùng chạm 44px và hướng dẫn bảng import trên mobile.
+- Thay confirm native bằng confirm dialog accessible có focus management/Escape/restore focus; sắp xếp lại Giao dịch để thứ tự đọc mobile là bộ lọc → tổng ròng → danh sách.
+- Files chính: `src/components/AuthShell.tsx`, `src/components/Feedback.tsx`, `src/index.css`, `src/pages/{Budgets,Catalogs,CreateFamily,ImportExport,Login,Members,RecurringExpenses,ResetPassword,TransactionForm,Transactions}.tsx` và test liên quan. Không đổi schema, RLS/RPC, Edge Function hoặc dữ liệu.
+- Kiểm thử: local Vitest 48 file/225 test, TypeScript, ESLint, Vite build, performance budget và `git diff --check` pass; CI main [run 35258642148](https://github.com/nhan0805/family-expense/actions/runs/35258642148) pass quality, E2E và db-security.
+- Triển khai: PR [#207](https://github.com/nhan0805/family-expense/pull/207) merge vào `main` tại commit `1fca219`; [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/3e449fb5-f2c1-482e-a475-3ff60247c338) pass; smoke production HTTP 200.
+
 ### Drill-down Dashboard và thu gọn thao tác giao dịch định kỳ
 
 - Dashboard truyền đúng khoảng ngày, trạng thái `Thực tế` và cờ bao gồm mọi mục đích khi mở Giao dịch từ KPI, xu hướng và top danh mục; mục `Chưa phân loại` không bị gộp mất khỏi drill-down `Khác`.
