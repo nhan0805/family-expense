@@ -263,6 +263,7 @@ const defaultCatalogIcons: Record<string, CatalogIconKey> = {
   Quà: 'gift',
   'Đầu tư chứng khoán': 'chart-candlestick',
   'Đầu tư vàng': 'coins',
+  Vàng: 'coins',
   'Chuyển khoản': 'landmark',
   'Thẻ tín dụng': 'credit-card',
   'Trả góp': 'credit-card',

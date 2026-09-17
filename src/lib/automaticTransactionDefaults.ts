@@ -74,7 +74,7 @@ export const automaticTransactionLabels: Record<AutomaticTransactionKey, { vi: s
 };
 
 const findByName = (items: CatalogItem[], names: string[]) =>
-  items.find((item) => names.some((name) => normalizeText(item.name) === normalizeText(name)))?.id
+  names.map((name) => items.find((item) => normalizeText(item.name) === normalizeText(name))?.id).find(Boolean)
   || items.find((item) => normalizeText(item.name) === normalizeText('Khác'))?.id
   || items[0]?.id
   || '';
@@ -86,8 +86,8 @@ const defaultExpenseTypeNames: Record<AutomaticTransactionKey, string[]> = {
   savings_opening: ['Gửi tiết kiệm'],
   savings_interest: ['Lãi tiền gửi'],
   savings_settlement: ['Tất toán tiết kiệm'],
-  gold_purchase: ['Đầu tư vàng'],
-  gold_sale: ['Đầu tư vàng'],
+  gold_purchase: ['Vàng', 'Đầu tư vàng'],
+  gold_sale: ['Vàng', 'Đầu tư vàng'],
 };
 
 export const createSystemAutomaticTransactionDefaults = (catalogs: AutomaticTransactionCatalogs): AutomaticTransactionDefault[] =>

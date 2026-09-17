@@ -1,6 +1,6 @@
 -- Structural tests for savings-book and gold asset management.
 begin;
-select plan(40);
+select plan(41);
 
 select ok(
   exists(
@@ -188,6 +188,11 @@ select ok(
   'gold lot-only save does not require transaction catalogs'
 );
 select ok(
+  pg_get_functiondef('public.upsert_gold_asset(uuid,uuid,date,numeric,numeric,numeric,uuid,text,boolean)'::regprocedure) ilike '%public.automatic_transaction_defaults%'
+  and pg_get_functiondef('public.upsert_gold_asset(uuid,uuid,date,numeric,numeric,numeric,uuid,text,boolean)'::regprocedure) ilike '%gold_purchase%',
+  'gold purchase honors the configured automatic mapping'
+);
+select ok(
   not exists(
     select 1
     from public.families f
@@ -195,11 +200,12 @@ select ok(
       select 1
       from public.expense_types e
       where e.family_id = f.id
-        and e.name = 'Đầu tư vàng'
+        and e.code = 'expense-25'
+        and e.name = 'Vàng'
         and e.active
-    )
+      )
   ),
-  'every family has an active gold investment expense category'
+  'every family has an active gold expense category'
 );
 
 select * from finish();

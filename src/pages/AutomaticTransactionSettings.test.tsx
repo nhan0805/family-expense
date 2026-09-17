@@ -21,7 +21,8 @@ const catalogs = {
     { id: 'expense-withdrawal', name: 'Rút tiết kiệm' },
     { id: 'expense-fee', name: 'Phí tiết kiệm' },
     { id: 'expense-settlement', name: 'Tất toán tiết kiệm' },
-    { id: 'expense-gold', name: 'Đầu tư vàng' },
+    { id: 'expense-gold-legacy', name: 'Đầu tư vàng' },
+    { id: 'expense-gold', name: 'Vàng' },
     { id: 'expense-other', name: 'Khác' },
   ],
   paymentMethods: [
@@ -59,6 +60,7 @@ describe('cấu hình giao dịch tự động', () => {
 
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Mặc định giao dịch tự động' })).toBeInTheDocument());
     expect(screen.getByLabelText('Mục đích', { selector: '#gold_sale-purpose' })).toHaveValue('purpose-investment');
+    expect(screen.getByLabelText('Danh mục', { selector: '#gold_purchase-expense-type' })).toHaveValue('expense-gold');
     expect(screen.getByLabelText('Danh mục', { selector: '#savings_interest-expense-type' })).toHaveValue('expense-interest');
     expect(screen.getByLabelText('Phương thức thanh toán', { selector: '#gold_sale-payment-method' })).toHaveValue('payment-bank');
     expect(screen.queryByRole('heading', { name: 'Rút tiền tiết kiệm' })).not.toBeInTheDocument();
