@@ -55,10 +55,14 @@ describe('sắp xếp giao dịch theo ngày', () => {
       getInitialTransactionPeriod('2024-11', null, new Date(2026, 7, 26)),
     ).toEqual({ month: '11', year: '2024' });
   });
-  it('không tự ẩn mục đích Đầu tư và vẫn tôn trọng bộ lọc URL', () => {
-    expect(getInitialExcludePurposeIds(new URLSearchParams())).toEqual([]);
-    expect(getInitialExcludePurposeIds(new URLSearchParams('purposeId=regular-purpose'))).toEqual([]);
-    expect(getInitialExcludePurposeIds(new URLSearchParams('excludePurposeId=550e8400-e29b-41d4-a716-446655440000'))).toEqual([
+  it('mặc định loại trừ mục đích Đầu tư và tôn trọng bộ lọc URL', () => {
+    const investment = { id: 'investment-purpose', name: 'Đầu tư' };
+    const regular = { id: 'regular-purpose', name: 'Sinh hoạt gia đình' };
+    expect(getInitialExcludePurposeIds(new URLSearchParams(), [regular, investment])).toEqual([
+      'investment-purpose',
+    ]);
+    expect(getInitialExcludePurposeIds(new URLSearchParams('purposeId=regular-purpose'), [regular, investment])).toEqual([]);
+    expect(getInitialExcludePurposeIds(new URLSearchParams('excludePurposeId=550e8400-e29b-41d4-a716-446655440000'), [regular, investment])).toEqual([
       '550e8400-e29b-41d4-a716-446655440000',
     ]);
   });
