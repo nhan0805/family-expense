@@ -96,10 +96,10 @@ select ok(
   'automatic default seeding is protected'
 );
 select ok(
-  pg_get_functiondef('public.seed_automatic_transaction_defaults(uuid)'::regprocedure) ilike '%(''savings_interest'', ''Lãi tiền gửi'', ''Chuyển khoản'')%'
-  and pg_get_functiondef('public.seed_automatic_transaction_defaults(uuid)'::regprocedure) ilike '%(''savings_settlement'', ''Tất toán tiết kiệm'', ''Chuyển khoản'')%'
-  and pg_get_functiondef('public.seed_automatic_transaction_defaults(uuid)'::regprocedure) ilike '%(''gold_sale'', ''Vàng'', ''Chuyển khoản'')%',
-  'system automatic defaults use transfer for savings interest, settlement and gold sale'
+  pg_get_functiondef('public.seed_automatic_transaction_defaults(uuid)'::regprocedure) ilike '%(''savings_interest'', ''asset-savings-interest'', ''Lãi tiền gửi'', ''Chuyển khoản'')%'
+  and pg_get_functiondef('public.seed_automatic_transaction_defaults(uuid)'::regprocedure) ilike '%(''savings_settlement'', ''asset-savings-settlement'', ''Tất toán tiết kiệm'', ''Chuyển khoản'')%'
+  and pg_get_functiondef('public.seed_automatic_transaction_defaults(uuid)'::regprocedure) ilike '%(''gold_sale'', ''expense-25'', ''Vàng'', ''Chuyển khoản'')%',
+  'system automatic defaults use stable catalog codes and transfer payment'
 );
 select ok(
   pg_get_functiondef('public.guard_catalog_delete_in_use()'::regprocedure) ilike '%automatic_transaction_defaults%',
