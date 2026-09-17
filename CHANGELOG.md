@@ -2,6 +2,14 @@
 
 ## 2026-09-18
 
+### Drill-down Dashboard và thu gọn thao tác giao dịch định kỳ
+
+- Dashboard truyền đúng khoảng ngày, trạng thái `Thực tế` và cờ bao gồm mọi mục đích khi mở Giao dịch từ KPI, xu hướng và top danh mục; mục `Chưa phân loại` không bị gộp mất khỏi drill-down `Khác`.
+- Nhóm nút `Sửa`/`Tạm dừng`/`…` của danh sách giao dịch định kỳ tự co theo nội dung, nằm trên cùng một hàng và vẫn giữ vùng chạm tối thiểu; nhóm khôi phục/xóa và nút lịch sử cũng được thu gọn.
+- Files: `src/pages/Dashboard.tsx`, `src/pages/Dashboard.test.tsx`, `src/lib/transactionFilters.ts`, `src/pages/Transactions.tsx`, `src/pages/Transactions.test.ts`, `src/pages/RecurringExpenses.tsx`. Không đổi schema, RLS/RPC, Edge Function hoặc dữ liệu.
+- Kiểm thử: local Vitest 48 file/225 test, TypeScript, ESLint, Vite build và `git diff --check` pass; CI main [run 35252912134](https://github.com/nhan0805/family-expense/actions/runs/35252912134) pass quality, E2E, db-security và performance budget.
+- Deployment: PR [#203](https://github.com/nhan0805/family-expense/pull/203) merge tại commit `d512126fbafdb599c114b6d42e01eb6bac3838e1`; [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/1adad82c-a505-45f5-8983-5df3e9bc73a8) pass; smoke `https://family-expense-8fo.pages.dev/` trả HTTP 200.
+
 ### Rút gọn nhãn danh sách tài sản trên Dashboard
 
 - Trên Dashboard, tiêu đề hai khu vực tài sản được đổi thành `Sổ tiết kiệm` và `Vàng`, bỏ tiền tố `Danh sách`; icon `Landmark` và `Crown` cùng kích thước 22px và giữ `shrink-0` để cân đối trên mobile.

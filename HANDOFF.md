@@ -4,10 +4,10 @@
 
 ## Current state
 
-- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; `main` hiện ở commit `fcc921b` sau PR [#200](https://github.com/nhan0805/family-expense/pull/200), còn deployment cho merge commit [#199](https://github.com/nhan0805/family-expense/pull/199) `13f4b2ddc7b629817794997a85c7fdb4dfc25a10` đã pass qua [Cloudflare Pages check](https://github.com/nhan0805/family-expense/runs/105298793479), smoke HTTP 200 đã được xác nhận.
-- Code trên `main` đã gồm PR [#199](https://github.com/nhan0805/family-expense/pull/199), đổi tiêu đề Dashboard thành `Sổ tiết kiệm`/`Vàng` và đồng bộ icon danh sách tài sản 22px; các thay đổi Family Finance/ngân sách của PR [#198](https://github.com/nhan0805/family-expense/pull/198) và icon/giá vàng của PR [#196](https://github.com/nhan0805/family-expense/pull/196) cũng đã có trên `main`.
-- CI main [run 35249616072](https://github.com/nhan0805/family-expense/actions/runs/35249616072) của PR #199 pass với quality, E2E, db-security và performance budget; PR #198 cũng có CI [run 35249272695](https://github.com/nhan0805/family-expense/actions/runs/35249272695) và Supabase Production Deploy [run 35248901123](https://github.com/nhan0805/family-expense/actions/runs/35248901123) pass.
-- Nhánh workspace cho release/status: `codex/release-status-20260918-dashboard-labels`, được tạo từ `origin/main` sau khi PR #199 merge; thay đổi chỉ cập nhật tài liệu trạng thái/link, không ghi đè thay đổi ngoài phạm vi release.
+- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; `main` hiện ở merge commit `d512126` sau PR [#203](https://github.com/nhan0805/family-expense/pull/203). [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/1adad82c-a505-45f5-8983-5df3e9bc73a8) đã pass và smoke HTTP 200 đã được xác nhận.
+- Code trên `main` đã gồm PR [#203](https://github.com/nhan0805/family-expense/pull/203), giữ drill-down Dashboard đúng khoảng ngày/trạng thái/mục đích và thu gọn nút thao tác giao dịch định kỳ trên một hàng; các thay đổi tài sản của PR [#202](https://github.com/nhan0805/family-expense/pull/202), nhãn Dashboard của PR [#199](https://github.com/nhan0805/family-expense/pull/199), Family Finance/ngân sách của PR [#198](https://github.com/nhan0805/family-expense/pull/198) và icon/giá vàng của PR [#196](https://github.com/nhan0805/family-expense/pull/196) cũng đã có trên `main`.
+- CI main [run 35252912134](https://github.com/nhan0805/family-expense/actions/runs/35252912134) của merge commit `d512126` pass quality, E2E, db-security và performance budget.
+- Nhánh workspace cho release/status: `codex/release-status-20260918-postdeploy`, được tạo từ `origin/main` sau khi PR #203 merge; thay đổi chỉ cập nhật tài liệu trạng thái/link, không ghi đè artifact, schema hoặc dữ liệu.
 - Release/status chỉ cập nhật tài liệu trạng thái/link sau deploy, không thay đổi artifact, schema hay dữ liệu.
 - Đã cập nhật CI/preview cho `merge_group`, thu hẹp trigger Supabase và chuẩn hóa single-writer cho tài liệu release; chưa bật Merge Queue/branch protection trên GitHub.
 - Bản đồ kiến trúc ổn định nằm trong [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md); quy tắc phân loại tài liệu nằm trong [`docs/AI_CONTEXT_GUIDE.md`](docs/AI_CONTEXT_GUIDE.md).
@@ -28,6 +28,14 @@
 - Semantic embedding/search production path đã bị loại bỏ; không đưa lại nếu chưa có quyết định kiến trúc mới.
 
 ## Recently completed
+
+### Drill-down Dashboard và thu gọn thao tác giao dịch định kỳ
+
+- Dashboard truyền đúng khoảng ngày, trạng thái `Thực tế` và cờ bao gồm mọi mục đích khi mở Giao dịch từ KPI, xu hướng và top danh mục; mục `Chưa phân loại` không bị gộp mất khỏi drill-down `Khác`.
+- Nhóm nút `Sửa`/`Tạm dừng`/`…` của danh sách giao dịch định kỳ tự co theo nội dung, nằm trên cùng một hàng và vẫn giữ vùng chạm tối thiểu; nhóm khôi phục/xóa và nút lịch sử cũng được thu gọn.
+- Files: `src/pages/Dashboard.tsx`, `src/pages/Dashboard.test.tsx`, `src/lib/transactionFilters.ts`, `src/pages/Transactions.tsx`, `src/pages/Transactions.test.ts`, `src/pages/RecurringExpenses.tsx`. Không đổi schema, RLS/RPC, Edge Function hoặc dữ liệu.
+- Kiểm thử: local Vitest 48 file/225 test, TypeScript, ESLint, Vite build và `git diff --check` pass; CI main [run 35252912134](https://github.com/nhan0805/family-expense/actions/runs/35252912134) pass quality, E2E, db-security và performance budget.
+- Deployment: PR [#203](https://github.com/nhan0805/family-expense/pull/203) merge tại commit `d512126fbafdb599c114b6d42e01eb6bac3838e1`; [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/1adad82c-a505-45f5-8983-5df3e9bc73a8) pass; smoke `https://family-expense-8fo.pages.dev/` trả HTTP 200.
 
 ### Rút gọn nhãn danh sách tài sản trên Dashboard
 
@@ -97,7 +105,7 @@
 
 ## Current work
 
-PR #199 đã hoàn tất quality gate, merge vào `main` và deploy production thành công. Dashboard dùng tiêu đề `Sổ tiết kiệm`/`Vàng` gọn hơn, icon danh sách tài sản đồng bộ 22px; icon `Gem` vẫn được dùng nhất quán cho phần Tài sản và icon `Crown` tiếp tục nhận diện các khu vực Vàng. Workspace hiện có follow-up UI chưa deploy trên nhánh `codex/release-status-20260918-dashboard-labels`: các nút `Sửa`/`Tạm dừng`/`…` của danh sách giao dịch định kỳ đã bỏ chiều rộng cố định, tự co theo nội dung và giữ trên một hàng; nhóm nút khôi phục/xóa và nút lịch sử cũng được thu gọn tương ứng. Vitest mục tiêu 7/7, TypeScript, ESLint, Vite build và `git diff --check` đều pass.
+PR #203 đã hoàn tất quality gate, merge vào `main` và deploy production thành công. Dashboard giữ drill-down đúng bộ lọc và hiển thị mục `Chưa phân loại` rõ ràng; danh sách giao dịch định kỳ dùng nhóm nút tự co trên một hàng với vùng chạm tối thiểu. Không còn feature code đang chờ trong workspace; nếu cần chỉnh tiếp, bắt đầu từ `origin/main`.
 
 ## Pending tasks
 
