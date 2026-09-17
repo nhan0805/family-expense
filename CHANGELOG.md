@@ -2,6 +2,13 @@
 
 ## 2026-09-17
 
+### Thu gọn giao diện Tài sản trên điện thoại
+
+- Trên mobile, các ô số liệu của sổ tiết kiệm và vàng dùng lưới 2 cột; nhóm nút thao tác xuống hàng riêng để card dễ đọc hơn, còn bố cục desktop được giữ nguyên.
+- Files: `src/pages/Assets.tsx`, `src/pages/Assets.ui.test.tsx`. Không đổi schema, RLS/RPC, Edge Function hoặc dữ liệu.
+- Kiểm thử: local Vitest 48 file/221 test, TypeScript, ESLint, Vite build và `git diff --check` pass; Playwright Chromium 2 pass/1 skip theo guard đăng nhập hiện có; CI main [run 35213578884](https://github.com/nhan0805/family-expense/actions/runs/35213578884) pass quality, E2E, db-security và performance budget.
+- Deployment: PR [#188](https://github.com/nhan0805/family-expense/pull/188) đã merge vào `main` với commit `df0c25f83664a9b395a20a553dcd5f8437762885`; [Cloudflare Pages production](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/00260fb1-ad44-4ab8-9e48-b9f67110e602) pass; smoke `https://family-expense-8fo.pages.dev/` trả HTTP 200 và bundle live có class responsive mới.
+
 ### Đặt mặc định hệ thống cho danh mục vàng
 
 - Danh mục built-in giữ nguyên mã nội bộ `expense-25` để không làm hỏng giao dịch cũ, nhưng hiển thị thống nhất là `Vàng`/`Gold`.

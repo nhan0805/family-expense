@@ -4,10 +4,10 @@
 
 ## Current state
 
-- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; deployment cho merge commit `b4eb1b5b7ca9b46b26084a005cbd069e947cbd3` đã pass qua [Cloudflare Pages](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/5b8d138e-5325-41c6-94fd-7bc90677553f), smoke HTTP 200 và kiểm tra deployment live đã được xác nhận.
-- Code trên `main` mới nhất: PR [#185](https://github.com/nhan0805/family-expense/pull/185), merge commit `b4eb1b5b7ca9b46b26084a005cbd069e947cbd3`; danh mục hệ thống cho giao dịch vàng hiện mặc định là `Vàng` với migration `202609170007_gold_category_system_default.sql`.
-- CI main [run 35211865964](https://github.com/nhan0805/family-expense/actions/runs/35211865964) và Supabase Production Deploy [run 35211866015](https://github.com/nhan0805/family-expense/actions/runs/35211866015) đều pass với quality, E2E, db-security, performance budget và migration production.
-- Nhánh workspace cho release/status: `codex/release-status-20260917-gold-default`, được tạo từ `origin/main` sau khi PR #185 merge; các stash cũ vẫn được giữ nguyên, không có thay đổi ngoài phạm vi release bị ghi đè.
+- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; deployment cho merge commit `df0c25f83664a9b395a20a553dcd5f8437762885` đã pass qua [Cloudflare Pages](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/00260fb1-ad44-4ab8-9e48-b9f67110e602), smoke HTTP 200 và kiểm tra bundle live đã được xác nhận.
+- Code trên `main` mới nhất: PR [#188](https://github.com/nhan0805/family-expense/pull/188), merge commit `df0c25f83664a9b395a20a553dcd5f8437762885`; giao diện Tài sản trên mobile đã thu gọn các ô số liệu sổ tiết kiệm/vàng thành lưới 2 cột.
+- CI main [run 35213578884](https://github.com/nhan0805/family-expense/actions/runs/35213578884) pass với quality, E2E, db-security và performance budget; không có thay đổi Supabase nên không phát sinh workflow production database.
+- Nhánh workspace cho release/status: `codex/release-status-20260917-compact-mobile`, được tạo từ `origin/main` sau khi PR #188 merge; thay đổi chỉ cập nhật tài liệu trạng thái/link, không ghi đè thay đổi ngoài phạm vi release.
 - Release/status chỉ cập nhật tài liệu trạng thái/link sau deploy, không thay đổi artifact, schema hay dữ liệu.
 - Đã cập nhật CI/preview cho `merge_group`, thu hẹp trigger Supabase và chuẩn hóa single-writer cho tài liệu release; chưa bật Merge Queue/branch protection trên GitHub.
 - Bản đồ kiến trúc ổn định nằm trong [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md); quy tắc phân loại tài liệu nằm trong [`docs/AI_CONTEXT_GUIDE.md`](docs/AI_CONTEXT_GUIDE.md).
@@ -28,6 +28,13 @@
 - Semantic embedding/search production path đã bị loại bỏ; không đưa lại nếu chưa có quyết định kiến trúc mới.
 
 ## Recently completed
+
+### Thu gọn giao diện Tài sản trên điện thoại
+
+- Trên mobile, bốn ô thông tin của sổ tiết kiệm và hai ô thông tin của vàng dùng lưới 2 cột; nhóm nút thao tác xuống hàng riêng để card dễ đọc hơn. Bố cục desktop được giữ nguyên.
+- Files: `src/pages/Assets.tsx`, `src/pages/Assets.ui.test.tsx`. Không đổi schema, RLS/RPC, Edge Function hoặc dữ liệu.
+- Kiểm thử: local Vitest 48 file/221 test, TypeScript, ESLint, Vite build và `git diff --check` pass; Playwright Chromium 2 pass/1 skip theo guard đăng nhập hiện có.
+- Deployment: PR [#188](https://github.com/nhan0805/family-expense/pull/188) đã merge vào `main` với commit `df0c25f83664a9b395a20a553dcd5f8437762885`; CI main [run 35213578884](https://github.com/nhan0805/family-expense/actions/runs/35213578884), [Cloudflare Pages production](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/00260fb1-ad44-4ab8-9e48-b9f67110e602) và smoke `https://family-expense-8fo.pages.dev/` HTTP 200 đều pass.
 
 ### Các thay đổi ngày 16/09/2026
 
@@ -76,11 +83,11 @@
 
 ## Current work
 
-PR #185 đã hoàn tất quality gate, merge vào `main` và deploy production thành công. Danh mục built-in `expense-25` hiện hiển thị là Vàng; mapping giao dịch vàng của family hiện có được chuẩn hóa và family mới được seed cùng mặc định. RPC mua vàng dùng mapping `gold_purchase`, trong khi luồng lưu tài sản không kèm giao dịch vẫn không phụ thuộc catalog. Các dòng tài sản vẫn dùng action icon gọn, phần “Lịch sử sổ” không còn chiếm chỗ, vàng đặt action cùng hàng với hai ô giá, và menu bên cạnh không còn mục “Bộ lọc mặc định”. Không còn feature code đang chờ trong workspace; nếu cần chỉnh tiếp, bắt đầu từ `origin/main`.
+PR #188 đã hoàn tất quality gate, merge vào `main` và deploy production thành công. Trên mobile, các card sổ tiết kiệm/vàng đã chuyển sang bố cục số liệu 2 cột, nhóm action nằm riêng một hàng; desktop vẫn giữ bố cục gọn cùng hàng. Các thay đổi trước đó về danh mục vàng, action icon, lịch sử sổ và menu cài đặt vẫn được giữ nguyên. Không còn feature code đang chờ trong workspace; nếu cần chỉnh tiếp, bắt đầu từ `origin/main`.
 
 ## Pending tasks
 
-- [x] Xác minh Cloudflare Pages production cho release #185, merge commit `b4eb1b5b`; smoke production HTTP 200.
+- [x] Xác minh Cloudflare Pages production cho release #188, merge commit `df0c25f8`; smoke production HTTP 200 và bundle responsive live.
 - [ ] Chạy backup/restore và rollback drill trên staging bằng secrets riêng.
 - [ ] Hoàn tất synthetic E2E trên staging bằng tài khoản test riêng (`E2E_EMAIL`/`E2E_PASSWORD`).
 - [ ] Xác nhận monitoring/alert routing production và retention của telemetry trước khi mở rộng vận hành.
@@ -160,6 +167,10 @@ PR #185 đã hoàn tất quality gate, merge vào `main` và deploy production t
 ## Testing status
 
 Latest confirmed validation:
+
+- PR #188: local Vitest 48 file/221 test, TypeScript, ESLint, Vite build và `git diff --check` pass; Playwright Chromium 2 pass/1 skip theo guard đăng nhập hiện có; CI main [run 35213578884](https://github.com/nhan0805/family-expense/actions/runs/35213578884) pass quality, E2E, db-security và performance budget.
+- Cloudflare Pages production [check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/00260fb1-ad44-4ab8-9e48-b9f67110e602) pass cho merge commit `df0c25f`; smoke `https://family-expense-8fo.pages.dev/` trả HTTP 200 và bundle live chứa class `grid-cols-2`/`col-span-2` của bố cục mobile.
+- Không chạy Supabase Production Deploy vì PR #188 chỉ thay đổi frontend/test.
 
 - PR #185: local Vitest 48 file/221 test, TypeScript, ESLint, Vite build và `git diff --check` pass; CI main [run 35211865964](https://github.com/nhan0805/family-expense/actions/runs/35211865964) pass quality, E2E, db-security và performance budget; Supabase Production Deploy [run 35211866015](https://github.com/nhan0805/family-expense/actions/runs/35211866015) pass.
 - Cloudflare Pages production [check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/5b8d138e-5325-41c6-94fd-7bc90677553f) pass; smoke `https://family-expense-8fo.pages.dev/` trả HTTP 200.
