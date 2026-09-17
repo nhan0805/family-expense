@@ -31,6 +31,17 @@ const renderLogin = () => render(
 afterEach(() => vi.clearAllMocks());
 
 describe('xác thực tài khoản', () => {
+  it('giữ cấu trúc form rõ ràng và hỗ trợ password manager', () => {
+    renderLogin();
+
+    expect(screen.getByRole('heading', { name: 'Đăng nhập' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Email')).toHaveAttribute('name', 'email');
+    expect(screen.getByLabelText('Email')).toHaveAttribute('autocomplete', 'email');
+    expect(screen.getByLabelText('Mật khẩu')).toHaveAttribute('name', 'password');
+    expect(screen.getByLabelText('Mật khẩu')).toHaveAttribute('autocomplete', 'current-password');
+    expect(screen.getByRole('button', { name: 'Hiện mật khẩu' })).toHaveAttribute('aria-pressed', 'false');
+  });
+
   it('dùng nhóm button cho chuyển mode đăng nhập và đăng ký', () => {
     renderLogin();
 
