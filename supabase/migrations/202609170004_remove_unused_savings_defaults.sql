@@ -4,6 +4,9 @@
 alter table public.automatic_transaction_defaults
   drop constraint if exists automatic_transaction_defaults_automation_key_check;
 
+delete from public.automatic_transaction_defaults
+where automation_key in ('savings_withdrawal', 'savings_fee');
+
 alter table public.automatic_transaction_defaults
   add constraint automatic_transaction_defaults_automation_key_check
   check (automation_key in (
@@ -13,9 +16,6 @@ alter table public.automatic_transaction_defaults
     'gold_purchase',
     'gold_sale'
   ));
-
-delete from public.automatic_transaction_defaults
-where automation_key in ('savings_withdrawal', 'savings_fee');
 
 create or replace function public.seed_automatic_transaction_defaults(p_family_id uuid)
 returns void
