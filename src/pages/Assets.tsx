@@ -82,7 +82,7 @@ import {
   type SavingsMovementType,
 } from '../lib/assets';
 import { isSupabaseConfigured } from '../lib/supabase';
-import { userFacingError } from '../lib/errorRecovery';
+import { errorText, userFacingError } from '../lib/errorRecovery';
 import { reportClientError } from '../lib/telemetry';
 
 type SavingsForm = {
@@ -165,8 +165,8 @@ const movementLabel = (value: SavingsMovementType, en: boolean) => {
   return en ? 'Opening deposit' : 'Mở sổ';
 };
 
-function assetError(error: unknown, en: boolean, fallback: string) {
-  const raw = error instanceof Error ? error.message.toLowerCase() : '';
+export function assetError(error: unknown, en: boolean, fallback: string) {
+  const raw = errorText(error).toLowerCase();
   if (raw.includes('forbidden') || raw.includes('42501'))
     return en ? 'You must be a family member to change assets.' : 'Bạn phải là thành viên gia đình để thay đổi tài sản.';
   if (raw.includes('insufficient_balance'))
@@ -184,11 +184,19 @@ function assetError(error: unknown, en: boolean, fallback: string) {
   if (raw.includes('principal_edit_not_allowed'))
     return en ? 'The opening principal cannot be edited after the book is created.' : 'Không thể sửa tiền gốc sau khi đã tạo sổ.';
   if (raw.includes('catalog_not_ready'))
-    return en ? 'The asset categories are not ready yet. Please reload and try again.' : 'Danh mục tài sản chưa sẵn sàng. Hãy tải lại trang rồi thử lại.';
+    return en
+      ? 'The automatic transaction categories are not ready. Uncheck automatic transaction creation to save the book only, or update the automatic transaction settings and try again.'
+      : 'Danh mục giao dịch tự động chưa sẵn sàng. Hãy bỏ chọn tự tạo giao dịch để chỉ lưu sổ, hoặc cập nhật cài đặt giao dịch tự động rồi thử lại.';
+  if (raw.includes('pgrst202') || raw.includes('could not find the function') || raw.includes('upsert_savings_account'))
+    return en
+      ? 'The savings-book service has not been updated yet. Reload the app and try again.'
+      : 'Chức năng lưu sổ chưa được cập nhật. Hãy tải lại ứng dụng rồi thử lại.';
+  if (raw.includes('payment_method_not_found'))
+    return en ? 'The selected payment method is no longer available. Reload and choose another one.' : 'Phương thức thanh toán đã chọn không còn khả dụng. Hãy tải lại và chọn phương thức khác.';
+  if (raw.includes('invalid_'))
+    return en ? 'Some savings-book details are invalid. Review the form and try again.' : 'Một số thông tin sổ tiết kiệm không hợp lệ. Hãy kiểm tra lại biểu mẫu rồi thử lại.';
   if (raw.includes('account_not_active') || raw.includes('asset_not_active'))
     return en ? 'This asset is no longer active.' : 'Tài sản này không còn ở trạng thái hoạt động.';
-  if (raw.includes('catalog_not_ready'))
-    return en ? 'The family is missing a category needed to record the gold transaction. Please refresh after the update.' : 'Gia đình đang thiếu danh mục cần thiết để ghi giao dịch mua vàng. Vui lòng tải lại sau khi cập nhật hệ thống.';
   return en ? fallback : userFacingError(error, fallback);
 }
 
@@ -299,7 +307,7 @@ export function Assets() {
 
   const refreshRelated = async () => {
     if (!isSupabaseConfigured) return;
-    await Promise.all([
+    const results = await Promise.allSettled([
       queryClient.invalidateQueries({ queryKey: ['assets', familyId] }),
       queryClient.invalidateQueries({ queryKey: ['asset-summary', familyId] }),
       queryClient.invalidateQueries({ queryKey: ['transactions', familyId] }),
@@ -307,6 +315,9 @@ export function Assets() {
       queryClient.invalidateQueries({ queryKey: ['budgets', familyId] }),
       queryClient.invalidateQueries({ queryKey: ['transaction-years', familyId] }),
     ]);
+    results.forEach((result) => {
+      if (result.status === 'rejected') reportClientError(result.reason, 'query');
+    });
   };
 
   const saveGoldBuybackPrice = async (event: FormEvent<HTMLFormElement>) => {
