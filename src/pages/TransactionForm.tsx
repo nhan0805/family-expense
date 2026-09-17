@@ -243,101 +243,106 @@ export function TransactionForm() {
         : (en ? 'You are offline. The draft was saved on this device; reconnect and try again.' : 'Đang mất kết nối mạng. Bản nháp đã được lưu trên thiết bị; hãy kết nối lại rồi thử lại.'));
       return;
     }
-    let duplicateCount = 0;
-    if (isSupabaseConfigured) {
-      let duplicateQuery = supabase
-        .from('transactions')
-        .select('id,transaction_date,amount,description')
-        .eq('family_id', familyId)
-        .eq('transaction_date', data.transactionDate)
-        .eq('amount', data.amount)
-        .is('deleted_at', null);
-      if (id) duplicateQuery = duplicateQuery.neq('id', id);
-      const { data: candidates, error: duplicateError } = await duplicateQuery;
-      if (duplicateError) {
-      setSaveError(userFacingError(duplicateError, en ? 'Could not check for duplicate transactions.' : 'Không thể kiểm tra giao dịch trùng.'));
-        return;
-      }
-      duplicateCount = findDuplicates(
-        data,
-        (candidates || []).map((candidate) => ({
-          ...data,
-          id: candidate.id,
-          transactionDate: candidate.transaction_date,
-          amount: Number(candidate.amount),
-          description: candidate.description,
-        })),
-      ).length;
-    } else
-      duplicateCount = findDuplicates(
-        data,
-        transactions.filter((t) => t.id !== id),
-      ).length;
-    if (duplicateCount && !await askConfirm({ title: en ? 'Possible duplicate transaction' : 'Giao dịch có thể bị trùng', description: en ? `Found ${duplicateCount} transactions with a similar date, description and amount. Save anyway?` : `Tìm thấy ${duplicateCount} giao dịch tương tự về ngày, nội dung và số tiền. Bạn vẫn muốn lưu?`, confirmLabel: en ? 'Save anyway' : 'Vẫn lưu' })) return;
     setSaveBusy(true);
     setSaveError('');
-    if (isSupabaseConfigured) {
-      const payload = {
-        family_id: familyId,
-        transaction_date: data.transactionDate,
-        transaction_type: data.transactionType,
-        status: data.status,
-        description: data.description,
-        amount: data.amount,
-        purpose_id: data.purposeId,
-        expense_type_id: data.expenseTypeId,
-        beneficiary_id: data.beneficiaryId || null,
-        payment_method_id: data.paymentMethodId || null,
-        note: data.note || null,
-        source: data.source,
-        source_reference: data.sourceReference || null,
-        ai_generated: data.aiGenerated,
-        updated_by: currentUserId,
-      };
-      const result = id
-        ? await supabase
-            .from('transactions')
-            .update(payload)
-            .eq('id', id)
-            .eq('family_id', familyId)
-            .select('id,created_at')
-            .single()
-        : await supabase
-            .from('transactions')
-            .insert({ ...payload, created_by: currentUserId })
-            .select('id,created_at')
-            .single();
-      if (result.error || !result.data) {
-        setSaveBusy(false);
-      setSaveError(userFacingError(result.error, en ? 'Could not save the transaction to the database.' : 'Không thể lưu giao dịch vào database.'));
-        return;
+    try {
+      let duplicateCount = 0;
+      if (isSupabaseConfigured) {
+        let duplicateQuery = supabase
+          .from('transactions')
+          .select('id,transaction_date,amount,description')
+          .eq('family_id', familyId)
+          .eq('transaction_date', data.transactionDate)
+          .eq('amount', data.amount)
+          .is('deleted_at', null);
+        if (id) duplicateQuery = duplicateQuery.neq('id', id);
+        const { data: candidates, error: duplicateError } = await duplicateQuery;
+        if (duplicateError) {
+          setSaveError(userFacingError(duplicateError, en ? 'Could not check for duplicate transactions.' : 'Không thể kiểm tra giao dịch trùng.'));
+          return;
+        }
+        duplicateCount = findDuplicates(
+          data,
+          (candidates || []).map((candidate) => ({
+            ...data,
+            id: candidate.id,
+            transactionDate: candidate.transaction_date,
+            amount: Number(candidate.amount),
+            description: candidate.description,
+          })),
+        ).length;
+      } else {
+        duplicateCount = findDuplicates(
+          data,
+          transactions.filter((t) => t.id !== id),
+        ).length;
       }
-      await queryClient.invalidateQueries({
-        queryKey: ['transactions', familyId],
-      });
-      await queryClient.invalidateQueries({
-        queryKey: ['asset-summary', familyId],
-      });
-      await queryClient.invalidateQueries({
-        queryKey: ['dashboard-data', familyId],
-      });
-      await queryClient.invalidateQueries({
-        queryKey: ['transaction-years', familyId],
-      });
-      await queryClient.invalidateQueries({
-        queryKey: ['budgets', familyId],
-      });
-    } else {
-      setTransactions((items) =>
-        id
-          ? items.map((item) => (item.id === id ? { ...item, ...data } : item))
-          : [{ ...data, id: crypto.randomUUID() }, ...items],
-      );
+      if (duplicateCount && !await askConfirm({ title: en ? 'Possible duplicate transaction' : 'Giao dịch có thể bị trùng', description: en ? `Found ${duplicateCount} transactions with a similar date, description and amount. Save anyway?` : `Tìm thấy ${duplicateCount} giao dịch tương tự về ngày, nội dung và số tiền. Bạn vẫn muốn lưu?`, confirmLabel: en ? 'Save anyway' : 'Vẫn lưu' })) return;
+      if (isSupabaseConfigured) {
+        const payload = {
+          family_id: familyId,
+          transaction_date: data.transactionDate,
+          transaction_type: data.transactionType,
+          status: data.status,
+          description: data.description,
+          amount: data.amount,
+          purpose_id: data.purposeId,
+          expense_type_id: data.expenseTypeId,
+          beneficiary_id: data.beneficiaryId || null,
+          payment_method_id: data.paymentMethodId || null,
+          note: data.note || null,
+          source: data.source,
+          source_reference: data.sourceReference || null,
+          ai_generated: data.aiGenerated,
+          updated_by: currentUserId,
+        };
+        const result = id
+          ? await supabase
+              .from('transactions')
+              .update(payload)
+              .eq('id', id)
+              .eq('family_id', familyId)
+              .select('id,created_at')
+              .single()
+          : await supabase
+              .from('transactions')
+              .insert({ ...payload, created_by: currentUserId })
+              .select('id,created_at')
+              .single();
+        if (result.error || !result.data) {
+          setSaveError(userFacingError(result.error, en ? 'Could not save the transaction to the database.' : 'Không thể lưu giao dịch vào database.'));
+          return;
+        }
+        await queryClient.invalidateQueries({
+          queryKey: ['transactions', familyId],
+        });
+        await queryClient.invalidateQueries({
+          queryKey: ['asset-summary', familyId],
+        });
+        await queryClient.invalidateQueries({
+          queryKey: ['dashboard-data', familyId],
+        });
+        await queryClient.invalidateQueries({
+          queryKey: ['transaction-years', familyId],
+        });
+        await queryClient.invalidateQueries({
+          queryKey: ['budgets', familyId],
+        });
+      } else {
+        setTransactions((items) =>
+          id
+            ? items.map((item) => (item.id === id ? { ...item, ...data } : item))
+            : [{ ...data, id: crypto.randomUUID() }, ...items],
+        );
+      }
+      clearTransactionDraft(familyId, id);
+      notify(id ? (en ? 'Transaction updated.' : 'Đã cập nhật giao dịch.') : (en ? 'Transaction added.' : 'Đã thêm giao dịch mới.'));
+      nav('/giao-dich');
+    } catch (error) {
+      setSaveError(userFacingError(error, en ? 'Could not save the transaction.' : 'Không thể lưu giao dịch.'));
+    } finally {
+      setSaveBusy(false);
     }
-    clearTransactionDraft(familyId, id);
-    setSaveBusy(false);
-    notify(id ? (en ? 'Transaction updated.' : 'Đã cập nhật giao dịch.') : (en ? 'Transaction added.' : 'Đã thêm giao dịch mới.'));
-    nav('/giao-dich');
   };
   const deleteTransaction = async () => {
     if (
@@ -559,6 +564,7 @@ export function TransactionForm() {
       <form
         className="form-panel card grid gap-5 p-4 sm:p-6 md:grid-cols-3"
         aria-label={en ? 'Transaction details' : 'Thông tin giao dịch'}
+        aria-busy={saveBusy || deleteBusy}
         onSubmit={handleSubmit(onSubmit, onInvalid)}
       >
           <p className="form-hint text-xs md:col-span-3">
@@ -585,13 +591,13 @@ export function TransactionForm() {
                 {voiceSupported && (
                   <button
                     type="button"
-                    className={`absolute inset-y-1 right-1 grid aspect-square place-items-center rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-violet-300 ${voiceListening ? 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300' : 'text-gray-500 hover:bg-gray-100 hover:text-violet-700 dark:text-gray-300 dark:hover:bg-white/10'}`}
+                    className={`absolute inset-y-0 right-0 grid min-h-11 min-w-11 place-items-center rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)] ${voiceListening ? 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300' : 'text-gray-500 hover:bg-gray-100 hover:text-[var(--primary)] dark:text-gray-300 dark:hover:bg-white/10'}`}
                     aria-label={voiceListening ? (en ? 'Stop voice input' : 'Dừng nhập bằng giọng nói') : (en ? 'Enter description by voice' : 'Nhập nội dung bằng giọng nói')}
                     aria-pressed={voiceListening}
                     title={voiceListening ? (en ? 'Stop listening' : 'Dừng nghe') : (en ? 'Enter by voice' : 'Nhập bằng giọng nói')}
                     onClick={toggleVoiceInput}
                   >
-                    {voiceListening ? <MicOff className="animate-pulse" size={19} /> : <Mic size={19} />}
+                    {voiceListening ? <MicOff className="animate-pulse" size={19} aria-hidden="true" /> : <Mic size={19} aria-hidden="true" />}
                   </button>
                 )}
               </div>
@@ -603,7 +609,7 @@ export function TransactionForm() {
                 disabled={aiBusy || !description.trim()}
                 onClick={() => void parseAi()}
               >
-                {aiBusy ? <LoaderCircle className="animate-spin" size={18} /> : aiCompleted ? <Check size={18} /> : <Sparkles size={18} />}
+                {aiBusy ? <LoaderCircle className="animate-spin" size={18} aria-hidden="true" /> : aiCompleted ? <Check size={18} aria-hidden="true" /> : <Sparkles size={18} aria-hidden="true" />}
                 <span className="hidden sm:inline">{aiBusy ? (en ? 'Analyzing…' : 'Đang phân tích…') : aiCompleted ? (en ? 'Filled' : 'Đã điền') : (en ? 'AI suggest' : 'Gợi ý AI')}</span>
               </button>
             </div>
@@ -614,14 +620,14 @@ export function TransactionForm() {
           {aiResult && aiResultVisible && (
             <section className={`form-ai-summary ui-enter rounded-xl border p-4 md:col-span-3 ${aiTone === 'warning' ? 'border-amber-300 bg-amber-50 text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100' : 'border-[color-mix(in_srgb,var(--primary)_25%,var(--border))] bg-[color-mix(in_srgb,var(--primary-soft)_65%,var(--surface))] text-[var(--text)]'}`} aria-label={en ? 'AI suggestion summary' : 'Tóm tắt gợi ý AI'}>
               <div className="flex items-start gap-3">
-                <Sparkles className="mt-0.5 shrink-0" size={19} />
+                <Sparkles className="mt-0.5 shrink-0" size={19} aria-hidden="true" />
                 <div className="min-w-0 flex-1">
                   <p className="font-bold">{en ? 'AI suggested' : 'AI đã đề xuất'} {aiResult.fields.length} {en ? 'fields' : 'trường'}</p>
                   <p className="mt-1 text-sm">{aiResult.fields.map((field) => aiFieldLabels[field]).join(', ')}.</p>
                   <p className="mt-2 text-xs font-semibold">{en ? 'Confidence' : 'Độ tin cậy'}: {Math.round(aiResult.confidence * 100)}%. {en ? 'Review before saving.' : 'Hãy kiểm tra trước khi lưu.'}</p>
                   {aiResult.warnings.length > 0 && <ul className="mt-2 list-disc pl-5 text-sm" role="alert">{aiResult.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>}
                 </div>
-                <button type="button" className="rounded-lg p-1.5 hover:bg-black/5 dark:hover:bg-white/10" aria-label={en ? 'Hide AI summary' : 'Ẩn tóm tắt và đánh dấu AI'} onClick={() => setAiResultVisible(false)}><X size={18} /></button>
+                <button type="button" className="grid min-h-11 min-w-11 place-items-center rounded-lg hover:bg-black/5 dark:hover:bg-white/10" aria-label={en ? 'Hide AI summary' : 'Ẩn tóm tắt và đánh dấu AI'} onClick={() => setAiResultVisible(false)}><X size={18} aria-hidden="true" /></button>
               </div>
             </section>
           )}
@@ -730,7 +736,7 @@ export function TransactionForm() {
               ))}
             </select>
           </Field>
-          <button type="button" className="form-disclosure btn-secondary flex items-center justify-between md:col-span-3" aria-expanded={extrasOpen} onClick={() => setExtrasOpen((value) => !value)}><span>{en ? 'Advanced options' : 'Tùy chọn nâng cao'}</span><ChevronDown size={18} className={`transition-transform ${extrasOpen ? 'rotate-180' : ''}`}/></button>
+          <button type="button" className="form-disclosure btn-secondary flex items-center justify-between md:col-span-3" aria-expanded={extrasOpen} onClick={() => setExtrasOpen((value) => !value)}><span>{en ? 'Advanced options' : 'Tùy chọn nâng cao'}</span><ChevronDown size={18} aria-hidden="true" className={`transition-transform ${extrasOpen ? 'rotate-180' : ''}`}/></button>
           {extrasOpen && <div className="ui-enter grid gap-4 md:col-span-3 md:grid-cols-2">
             <Field fieldId="transaction-status" label={en ? 'Status' : 'Trạng thái'} error={errors.status?.message} {...aiFieldProps('status')}>
               <select id="transaction-status" className={`field ${aiFieldClass(aiFieldProps('status'))}`} aria-invalid={Boolean(errors.status)} aria-describedby={errors.status ? 'transaction-status-error' : undefined} {...register('status')}>
@@ -747,13 +753,14 @@ export function TransactionForm() {
           {draftStatus === 'saving' && <p role="status" aria-live="polite" className="inline-feedback md:col-span-3">{en ? 'Saving draft on this device…' : 'Đang lưu bản nháp trên thiết bị…'}</p>}
           {draftStatus === 'saved' && <p role="status" aria-live="polite" className="inline-feedback md:col-span-3">{en ? 'Draft saved on this device.' : 'Đã lưu bản nháp trên thiết bị.'}</p>}
           {draftStatus === 'unavailable' && <p role="status" aria-live="polite" className="inline-feedback inline-feedback-warning md:col-span-3">{en ? 'This browser could not save a local draft. Keep this page open until you save.' : 'Trình duyệt không thể lưu bản nháp cục bộ. Hãy giữ trang này mở cho đến khi lưu giao dịch.'}</p>}
-          {saveError && <div role="alert" className="inline-feedback inline-feedback-error md:col-span-3"><p>{saveError}</p><button type="button" className="btn-secondary mt-2" disabled={saveBusy || deleteBusy || (isSupabaseConfigured && !online)} onClick={() => void handleSubmit(onSubmit)()}>{en ? 'Try again' : 'Thử lại'}</button></div>}
+          {saveError && <div role="alert" className="inline-feedback inline-feedback-error md:col-span-3"><p>{saveError}</p><button type="button" className="btn-secondary mt-2" disabled={saveBusy || deleteBusy || (isSupabaseConfigured && !online)} onClick={() => void handleSubmit(onSubmit, onInvalid)()}>{en ? 'Try again' : 'Thử lại'}</button></div>}
           <div className="form-actions flex items-center gap-2 md:col-span-3">
             <button
               className="btn-primary h-12 min-w-0 flex-1 whitespace-nowrap px-3 md:flex-none md:px-4"
               type="submit"
               disabled={saveBusy || deleteBusy}
             >
+              {saveBusy && <LoaderCircle size={17} className="mr-2 inline-block animate-spin align-[-3px]" aria-hidden="true" />}
               {saveBusy ? (en ? 'Saving…' : 'Đang lưu…') : id ? (en ? 'Save changes' : 'Lưu thay đổi') : (en ? 'Confirm and save' : 'Xác nhận và lưu')}
             </button>
             <button
@@ -775,7 +782,7 @@ export function TransactionForm() {
                   disabled={saveBusy || deleteBusy}
                   onClick={() => void deleteTransaction()}
                 >
-                  <Trash2 className="shrink-0" size={17} />
+                  <Trash2 className="shrink-0" size={17} aria-hidden="true" />
                   <span className="md:hidden">
                     {deleteBusy ? (en ? 'Deleting…' : 'Đang xóa…') : (en ? 'Delete' : 'Xóa')}
                   </span>

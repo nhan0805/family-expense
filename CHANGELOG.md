@@ -1,25 +1,54 @@
 # Nhật ký thay đổi Family Expense
 
-## 2026-09-17
-
-### Thu gọn danh sách tài sản trên Dashboard
-
-- Thêm nút `Xem danh sách`/`Thu gọn` riêng cho danh sách sổ tiết kiệm và vàng trong Asset Snapshot; mặc định đóng để Dashboard không bị kéo dài khi có nhiều dòng.
-- Nút có `aria-expanded`/`aria-controls` và vùng chạm tối thiểu 44px; không đổi schema, API hoặc dữ liệu.
-- Files: `src/pages/Dashboard.tsx`, `src/pages/Dashboard.test.tsx`.
-- Kiểm thử local: full Vitest 43 file/201 test, TypeScript, ESLint, production build và `git diff --check` pass; Playwright E2E local 4 pass/2 skip vì chưa cấu hình tài khoản test.
-- Deployment: PR [#166](https://github.com/nhan0805/family-expense/pull/166) đã merge vào `main` với commit `37486333c09b7cc7f57c0443c6dfc1db8719c44b`; CI main [run 35134311249](https://github.com/nhan0805/family-expense/actions/runs/35134311249) và Cloudflare Pages production [check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/e5e0a156-8878-416e-ad98-c29c6f90cb82) pass. Smoke `https://family-expense-8fo.pages.dev/` trả HTTP 200. Không có thay đổi backend nên không chạy Supabase Production Deploy mới.
-
 ## 2026-09-16
+
+### Sắp xếp form giao dịch
+
+- PR [#153](https://github.com/nhan0805/family-expense/pull/153) đưa Nội dung lên trước Số tiền trong form giao dịch, merge vào `main` tại commit `c5395ffffcdfb25a9db8d843ebdcc1edab43f46d`; CI main [run 35052905005](https://github.com/nhan0805/family-expense/actions/runs/35052905005) pass.
+
+### Quản lý sổ tiết kiệm và vàng
+
+- Bổ sung màn hình Tài sản tại /tai-san cho sổ tiết kiệm và từng dòng vàng: theo dõi số dư, đáo hạn, lãi, rút tiền, phí, tất toán, bán một phần/toàn bộ và lưu trữ. Các thao tác tạo tài sản nguyên tử với transaction liên kết có source asset.
+- Dashboard có snapshot tiền ròng, sổ tiết kiệm, vàng và danh sách tài sản; dữ liệu có demo/local fallback. Thêm migration 202609160001_asset_management.sql, API/domain helpers, regression test và E2E flow.
+- PR [#154](https://github.com/nhan0805/family-expense/pull/154) đã merge vào main tại commit 7b9e988956c4993a3efc6a68afa3cf00319d4ff9. CI main [run 35069815555](https://github.com/nhan0805/family-expense/actions/runs/35069815555) và Supabase Production Deploy [run 35069815590](https://github.com/nhan0805/family-expense/actions/runs/35069815590) pass.
+
+### Sửa ghi transaction liên kết tài sản
+
+- Migration 202609160002_fix_asset_transaction_writes.sql sửa các RPC tài sản để cast transaction_status đúng kiểu enum và dùng đúng payment_method_id khi ghi giao dịch mua vàng; test cấu trúc kiểm tra lại cả hai lỗi này.
+- PR [#155](https://github.com/nhan0805/family-expense/pull/155) đã merge vào main tại commit 8bc0708b386d998f0ede71ea99483fa6d68c6e03. CI main [run 35073238729](https://github.com/nhan0805/family-expense/actions/runs/35073238729) và Supabase Production Deploy [run 35073238726](https://github.com/nhan0805/family-expense/actions/runs/35073238726) pass với quality, E2E và db-security.
 
 ### Triển khai nhãn tài sản và mặc định giao dịch
 
-- Màn hình tài sản dùng tên đơn giản `Gold`/`vàng`; đơn vị tiếng Anh là `mace`, tiếng Việt là `chỉ`. Không còn nhãn giao diện theo lô/thỏi vàng.
-- Giá tiệm mua vào được lưu thành một thiết lập dùng chung cho gia đình; kỳ hạn sổ tiết kiệm được tính lại bằng trigger database. Active member có thể xem và quản lý tài sản qua RLS/RPC được bảo vệ.
-- Giao dịch mới thanh toán bằng `Thẻ tín dụng` mặc định ở trạng thái `Dự kiến`; màn hình Giao dịch mặc định lọc `Chi tiêu` thực tế trong tháng hiện tại và loại trừ mục đích `Đầu tư`.
-- Files/DB: `src/pages/Assets.tsx`, `src/pages/Dashboard.tsx`, `src/pages/TransactionForm.tsx`, `src/pages/Transactions.tsx`, các regression/E2E tests; migration `supabase/migrations/202609160003_member_asset_controls.sql` và `supabase/tests/asset_management.sql`.
-- Validation: CI main run [35074751965](https://github.com/nhan0805/family-expense/actions/runs/35074751965) pass quality, coverage, E2E, db-security và performance budget; Supabase Production Deploy run [35074751902](https://github.com/nhan0805/family-expense/actions/runs/35074751902) pass; local smoke flow pass; local pgTAP không chạy vì PostgreSQL chưa bật tại `127.0.0.1:54322`.
-- Deployment: PR [#156](https://github.com/nhan0805/family-expense/pull/156) đã merge với commit `f99ef4415fc103f6cdf09ce039372442b3578e4f`; Cloudflare Pages production check [pass](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/147ea61d-fca7-413a-9309-09eb1713b77f). `https://family-expense-8fo.pages.dev/` trả HTTP 200.
+- Commit d23d09a thêm tổng tài sản, lãi dự kiến sổ tiết kiệm và lãi/lỗ vàng trên Dashboard; các thay đổi quyền member, giá vàng dùng chung và ngày đáo hạn nằm trong migration 202609160003_member_asset_controls.sql.
+- PR [#156](https://github.com/nhan0805/family-expense/pull/156) đã merge vào main tại commit f99ef4415fc103f6cdf09ce039372442b3578e4f. CI main [run 35074751965](https://github.com/nhan0805/family-expense/actions/runs/35074751965), Supabase Production Deploy [run 35074751902](https://github.com/nhan0805/family-expense/actions/runs/35074751902) và Cloudflare Pages production đều pass; smoke production trả HTTP 200.
+- Giao dịch mới thanh toán bằng thẻ tín dụng mặc định ở trạng thái Dự kiến; màn hình Giao dịch mặc định lọc Chi tiêu thực tế trong tháng hiện tại và loại trừ mục đích Đầu tư; label tài sản dùng Gold/mace theo ngôn ngữ.
+
+### Follow-up backfill danh mục đầu tư vàng
+
+- Commit 23cfe3a thêm migration 202609160004_backfill_gold_expense_type.sql và structural test để bảo đảm mọi family có danh mục active Đầu tư vàng. Commit này mới ở branch, chưa có trong main và chưa deploy production.
+
+### Follow-up input và form giao dịch
+
+- Commit c395041 giới hạn input lãi suất và căn chỉnh form giá vàng; commit này mới ở asset branch, chưa có CI/deploy.
+- PR [#159](https://github.com/nhan0805/family-expense/pull/159) với commit c732c94 chuyển focus mặc định sang Nội dung và đặt Trả góp là Dự kiến, đã merge vào main tại commit 9168dedc2b27e5ca46ef816e4f3f8d956978057c. Preview pass và CI [run 35076403354](https://github.com/nhan0805/family-expense/actions/runs/35076403354) pass với quality, E2E và db-security.
+
+### Bộ lọc cá nhân và khôi phục giao dịch mua vàng
+
+- Commit `4120a94` thêm trang `/cai-dat/giao-dich`, bộ lọc mặc định theo từng người dùng, local/Supabase persistence, migration `202609160006_transaction_filter_preferences.sql`, RLS test và regression coverage. Commit local chưa push/CI/deploy.
+- Commit `624319d` khôi phục các giao dịch mua vàng, thêm tính lãi sổ tiết kiệm đến hiện tại/toàn kỳ, migration `202609160005_backfill_gold_expense_type.sql` và structural/regression tests. Commit local chưa push/CI/deploy.
+
+### Thu gọn danh sách tài sản trên Dashboard
+
+- Thêm nút `Xem danh sách`/`Thu gọn` riêng cho danh sách sổ tiết kiệm và vàng trong Asset Snapshot; mặc định đóng để Dashboard không bị kéo dài khi có nhiều dòng. Nút có trạng thái `aria-expanded`/`aria-controls`; không đổi schema, API hoặc dữ liệu.
+- Kiểm thử: Dashboard Vitest 11/11, TypeScript, ESLint các file liên quan và `git diff --check` pass.
+
+### Khôi phục lưu sổ tiết kiệm với mặc định giao dịch tự động
+
+- Hiển thị đúng lỗi Supabase dạng structured object khi lưu sổ tiết kiệm thất bại, đồng thời không báo lỗi giả nếu mutation đã thành công nhưng refetch liên quan gặp lỗi.
+- RPC lưu sổ dùng cấu hình `savings_opening` trong phần cài đặt mặc định khi tạo giao dịch mở sổ; nếu không chọn tự tạo giao dịch thì vẫn lưu được sổ ngay cả khi catalog giao dịch chưa đầy đủ.
+- Files/DB: `src/lib/errorRecovery.ts`, `src/pages/Assets.tsx`, regression tests và migration `supabase/migrations/202609170002_savings_book_save_recovery.sql`.
+- Kiểm thử local: Vitest 48 file/213 test, TypeScript, ESLint, Vite build pass; Playwright Chromium 2 pass/1 skip. CI main [run 35172065376](https://github.com/nhan0805/family-expense/actions/runs/35172065376) pass với quality, E2E và db-security.
+- Deployment: PR [#169](https://github.com/nhan0805/family-expense/pull/169) đã merge vào `main` với merge commit `63ef3fd64059dfb2542e33df51c76363e151d3c6`; Supabase Production Deploy [run 35172065327](https://github.com/nhan0805/family-expense/actions/runs/35172065327) và Cloudflare Pages production [check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/2727b094-d0d9-4807-9623-6c621df0d702) đều pass. Smoke `https://family-expense-8fo.pages.dev/` trả HTTP 200.
 
 ## 2026-09-12
 
