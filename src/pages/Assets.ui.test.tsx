@@ -268,6 +268,7 @@ describe('Tài sản', () => {
     const savingsActions = within(savingsArticle).getByRole('group', { name: 'Thao tác sổ tiết kiệm' });
     expect(savingsActions.parentElement).toHaveClass('asset-stat-row');
     expect(within(savingsActions).getAllByRole('button')).toHaveLength(3);
+    expect(Array.from(savingsActions.querySelectorAll('button')).map((button) => button.getAttribute('aria-label'))).toEqual(['Tất toán', 'Sửa', 'Xóa']);
     expect(within(savingsActions).getByRole('button', { name: 'Sửa' })).toHaveClass('asset-action-button', 'asset-icon-action');
     expect(within(savingsActions).getByRole('button', { name: 'Tất toán' })).toHaveClass('asset-action-button', 'asset-icon-action');
     expect(within(savingsActions).getByRole('button', { name: 'Xóa' })).toHaveClass('asset-action-button', 'asset-icon-action');
