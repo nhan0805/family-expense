@@ -94,8 +94,8 @@ function notificationLabel(notification: BudgetNotification, language: 'vi' | 'e
 
 function notificationTone(notification: BudgetNotification) {
   return notification.kind === 'over'
-    ? 'border-rose-200 bg-rose-50 dark:border-[#ff555566] dark:bg-[#ff55551f]'
-    : 'border-amber-200 bg-amber-50 dark:border-[#f1fa8c66] dark:bg-[#f1fa8c1f]';
+    ? 'border-rose-200 bg-rose-50 dark:border-rose-900/60 dark:bg-rose-950/30'
+    : 'border-amber-200 bg-amber-50 dark:border-amber-900/60 dark:bg-amber-950/30';
 }
 
 export function BudgetNotifications() {
@@ -258,10 +258,10 @@ export function BudgetNotifications() {
         title={notificationTitle}
         onClick={() => setOpen((value) => !value)}
       >
-        <Bell size={19} />
+        <Bell size={19} aria-hidden="true" />
         {attentionCount > 0 && (
           <span
-            className="absolute -right-0.5 -top-0.5 grid min-w-5 -translate-y-1/4 translate-x-1/4 place-items-center rounded-full bg-[#ff5555] px-1 text-[10px] font-extrabold leading-5 text-white"
+            className="absolute -right-0.5 -top-0.5 grid min-w-5 -translate-y-1/4 translate-x-1/4 place-items-center rounded-full bg-[var(--danger)] px-1 text-[10px] font-extrabold leading-5 text-white"
             aria-label={`${attentionCount} ${en ? 'notifications need attention' : 'mục cần chú ý'}`}
           >
             {attentionCount > 99 ? '99+' : attentionCount}
@@ -273,9 +273,9 @@ export function BudgetNotifications() {
           id="budget-notifications-panel"
           role="dialog"
           aria-label={notificationTitle}
-          className="absolute right-0 top-12 z-50 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border bg-white shadow-2xl dark:border-[#6272a466] dark:bg-[#343746]"
+          className="absolute right-0 top-12 z-50 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-2xl"
         >
-          <div className="flex items-center justify-between gap-3 border-b px-4 py-3 dark:border-[#6272a466]">
+          <div className="flex items-center justify-between gap-3 border-b border-[var(--border)] px-4 py-3">
             <div>
               <h2 className="font-extrabold">{notificationTitle}</h2>
               <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-300">
@@ -283,19 +283,19 @@ export function BudgetNotifications() {
               </p>
             </div>
             {(unreadCount > 0 || readCount > 0) && <div className="flex flex-wrap items-center justify-end gap-2">
-              {unreadCount > 0 && <button type="button" className="text-xs font-bold text-purple-700 hover:underline dark:text-[#bd93f9]" onClick={markAllRead}>
+              {unreadCount > 0 && <button type="button" className="min-h-11 rounded-lg px-2 text-xs font-bold text-[var(--primary)] hover:bg-[var(--primary-soft)] hover:underline" onClick={markAllRead}>
                 {t('markAllRead')}
               </button>}
-              {readCount > 0 && <button type="button" className="inline-flex items-center gap-1 text-xs font-bold text-red-700 hover:underline dark:text-[#ff6e6e]" onClick={deleteRead}>
+              {readCount > 0 && <button type="button" className="inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-xs font-bold text-red-700 hover:bg-red-50 hover:underline dark:text-red-300 dark:hover:bg-red-950/30" onClick={deleteRead}>
                 <Trash2 size={14} aria-hidden="true" />
                 {en ? 'Delete read' : 'Xóa đã đọc'}
               </button>}
             </div>}
           </div>
-          {dueTransactions.length > 0 && <div className="border-b border-amber-200 bg-amber-50/70 p-3 dark:border-[#f1fa8c44] dark:bg-[#f1fa8c14]">
+          {dueTransactions.length > 0 && <div className="border-b border-amber-200 bg-amber-50/70 p-3 dark:border-amber-900/60 dark:bg-amber-950/20">
             <div className="flex flex-col gap-2">
               <div className="min-w-0">
-                <h3 className="whitespace-nowrap font-bold">{en ? 'Planned transactions due' : 'Giao dịch dự kiến tới hạn'}</h3>
+                <h3 className="break-words font-bold">{en ? 'Planned transactions due' : 'Giao dịch dự kiến tới hạn'}</h3>
                 <p className="mt-0.5 text-xs text-amber-900/75 dark:text-amber-100/75">{en ? `${dueTransactions.length} transaction(s) need confirmation.` : `${dueTransactions.length} giao dịch cần xác nhận.`}</p>
               </div>
               {dueTransactions.length > 1 && <button type="button" className="btn-primary self-start px-3 py-2 text-xs" disabled={Boolean(confirmingId)} onClick={() => void confirmDueTransactions(dueTransactions)}>
@@ -303,13 +303,13 @@ export function BudgetNotifications() {
               </button>}
             </div>
             {dueError && <p role="alert" className="mt-2 rounded-lg border border-red-200 bg-red-50 p-2 text-xs text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300">{dueError}</p>}
-            <ul aria-label={en ? 'Due planned transactions' : 'Danh sách giao dịch dự kiến tới hạn'} className="mt-2 max-h-64 overflow-y-auto overscroll-contain pr-1 divide-y divide-amber-200/70 dark:divide-[#f1fa8c33]">
-              {dueTransactions.map((transaction) => <li key={transaction.id} className="flex items-center justify-between gap-3 py-2">
+            <ul aria-label={en ? 'Due planned transactions' : 'Danh sách giao dịch dự kiến tới hạn'} className="mt-2 max-h-64 overflow-y-auto overscroll-contain pr-1 divide-y divide-amber-200/70 dark:divide-amber-900/50">
+              {dueTransactions.map((transaction) => <li key={transaction.id} className="flex flex-wrap items-center justify-between gap-3 py-2">
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold">{transaction.description}</p>
+                  <p className="break-words text-sm font-semibold [overflow-wrap:anywhere]">{transaction.description}</p>
                   <p className="text-[11px] text-amber-900/70 dark:text-amber-100/70">{formatDueDate(transaction.transactionDate, language)} · {formatMoney(transaction.amount, language)}</p>
                 </div>
-                <button type="button" className="shrink-0 rounded-lg px-2 py-1 text-xs font-bold text-amber-800 hover:bg-amber-100 dark:text-amber-200 dark:hover:bg-amber-950/50" disabled={Boolean(confirmingId)} onClick={() => void confirmDueTransactions([transaction])}>
+                <button type="button" className="min-h-11 shrink-0 rounded-lg px-3 py-2 text-xs font-bold text-amber-800 hover:bg-amber-100 dark:text-amber-200 dark:hover:bg-amber-950/50" disabled={Boolean(confirmingId)} onClick={() => void confirmDueTransactions([transaction])}>
                   {confirmingId === transaction.id ? (en ? 'Confirming…' : 'Đang xác nhận…') : (en ? 'Confirm' : 'Xác nhận')}
                 </button>
               </li>)}
@@ -331,13 +331,13 @@ export function BudgetNotifications() {
                       onClick={() => { markRead(notification.id); setOpen(false); }}
                     >
                       <div className="flex items-start gap-2">
-                        <Icon size={18} className={notification.kind === 'over' ? 'mt-0.5 shrink-0 text-rose-700 dark:text-[#ff5555]' : 'mt-0.5 shrink-0 text-amber-700 dark:text-[#f1fa8c]'} aria-hidden="true" />
+                        <Icon size={18} className={notification.kind === 'over' ? 'mt-0.5 shrink-0 text-rose-700 dark:text-rose-300' : 'mt-0.5 shrink-0 text-amber-700 dark:text-amber-300'} aria-hidden="true" />
                         <div className="min-w-0 flex-1">
                           <p className="font-bold leading-snug">{notificationLabel(notification, language)}: {name}</p>
                           <p className="mt-1 text-xs text-gray-700 dark:text-gray-200">{notificationMessage(notification, language)}</p>
                           <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-300">{formatPeriod(notification, language)} · {t('viewTransactions')}</p>
                         </div>
-                        {!notification.readAt && <span className="mt-1 size-2 shrink-0 rounded-full bg-[#bd93f9]" aria-label={t('unreadBudgetNotification')} />}
+                        {!notification.readAt && <span className="mt-1 size-2 shrink-0 rounded-full bg-[var(--primary)]" aria-label={t('unreadBudgetNotification')} />}
                       </div>
                     </Link>
                   </li>
@@ -346,7 +346,7 @@ export function BudgetNotifications() {
             </ul>
           ) : (
             <div className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-300">
-              <Check size={24} className="mx-auto mb-2 text-emerald-600 dark:text-[#50fa7b]" aria-hidden="true" />
+              <Check size={24} className="mx-auto mb-2 text-emerald-600 dark:text-emerald-300" aria-hidden="true" />
               {t('noBudgetNotifications')}
             </div>
           )}

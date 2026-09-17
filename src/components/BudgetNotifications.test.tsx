@@ -142,7 +142,7 @@ describe('BudgetNotifications', () => {
     renderNotifications();
 
     fireEvent.click(screen.getByRole('button', { name: 'Thông báo' }));
-    expect(screen.getByRole('heading', { name: 'Giao dịch dự kiến tới hạn' })).toHaveClass('whitespace-nowrap');
+    expect(screen.getByRole('heading', { name: 'Giao dịch dự kiến tới hạn' })).toHaveClass('break-words');
     fireEvent.click(screen.getByRole('button', { name: 'Xác nhận' }));
     const dialog = screen.getByRole('alertdialog');
     fireEvent.click(within(dialog).getByRole('button', { name: 'Xác nhận' }));

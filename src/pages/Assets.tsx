@@ -839,8 +839,6 @@ export function Assets() {
     } catch (error) {
       reportClientError(error, 'mutation');
       notify(assetError(error, en, en ? 'Could not delete gold.' : 'Không thể xóa vàng.'), 'error');
-    } finally {
-      setBusy('');
     }
   };
 
@@ -854,7 +852,7 @@ export function Assets() {
   const allSavingsMovements = data?.savingsMovements || [];
   const allGoldSales = data?.goldSales || [];
 
-  return <div className="space-y-5">
+  return <div className="assets-page space-y-5">
     <header className="page-header flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
       <div>
         <p className="page-kicker"><Coins size={16} aria-hidden="true" />{en ? 'Family balance sheet' : 'Tài sản gia đình'}</p>
@@ -961,7 +959,7 @@ export function Assets() {
 }
 
 function AssetKpi({ label, value, icon: Icon, tone, meta }: { label: string; value: number; icon: typeof Landmark; tone: 'emerald' | 'amber' | 'violet' | 'sky'; meta: string }) {
-  return <div className="card min-w-0 p-3 sm:p-4"><div className="flex items-center gap-2"><span className={`grid size-9 shrink-0 place-items-center rounded-xl kpi-tone-${tone}`}><Icon size={18} aria-hidden="true" /></span><p className="min-w-0 truncate text-xs font-semibold text-gray-500 dark:text-gray-400">{label}</p></div><p className="mt-2 break-words text-lg font-extrabold leading-tight sm:text-xl">{formatVnd(value)}</p><p className="mt-2 truncate text-xs text-gray-500 dark:text-gray-400">{meta}</p></div>;
+  return <div className="card min-w-0 p-3 sm:p-4"><div className="flex items-start gap-2"><span className={`grid size-9 shrink-0 place-items-center rounded-xl kpi-tone-${tone}`}><Icon size={18} aria-hidden="true" /></span><p className="min-w-0 flex-1 break-words text-xs font-semibold leading-tight text-gray-500 dark:text-gray-400">{label}</p></div><p className="mt-2 break-words text-lg font-extrabold leading-tight sm:text-xl">{formatVnd(value)}</p><p className="mt-2 break-words text-xs leading-tight text-gray-500 dark:text-gray-400">{meta}</p></div>;
 }
 
 function GoldHoldingStat({ label, value, tone = 'neutral' }: { label: string; value: string; tone?: 'neutral' | 'positive' | 'negative' }) {
@@ -1011,7 +1009,7 @@ function SavingsRow({
       : (en ? 'Active' : 'Đang hoạt động');
   return <article className="p-4 sm:p-5">
     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-      <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h4 className="truncate text-base font-bold">{account.bankName} · {account.name}</h4><span className="ui-chip">{status}</span></div><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{en ? 'Principal' : 'Tiền gốc'} {formatVnd(account.principal)} · {formatRate(account.annualInterestRate)}% · {account.termMonths} {en ? 'mo.' : 'tháng'} · {interestMethodLabel(account.interestMethod, en)}</p></div>
+      <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h4 className="min-w-0 break-words text-base font-bold [overflow-wrap:anywhere]">{account.bankName} · {account.name}</h4><span className="ui-chip">{status}</span></div><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{en ? 'Principal' : 'Tiền gốc'} {formatVnd(account.principal)} · {formatRate(account.annualInterestRate)}% · {account.termMonths} {en ? 'mo.' : 'tháng'} · {interestMethodLabel(account.interestMethod, en)}</p></div>
       <div className="text-left lg:text-right"><p className="text-lg font-extrabold text-[var(--primary)]">{formatVnd(account.currentBalance)}</p><p className="text-xs text-gray-500 dark:text-gray-400">{en ? 'Current balance' : 'Số dư hiện tại'}</p></div>
     </div>
     <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-4"><div className="rounded-xl bg-black/[.025] p-3 dark:bg-white/[.04]"><p className="text-xs text-gray-500">{en ? 'Opened' : 'Ngày mở'}</p><p className="mt-1 font-semibold">{formatDateOnlyVi(account.openedOn)}</p></div><div className={`rounded-xl bg-black/[.025] p-3 dark:bg-white/[.04] ${maturityClass}`}><p className="text-xs">{en ? 'Maturity' : 'Đáo hạn'}</p><p className="mt-1 font-semibold">{formatDateOnlyVi(account.maturityOn)}</p><p className="text-xs">{days < 0 ? (en ? 'Past due' : 'Đã quá hạn') : days === 0 ? (en ? 'Today' : 'Hôm nay') : (en ? `${days} day(s) left` : `Còn ${days} ngày`)}</p></div><div className="rounded-xl bg-black/[.025] p-3 dark:bg-white/[.04]"><p className="text-xs text-gray-500">{en ? 'Interest to date' : 'Lãi đến hiện tại'}</p><p className="mt-1 font-semibold">{formatVnd(expectedInterestToDate)}</p><p className="text-xs text-gray-500">{en ? 'estimated through today' : 'ước tính đến hôm nay'}</p></div><div className="rounded-xl bg-black/[.025] p-3 dark:bg-white/[.04]"><p className="text-xs text-gray-500">{en ? 'Full-term interest' : 'Lãi dự kiến toàn kỳ'}</p><p className="mt-1 font-semibold">{formatVnd(expectedInterestFullTerm)}</p><p className="text-xs text-gray-500">{en ? 'if held until maturity' : 'nếu giữ đến đáo hạn'}</p></div></div>
@@ -1059,7 +1057,7 @@ function SavingsForm({ editor, setEditor, onSubmit, onCancel, paymentMethods, bu
     <section className="card border-[var(--primary)] p-4 sm:p-5" aria-labelledby="savings-form-title">
       <div className="flex items-start justify-between gap-3">
         <div><p className="page-kicker"><Landmark size={15} aria-hidden="true" />{en ? 'Savings book form' : 'Thông tin sổ tiết kiệm'}</p><h3 id="savings-form-title" className="text-lg font-extrabold">{editor.id ? (en ? 'Edit savings book' : 'Sửa sổ tiết kiệm') : (en ? 'Add savings book' : 'Thêm sổ tiết kiệm')}</h3></div>
-        <button type="button" className="icon-button" onClick={onCancel} aria-label={en ? 'Close savings form' : 'Đóng biểu mẫu sổ'}><X size={18} /></button>
+        <button type="button" className="icon-button" onClick={onCancel} aria-label={en ? 'Close savings form' : 'Đóng biểu mẫu sổ'}><X size={18} aria-hidden="true" /></button>
       </div>
       <form className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" onSubmit={onSubmit}>
         <label><span className="label">{en ? 'Bank' : 'Ngân hàng'}</span><input className="field" value={editor.bankName} onChange={(event) => setEditor({ ...editor, bankName: event.target.value })} /></label>
@@ -1091,7 +1089,7 @@ function GoldForm({ editor, setEditor, onSubmit, onCancel, paymentMethods, busy,
     <section className="card border-[var(--primary)] p-4 sm:p-5" aria-labelledby="gold-form-title">
       <div className="flex items-start justify-between gap-3">
         <div><p className="page-kicker"><Coins size={15} aria-hidden="true" />{en ? 'Gold form' : 'Thông tin vàng'}</p><h3 id="gold-form-title" className="text-lg font-extrabold">{editor.id ? (en ? 'Edit gold' : 'Sửa vàng') : (en ? 'Add gold' : 'Thêm vàng')}</h3></div>
-        <button type="button" className="icon-button" onClick={onCancel} aria-label={en ? 'Close gold form' : 'Đóng biểu mẫu vàng'}><X size={18} /></button>
+        <button type="button" className="icon-button" onClick={onCancel} aria-label={en ? 'Close gold form' : 'Đóng biểu mẫu vàng'}><X size={18} aria-hidden="true" /></button>
       </div>
       <form className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" onSubmit={onSubmit}>
         <label><span className="label">{en ? 'Purchase date' : 'Ngày mua'}</span><input className="field" type="date" value={editor.purchaseDate} onChange={(event) => setEditor({ ...editor, purchaseDate: event.target.value })} /></label>

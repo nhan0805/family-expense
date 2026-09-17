@@ -341,6 +341,11 @@ body {
   color: #047857;
 }
 
+.kpi-tone-amber {
+  background: #fef3c7;
+  color: #b45309;
+}
+
 .kpi-tone-rose {
   background: #ffe4e6;
   color: #be123c;
@@ -359,6 +364,11 @@ body {
 .dark .kpi-tone-emerald {
   background: #174c34;
   color: #50fa7b;
+}
+
+.dark .kpi-tone-amber {
+  background: #4d3826;
+  color: #ffb86c;
 }
 
 .dark .kpi-tone-rose {
@@ -421,8 +431,8 @@ body {
 }
 
 .field:focus {
-  border-color: #197254;
-  box-shadow: 0 0 0 3px #19725420;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent);
 }
 
 .dark .field:focus {
@@ -1197,6 +1207,9 @@ summary:focus-visible {
 .dark .members-page .text-gray-500,
 .dark .transactions-page .text-gray-500,
 .dark .transaction-form-page .text-gray-500,
+.dark .assets-page .text-gray-500,
+.dark .dashboard-page .text-gray-500,
+.dark .transaction-filter-settings-page .text-gray-500,
 .dark .dashboard-chart-card .text-gray-500,
 .dark .dashboard-breakdown-card .text-gray-500 {
   color: var(--muted);

@@ -99,7 +99,7 @@ describe('TransactionRow', () => {
     const amount = desktopRow?.querySelector('.transaction-row-amount');
     const actions = desktopRow?.querySelector('.transaction-row-actions');
     expect(amount?.parentElement).toBe(actions?.parentElement);
-    expect(actions).toHaveClass('w-[72px]', 'grid-cols-2');
+    expect(actions).toHaveClass('w-[88px]', 'grid-cols-2');
   });
 
   it('giữ tên mục đích và các nút desktop trong vùng cột riêng', () => {
