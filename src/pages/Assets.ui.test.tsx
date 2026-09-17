@@ -266,7 +266,8 @@ describe('Tài sản', () => {
     expect(savingsArticle.querySelectorAll('.asset-stat-card')).toHaveLength(4);
     expect(within(savingsArticle).queryByText(/Lịch sử sổ/)).not.toBeInTheDocument();
     const savingsActions = within(savingsArticle).getByRole('group', { name: 'Thao tác sổ tiết kiệm' });
-    expect(savingsActions.parentElement).toHaveClass('asset-stat-row');
+    expect(savingsActions.parentElement).toHaveClass('asset-stat-row', 'grid-cols-2');
+    expect(savingsActions).toHaveClass('col-span-2');
     expect(within(savingsActions).getAllByRole('button')).toHaveLength(3);
     expect(Array.from(savingsActions.querySelectorAll('button')).map((button) => button.getAttribute('aria-label'))).toEqual(['Tất toán', 'Sửa', 'Xóa']);
     expect(within(savingsActions).getByRole('button', { name: 'Sửa' })).toHaveClass('asset-action-button', 'asset-icon-action');
@@ -279,7 +280,8 @@ describe('Tài sản', () => {
     const goldArticle = screen.getByText('1 / 1 chỉ').closest('article')!;
 
     const goldActions = within(goldArticle).getByRole('group', { name: 'Thao tác lô vàng' });
-    expect(goldActions.parentElement).toHaveClass('asset-stat-row');
+    expect(goldActions.parentElement).toHaveClass('asset-stat-row', 'grid-cols-2');
+    expect(goldActions).toHaveClass('col-span-2');
     expect(within(goldActions).getAllByRole('button')).toHaveLength(2);
     expect(within(goldActions).getByRole('button', { name: 'Sửa' })).toHaveClass('asset-icon-action');
     expect(within(goldActions).getByRole('button', { name: 'Xóa' })).toHaveClass('asset-icon-action');
