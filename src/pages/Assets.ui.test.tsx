@@ -243,8 +243,19 @@ describe('Tài sản', () => {
     expect(sellButton.parentElement).toHaveClass('grid', 'w-full', 'sm:w-64');
   });
 
-  it('giữ dòng tài sản gọn và nút thao tác không xuống dòng', () => {
+  it('giữ dòng tài sản gọn, ẩn lịch sử sổ và dùng nút icon cùng hàng số liệu', () => {
     localStorage.setItem(`family-expense:savings-accounts:${familyId}`, JSON.stringify([savingsAccount]));
+    localStorage.setItem(`family-expense:savings-movements:${familyId}`, JSON.stringify([{
+      id: 'movement-hidden-ui',
+      familyId,
+      savingsAccountId: savingsAccount.id,
+      movementType: 'opening',
+      amount: savingsAccount.principal,
+      balanceAfter: savingsAccount.currentBalance,
+      movementDate: savingsAccount.openedOn,
+      paymentMethodId: 'payment-bank',
+      transactionId: 'savings-opening-ui',
+    }]));
     localStorage.setItem(`family-expense:gold-assets:${familyId}`, JSON.stringify([goldAsset]));
     renderAssets([]);
 
@@ -252,14 +263,25 @@ describe('Tài sản', () => {
 
     expect(savingsArticle).toHaveClass('p-3', 'sm:p-4');
     expect(savingsArticle.querySelectorAll('.asset-stat-card')).toHaveLength(4);
-    expect(within(savingsArticle).getByRole('button', { name: 'Sửa' })).toHaveClass('asset-action-button');
-    expect(within(savingsArticle).getByRole('button', { name: 'Tất toán' })).toHaveClass('asset-action-button');
+    expect(within(savingsArticle).queryByText(/Lịch sử sổ/)).not.toBeInTheDocument();
+    const savingsActions = within(savingsArticle).getByRole('group', { name: 'Thao tác sổ tiết kiệm' });
+    expect(savingsActions.parentElement).toHaveClass('asset-stat-row');
+    expect(within(savingsActions).getAllByRole('button')).toHaveLength(3);
+    expect(within(savingsActions).getByRole('button', { name: 'Sửa' })).toHaveClass('asset-action-button', 'asset-icon-action');
+    expect(within(savingsActions).getByRole('button', { name: 'Tất toán' })).toHaveClass('asset-action-button', 'asset-icon-action');
+    expect(within(savingsActions).getByRole('button', { name: 'Xóa' })).toHaveClass('asset-action-button', 'asset-icon-action');
+    expect(within(savingsActions).getByRole('button', { name: 'Sửa' }).textContent).toBe('');
+    expect(within(savingsActions).getByRole('button', { name: 'Sửa' })).toHaveAttribute('title', 'Sửa sổ tiết kiệm');
 
     fireEvent.click(screen.getByRole('tab', { name: 'Vàng' }));
     const goldArticle = screen.getByText('1 / 1 chỉ').closest('article')!;
 
-    expect(within(goldArticle).getByRole('button', { name: 'Sửa' })).toHaveClass('asset-action-button');
-    expect(within(goldArticle).getByRole('button', { name: 'Xóa' })).toHaveClass('asset-action-button');
+    const goldActions = within(goldArticle).getByRole('group', { name: 'Thao tác lô vàng' });
+    expect(goldActions.parentElement).toHaveClass('asset-stat-row');
+    expect(within(goldActions).getAllByRole('button')).toHaveLength(2);
+    expect(within(goldActions).getByRole('button', { name: 'Sửa' })).toHaveClass('asset-icon-action');
+    expect(within(goldActions).getByRole('button', { name: 'Xóa' })).toHaveClass('asset-icon-action');
+    expect(within(goldActions).getByRole('button', { name: 'Sửa' }).textContent).toBe('');
   });
 
   it('cho phép nhập lãi suất thập phân trên bàn phím điện thoại', () => {
