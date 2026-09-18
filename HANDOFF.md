@@ -4,10 +4,10 @@
 
 ## Current state
 
-- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; `main` hiện ở merge commit `10e447e` sau PR [#211](https://github.com/nhan0805/family-expense/pull/211). [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/d82088e3-6a28-4761-9d4f-7166af23dee4) đã pass và smoke HTTP 200 đã được xác nhận.
-- Code trên `main` đã gồm PR [#211](https://github.com/nhan0805/family-expense/pull/211), rút gọn card vàng mobile và khôi phục lần bán; cùng các thay đổi UI/UX toàn app của PR [#207](https://github.com/nhan0805/family-expense/pull/207), tài sản của PR [#206](https://github.com/nhan0805/family-expense/pull/206) và [#205](https://github.com/nhan0805/family-expense/pull/205), drill-down Dashboard của PR [#203](https://github.com/nhan0805/family-expense/pull/203) và các release trước.
-- CI hậu merge [run 35295390813](https://github.com/nhan0805/family-expense/actions/runs/35295390813) và Supabase Production Deploy [run 35295390802](https://github.com/nhan0805/family-expense/actions/runs/35295390802) của merge commit `10e447e` pass quality, E2E, db-security và migration production.
-- Nhánh workspace cho release/status: `codex/release-status-20260918-uiux`, được đồng bộ từ `origin/main` sau khi PR #211 merge. Các thay đổi điều hướng nút Sửa ở Layout/Catalogs/RecurringExpenses vẫn chưa được đưa vào production.
+- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; `main` hiện ở merge commit `f3db7b7` sau PR [#214](https://github.com/nhan0805/family-expense/pull/214). [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/b7c87118-409b-4c49-8b0a-d1f43693b57e) đã pass và smoke `/dang-nhap` trả HTTP 200.
+- Code trên `main` đã gồm PR [#214](https://github.com/nhan0805/family-expense/pull/214), sửa lỗi cascade khiến icon form đăng nhập chồng lên nội dung; cùng PR [#211](https://github.com/nhan0805/family-expense/pull/211), các thay đổi UI/UX toàn app của PR [#207](https://github.com/nhan0805/family-expense/pull/207), tài sản của PR [#206](https://github.com/nhan0805/family-expense/pull/206) và [#205](https://github.com/nhan0805/family-expense/pull/205), drill-down Dashboard của PR [#203](https://github.com/nhan0805/family-expense/pull/203) và các release trước.
+- CI hậu merge [run 35309504593](https://github.com/nhan0805/family-expense/actions/runs/35309504593) của merge commit `f3db7b7` pass quality, E2E, db-security và performance budget; thay đổi chỉ ở frontend nên không có Supabase Production Deploy mới.
+- Nhánh release/status: `codex/release-status-20260918-login-icon`, được đồng bộ từ `origin/main` sau khi PR #214 merge. Các thay đổi khác ngoài PR #214 không nằm trong release này.
 - Các cập nhật release/status sau deploy chỉ cập nhật tài liệu trạng thái/link; không tạo thêm production deploy cho follow-up này.
 - Đã cập nhật CI/preview cho `merge_group`, thu hẹp trigger Supabase và chuẩn hóa single-writer cho tài liệu release; chưa bật Merge Queue/branch protection trên GitHub.
 - Bản đồ kiến trúc ổn định nằm trong [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md); quy tắc phân loại tài liệu nằm trong [`docs/AI_CONTEXT_GUIDE.md`](docs/AI_CONTEXT_GUIDE.md).
@@ -28,6 +28,13 @@
 - Semantic embedding/search production path đã bị loại bỏ; không đưa lại nếu chưa có quyết định kiến trúc mới.
 
 ## Recently completed
+
+### Sửa icon bị chồng lên chữ trong màn hình đăng nhập
+
+- Form đăng nhập giữ đúng khoảng đệm trái/phải cho icon email, khóa và nút hiện mật khẩu bằng cách đưa style nền `.field` vào `@layer components`, để utility Tailwind `pl-10`/`pr-12` được áp dụng đúng.
+- Files: `src/index.css`, `src/pages/Login.test.tsx`. Không đổi schema, RLS/RPC, Edge Function hoặc dữ liệu.
+- Kiểm thử: CI hậu merge [run 35309504593](https://github.com/nhan0805/family-expense/actions/runs/35309504593) pass quality, E2E, db-security và performance budget.
+- Triển khai: PR [#214](https://github.com/nhan0805/family-expense/pull/214) merge tại commit `f3db7b7`; Cloudflare Pages production pass; smoke `https://family-expense-8fo.pages.dev/dang-nhap` trả HTTP 200.
 
 ### Rút gọn dòng vàng và khôi phục lần bán nhầm
 
@@ -135,7 +142,7 @@
 
 ## Current work
 
-PR #209 đã hoàn tất quality gate, merge vào `main` và deploy production thành công. Card lô vàng đã cân lại trên mobile/tablet rộng, còn điện thoại nhỏ vẫn xếp dọc; không còn feature code đang chờ trong workspace. Nếu cần chỉnh tiếp, bắt đầu từ `origin/main`.
+PR #214 đã hoàn tất quality gate, merge vào `main` và deploy production thành công. Lỗi icon bị chồng lên chữ ở form đăng nhập đã được sửa; nếu cần chỉnh tiếp, bắt đầu từ `origin/main`. Các thay đổi working tree ngoài release này không được đưa vào production.
 
 ## Pending tasks
 
