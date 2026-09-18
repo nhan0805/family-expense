@@ -37,7 +37,7 @@ describe('Members', () => {
       screen.getByRole('button', { name: 'Thêm vào gia đình' }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: 'Xóa gia đình' }),
+      await screen.findByRole('button', { name: 'Xóa gia đình' }),
     ).toHaveClass('danger-button');
     expect(
       screen.getByRole('heading', { name: 'Xóa gia đình' }),
@@ -170,5 +170,30 @@ describe('Members', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Hệ thống phản hồi quá lâu');
     expect(deleteFamily).toHaveBeenCalledOnce();
     expect(deleteButton).toBeEnabled();
+  });
+
+  it('cho nút phản hồi rõ ràng khi gia đình còn giao dịch hoạt động', async () => {
+    const deleteFamily = vi.fn();
+    vi.mocked(supabase.rpc)
+      .mockResolvedValueOnce({ data: [], error: null } as never)
+      .mockResolvedValueOnce({ data: false, error: null } as never);
+    vi.mocked(useApp).mockReturnValue({
+      familyId: 'family-1',
+      familyName: 'Gia đình của tôi',
+      currentUserEmail: 'owner@example.com',
+      currentUserId: 'owner-1',
+      currentUserRole: 'owner',
+      updateFamilyName: vi.fn(),
+      deleteFamily,
+    } as unknown as ReturnType<typeof useApp>);
+
+    renderMembers();
+
+    const deleteButton = await screen.findByRole('button', { name: 'Xóa gia đình' });
+    expect(deleteButton).toBeEnabled();
+    fireEvent.click(deleteButton);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Hãy xóa hết giao dịch');
+    expect(deleteFamily).not.toHaveBeenCalled();
   });
 });
