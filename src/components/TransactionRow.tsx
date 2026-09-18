@@ -92,8 +92,8 @@ export const TransactionRow = memo(function TransactionRow({
   const desktopActionClass = hasTwoDesktopActions ? 'w-[88px] grid-cols-2' : 'w-11 grid-cols-1';
 
   return (
-    <div className="transaction-row-shell">
-      <article aria-label={`Giao dịch ${transaction.description}`} className={`transaction-card relative rounded-2xl border border-black/10 p-4 shadow-sm transition duration-150 hover:-translate-y-0.5 hover:shadow-md dark:border-white/10 md:hidden ${tone.rowClass}`}>
+    <div className={`transaction-row-shell${openMenu ? ' transaction-row-shell-menu-open' : ''}`}>
+      <article aria-label={`Giao dịch ${transaction.description}`} className={`transaction-card relative rounded-2xl border border-black/10 p-4 shadow-sm transition duration-150 hover:-translate-y-0.5 hover:shadow-md dark:border-white/10 md:hidden ${openMenu ? 'z-20' : ''} ${tone.rowClass}`}>
         <div className="flex items-start justify-between gap-3">
           {selectMode && <input type="checkbox" className="mt-1 size-5 shrink-0 accent-[var(--primary)]" aria-label={`Chọn giao dịch ${transaction.description}`} checked={selected} onChange={() => onToggleSelected(transaction.id)} />}
           <div className="min-w-0 flex-1">
