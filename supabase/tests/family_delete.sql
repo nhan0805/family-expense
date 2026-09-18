@@ -42,8 +42,14 @@ select ok(
   'family deletion only hard-deletes soft-deleted transactions'
 );
 select ok(
-  not has_table_privilege('authenticated', 'public.families', 'DELETE'),
-  'authenticated clients cannot delete families directly'
+  not exists(
+    select 1
+    from pg_policies
+    where schemaname = 'public'
+      and tablename = 'families'
+      and cmd = 'DELETE'
+  ),
+  'families have no direct delete policy for clients'
 );
 
 select * from finish();
