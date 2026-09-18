@@ -4,10 +4,10 @@
 
 ## Current state
 
-- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; `main` hiện có runtime merge commit `663e44e` sau PR [#225](https://github.com/nhan0805/family-expense/pull/225). [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/5b8cf9a5-f601-4bd0-b754-3255299d064c) đã pass; smoke `/`, `/dang-nhap` và `/thanh-vien` đều trả HTTP 200.
-- Code trên `main` đã gồm PR [#216](https://github.com/nhan0805/family-expense/pull/216), sửa RPC xóa gia đình để gỡ liên kết asset trước khi hard-delete giao dịch đã xóa mềm; PR [#220](https://github.com/nhan0805/family-expense/pull/220), bắt lỗi reject của thao tác xóa và hiển thị trạng thái loading; PR [#222](https://github.com/nhan0805/family-expense/pull/222), hiển thị rõ trạng thái kiểm tra điều kiện và lý do không thể xóa; PR [#225](https://github.com/nhan0805/family-expense/pull/225), cho phép tiếp tục tới RPC authoritative khi preflight không khả dụng và dọn dữ liệu family local sau khi xóa; PR [#217](https://github.com/nhan0805/family-expense/pull/217), thu gọn nút Xóa thành viên thành icon-only; cùng PR [#214](https://github.com/nhan0805/family-expense/pull/214), [#211](https://github.com/nhan0805/family-expense/pull/211), các thay đổi UI/UX toàn app của PR [#207](https://github.com/nhan0805/family-expense/pull/207), tài sản của PR [#206](https://github.com/nhan0805/family-expense/pull/206) và [#205](https://github.com/nhan0805/family-expense/pull/205), drill-down Dashboard của PR [#203](https://github.com/nhan0805/family-expense/pull/203) và các release trước.
-- CI hậu merge [run 35359520727](https://github.com/nhan0805/family-expense/actions/runs/35359520727) của PR #225 pass quality, E2E, db-security và performance budget; [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/5b8cf9a5-f601-4bd0-b754-3255299d064c) cũng pass. PR #225 chỉ thay đổi frontend và local fallback nên không có migration hoặc Supabase Production Deploy mới.
-- Nhánh release/status: `codex/release-status-family-delete-fallback-20260918`, được đồng bộ từ `origin/main` sau khi PR #225 merge. PR này chỉ cập nhật tài liệu trạng thái/link và không tạo thêm production deploy.
+- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; `main` hiện có runtime merge commit `57484d5` sau PR [#226](https://github.com/nhan0805/family-expense/pull/226). [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/4f4a5e15-5c3d-44f3-8356-afbdd78e89ea) đã pass; smoke `/`, `/dang-nhap` và `/thanh-vien` đều trả HTTP 200.
+- Code trên `main` đã gồm PR [#225](https://github.com/nhan0805/family-expense/pull/225), xử lý fallback xóa gia đình; PR [#226](https://github.com/nhan0805/family-expense/pull/226), khôi phục toggle giao diện Sáng/Tối bằng icon và bỏ trạng thái theme `system`; cùng các release trước.
+- CI hậu merge [run 35361342048](https://github.com/nhan0805/family-expense/actions/runs/35361342048) của merge commit `57484d5` pass quality, E2E, db-security và performance budget; Cloudflare Pages production check cũng pass. PR #226 chỉ thay đổi frontend, không có migration Supabase mới.
+- Nhánh release/status hiện tại: `codex/release-status-theme-toggle-20260918`, được đồng bộ từ `origin/main` sau khi PR #226 merge để ghi nhận release; thay đổi tài liệu này không tạo thêm production deploy.
 - Đã cập nhật CI/preview cho `merge_group`, thu hẹp trigger Supabase và chuẩn hóa single-writer cho tài liệu release; chưa bật Merge Queue/branch protection trên GitHub.
 - Bản đồ kiến trúc ổn định nằm trong [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md); quy tắc phân loại tài liệu nằm trong [`docs/AI_CONTEXT_GUIDE.md`](docs/AI_CONTEXT_GUIDE.md).
 
@@ -36,6 +36,12 @@
 
 ## Recently completed
 
+### Khôi phục toggle giao diện Sáng/Tối
+
+- Giao diện đổi lại thành toggle hai trạng thái Sáng/Tối với icon Sun/Moon; bỏ select `Theo thiết bị` và giữ switch ngôn ngữ VI/EN.
+- Files: `src/components/ThemeSelect.tsx`, `src/context/ThemeContext.tsx`, `src/context/ThemeContext.test.tsx`.
+- Kiểm thử: Vitest 49 file/239 test, TypeScript, ESLint, Vite build, performance budget, E2E và db-security đều pass qua CI.
+- Triển khai: PR [#226](https://github.com/nhan0805/family-expense/pull/226) merge tại commit `57484d5`; [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/4f4a5e15-5c3d-44f3-8356-afbdd78e89ea) pass; smoke production `/`, `/dang-nhap` và `/thanh-vien` trả HTTP 200.
 ### Khôi phục thao tác xóa gia đình khi preflight không khả dụng
 
 - Nguyên nhân: giao diện coi lỗi hoặc kết quả không xác định của preflight `can_delete_family` như không đủ điều kiện, nên người dùng không thể tiếp tục dù RPC authoritative vẫn là lớp kiểm tra cuối; local/demo cũng chưa dọn hết dữ liệu family sau khi xóa.

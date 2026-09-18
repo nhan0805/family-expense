@@ -2,6 +2,13 @@
 
 ## 2026-09-18
 
+### Khôi phục toggle giao diện Sáng/Tối
+
+- Yêu cầu: Đưa nút Giao diện về toggle Sáng/Tối bằng icon như trước, không dùng lựa chọn Theo thiết bị.
+- Sau thay đổi: Hàng Giao diện dùng switch hai trạng thái với icon Sun/Moon; switch VI/EN giữ nguyên. Theme state chỉ còn `light`/`dark`; `ThemeSelect` vẫn dùng hook optional để hoạt động an toàn trong AuthShell/test không bọc provider.
+- Files: `src/components/ThemeSelect.tsx`, `src/context/ThemeContext.tsx`, `src/context/ThemeContext.test.tsx`.
+- Kiểm thử: local Vitest 49 file/239 test, TypeScript, ESLint, Vite build và `git diff --check` pass; CI [run 35361342048](https://github.com/nhan0805/family-expense/actions/runs/35361342048) pass quality, E2E, db-security và performance budget.
+- Triển khai: PR [#226](https://github.com/nhan0805/family-expense/pull/226) merge vào `main` tại commit `57484d5`; [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/4f4a5e15-5c3d-44f3-8356-afbdd78e89ea) pass; smoke `https://family-expense-8fo.pages.dev/`, `/dang-nhap` và `/thanh-vien` trả HTTP 200.
 ### Khôi phục thao tác xóa gia đình khi preflight không khả dụng
 
 - Giao diện không còn coi lỗi/null từ preflight `can_delete_family` là kết luận không thể xóa; người dùng vẫn có thể xác nhận để RPC `delete_empty_family` authoritative tự kiểm tra lần cuối. Local/demo mode kiểm tra giao dịch đang hoạt động trước khi xóa.
