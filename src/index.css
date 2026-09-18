@@ -813,6 +813,123 @@ summary:focus-visible {
   color: var(--text);
 }
 
+.gold-price-panel {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--primary) 30%, var(--border));
+  border-radius: 1.15rem;
+  background: color-mix(in srgb, var(--primary-soft) 46%, var(--surface));
+  padding: 1rem;
+}
+
+.gold-price-panel::after {
+  position: absolute;
+  top: -4.5rem;
+  right: -2.5rem;
+  width: 11rem;
+  height: 11rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  content: '';
+  pointer-events: none;
+}
+
+.gold-price-panel-heading,
+.gold-price-form {
+  position: relative;
+  z-index: 1;
+}
+
+.gold-price-panel-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: .75rem;
+}
+
+.gold-price-panel-icon {
+  display: grid;
+  flex: 0 0 auto;
+  width: 2.75rem;
+  height: 2.75rem;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--primary) 62%, transparent);
+  border-radius: .9rem;
+  background: var(--primary);
+  color: var(--primary-contrast);
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--primary) 24%, transparent);
+}
+
+.gold-price-panel-description {
+  margin-top: .35rem;
+  max-width: 48rem;
+  color: var(--muted);
+  font-size: .85rem;
+  line-height: 1.45;
+}
+
+.gold-price-status {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: .22rem .55rem;
+  font-size: .7rem;
+  font-weight: 750;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.gold-price-status-active {
+  border-color: color-mix(in srgb, var(--success) 42%, var(--border));
+  background: var(--success-soft);
+  color: var(--success-strong);
+}
+
+.gold-price-status-empty {
+  border-color: color-mix(in srgb, var(--border-strong) 70%, transparent);
+  background: var(--surface-muted);
+  color: var(--muted);
+}
+
+.gold-price-form {
+  display: grid;
+  gap: .75rem;
+  margin-top: 1rem;
+}
+
+.gold-price-input-wrap {
+  position: relative;
+  display: block;
+}
+
+.gold-price-input {
+  padding-inline-end: 5.25rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+}
+
+.gold-price-unit {
+  position: absolute;
+  top: 50%;
+  right: .9rem;
+  transform: translateY(-50%);
+  color: var(--muted);
+  font-size: .75rem;
+  font-weight: 800;
+  letter-spacing: .02em;
+  pointer-events: none;
+}
+
+.gold-price-submit {
+  min-width: 8.5rem;
+}
+
+.gold-price-helper {
+  color: var(--muted);
+  font-size: .75rem;
+  line-height: 1.4;
+}
+
 .transaction-card-tag {
   display: inline-flex;
   align-items: center;
@@ -830,6 +947,21 @@ summary:focus-visible {
   border-color: #ffffff38;
   background: color-mix(in srgb, var(--surface) 92%, transparent);
   color: var(--text);
+}
+
+@media (min-width: 640px) {
+  .gold-price-panel {
+    padding: 1.25rem;
+  }
+
+  .gold-price-form {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+  }
+
+  .gold-price-helper {
+    grid-column: 1 / -1;
+  }
 }
 
 .ui-enter {
