@@ -1,6 +1,6 @@
 -- Structural tests for savings-book and gold asset management.
 begin;
-select plan(41);
+select plan(43);
 
 select ok(
   exists(
@@ -69,10 +69,11 @@ select ok(
     'public.upsert_gold_asset(uuid,uuid,date,numeric,numeric,numeric,uuid,text,boolean)'::regprocedure,
     'public.record_gold_sale(uuid,uuid,date,numeric,numeric,uuid,text)'::regprocedure,
     'public.record_gold_sale_aggregate(uuid,date,numeric,numeric,uuid,text)'::regprocedure,
-    'public.archive_gold_asset(uuid,uuid)'::regprocedure
+    'public.archive_gold_asset(uuid,uuid)'::regprocedure,
+    'public.restore_gold_sale(uuid,uuid)'::regprocedure
   )
   and pg_get_functiondef(oid) ilike '%public.is_family_member(%'
-  and pg_get_functiondef(oid) not ilike '%public.is_family_owner(%') = 8,
+  and pg_get_functiondef(oid) not ilike '%public.is_family_owner(%') = 9,
   'asset mutation RPCs allow all active family members'
 );
 
@@ -84,6 +85,7 @@ select has_function('public', 'archive_savings_account', array['uuid','uuid'], '
 select has_function('public', 'upsert_gold_asset', array['uuid','uuid','date','numeric','numeric','numeric','uuid','text','boolean'], 'gold upsert RPC exists');
 select has_function('public', 'record_gold_sale', array['uuid','uuid','date','numeric','numeric','uuid','text'], 'gold sale RPC exists');
 select has_function('public', 'record_gold_sale_aggregate', array['uuid','date','numeric','numeric','uuid','text'], 'aggregate gold sale RPC exists');
+select has_function('public', 'restore_gold_sale', array['uuid','uuid'], 'gold sale restore RPC exists');
 select has_function('public', 'archive_gold_asset', array['uuid','uuid'], 'gold archive RPC exists');
 select has_function('public', 'get_asset_summary', array['uuid'], 'asset summary RPC exists');
 select ok(
@@ -96,8 +98,9 @@ select ok(
     'public.record_gold_sale(uuid,uuid,date,numeric,numeric,uuid,text)'::regprocedure,
     'public.record_gold_sale_aggregate(uuid,date,numeric,numeric,uuid,text)'::regprocedure,
     'public.archive_gold_asset(uuid,uuid)'::regprocedure,
+    'public.restore_gold_sale(uuid,uuid)'::regprocedure,
     'public.get_asset_summary(uuid)'::regprocedure
-  )) = 9,
+  )) = 10,
   'asset RPCs use security definer'
 );
 select ok(
@@ -120,6 +123,15 @@ select ok(
   pg_get_functiondef('public.record_gold_sale_aggregate(uuid,date,numeric,numeric,uuid,text)'::regprocedure) ilike '%public.automatic_transaction_defaults%'
   and pg_get_functiondef('public.record_gold_sale_aggregate(uuid,date,numeric,numeric,uuid,text)'::regprocedure) ilike '%gold_sale%',
   'aggregate gold sale reads the configured gold-sale catalogs'
+);
+select ok(
+  pg_get_functiondef('public.restore_gold_sale(uuid,uuid)'::regprocedure) ilike '%public.is_family_member(%'
+  and pg_get_functiondef('public.restore_gold_sale(uuid,uuid)'::regprocedure) ilike '%for update%'
+  and pg_get_functiondef('public.restore_gold_sale(uuid,uuid)'::regprocedure) ilike '%delete from public.gold_sales%'
+  and pg_get_functiondef('public.restore_gold_sale(uuid,uuid)'::regprocedure) ilike '%delete from public.transactions%'
+  and pg_get_functiondef('public.restore_gold_sale(uuid,uuid)'::regprocedure) ilike '%remaining_quantity_chi%'
+  and pg_get_functiondef('public.restore_gold_sale(uuid,uuid)'::regprocedure) ilike '%archived_at = null%',
+  'gold sale restore returns quantity and removes the linked income atomically'
 );
 select ok(
   not has_table_privilege('authenticated', 'public.savings_accounts', 'INSERT')

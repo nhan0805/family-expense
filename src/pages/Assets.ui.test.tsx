@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { FeedbackProvider } from '../components/Feedback';
 import { useApp } from '../context/AppContext';
@@ -10,6 +10,7 @@ vi.mock('../context/AppContext', () => ({ useApp: vi.fn() }));
 vi.mock('../lib/supabase', () => ({ isSupabaseConfigured: false }));
 
 const familyId = 'family-assets-ui';
+const scrollIntoView = vi.fn();
 const savingsAccount = {
   id: 'savings-ui',
   familyId,
@@ -60,6 +61,10 @@ function renderAssets(
 }
 
 describe('Tài sản', () => {
+  beforeEach(() => {
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, value: scrollIntoView });
+  });
+
   afterEach(() => {
     cleanup();
     localStorage.clear();
@@ -124,7 +129,7 @@ describe('Tài sản', () => {
     ];
     const { setTransactions } = renderAssets(linkedTransactions);
     fireEvent.click(screen.getByRole('tab', { name: 'Vàng' }));
-    const goldArticle = screen.getByText('1 / 1 chỉ').closest('article')!;
+    const goldArticle = screen.getByRole('heading', { name: '1 chỉ', level: 4 }).closest('article')!;
 
     fireEvent.click(within(goldArticle).getByRole('button', { name: 'Xóa' }));
     const dialog = await screen.findByRole('alertdialog');
@@ -207,9 +212,42 @@ describe('Tài sản', () => {
     expect(savedSales).toHaveLength(2);
     expect(savedSales.map((sale: { quantityChi: number }) => sale.quantityChi)).toEqual([1, 0.5]);
     expect(savedSales.every((sale: { transactionId: string }) => Boolean(sale.transactionId))).toBe(true);
+    expect(screen.getByText('Lịch sử bán (1)')).toBeInTheDocument();
     await waitFor(() => expect(setTransactions).toHaveBeenCalledTimes(1));
     const update = setTransactions.mock.calls[0]![0] as (items: Array<Record<string, unknown>>) => Array<Record<string, unknown>>;
     expect(update([])[0]).toMatchObject({ transactionType: 'Thu nhập', amount: 13_500_000, sourceReference: expect.stringContaining('asset:gold:aggregate:sale:') });
+  });
+
+  it('khôi phục toàn bộ lần bán tổng hợp và giao dịch thu nhập liên kết', async () => {
+    const soldAsset = { ...goldAsset, remainingQuantityChi: 0.5 };
+    localStorage.setItem(`family-expense:gold-assets:${familyId}`, JSON.stringify([soldAsset]));
+    localStorage.setItem(`family-expense:gold-sales:${familyId}`, JSON.stringify([{
+      id: 'sale-restore-ui',
+      familyId,
+      goldAssetId: goldAsset.id,
+      saleDate: '2026-02-01',
+      quantityChi: 0.5,
+      salePricePerChi: 8_500_000,
+      amount: 4_250_000,
+      paymentMethodId: 'payment-bank',
+      transactionId: 'gold-sale-restore-ui',
+    }]));
+    const linkedTransaction = { id: 'gold-sale-restore-ui', source: 'asset', sourceReference: 'asset:gold:aggregate:sale:restore' };
+    const { setTransactions } = renderAssets([linkedTransaction]);
+    fireEvent.click(screen.getByRole('tab', { name: 'Vàng' }));
+    fireEvent.click(screen.getByText('Lịch sử bán (1)'));
+    fireEvent.click(screen.getByRole('button', { name: 'Khôi phục lần bán' }));
+    const dialog = await screen.findByRole('alertdialog');
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Khôi phục' }));
+
+    await waitFor(() => expect(screen.getByText('Đã khôi phục lần bán vàng.')).toBeInTheDocument());
+    expect(JSON.parse(localStorage.getItem(`family-expense:gold-assets:${familyId}`) || '[]')).toEqual([
+      expect.objectContaining({ id: goldAsset.id, remainingQuantityChi: 1, status: 'active' }),
+    ]);
+    expect(JSON.parse(localStorage.getItem(`family-expense:gold-sales:${familyId}`) || '[]')).toEqual([]);
+    await waitFor(() => expect(setTransactions).toHaveBeenCalledTimes(1));
+    const update = setTransactions.mock.calls[0]![0] as (items: typeof linkedTransaction[]) => typeof linkedTransaction[];
+    expect(update([linkedTransaction])).toEqual([]);
   });
 
   it('hiển thị sổ tiết kiệm và vàng trong hai tab riêng', () => {
@@ -231,7 +269,7 @@ describe('Tài sản', () => {
 
     expect(goldTab).toHaveAttribute('aria-selected', 'true');
     expect(savingsPanel).toHaveAttribute('hidden');
-    expect(within(goldPanel).getByText('1 / 1 chỉ')).toBeInTheDocument();
+    expect(within(goldPanel).getByRole('heading', { name: '1 chỉ', level: 4 })).toBeInTheDocument();
   });
 
   it('phân biệt màu nút thêm sổ và thêm vàng theo loại tài sản', () => {
@@ -293,7 +331,7 @@ describe('Tài sản', () => {
     expect(within(savingsActions).getByRole('button', { name: 'Sửa' })).toHaveAttribute('title', 'Sửa sổ tiết kiệm');
 
     fireEvent.click(screen.getByRole('tab', { name: 'Vàng' }));
-    const goldArticle = screen.getByText('1 / 1 chỉ').closest('article')!;
+    const goldArticle = screen.getByRole('heading', { name: '1 chỉ', level: 4 }).closest('article')!;
 
     expect(goldArticle).toHaveClass('asset-gold-row', 'rounded-2xl', 'p-3', 'sm:p-4');
     expect(goldArticle.querySelectorAll('.asset-stat-card')).toHaveLength(0);
@@ -302,14 +340,33 @@ describe('Tài sản', () => {
     expect(within(goldArticle).getByText('Giá bán ước tính')).toBeInTheDocument();
     expect(within(goldArticle).queryByText('Giá trị bán ước tính')).not.toBeInTheDocument();
     expect(within(goldArticle).getByText('8.000.000 ₫/chỉ')).toBeInTheDocument();
-    const goldActions = within(goldArticle).getByRole('group', { name: 'Thao tác lô vàng' });
+    const goldActions = within(goldArticle).getByRole('group', { name: 'Thao tác vàng' });
     expect(goldArticle.querySelector('.asset-row-footer')).not.toBeInTheDocument();
-    expect(goldActions.closest('.asset-row-main')).toHaveClass('asset-row-main', 'grid', 'gap-3', 'md:grid-cols-[minmax(0,1fr)_minmax(18rem,0.75fr)_auto]');
-    expect(goldActions).toHaveClass('border-t', 'md:border-l', 'md:border-t-0');
+    expect(goldActions.closest('.asset-row-main')).toHaveClass('asset-row-main', 'grid', 'gap-3', 'grid-cols-[minmax(0,1fr)_auto]', 'md:grid-cols-[minmax(0,1fr)_minmax(18rem,0.75fr)_auto]');
+    expect(goldActions).toHaveClass('col-start-2', 'row-start-1', 'md:border-l');
     expect(within(goldActions).getAllByRole('button')).toHaveLength(2);
     expect(within(goldActions).getByRole('button', { name: 'Sửa' })).toHaveClass('asset-icon-action');
     expect(within(goldActions).getByRole('button', { name: 'Xóa' })).toHaveClass('asset-icon-action');
     expect(within(goldActions).getByRole('button', { name: 'Sửa' }).textContent).toBe('');
+  });
+
+  it('đưa tới form khi sửa sổ tiết kiệm hoặc lô vàng ở cuối danh sách', async () => {
+    localStorage.setItem(`family-expense:savings-accounts:${familyId}`, JSON.stringify([savingsAccount]));
+    localStorage.setItem(`family-expense:gold-assets:${familyId}`, JSON.stringify([goldAsset]));
+    renderAssets([]);
+
+    const savingsArticle = screen.getByText('ACB · Sổ cần xóa').closest('article')!;
+    fireEvent.click(within(savingsArticle).getByRole('button', { name: 'Sửa' }));
+
+    await waitFor(() => expect(scrollIntoView).toHaveBeenCalledWith(expect.objectContaining({ behavior: 'smooth', block: 'start' })));
+    expect(document.activeElement).toBe(screen.getByLabelText('Ngân hàng'));
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Vàng' }));
+    const goldArticle = screen.getByRole('heading', { name: '1 chỉ', level: 4 }).closest('article')!;
+    fireEvent.click(within(goldArticle).getByRole('button', { name: 'Sửa' }));
+
+    await waitFor(() => expect(scrollIntoView).toHaveBeenCalledTimes(2));
+    expect(document.activeElement).toBe(screen.getByLabelText('Ngày mua'));
   });
 
   it('cho phép nhập lãi suất thập phân trên bàn phím điện thoại', () => {

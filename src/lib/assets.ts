@@ -770,6 +770,53 @@ export function recordLocalGoldSaleAggregate(
   return { assets: nextAssets, sales };
 }
 
+export function restoreLocalGoldSale(
+  familyId: string,
+  saleId: string,
+): { assets: GoldAsset[]; sales: GoldSale[]; transactionIds: string[] } {
+  const saleKey = localStorageKey(familyId, 'gold-sales');
+  const sales = readStored(saleKey, isGoldSale);
+  const target = sales.find((sale) => sale.id === saleId);
+  if (!target) throw new Error('GOLD_SALE_NOT_FOUND');
+
+  const relatedSales = target.transactionId
+    ? sales.filter((sale) => sale.transactionId === target.transactionId)
+    : [target];
+  const assetKey = localStorageKey(familyId, 'gold-assets');
+  const assets = readStored(assetKey, isGoldAsset);
+  if (relatedSales.some((sale) => !assets.some((asset) => asset.id === sale.goldAssetId))) {
+    throw new Error('GOLD_ASSET_NOT_FOUND');
+  }
+
+  const restoredByAsset = new Map<string, number>();
+  relatedSales.forEach((sale) => {
+    restoredByAsset.set(
+      sale.goldAssetId,
+      Number(((restoredByAsset.get(sale.goldAssetId) || 0) + sale.quantityChi).toFixed(3)),
+    );
+  });
+  const nextAssets = assets.map((asset) => {
+    const quantity = restoredByAsset.get(asset.id);
+    if (quantity === undefined) return asset;
+    return {
+      ...asset,
+      remainingQuantityChi: Math.min(asset.quantityChi, Number((asset.remainingQuantityChi + quantity).toFixed(3))),
+      status: 'active' as const,
+      archivedAt: null,
+    };
+  });
+  const removedSaleIds = new Set(relatedSales.map((sale) => sale.id));
+  const nextSales = sales.filter((sale) => !removedSaleIds.has(sale.id));
+  saveStored(assetKey, nextAssets);
+  saveStored(saleKey, nextSales);
+
+  return {
+    assets: nextAssets,
+    sales: relatedSales,
+    transactionIds: Array.from(new Set(relatedSales.map((sale) => sale.transactionId).filter((id): id is string => Boolean(id)))),
+  };
+}
+
 export function archiveLocalGoldAsset(familyId: string, assetId: string) {
   const key = localStorageKey(familyId, 'gold-assets');
   const items = readStored(key, isGoldAsset);

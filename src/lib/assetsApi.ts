@@ -291,6 +291,15 @@ export async function recordGoldSale(
   return data;
 }
 
+export async function restoreGoldSale(familyId: string, saleId: string) {
+  const { data, error } = await supabase.rpc('restore_gold_sale', {
+    p_family_id: familyId,
+    p_sale_id: saleId,
+  });
+  if (error) throw error;
+  return data;
+}
+
 export async function archiveGoldAsset(familyId: string, id: string) {
   const { data, error } = await supabase.rpc('archive_gold_asset', {
     p_family_id: familyId,

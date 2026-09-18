@@ -2,6 +2,21 @@
 
 ## 2026-09-18
 
+### Rút gọn dòng vàng và khôi phục lần bán nhầm
+
+- Card vàng trên mobile chỉ hiển thị số vàng còn giữ, ví dụ `1 chỉ`, không còn dạng `1 / 1 chỉ`; nhãn tiếng Việt được đưa về kiểu câu tự nhiên, nhóm nút icon vẫn giữ vùng chạm tối thiểu và lịch sử bán được gộp theo từng lần bán tổng hợp.
+- Thêm nút `Khôi phục lần bán` có xác nhận; local fallback và RPC `restore_gold_sale` cùng khôi phục toàn bộ số chỉ đã phân bổ, xóa lịch sử bán liên kết và giao dịch thu nhập do lần bán đó tạo ra. Migration mới: `supabase/migrations/202609180001_restore_gold_sale.sql`.
+- Files chính: `src/pages/Assets.tsx`, `src/lib/assets.ts`, `src/lib/assetsApi.ts`, test UI/domain và `supabase/tests/asset_management.sql`.
+- Kiểm thử local: Vitest 48 file/230 test, TypeScript, ESLint, Vite build và `git diff --check` pass. Test DB local chưa chạy được vì Supabase/Postgres local chưa khởi động trên máy.
+- Trạng thái: chưa merge/deploy production.
+
+### Đưa nút Sửa tới đúng form chỉnh sửa
+
+- Rà soát toàn bộ màn hình có thao tác Sửa; sổ tiết kiệm, vàng, tất toán, bán vàng, danh mục và chi phí định kỳ đều tự cuộn tới editor và focus trường đầu tiên. Route sửa giao dịch đưa viewport về đầu form; ngân sách, thành viên và sửa hàng loạt đã có editor inline/modal trực tiếp.
+- Files: `src/pages/Assets.tsx`, `src/pages/Catalogs.tsx`, `src/pages/RecurringExpenses.tsx`, `src/components/Layout.tsx` và regression tests liên quan.
+- Kiểm thử local: Vitest 48 file/230 test, TypeScript, ESLint, Vite build và `git diff --check` pass.
+- Trạng thái: chờ merge/deploy production cùng follow-up tài sản hiện tại.
+
 ### Cân lại card lô vàng trên mobile
 
 - Chuyển card lô vàng sang bố cục ngang từ breakpoint `md` để viewport mobile/tablet rộng không còn khoảng trống lớn hoặc cụm nút bị dạt lệch; điện thoại nhỏ vẫn giữ bố cục xếp dọc.
