@@ -1,7 +1,7 @@
 -- Structural regression coverage for family deletion with asset-linked
 -- soft-deleted transactions.
 begin;
-select plan(8);
+select plan(9);
 
 select has_function(
   'public',
@@ -40,6 +40,10 @@ select ok(
   pg_get_functiondef('public.delete_empty_family(uuid)'::regprocedure) ilike '%delete from public.transactions%'
     and pg_get_functiondef('public.delete_empty_family(uuid)'::regprocedure) ilike '%deleted_at is not null%',
   'family deletion only hard-deletes soft-deleted transactions'
+);
+select ok(
+  pg_get_functiondef('public.delete_empty_family(uuid)'::regprocedure) ilike '%delete from public.automatic_transaction_defaults%',
+  'family deletion clears automatic catalog defaults before catalog cascade'
 );
 select ok(
   not exists(
