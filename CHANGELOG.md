@@ -9,6 +9,14 @@
 - Kiểm thử: CI hậu merge [run 35314836865](https://github.com/nhan0805/family-expense/actions/runs/35314836865) pass quality, coverage, build/performance, E2E và db-security; local Postgres chưa khởi động nên không chạy pgTAP tại máy.
 - Triển khai: PR [#216](https://github.com/nhan0805/family-expense/pull/216) merge vào `main` tại commit `f2337af`; [Supabase Production Deploy](https://github.com/nhan0805/family-expense/actions/runs/35314836935) và [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/009a322e-2763-4946-88cb-4ea359eeb95f) pass; smoke `https://family-expense-8fo.pages.dev/` và các route `/dang-nhap`, `/thanh-vien` trả HTTP 200.
 
+### Hiển thị lỗi khi thao tác xóa gia đình không thành công
+
+- Nguyên nhân: nếu lời gọi RPC bị reject ở tầng network/runtime thay vì trả object `{ error }`, promise thoát khỏi handler nên không hiển thị lỗi và trạng thái nút có thể bị kẹt.
+- `AppContext` hiện bắt cả lỗi RPC trả về và lỗi reject; màn hình Thành viên dùng `try/catch/finally`, hiển thị `Đang xóa gia đình…` và luôn kết thúc loading để người dùng có thể thử lại. Thêm regression test cho lỗi timeout.
+- Files: `src/context/AppContext.tsx`, `src/pages/Members.tsx`, `src/pages/Members.test.tsx`. Không đổi schema, RLS/RPC hoặc dữ liệu.
+- Kiểm thử: CI hậu merge [run 35321384794](https://github.com/nhan0805/family-expense/actions/runs/35321384794) pass quality, E2E, db-security và performance budget; local Vitest 48 file/233 test cũng pass.
+- Triển khai: PR [#220](https://github.com/nhan0805/family-expense/pull/220) merge vào `main` tại commit `6cae993`; [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/92188dea-0df1-4ed0-9a4c-0f5bcc8b15d8) pass; không có migration Supabase mới; smoke `https://family-expense-8fo.pages.dev/` và các route `/dang-nhap`, `/thanh-vien` trả HTTP 200.
+
 ### Thu gọn nút xóa thành viên
 
 - Nút `Xóa thành viên` trên màn hình Thành viên chỉ còn icon thùng rác, vẫn giữ `aria-label`/tooltip và vùng chạm tối thiểu; các nút xóa gia đình, giao dịch, chi phí định kỳ và thông báo giữ lại giao diện có nhãn như trước.
