@@ -4,10 +4,10 @@
 
 ## Current state
 
-- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; `main` hiện ở merge commit `f3db7b7` sau PR [#214](https://github.com/nhan0805/family-expense/pull/214). [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/b7c87118-409b-4c49-8b0a-d1f43693b57e) đã pass và smoke `/dang-nhap` trả HTTP 200.
-- Code trên `main` đã gồm PR [#214](https://github.com/nhan0805/family-expense/pull/214), sửa lỗi cascade khiến icon form đăng nhập chồng lên nội dung; cùng PR [#211](https://github.com/nhan0805/family-expense/pull/211), các thay đổi UI/UX toàn app của PR [#207](https://github.com/nhan0805/family-expense/pull/207), tài sản của PR [#206](https://github.com/nhan0805/family-expense/pull/206) và [#205](https://github.com/nhan0805/family-expense/pull/205), drill-down Dashboard của PR [#203](https://github.com/nhan0805/family-expense/pull/203) và các release trước.
-- CI hậu merge [run 35309504593](https://github.com/nhan0805/family-expense/actions/runs/35309504593) của merge commit `f3db7b7` pass quality, E2E, db-security và performance budget; thay đổi chỉ ở frontend nên không có Supabase Production Deploy mới.
-- Nhánh release/status: `codex/release-status-20260918-login-icon`, được đồng bộ từ `origin/main` sau khi PR #214 merge. Các thay đổi khác ngoài PR #214 không nằm trong release này.
+- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; `main` hiện ở merge commit `111118a` sau PR [#217](https://github.com/nhan0805/family-expense/pull/217). [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/9cdff4e5-a0d1-490d-baec-2c765e43c21b) đã pass và smoke HTTP 200 đã được xác nhận.
+- Code trên `main` đã gồm PR [#217](https://github.com/nhan0805/family-expense/pull/217), thu gọn riêng nút Xóa thành viên thành icon-only; cùng PR [#214](https://github.com/nhan0805/family-expense/pull/214), [#211](https://github.com/nhan0805/family-expense/pull/211), các thay đổi UI/UX toàn app của PR [#207](https://github.com/nhan0805/family-expense/pull/207), tài sản của PR [#206](https://github.com/nhan0805/family-expense/pull/206) và [#205](https://github.com/nhan0805/family-expense/pull/205), drill-down Dashboard của PR [#203](https://github.com/nhan0805/family-expense/pull/203) và các release trước.
+- CI hậu merge [run 35314416000](https://github.com/nhan0805/family-expense/actions/runs/35314416000) của merge commit `111118a` pass quality, E2E, db-security và performance budget; thay đổi chỉ ở frontend/test nên không có Supabase Production Deploy mới.
+- Nhánh release/status: `codex/release-status-20260918-member-delete`, được đồng bộ từ `origin/main` sau khi PR #217 merge. Nhánh này chỉ cập nhật tài liệu trạng thái/link, không thay đổi runtime.
 - Các cập nhật release/status sau deploy chỉ cập nhật tài liệu trạng thái/link; không tạo thêm production deploy cho follow-up này.
 - Đã cập nhật CI/preview cho `merge_group`, thu hẹp trigger Supabase và chuẩn hóa single-writer cho tài liệu release; chưa bật Merge Queue/branch protection trên GitHub.
 - Bản đồ kiến trúc ổn định nằm trong [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md); quy tắc phân loại tài liệu nằm trong [`docs/AI_CONTEXT_GUIDE.md`](docs/AI_CONTEXT_GUIDE.md).
@@ -28,6 +28,13 @@
 - Semantic embedding/search production path đã bị loại bỏ; không đưa lại nếu chưa có quyết định kiến trúc mới.
 
 ## Recently completed
+
+### Thu gọn nút xóa thành viên
+
+- Nút Xóa thành viên trên màn hình Thành viên chỉ còn icon thùng rác, vẫn giữ accessible name/tooltip và vùng chạm tối thiểu; các nút xóa khác được giữ nguyên nhãn trước đó.
+- Files: `src/pages/Members.tsx`, `src/pages/Members.test.tsx`. Không đổi schema, RLS/RPC, Edge Function hoặc dữ liệu.
+- Kiểm thử: CI hậu merge [run 35314416000](https://github.com/nhan0805/family-expense/actions/runs/35314416000) pass quality, E2E, db-security và performance budget.
+- Triển khai: PR [#217](https://github.com/nhan0805/family-expense/pull/217) merge tại commit `111118a`; Cloudflare Pages production pass; smoke `https://family-expense-8fo.pages.dev/` trả HTTP 200.
 
 ### Sửa icon bị chồng lên chữ trong màn hình đăng nhập
 
