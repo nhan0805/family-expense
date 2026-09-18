@@ -2,6 +2,13 @@
 
 ## 2026-09-18
 
+### Sửa icon bị chồng lên chữ trong màn hình đăng nhập
+
+- Sửa cascade của `.field` để các utility `pl-10`/`pr-12` giữ đúng khoảng trống cho icon email, khóa và nút hiện mật khẩu; bổ sung regression assertion trong `src/pages/Login.test.tsx`.
+- Files: `src/index.css`, `src/pages/Login.test.tsx`. Không đổi schema, RLS/RPC, Edge Function hoặc dữ liệu.
+- Kiểm thử: `git diff --check` pass; CI hậu merge [run 35309504593](https://github.com/nhan0805/family-expense/actions/runs/35309504593) pass typecheck, lint, Vitest/coverage, build/performance, E2E và db-security.
+- Triển khai: PR [#214](https://github.com/nhan0805/family-expense/pull/214) merge tại commit `f3db7b7`; [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/b7c87118-409b-4c49-8b0a-d1f43693b57e) báo deploy thành công; smoke `https://family-expense-8fo.pages.dev/dang-nhap` trả HTTP 200.
+
 ### Rút gọn dòng vàng và khôi phục lần bán nhầm
 
 - Card vàng trên mobile chỉ hiển thị số vàng còn giữ, ví dụ `1 chỉ`, không còn dạng `1 / 1 chỉ`; nhãn tiếng Việt được đưa về kiểu câu tự nhiên, nhóm nút icon vẫn giữ vùng chạm tối thiểu và lịch sử bán được gộp theo từng lần bán tổng hợp.
