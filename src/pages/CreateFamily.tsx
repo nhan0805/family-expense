@@ -17,7 +17,7 @@ export function CreateFamily() {
   const [signingOut, setSigningOut] = useState(false);
   if (loading)
     return (
-      <AuthShell maxWidth="max-w-2xl">
+      <AuthShell maxWidth="max-w-2xl" showCompactThemeIcon={false}>
         <div className="space-y-5" role="status" aria-live="polite">
           <span className="sr-only">{en ? 'Preparing your family space…' : 'Đang chuẩn bị không gian gia đình…'}</span>
           <div className="h-3 w-32 animate-pulse rounded-full bg-[var(--primary-soft)] motion-reduce:animate-none" aria-hidden="true" />
@@ -68,13 +68,12 @@ export function CreateFamily() {
     : ['Có sẵn danh mục mặc định ngay từ đầu.', 'Thêm những người bạn tin tưởng sau khi thiết lập.', 'Cả gia đình cùng theo dõi một bức tranh chung.'];
 
   return (
-    <AuthShell maxWidth="max-w-3xl">
-      <div className="mb-8 flex items-start justify-between gap-4">
+    <AuthShell maxWidth="max-w-3xl" showCompactThemeIcon={false}>
+      <div className="mb-8">
         <div>
           <p className="page-kicker"><Sparkles size={15} aria-hidden="true" />{en ? 'First-time setup' : 'Thiết lập ban đầu'}</p>
           <p className="mt-2 text-xs font-semibold text-[var(--muted)]">{en ? 'One small step to get started' : 'Một bước nhỏ để bắt đầu'}</p>
         </div>
-        <span className="shrink-0 rounded-full border border-[var(--border-strong)] bg-[var(--surface-muted)] px-3 py-1.5 text-xs font-extrabold text-[var(--primary)]" aria-label={en ? 'Step 1 of 1' : 'Bước 1 trên 1'}>1 / 1</span>
       </div>
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1.08fr)_minmax(15rem,.92fr)] lg:items-start lg:gap-10">
