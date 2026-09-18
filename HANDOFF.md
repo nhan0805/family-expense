@@ -4,10 +4,10 @@
 
 ## Current state
 
-- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; `main` hiện có runtime merge commit `57484d5` sau PR [#226](https://github.com/nhan0805/family-expense/pull/226). [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/4f4a5e15-5c3d-44f3-8356-afbdd78e89ea) đã pass; smoke `/`, `/dang-nhap` và `/thanh-vien` đều trả HTTP 200.
-- Code trên `main` đã gồm PR [#225](https://github.com/nhan0805/family-expense/pull/225), xử lý fallback xóa gia đình; PR [#226](https://github.com/nhan0805/family-expense/pull/226), khôi phục toggle giao diện Sáng/Tối bằng icon và bỏ trạng thái theme `system`; cùng các release trước.
-- CI hậu merge [run 35361342048](https://github.com/nhan0805/family-expense/actions/runs/35361342048) của merge commit `57484d5` pass quality, E2E, db-security và performance budget; Cloudflare Pages production check cũng pass. PR #226 chỉ thay đổi frontend, không có migration Supabase mới.
-- Nhánh release/status hiện tại: `codex/release-status-theme-toggle-20260918`, được đồng bộ từ `origin/main` sau khi PR #226 merge để ghi nhận release; thay đổi tài liệu này không tạo thêm production deploy.
+- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; `main` hiện có runtime merge commit `048ab60` sau PR [#230](https://github.com/nhan0805/family-expense/pull/230). [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/96974dcf-aef4-4b14-8a08-c1dd86322791) đã pass; smoke `/` trả HTTP 200.
+- Code trên `main` đã gồm PR [#230](https://github.com/nhan0805/family-expense/pull/230), chuẩn hóa trạng thái giao dịch mới do AI gợi ý theo phương thức thanh toán; cùng PR [#225](https://github.com/nhan0805/family-expense/pull/225) và [#226](https://github.com/nhan0805/family-expense/pull/226).
+- CI hậu merge [run 35370991235](https://github.com/nhan0805/family-expense/actions/runs/35370991235) của merge commit `048ab60` pass quality, coverage, build/performance, E2E và db-security. PR #230 chỉ thay đổi frontend và test, không có migration Supabase mới.
+- Nhánh release/status hiện tại: `codex/release-status-ai-transaction-20260918`, được đồng bộ từ `origin/main` sau khi PR #230 merge để ghi nhận release; thay đổi tài liệu này không tạo thêm production deploy.
 - Đã cập nhật CI/preview cho `merge_group`, thu hẹp trigger Supabase và chuẩn hóa single-writer cho tài liệu release; chưa bật Merge Queue/branch protection trên GitHub.
 - Bản đồ kiến trúc ổn định nằm trong [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md); quy tắc phân loại tài liệu nằm trong [`docs/AI_CONTEXT_GUIDE.md`](docs/AI_CONTEXT_GUIDE.md).
 
@@ -35,6 +35,13 @@
 - Semantic embedding/search production path đã bị loại bỏ; không đưa lại nếu chưa có quyết định kiến trúc mới.
 
 ## Recently completed
+
+### Đặt giao dịch AI thẻ tín dụng/trả góp ở trạng thái Dự kiến
+
+- Khi AI gợi ý giao dịch mới, `TransactionForm` dùng phương thức thanh toán để gọi lại quy tắc trạng thái mặc định; `Thẻ tín dụng` và `Trả góp` hiển thị `Dự kiến`, còn giao dịch đang sửa giữ nguyên trạng thái AI trả về.
+- Files: `src/pages/TransactionForm.tsx`, `src/pages/TransactionForm.test.tsx`. Không đổi schema, RLS/RPC, Edge Function hoặc dữ liệu production.
+- Kiểm thử: CI hậu merge [run 35370991235](https://github.com/nhan0805/family-expense/actions/runs/35370991235) pass quality, coverage, build/performance, E2E và db-security.
+- Triển khai: PR [#230](https://github.com/nhan0805/family-expense/pull/230) merge tại commit `048ab60`; [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/96974dcf-aef4-4b14-8a08-c1dd86322791) pass; smoke production `/` trả HTTP 200.
 
 ### Khôi phục toggle giao diện Sáng/Tối
 
