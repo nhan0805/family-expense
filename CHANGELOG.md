@@ -2,6 +2,13 @@
 
 ## 2026-09-18
 
+### Sửa lỗi không xóa được gia đình
+
+- Nguyên nhân: giao dịch đã xóa mềm vẫn còn được `savings_movements`, `gold_assets` hoặc `gold_sales` tham chiếu, khiến khóa ngoại chặn RPC xóa gia đình dù không còn giao dịch hoạt động.
+- Migration `supabase/migrations/202609180002_family_delete_asset_links.sql` cập nhật `delete_empty_family` để kiểm tra owner, khóa family, gỡ liên kết asset tùy chọn rồi hard-delete giao dịch đã xóa mềm và family nguyên tử. Thêm `supabase/tests/family_delete.sql` kiểm tra RPC và policy.
+- Kiểm thử: CI hậu merge [run 35314836865](https://github.com/nhan0805/family-expense/actions/runs/35314836865) pass quality, coverage, build/performance, E2E và db-security; local Postgres chưa khởi động nên không chạy pgTAP tại máy.
+- Triển khai: PR [#216](https://github.com/nhan0805/family-expense/pull/216) merge vào `main` tại commit `f2337af`; [Supabase Production Deploy](https://github.com/nhan0805/family-expense/actions/runs/35314836935) và [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/009a322e-2763-4946-88cb-4ea359eeb95f) pass; smoke `https://family-expense-8fo.pages.dev/` và các route `/dang-nhap`, `/thanh-vien` trả HTTP 200.
+
 ### Sửa icon bị chồng lên chữ trong màn hình đăng nhập
 
 - Sửa cascade của `.field` để các utility `pl-10`/`pr-12` giữ đúng khoảng trống cho icon email, khóa và nút hiện mật khẩu; bổ sung regression assertion trong `src/pages/Login.test.tsx`.
