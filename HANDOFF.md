@@ -4,11 +4,11 @@
 
 ## Current state
 
-- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; `main` hiện ở merge commit `cc411e0` sau PR [#209](https://github.com/nhan0805/family-expense/pull/209). [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/36949a0f-2214-4fe7-8aa5-774be5c85e82) đã pass và smoke HTTP 200 đã được xác nhận.
-- Code trên `main` đã gồm PR [#209](https://github.com/nhan0805/family-expense/pull/209), cân lại card lô vàng trên mobile/tablet rộng; cùng các thay đổi UI/UX toàn app của PR [#207](https://github.com/nhan0805/family-expense/pull/207), tài sản của PR [#206](https://github.com/nhan0805/family-expense/pull/206) và [#205](https://github.com/nhan0805/family-expense/pull/205), drill-down Dashboard của PR [#203](https://github.com/nhan0805/family-expense/pull/203) và các release trước.
-- CI main [run 35259383491](https://github.com/nhan0805/family-expense/actions/runs/35259383491) của merge commit `cc411e0` pass quality, E2E, db-security và performance budget.
-- Nhánh workspace cho release/status: `codex/release-status-20260918-uiux`, được đồng bộ từ `origin/main` sau khi PR #209 merge. Working tree hiện có follow-up giao diện vàng, migration khôi phục bán nhầm và điều hướng nút Sửa tới đúng form đang chờ review/merge; chưa áp dụng production.
-- Các cập nhật release/status trước đó chỉ cập nhật tài liệu trạng thái/link sau deploy; follow-up vàng hiện tại là thay đổi sản phẩm riêng và chưa được deploy.
+- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; `main` hiện ở merge commit `10e447e` sau PR [#211](https://github.com/nhan0805/family-expense/pull/211). [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/d82088e3-6a28-4761-9d4f-7166af23dee4) đã pass và smoke HTTP 200 đã được xác nhận.
+- Code trên `main` đã gồm PR [#211](https://github.com/nhan0805/family-expense/pull/211), rút gọn card vàng mobile và khôi phục lần bán; cùng các thay đổi UI/UX toàn app của PR [#207](https://github.com/nhan0805/family-expense/pull/207), tài sản của PR [#206](https://github.com/nhan0805/family-expense/pull/206) và [#205](https://github.com/nhan0805/family-expense/pull/205), drill-down Dashboard của PR [#203](https://github.com/nhan0805/family-expense/pull/203) và các release trước.
+- CI hậu merge [run 35295390813](https://github.com/nhan0805/family-expense/actions/runs/35295390813) và Supabase Production Deploy [run 35295390802](https://github.com/nhan0805/family-expense/actions/runs/35295390802) của merge commit `10e447e` pass quality, E2E, db-security và migration production.
+- Nhánh workspace cho release/status: `codex/release-status-20260918-uiux`, được đồng bộ từ `origin/main` sau khi PR #211 merge. Các thay đổi điều hướng nút Sửa ở Layout/Catalogs/RecurringExpenses vẫn chưa được đưa vào production.
+- Các cập nhật release/status sau deploy chỉ cập nhật tài liệu trạng thái/link; không tạo thêm production deploy cho follow-up này.
 - Đã cập nhật CI/preview cho `merge_group`, thu hẹp trigger Supabase và chuẩn hóa single-writer cho tài liệu release; chưa bật Merge Queue/branch protection trên GitHub.
 - Bản đồ kiến trúc ổn định nằm trong [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md); quy tắc phân loại tài liệu nằm trong [`docs/AI_CONTEXT_GUIDE.md`](docs/AI_CONTEXT_GUIDE.md).
 
@@ -29,12 +29,13 @@
 
 ## Recently completed
 
-### Rút gọn dòng vàng và khôi phục lần bán nhầm (đang chờ review/merge)
+### Rút gọn dòng vàng và khôi phục lần bán nhầm
 
 - Card vàng trên mobile hiển thị số chỉ còn lại thay vì dạng `còn / tổng`, không lộ chi tiết phân bổ FIFO; lịch sử bán được gộp thành từng lần bán tổng hợp và dùng nhãn tiếng Việt kiểu câu.
 - Thêm thao tác khôi phục có xác nhận. Với Supabase, RPC `restore_gold_sale` khôi phục các lô liên quan trong một transaction, xóa các dòng `gold_sales` của lần bán và giao dịch thu nhập liên kết; local fallback giữ cùng hành vi.
 - Files: `src/pages/Assets.tsx`, `src/lib/assets.ts`, `src/lib/assetsApi.ts`, `src/pages/Assets.ui.test.tsx`, `src/pages/Assets.cloud.ui.test.tsx`, `supabase/migrations/202609180001_restore_gold_sale.sql`, `supabase/tests/asset_management.sql`.
-- Kiểm thử: Vitest 48 file/230 test, TypeScript, ESLint, Vite build và `git diff --check` pass. `supabase test db --local` chưa chạy vì Postgres local chưa khởi động; chưa merge/deploy production.
+- Kiểm thử: Vitest 48 file/230 test, TypeScript, ESLint, Vite build và `git diff --check` pass; CI quality, E2E, db-security và performance budget pass. `supabase test db --local` local không chạy vì Postgres local chưa khởi động.
+- Triển khai: PR [#211](https://github.com/nhan0805/family-expense/pull/211) merge tại commit `10e447e`; Supabase Production Deploy và [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/d82088e3-6a28-4761-9d4f-7166af23dee4) pass; smoke `https://family-expense-8fo.pages.dev/` trả HTTP 200.
 
 ### Đưa nút Sửa tới đúng form chỉnh sửa (đang chờ review/merge)
 

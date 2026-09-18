@@ -8,7 +8,7 @@
 - Thêm nút `Khôi phục lần bán` có xác nhận; local fallback và RPC `restore_gold_sale` cùng khôi phục toàn bộ số chỉ đã phân bổ, xóa lịch sử bán liên kết và giao dịch thu nhập do lần bán đó tạo ra. Migration mới: `supabase/migrations/202609180001_restore_gold_sale.sql`.
 - Files chính: `src/pages/Assets.tsx`, `src/lib/assets.ts`, `src/lib/assetsApi.ts`, test UI/domain và `supabase/tests/asset_management.sql`.
 - Kiểm thử local: Vitest 48 file/230 test, TypeScript, ESLint, Vite build và `git diff --check` pass. Test DB local chưa chạy được vì Supabase/Postgres local chưa khởi động trên máy.
-- Trạng thái: chưa merge/deploy production.
+- Triển khai: PR [#211](https://github.com/nhan0805/family-expense/pull/211) merge vào `main` tại commit `10e447e`; CI hậu merge [run 35295390813](https://github.com/nhan0805/family-expense/actions/runs/35295390813), Supabase Production Deploy [run 35295390802](https://github.com/nhan0805/family-expense/actions/runs/35295390802) và [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/d82088e3-6a28-4761-9d4f-7166af23dee4) đều pass; smoke `https://family-expense-8fo.pages.dev/` trả HTTP 200.
 
 ### Đưa nút Sửa tới đúng form chỉnh sửa
 
