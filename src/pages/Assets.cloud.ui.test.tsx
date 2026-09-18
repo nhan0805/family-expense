@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   deleteGoldAsset: vi.fn(),
   deleteSavingsAccount: vi.fn(),
   recordGoldSale: vi.fn(),
+  restoreGoldSale: vi.fn(),
   recordSavingsMovement: vi.fn(),
   settleSavingsAccount: vi.fn(),
   setGoldBuybackPrice: vi.fn(),
@@ -29,6 +30,7 @@ vi.mock('../lib/automaticTransactionDefaultsApi', () => ({
 }));
 
 const familyId = 'family-assets-cloud-ui';
+const scrollIntoView = vi.fn();
 const assetData = {
   savingsAccounts: [],
   savingsMovements: [],
@@ -79,6 +81,7 @@ async function submitNewSavingsBook() {
 
 describe('Tài sản — luồng Supabase', () => {
   beforeEach(() => {
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, value: scrollIntoView });
     mocks.fetchAssetData.mockResolvedValue(assetData);
     mocks.fetchAssetSummary.mockResolvedValue(assetSummary);
     mocks.fetchAutomaticTransactionDefaults.mockResolvedValue([]);

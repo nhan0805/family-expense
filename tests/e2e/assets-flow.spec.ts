@@ -38,7 +38,7 @@ test('luồng demo thêm và bán vàng', async ({ page }) => {
   await page.getByRole('button', { name: 'Lưu vàng' }).click();
   await page.getByRole('alertdialog').getByRole('button', { name: 'Tạo và ghi giao dịch' }).click();
   await expect(page.getByText('Đã lưu vàng.')).toBeVisible();
-  await expect(page.getByText(/1,5 \/ 1,5 chỉ/)).toBeVisible();
+  await expect(page.getByRole('heading', { name: '1,5 chỉ', level: 4 })).toBeVisible();
 
   await page.getByRole('button', { name: 'Bán vàng' }).click();
   await page.getByLabel('Số lượng (chỉ)').fill('0.5');
@@ -46,7 +46,7 @@ test('luồng demo thêm và bán vàng', async ({ page }) => {
   await page.getByRole('button', { name: 'Bán và ghi thu nhập' }).click();
   await page.getByRole('alertdialog').getByRole('button', { name: 'Bán và ghi nhận' }).click();
   await expect(page.getByText('Đã ghi nhận bán vàng.')).toBeVisible();
-  await expect(page.getByText(/1 \/ 1,5 chỉ/)).toBeVisible();
+  await expect(page.getByRole('heading', { name: '1 chỉ', level: 4 })).toBeVisible();
 
   await page.getByRole('button', { name: 'Xóa' }).click();
   await expect(page.getByRole('alertdialog')).toContainText('các giao dịch được tự tạo cho lô này');
