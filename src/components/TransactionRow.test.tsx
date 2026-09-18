@@ -83,6 +83,14 @@ describe('TransactionRow', () => {
     expect(onToggleMenu).toHaveBeenCalledWith('tx-1');
   });
 
+  it('mở rộng vùng hiển thị khi menu mobile đang mở để không bị cắt ở đáy card', () => {
+    renderRow({ openMenu: true });
+
+    expect(document.querySelector('.transaction-row-shell')).toHaveClass('transaction-row-shell-menu-open');
+    expect(document.querySelector('.transaction-card')).toHaveClass('z-20');
+    expect(screen.getByRole('menu', { name: 'Thao tác với Mua thực phẩm' })).toBeInTheDocument();
+  });
+
   it('hiển thị thao tác khôi phục trong thùng rác', () => {
     const onRestore = vi.fn();
     renderRow({ showTrash: true, onRestore });
