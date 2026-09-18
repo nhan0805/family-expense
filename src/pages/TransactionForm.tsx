@@ -438,7 +438,16 @@ export function TransactionForm() {
         filledFields.push('amount');
       }
       setValue('transactionType', s.transactionType, { shouldValidate: true });
-      setValue('status', s.status, { shouldValidate: true });
+      const suggestedPaymentMethodName = s.paymentMethodId
+        ? paymentMethods.find((method) => method.id === s.paymentMethodId)?.name
+        : undefined;
+      setValue(
+        'status',
+        id
+          ? s.status
+          : statusForNewTransaction(s.date, getVietnamToday(), suggestedPaymentMethodName),
+        { shouldValidate: true },
+      );
       if (s.purposeId) {
         setValue('purposeId', s.purposeId, { shouldValidate: true });
         filledFields.push('purposeId');

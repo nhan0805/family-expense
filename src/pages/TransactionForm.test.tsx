@@ -67,6 +67,30 @@ describe('Form giao dịch hợp nhất', () => {
     expect(screen.getByLabelText(/Trạng thái/)).toHaveValue('Dự kiến');
   });
 
+  it.each([
+    { paymentMethodId: 'm2', paymentMethodName: 'Thẻ tín dụng' },
+    { paymentMethodId: 'm3', paymentMethodName: 'Trả góp' },
+  ])('AI gợi ý $paymentMethodName thì giao dịch mới vẫn là dự kiến', async ({ paymentMethodId, paymentMethodName }) => {
+    vi.mocked(useApp).mockReturnValue(appValue);
+    invokeMock.mockResolvedValue({
+      data: { suggestion: {
+        date: '2026-08-27', description: 'Mua điện thoại', amount: 12000000,
+        transactionType: 'Chi tiêu', status: 'Thực tế', purposeId: 'p1', purposeName: 'Sinh hoạt',
+        expenseTypeId: 'e1', expenseTypeName: 'Thực phẩm', paymentMethodId,
+        paymentMethodName, confidence: 0.95, warnings: [],
+      } },
+      error: null,
+    });
+    render(<FeedbackProvider><QueryClientProvider client={new QueryClient()}><MemoryRouter><TransactionForm/></MemoryRouter></QueryClientProvider></FeedbackProvider>);
+
+    fireEvent.change(screen.getByLabelText(/Nội dung/), { target: { value: 'Mua điện thoại trả góp' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Phân tích nội dung bằng AI' }));
+
+    await screen.findByText('AI đã đề xuất 8 trường');
+    fireEvent.click(screen.getByRole('button', { name: 'Tùy chọn nâng cao' }));
+    expect(screen.getByLabelText(/Trạng thái/)).toHaveValue('Dự kiến');
+  });
+
   it('debounce autosave và báo rõ khi bản nháp đã được lưu', async () => {
     vi.useFakeTimers();
     try {
