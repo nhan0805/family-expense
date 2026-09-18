@@ -139,9 +139,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!isSupabaseConfigured) return;
     let active = true;
-    const load = async (showInitialLoading = false) => {
+    const load = async () => {
       try {
-        if (showInitialLoading) setLoading(true);
+        // Auth events can arrive after the previous unauthenticated load has
+        // finished. Keep protected routes in a loading state until the
+        // membership and catalogs for the new session are ready; otherwise
+        // Layout briefly sees an authenticated user without a family and
+        // redirects to the onboarding screen before this request completes.
+        setLoading(true);
         setError(null);
         const { data: sessionData } = await supabase.auth.getSession();
       const user = sessionData.session?.user;
@@ -264,12 +269,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setError(userFacingError(loadError, 'Không thể tải dữ liệu gia đình.'));
       }
     };
-    void load(true);
+    void load();
     const { data: listener } = supabase.auth.onAuthStateChange((event) => {
       // Supabase refreshes the session when the browser regains focus after a
       // native file picker closes. Reloading here would unmount the current
       // route and discard the selected Excel file before parsing can finish.
-      if (shouldReloadAppForAuthEvent(event)) void load(false);
+      if (shouldReloadAppForAuthEvent(event)) void load();
     });
     return () => {
       active = false;

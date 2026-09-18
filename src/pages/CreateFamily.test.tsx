@@ -18,8 +18,9 @@ describe('CreateFamily', () => {
       </MemoryRouter>,
     );
     expect(
-      screen.getByRole('heading', { name: 'Tạo gia đình mới' }),
+      screen.getByRole('heading', { name: 'Tạo không gian gia đình' }),
     ).toBeInTheDocument();
+    expect(screen.getByLabelText('Tên gia đình *')).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Tạo gia đình' }),
     ).toBeInTheDocument();

@@ -388,21 +388,23 @@ body {
   background: color-mix(in srgb, var(--primary-soft) 56%, var(--surface));
 }
 
-.field {
-  display: block;
-  inline-size: 100%;
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-  min-height: 2.75rem;
-  border: 1px solid var(--border-strong);
-  border-radius: .75rem;
-  background: var(--surface);
-  color: var(--text);
-  padding: .7rem .8rem;
-  outline: none;
-  font-size: 1rem;
-  transition: border-color .16s ease, box-shadow .16s ease, background-color .16s ease;
+@layer components {
+  .field {
+    display: block;
+    inline-size: 100%;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    min-height: 2.75rem;
+    border: 1px solid var(--border-strong);
+    border-radius: .75rem;
+    background: var(--surface);
+    color: var(--text);
+    padding: .7rem .8rem;
+    outline: none;
+    font-size: 1rem;
+    transition: border-color .16s ease, box-shadow .16s ease, background-color .16s ease;
+  }
 }
 
 .multi-select-trigger {
