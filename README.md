@@ -129,6 +129,8 @@ Owner vào **Thành viên**, nhập email của người cần thêm và tên hi
 
 Tài khoản mới chưa thuộc gia đình nào sẽ tự chuyển đến màn hình **Tạo gia đình mới**. Sau khi nhập tên, hệ thống tạo gia đình, gán tài khoản làm owner và seed toàn bộ danh mục mặc định trong cùng một RPC transaction. Tài khoản đã thuộc gia đình không thể tạo thêm gia đình khác.
 
+Owner có thể vào **Danh mục** và chọn **Đặt bộ hiện tại làm mặc định** để dùng các mục đang bật của gia đình hiện tại làm bộ danh mục cho những gia đình tạo sau này. Thao tác này không thay đổi gia đình hiện tại hoặc các gia đình đã tồn tại.
+
 Owner có thể xóa gia đình tại cuối màn hình **Thành viên** khi gia đình không còn giao dịch đang hoạt động. Kiểm tra được thực hiện tại database; các giao dịch đã xóa mềm sẽ bị xóa vĩnh viễn trong cùng thao tác. Xóa gia đình không xóa tài khoản đăng nhập; owner được đưa về onboarding để tạo gia đình mới.
 
 ## Kiểm thử và chất lượng

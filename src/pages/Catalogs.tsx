@@ -1,4 +1,4 @@
-import { Check, Pencil, Plus, Search, Tags, Trash2, X } from 'lucide-react';
+import { Check, Copy, Pencil, Plus, Search, Tags, Trash2, X } from 'lucide-react';
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { useApp, type CatalogKind } from '../context/AppContext';
 import { useOptionalLanguage } from '../context/LanguageContext';
@@ -17,7 +17,7 @@ type Editor = { kind: CatalogKind; id?: string } | null;
 export function Catalogs() {
   const { language } = useOptionalLanguage();
   const isEnglish = language === 'en';
-  const { askConfirm } = useFeedback();
+  const { askConfirm, notify } = useFeedback();
   const {
     currentUserRole,
     purposes,
@@ -26,6 +26,7 @@ export function Catalogs() {
     addCatalogItem,
     updateCatalogItem,
     deleteCatalogItem,
+    saveCatalogDefaults,
   } = useApp();
   const canManage = currentUserRole === 'owner';
   const [editor, setEditor] = useState<Editor>(null);
@@ -39,6 +40,7 @@ export function Catalogs() {
   const [errorKind, setErrorKind] = useState<CatalogKind | null>(null);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [promotingDefaults, setPromotingDefaults] = useState(false);
   const tabRefs = useRef<Record<CatalogKind, HTMLButtonElement | null>>({ purpose: null, expenseType: null, paymentMethod: null });
 
   const openEditor = (kind: CatalogKind, item?: CatalogItem) => {
@@ -96,6 +98,31 @@ export function Catalogs() {
     else if (editor?.id === item.id) closeEditor();
   };
 
+  const promoteDefaults = async () => {
+    const confirmed = await askConfirm({
+      title: isEnglish ? 'Use these catalogs for new families?' : 'Dùng bộ danh mục này cho gia đình mới?',
+      description: isEnglish
+        ? 'Only active purposes, expense categories and payment methods will be copied. Existing families and this family will not be changed.'
+        : 'Chỉ các mục đang bật trong Mục đích, Danh mục và Phương thức thanh toán sẽ được sao chép. Gia đình hiện tại và các gia đình đã tồn tại không bị thay đổi.',
+      confirmLabel: isEnglish ? 'Set as default' : 'Đặt làm mặc định',
+    });
+    if (!confirmed) return;
+    setPromotingDefaults(true);
+    let result: string | null = null;
+    try {
+      result = await saveCatalogDefaults();
+    } catch {
+      result = isEnglish ? 'Could not update the defaults for new families.' : 'Không thể cập nhật bộ mặc định cho gia đình mới.';
+    } finally {
+      setPromotingDefaults(false);
+    }
+    if (result) {
+      notify(result, 'error');
+      return;
+    }
+    notify(isEnglish ? 'The current catalogs are now the defaults for new families.' : 'Đã đặt bộ danh mục hiện tại làm mặc định cho gia đình mới.');
+  };
+
   const shared = {
     editor,
     name,
@@ -145,6 +172,13 @@ export function Catalogs() {
       <p className="page-subtitle">{canManage
         ? (isEnglish ? 'You can add, rename and delete unused categories.' : 'Bạn có thể thêm, đổi tên và xóa danh mục chưa được sử dụng.')
         : (isEnglish ? 'You can view categories. Only the family owner can edit them.' : 'Bạn có thể xem danh mục. Chỉ chủ gia đình mới có quyền chỉnh sửa.')}</p>
+      {canManage && <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+        <button type="button" className="btn-secondary inline-flex items-center justify-center gap-2 self-start" onClick={() => void promoteDefaults()} disabled={promotingDefaults || !purposes.length || !expenseTypes.length || !paymentMethods.length} aria-busy={promotingDefaults}>
+          <Copy size={17} aria-hidden="true" />
+          {promotingDefaults ? (isEnglish ? 'Updating…' : 'Đang cập nhật…') : (isEnglish ? 'Set current catalogs as defaults' : 'Đặt bộ hiện tại làm mặc định')}
+        </button>
+        <p className="text-xs text-gray-500 dark:text-gray-400">{isEnglish ? 'Used when a new family is created.' : 'Áp dụng khi tạo gia đình mới.'}</p>
+      </div>}
     </div>
     <div className="catalog-tabs" role="tablist" aria-orientation="horizontal" aria-label={isEnglish ? 'Catalog groups' : 'Nhóm danh mục'}>
       {catalogTabs.map(({ kind, title }) => <button

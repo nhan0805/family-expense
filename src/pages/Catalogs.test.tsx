@@ -10,6 +10,7 @@ const mockedUseApp = vi.mocked(useApp);
 const addCatalogItem = vi.fn();
 const updateCatalogItem = vi.fn();
 const deleteCatalogItem = vi.fn();
+const saveCatalogDefaults = vi.fn();
 const scrollIntoView = vi.fn();
 
 function appState(role: 'owner' | 'member') {
@@ -24,6 +25,7 @@ function appState(role: 'owner' | 'member') {
     addCatalogItem,
     updateCatalogItem,
     deleteCatalogItem,
+    saveCatalogDefaults,
   } as unknown as ReturnType<typeof useApp>;
 }
 
@@ -41,6 +43,19 @@ describe('Quản lý danh mục', () => {
     addCatalogItem.mockResolvedValue(null);
     updateCatalogItem.mockResolvedValue(null);
     deleteCatalogItem.mockResolvedValue(null);
+    saveCatalogDefaults.mockResolvedValue(null);
+  });
+
+  it('cho owner đặt bộ danh mục hiện tại làm mặc định cho gia đình mới', async () => {
+    mockedUseApp.mockReturnValue(appState('owner'));
+    renderCatalogs();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Đặt bộ hiện tại làm mặc định' }));
+    expect(await screen.findByRole('alertdialog')).toHaveTextContent('Dùng bộ danh mục này cho gia đình mới?');
+    fireEvent.click(screen.getByRole('button', { name: 'Đặt làm mặc định' }));
+
+    await waitFor(() => expect(saveCatalogDefaults).toHaveBeenCalledTimes(1));
+    expect(screen.getByRole('status')).toHaveTextContent('Đã đặt bộ danh mục hiện tại làm mặc định cho gia đình mới.');
   });
 
   it('cho owner thêm danh mục', async () => {
