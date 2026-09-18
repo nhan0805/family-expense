@@ -2,6 +2,14 @@
 
 ## 2026-09-19
 
+### Đặt bộ danh mục hiện tại làm mặc định cho gia đình mới
+
+- Owner có thể xác nhận bộ `Mục đích chi`, `Loại chi phí` và `Phương thức thanh toán` active của gia đình hiện tại làm template mặc định cho các gia đình tạo sau này. Gia đình hiện tại và các gia đình đã tồn tại không bị thay đổi.
+- Thêm RPC owner-guarded `save_system_catalog_template(uuid)` và action trong màn hình Danh mục; snapshot được ghi vào template catalog và dùng lại trong luồng tạo gia đình mới. Không cho lưu nếu một nhóm catalog đang rỗng.
+- Files chính: `src/pages/Catalogs.tsx`, `src/context/AppContext.tsx`, `src/pages/Catalogs.test.tsx`, hai migration `202609180003_restore_catalog_template_promotion.sql`/`202609190001_restore_catalog_template_promotion.sql`, `supabase/tests/system_catalog_template.sql`, `README.md`, `docs/PROJECT_MAP.md`.
+- Kiểm thử: CI hậu merge [run 35375328631](https://github.com/nhan0805/family-expense/actions/runs/35375328631) pass quality, E2E, db-security và performance budget; [Supabase Production Deploy run 35375328575](https://github.com/nhan0805/family-expense/actions/runs/35375328575) pass migration và Edge Functions.
+- Triển khai: PR [#234](https://github.com/nhan0805/family-expense/pull/234) merge tại commit `78911d7`; các PR đồng bộ migration [#238](https://github.com/nhan0805/family-expense/pull/238), [#239](https://github.com/nhan0805/family-expense/pull/239), [#241](https://github.com/nhan0805/family-expense/pull/241) đưa `main` tới commit `5fa6c20`. [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/d9b585e9-1f53-46a8-b91d-55f56244077b) pass; smoke `/`, `/dang-nhap` và `/thanh-vien` đều trả HTTP 200.
+
 ### Làm đẹp panel giá mua vào vàng dùng chung
 
 - Khu vực nhập giá mua vào được chuyển thành panel cài đặt riêng có icon, trạng thái thiết lập, mô tả ngắn, đơn vị VND trong ô nhập và nút lưu gọn hơn; bố cục responsive/dark mode rõ ràng hơn.
