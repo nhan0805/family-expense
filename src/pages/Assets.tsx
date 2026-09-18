@@ -1006,11 +1006,11 @@ export function Assets() {
             <label className="block min-w-0" htmlFor="gold-buyback-price">
               <span id="gold-buyback-price-label" className="label">{en ? 'Buy-back price / mace (VND)' : 'Giá mua vào / chỉ (VND)'}</span>
               <span className="gold-price-input-wrap">
-                <input id="gold-buyback-price" aria-labelledby="gold-buyback-price-label" className="field gold-price-input" inputMode="numeric" value={goldBuybackPriceInput} disabled={!canManage || busy === 'gold-price'} onChange={(event) => setGoldBuybackPriceInput(formatAssetMoneyInput(event.target.value))} placeholder={en ? 'Enter a price' : 'Nhập giá mua vào'} />
+                <input id="gold-buyback-price" aria-label={en ? 'Shared shop buy-back price / mace (VND)' : 'Giá tiệm mua vào dùng chung / chỉ (VND)'} className="field gold-price-input" inputMode="numeric" value={goldBuybackPriceInput} disabled={!canManage || busy === 'gold-price'} onChange={(event) => setGoldBuybackPriceInput(formatAssetMoneyInput(event.target.value))} placeholder={en ? 'Enter a price' : 'Nhập giá mua vào'} />
                 <span className="gold-price-unit" aria-hidden="true">VND</span>
               </span>
             </label>
-            {canManage && <button type="submit" className="btn-primary gold-price-submit inline-flex w-full items-center justify-center gap-2 sm:w-auto" disabled={Boolean(busy)}>{busy === 'gold-price' ? <LoaderCircle size={17} className="animate-spin" aria-hidden="true" /> : <Save size={17} aria-hidden="true" />}{en ? 'Save price' : 'Lưu giá'}</button>}
+            {canManage && <button type="submit" aria-label={en ? 'Save shared price' : 'Lưu giá dùng chung'} className="btn-primary gold-price-submit inline-flex w-full items-center justify-center gap-2 sm:w-auto" disabled={Boolean(busy)}>{busy === 'gold-price' ? <LoaderCircle size={17} className="animate-spin" aria-hidden="true" /> : <Save size={17} aria-hidden="true" />}{en ? 'Save price' : 'Lưu giá'}</button>}
             <p className="gold-price-helper">{en ? 'Leave empty if you do not want to calculate the estimate yet.' : 'Để trống nếu bạn chưa muốn tính giá trị ước tính.'}</p>
           </form>
           {formError && <div role="alert" className="inline-feedback inline-feedback-error mt-3 sm:col-span-2">{formError}</div>}

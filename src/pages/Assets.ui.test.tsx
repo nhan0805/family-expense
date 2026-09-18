@@ -301,8 +301,8 @@ describe('Tài sản', () => {
     const pricePanel = screen.getByRole('heading', { name: 'Giá tiệm mua vào dùng chung' }).closest<HTMLElement>('.gold-price-panel');
     expect(pricePanel).not.toBeNull();
     expect(pricePanel).toHaveClass('gold-price-panel');
-    expect(within(pricePanel!).getByRole('textbox', { name: 'Giá mua vào / chỉ (VND)' })).toHaveClass('gold-price-input');
-    expect(within(pricePanel!).getByRole('button', { name: 'Lưu giá' })).toHaveClass('gold-price-submit');
+    expect(within(pricePanel!).getByRole('textbox', { name: 'Giá tiệm mua vào dùng chung / chỉ (VND)' })).toHaveClass('gold-price-input');
+    expect(within(pricePanel!).getByRole('button', { name: 'Lưu giá dùng chung' })).toHaveClass('gold-price-submit');
     expect(within(pricePanel!).getByText('Chưa thiết lập')).toBeInTheDocument();
   });
 
