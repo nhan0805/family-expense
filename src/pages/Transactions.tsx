@@ -1446,23 +1446,19 @@ export function Transactions() {
       )}
       <div
         key={resultKey}
-        className="transactions-table space-y-2 overflow-visible outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] md:space-y-0 md:overflow-x-auto md:rounded-2xl md:border"
+        className="transactions-table min-w-0 max-w-full space-y-2 overflow-visible outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] md:space-y-0 md:rounded-2xl md:border"
         role="region"
         aria-label={showTrash ? (en ? 'Deleted transactions table' : 'Bảng giao dịch đã xóa') : (en ? 'Transactions table' : 'Bảng giao dịch')}
-        aria-describedby="transactions-table-hint"
         tabIndex={0}
       >
-        <p id="transactions-table-hint" className="px-1 text-xs text-[var(--muted)] xl:hidden">
-          {en ? 'Swipe or scroll horizontally to review all columns.' : 'Vuốt hoặc cuộn ngang để xem đủ các cột.'}
-        </p>
-        <div className={`hidden w-full min-w-[1080px] gap-1 rounded-t-2xl bg-[var(--surface-muted)] p-3 text-sm font-bold md:grid ${selectMode ? 'grid-cols-[32px_80px_minmax(180px,1fr)_190px_160px_190px_220px]' : 'grid-cols-[80px_minmax(180px,1fr)_190px_160px_190px_220px]'}`}>
+        <div className={`hidden w-full min-w-0 gap-1 rounded-t-2xl bg-[var(--surface-muted)] p-3 text-sm font-bold md:grid ${selectMode ? 'md:grid-cols-[32px_minmax(0,5rem)_minmax(0,1.65fr)_minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,1.1fr)_minmax(0,1.25fr)]' : 'md:grid-cols-[minmax(0,5rem)_minmax(0,1.65fr)_minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,1.1fr)_minmax(0,1.25fr)]'}`}>
           {selectMode && <input type="checkbox" className="size-5 accent-[var(--primary)]" aria-label={en ? 'Select all visible transactions' : 'Chọn tất cả giao dịch đang hiển thị'} checked={rows.length > 0 && rows.slice(0, 100).every((item) => selectedIds.has(item.id))} onChange={(event) => setSelectedIds(event.target.checked ? new Set(rows.slice(0, 100).map((item) => item.id)) : new Set())} />}
-          <span>{en ? 'Date' : 'Ngày'}</span>
-          <span>{en ? 'Description' : 'Nội dung'}</span>
-          <span>{en ? 'Purpose' : 'Mục đích'}</span>
-          <span>{en ? 'Category' : 'Danh mục'}</span>
-          <span>{en ? 'Payment method' : 'Phương thức'}</span>
-          <span>{en ? 'Amount' : 'Số tiền'}</span>
+          <span className="min-w-0 break-words">{en ? 'Date' : 'Ngày'}</span>
+          <span className="min-w-0 break-words">{en ? 'Description' : 'Nội dung'}</span>
+          <span className="min-w-0 break-words">{en ? 'Purpose' : 'Mục đích'}</span>
+          <span className="min-w-0 break-words">{en ? 'Category' : 'Danh mục'}</span>
+          <span className="min-w-0 break-words">{en ? 'Payment method' : 'Phương thức'}</span>
+          <span className="min-w-0 break-words">{en ? 'Amount' : 'Số tiền'}</span>
         </div>
         {rows.map((transaction) => {
           const purpose = purposeById.get(transaction.purposeId);
