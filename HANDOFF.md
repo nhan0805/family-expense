@@ -42,6 +42,13 @@
 - Files: `src/components/ThemeSelect.tsx`, `src/context/ThemeContext.tsx`, `src/context/ThemeContext.test.tsx`.
 - Kiểm thử: Vitest 49 file/239 test, TypeScript, ESLint, Vite build, performance budget, E2E và db-security đều pass qua CI.
 - Triển khai: PR [#226](https://github.com/nhan0805/family-expense/pull/226) merge tại commit `57484d5`; [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/4f4a5e15-5c3d-44f3-8356-afbdd78e89ea) pass; smoke production `/`, `/dang-nhap` và `/thanh-vien` trả HTTP 200.
+### Khôi phục thao tác xóa gia đình khi preflight không khả dụng
+
+- Nguyên nhân: giao diện coi lỗi hoặc kết quả không xác định của preflight `can_delete_family` như không đủ điều kiện, nên người dùng không thể tiếp tục dù RPC authoritative vẫn là lớp kiểm tra cuối; local/demo cũng chưa dọn hết dữ liệu family sau khi xóa.
+- `Members` hiện phân biệt `false` với trạng thái preflight lỗi/null: chỉ chặn khi có giao dịch đang hoạt động, còn lỗi preflight vẫn cho phép xác nhận để `delete_empty_family` tự quyết định. `AppContext` dọn các key local theo `family_id` và các catalog sau khi xóa thành công ở local hoặc cloud.
+- Files: `src/pages/Members.tsx`, `src/context/AppContext.tsx`, `src/pages/Members.test.tsx`, `src/context/AppContext.ui.test.tsx`, `README.md`. Không đổi schema, RLS/RPC hoặc dữ liệu production.
+- Kiểm thử local: Vitest 49 file/240 test, TypeScript, ESLint, Vite build và `git diff --check` pass; Playwright local chạy 6 test auth-dependent và cả 6 được skip theo guard hiện có. CI hậu merge [run 35359520727](https://github.com/nhan0805/family-expense/actions/runs/35359520727) pass quality, E2E, db-security và performance budget.
+- Triển khai: PR [#225](https://github.com/nhan0805/family-expense/pull/225) merge vào `main` tại commit `663e44e`; [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/5b8cf9a5-f601-4bd0-b754-3255299d064c) pass; smoke production `/`, `/dang-nhap` và `/thanh-vien` trả HTTP 200. Không có migration Supabase mới.
 
 ### Sửa lỗi không xóa được gia đình
 
