@@ -4,9 +4,9 @@
 
 ## Current state
 
-- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; `main` hiện ở merge commit `f2337af` sau PR [#216](https://github.com/nhan0805/family-expense/pull/216). [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/009a322e-2763-4946-88cb-4ea359eeb95f) đã pass; smoke `/`, `/dang-nhap` và `/thanh-vien` đều trả HTTP 200.
-- Code trên `main` đã gồm PR [#216](https://github.com/nhan0805/family-expense/pull/216), sửa RPC xóa gia đình để gỡ liên kết asset trước khi hard-delete giao dịch đã xóa mềm; cùng PR [#214](https://github.com/nhan0805/family-expense/pull/214), [#211](https://github.com/nhan0805/family-expense/pull/211), các thay đổi UI/UX toàn app của PR [#207](https://github.com/nhan0805/family-expense/pull/207), tài sản của PR [#206](https://github.com/nhan0805/family-expense/pull/206) và [#205](https://github.com/nhan0805/family-expense/pull/205), drill-down Dashboard của PR [#203](https://github.com/nhan0805/family-expense/pull/203) và các release trước.
-- CI hậu merge [run 35314836865](https://github.com/nhan0805/family-expense/actions/runs/35314836865) pass quality, E2E, db-security và performance budget; [Supabase Production Deploy](https://github.com/nhan0805/family-expense/actions/runs/35314836935) đã apply migration `202609180002_family_delete_asset_links.sql` thành công.
+- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; `main` hiện có runtime merge commit `f2337af` sau PR [#216](https://github.com/nhan0805/family-expense/pull/216) và status update mới hơn. [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/009a322e-2763-4946-88cb-4ea359eeb95f) đã pass; smoke `/`, `/dang-nhap` và `/thanh-vien` đều trả HTTP 200.
+- Code trên `main` đã gồm PR [#216](https://github.com/nhan0805/family-expense/pull/216), sửa RPC xóa gia đình để gỡ liên kết asset trước khi hard-delete giao dịch đã xóa mềm; PR [#217](https://github.com/nhan0805/family-expense/pull/217), thu gọn nút Xóa thành viên thành icon-only; cùng PR [#214](https://github.com/nhan0805/family-expense/pull/214), [#211](https://github.com/nhan0805/family-expense/pull/211), các thay đổi UI/UX toàn app của PR [#207](https://github.com/nhan0805/family-expense/pull/207), tài sản của PR [#206](https://github.com/nhan0805/family-expense/pull/206) và [#205](https://github.com/nhan0805/family-expense/pull/205), drill-down Dashboard của PR [#203](https://github.com/nhan0805/family-expense/pull/203) và các release trước.
+- CI hậu merge [run 35314836865](https://github.com/nhan0805/family-expense/actions/runs/35314836865) của PR #216 và [run 35314416000](https://github.com/nhan0805/family-expense/actions/runs/35314416000) của PR #217 pass quality, E2E, db-security và performance budget; [Supabase Production Deploy](https://github.com/nhan0805/family-expense/actions/runs/35314836935) đã apply migration `202609180002_family_delete_asset_links.sql` thành công.
 - Nhánh release/status: `codex/release-status-family-delete-20260918`, được đồng bộ từ `origin/main` sau khi PR #216 merge. PR này chỉ cập nhật tài liệu trạng thái/link và không tạo thêm production deploy.
 - Đã cập nhật CI/preview cho `merge_group`, thu hẹp trigger Supabase và chuẩn hóa single-writer cho tài liệu release; chưa bật Merge Queue/branch protection trên GitHub.
 - Bản đồ kiến trúc ổn định nằm trong [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md); quy tắc phân loại tài liệu nằm trong [`docs/AI_CONTEXT_GUIDE.md`](docs/AI_CONTEXT_GUIDE.md).
@@ -35,6 +35,13 @@
 - Files: `supabase/migrations/202609180002_family_delete_asset_links.sql`, `supabase/tests/family_delete.sql`.
 - Kiểm thử: Vitest 48 file/232 test, TypeScript, ESLint, Vite build, E2E, db-security và performance budget đều pass qua CI; Postgres local trên máy phát triển không chạy nên không rehearsal local.
 - Triển khai: PR [#216](https://github.com/nhan0805/family-expense/pull/216) merge tại commit `f2337af`; Supabase Production Deploy [run 35314836935](https://github.com/nhan0805/family-expense/actions/runs/35314836935) và [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/009a322e-2763-4946-88cb-4ea359eeb95f) pass; smoke production `/`, `/dang-nhap` và `/thanh-vien` trả HTTP 200.
+
+### Thu gọn nút xóa thành viên
+
+- Nút Xóa thành viên trên màn hình Thành viên chỉ còn icon thùng rác, vẫn giữ accessible name/tooltip và vùng chạm tối thiểu; các nút xóa khác được giữ nguyên nhãn trước đó.
+- Files: `src/pages/Members.tsx`, `src/pages/Members.test.tsx`. Không đổi schema, RLS/RPC, Edge Function hoặc dữ liệu.
+- Kiểm thử: CI hậu merge [run 35314416000](https://github.com/nhan0805/family-expense/actions/runs/35314416000) pass quality, E2E, db-security và performance budget.
+- Triển khai: PR [#217](https://github.com/nhan0805/family-expense/pull/217) merge tại commit `111118a`; Cloudflare Pages production pass; smoke `https://family-expense-8fo.pages.dev/` trả HTTP 200.
 
 ### Sửa icon bị chồng lên chữ trong màn hình đăng nhập
 

@@ -9,6 +9,12 @@
 - Kiểm thử: CI hậu merge [run 35314836865](https://github.com/nhan0805/family-expense/actions/runs/35314836865) pass quality, coverage, build/performance, E2E và db-security; local Postgres chưa khởi động nên không chạy pgTAP tại máy.
 - Triển khai: PR [#216](https://github.com/nhan0805/family-expense/pull/216) merge vào `main` tại commit `f2337af`; [Supabase Production Deploy](https://github.com/nhan0805/family-expense/actions/runs/35314836935) và [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/009a322e-2763-4946-88cb-4ea359eeb95f) pass; smoke `https://family-expense-8fo.pages.dev/` và các route `/dang-nhap`, `/thanh-vien` trả HTTP 200.
 
+### Thu gọn nút xóa thành viên
+
+- Nút `Xóa thành viên` trên màn hình Thành viên chỉ còn icon thùng rác, vẫn giữ `aria-label`/tooltip và vùng chạm tối thiểu; các nút xóa gia đình, giao dịch, chi phí định kỳ và thông báo giữ lại giao diện có nhãn như trước.
+- Files: `src/pages/Members.tsx`, `src/pages/Members.test.tsx`. Không đổi schema, RLS/RPC, Edge Function hoặc dữ liệu.
+- Kiểm thử: Vitest 48 file/232 test, TypeScript, ESLint, Vite build, performance budget, E2E, db-security và `git diff --check` pass; E2E local skip theo auth/demo guard hiện có.
+
 ### Sửa icon bị chồng lên chữ trong màn hình đăng nhập
 
 - Sửa cascade của `.field` để các utility `pl-10`/`pr-12` giữ đúng khoảng trống cho icon email, khóa và nút hiện mật khẩu; bổ sung regression assertion trong `src/pages/Login.test.tsx`.
