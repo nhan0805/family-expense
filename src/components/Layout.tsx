@@ -7,6 +7,7 @@ import { PageSkeleton } from './AsyncStates';
 import { ThemeSelect } from './ThemeSelect';
 import { useLanguage } from '../context/LanguageContext';
 import { BudgetNotifications } from './BudgetNotifications';
+import { useFocusTrap } from './ui/Dialog';
 
 const links = [['/', 'overview', House], ['/giao-dich', 'transactions', WalletCards], ['/tai-san', 'assets', Gem], ['/ngan-sach', 'budgets', PiggyBank], ['/chi-phi-dinh-ky', 'recurringExpenses', Repeat2], ['/danh-muc', 'catalogs', Tags], ['/thanh-vien', 'members', UsersRound], ['/du-lieu', 'data', BookOpen]] as const;
 const mobilePrimaryLinks = [links[0], links[1], links[2], links[3]] as const;
@@ -16,7 +17,7 @@ export function Layout() {
   const [menuMounted, setMenuMounted] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const menuTriggerRef = useRef<HTMLButtonElement | null>(null);
-  const drawerRef = useRef<HTMLElement | null>(null);
+  const drawerRef = useFocusTrap<HTMLElement>(open && menuMounted, { onEscape: () => setOpen(false) });
   const { familyId, familyName, currentUserEmail, currentUserDisplayName, loading, authenticated, error, online, reloadApp } = useApp();
   const { t, language } = useLanguage();
   const en = language === 'en';
@@ -42,26 +43,6 @@ export function Layout() {
     });
     return () => window.cancelAnimationFrame(frame);
   }, [isTransactionForm, pathname]);
-  useEffect(() => {
-    if (!open) {
-      if (menuMounted) menuTriggerRef.current?.focus();
-      return;
-    }
-    const focusTimer = window.setTimeout(() => drawerRef.current?.querySelector<HTMLElement>('button, a')?.focus(), 0);
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') { event.preventDefault(); setOpen(false); return; }
-      if (event.key !== 'Tab' || !drawerRef.current) return;
-      const focusable = Array.from(drawerRef.current.querySelectorAll<HTMLElement>('button, a, input, select, textarea, [tabindex]:not([tabindex="-1"])')).filter((element) => !element.hasAttribute('disabled'));
-      if (!focusable.length) return;
-      const first = focusable[0]!;
-      const last = focusable[focusable.length - 1]!;
-      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
-      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
-    };
-    document.addEventListener('keydown', closeOnEscape);
-    return () => { window.clearTimeout(focusTimer); document.removeEventListener('keydown', closeOnEscape); };
-  }, [menuMounted, open]);
-
   if (!loading && !authenticated) return <Navigate to="/dang-nhap" replace state={{ from: pathname }} />;
   if (!loading && authenticated && !familyId && !error) return <Navigate to="/tao-gia-dinh" replace />;
 

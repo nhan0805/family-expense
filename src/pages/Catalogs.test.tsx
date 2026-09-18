@@ -60,7 +60,7 @@ describe('Quản lý danh mục', () => {
     fireEvent.click(screen.getAllByRole('button', { name: 'Thêm' })[0]!);
     fireEvent.change(screen.getByLabelText('Tên mục đích'), { target: { value: '  Giáo dục  ' } });
     fireEvent.change(screen.getByLabelText('Tìm biểu tượng cho Mục đích'), { target: { value: 'xe đạp' } });
-    fireEvent.click(screen.getByRole('option', { name: 'Bike' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Bike' }));
     fireEvent.click(screen.getByRole('button', { name: 'Lưu danh mục' }));
 
     await waitFor(() => expect(addCatalogItem).toHaveBeenCalledWith('purpose', '  Giáo dục  ', '', 'bike', true));

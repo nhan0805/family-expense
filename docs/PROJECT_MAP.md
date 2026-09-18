@@ -201,6 +201,8 @@ The authoritative schema and policy definitions are the ordered SQL migrations, 
 | `/` | Dashboard |
 | `/giao-dich` | Transaction list, filters and planned confirmation |
 | `/giao-dich/moi`, `/giao-dich/:id` | Create/edit transaction |
+| `/cai-dat` | Settings tabs for default filters and automatic transactions |
+| `/cai-dat/giao-dich` | Backward-compatible redirect to `/cai-dat?tab=filters` |
 | `/tai-san` | Savings books and gold assets |
 | `/ngan-sach` | Budgets |
 | `/chi-phi-dinh-ky` | Recurring templates and runs |

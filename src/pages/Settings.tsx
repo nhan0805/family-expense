@@ -1,5 +1,6 @@
 import { Settings2, SlidersHorizontal } from 'lucide-react';
-import { useRef, useState, type KeyboardEvent } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useOptionalLanguage } from '../context/LanguageContext';
 import { AutomaticTransactionSettings } from './AutomaticTransactionSettings';
 import { TransactionFilterSettings } from './TransactionFilterSettings';
@@ -24,8 +25,15 @@ type SettingsTab = (typeof settingsTabs)[number]['id'];
 export function Settings() {
   const { language } = useOptionalLanguage();
   const en = language === 'en';
-  const [activeTab, setActiveTab] = useState<SettingsTab>('filters');
+  const [searchParams] = useSearchParams();
+  const requestedTab = searchParams.get('tab');
+  const initialTab: SettingsTab = requestedTab === 'automatic' ? 'automatic' : 'filters';
+  const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab);
   const tabRefs = useRef<Record<SettingsTab, HTMLButtonElement | null>>({ filters: null, automatic: null });
+
+  useEffect(() => {
+    if (requestedTab === 'automatic' || requestedTab === 'filters') setActiveTab(requestedTab);
+  }, [requestedTab]);
 
   const handleTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>, currentTab: SettingsTab) => {
     const currentIndex = settingsTabs.findIndex((tab) => tab.id === currentTab);

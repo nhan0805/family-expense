@@ -105,7 +105,7 @@ export function CreateFamily() {
               </span>
               <span id="create-family-name-hint" className="mt-2 flex items-start gap-2 text-xs leading-5 text-[var(--muted)]">
                 <Sparkles className="mt-0.5 shrink-0 text-[var(--primary)]" size={14} aria-hidden="true" />
-                {en ? 'You can change the name later in Settings.' : 'Bạn có thể đổi tên sau trong phần Cài đặt.'}
+                {en ? 'You can change the name later in Family members.' : 'Bạn có thể đổi tên sau trong phần Thành viên gia đình.'}
               </span>
             </div>
 

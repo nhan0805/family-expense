@@ -30,3 +30,23 @@ export function EmptyState({ title, description, icon: Icon = Inbox, action }: {
     {action && <div className="mt-4">{action}</div>}
   </div>;
 }
+
+export function ErrorState({
+  title,
+  description,
+  retryLabel = 'Thử lại',
+  onRetry,
+}: {
+  title: string;
+  description?: string;
+  retryLabel?: string;
+  onRetry?: () => void;
+}) {
+  return (
+    <div className="card border-[var(--danger)] bg-[var(--danger-soft)] p-5 text-sm text-[var(--danger-strong)]" role="alert">
+      <h3 className="font-bold">{title}</h3>
+      {description && <p className="mt-1">{description}</p>}
+      {onRetry && <button type="button" className="btn-secondary mt-3" onClick={onRetry}>{retryLabel}</button>}
+    </div>
+  );
+}

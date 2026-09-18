@@ -66,7 +66,7 @@ describe('xác thực tài khoản', () => {
     const form = screen.getByRole('button', { name: 'Tiếp tục' }).closest('form');
     fireEvent.submit(form!);
 
-    expect(screen.getByRole('status')).toHaveTextContent('Vui lòng nhập email.');
+    expect(screen.getByRole('alert')).toHaveTextContent('Vui lòng nhập email.');
     expect(signInWithPassword).not.toHaveBeenCalled();
   });
 
@@ -77,7 +77,7 @@ describe('xác thực tài khoản', () => {
     fireEvent.change(screen.getByLabelText('Mật khẩu'), { target: { value: 'secret123' } });
     fireEvent.submit(screen.getByRole('button', { name: 'Tiếp tục' }).closest('form')!);
 
-    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Email hoặc mật khẩu không đúng.'));
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Email hoặc mật khẩu không đúng.'));
     expect(screen.getByRole('button', { name: 'Tiếp tục' })).toBeEnabled();
     expect(screen.queryByText('Invalid login credentials')).not.toBeInTheDocument();
   });

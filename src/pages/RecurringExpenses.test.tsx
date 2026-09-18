@@ -70,7 +70,7 @@ describe('Chi phí định kỳ', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Lưu mẫu' }));
 
     expect(await screen.findByText('Tiền điện')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Tạo giao dịch đến hạn' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Kiểm tra và tạo giao dịch đến hạn' }));
     expect(await screen.findByText('Đã tạo 1 giao dịch dự kiến.')).toBeInTheDocument();
   });
 

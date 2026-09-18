@@ -20,6 +20,7 @@ import { EmptyState, TransactionListSkeleton } from '../components/AsyncStates';
 import { MultiSelectField } from '../components/MultiSelectField';
 import { TransactionRow } from '../components/TransactionRow';
 import { useFeedback } from '../components/Feedback';
+import { useFocusTrap } from '../components/ui/Dialog';
 import {
   keepPreviousData,
   useInfiniteQuery,
@@ -379,6 +380,7 @@ export function Transactions() {
   const [bulkEditMounted, setBulkEditMounted] = useState(false);
   const [bulkEditBusy, setBulkEditBusy] = useState(false);
   const [bulkEditValues, setBulkEditValues] = useState<BulkEditValues>(emptyBulkEditValues);
+  const bulkEditPanelRef = useFocusTrap<HTMLElement>(bulkEditOpen, { onEscape: () => setBulkEditOpen(false) });
   const [showTrash, setShowTrash] = useState(false);
   const [aiSearchBusy, setAiSearchBusy] = useState(false);
   const [aiSearchCompleted, setAiSearchCompleted] = useState(false);
@@ -1155,7 +1157,7 @@ export function Transactions() {
           <h2 className="page-title">{en ? 'Transactions' : 'Giao dịch'}</h2>
           <p className="page-subtitle">{en ? 'Search, review and organize every family transaction.' : 'Tìm kiếm, rà soát và sắp xếp mọi giao dịch của gia đình.'}</p>
         </div>
-        <Link to="/cai-dat/giao-dich" className="btn-secondary inline-flex items-center gap-2">
+        <Link to="/cai-dat?tab=filters" className="btn-secondary inline-flex items-center gap-2">
           <Settings2 size={17} aria-hidden="true" />
           {en ? 'Default filters' : 'Bộ lọc mặc định'}
         </Link>
@@ -1242,11 +1244,11 @@ export function Transactions() {
         {filterChips.length > 0 && <div className="flex max-w-full flex-wrap gap-2 pb-1" aria-label={en ? 'Active filters' : 'Bộ lọc đang áp dụng'}>{filterChips.map((chip) => <button type="button" key={chip.key} onClick={chip.clear} className="filter-chip inline-flex min-h-11 max-w-full items-center gap-1 rounded-full px-3 py-2 text-xs font-semibold transition"><span className="min-w-0 break-words [overflow-wrap:anywhere]">{chip.label}</span><X size={13} aria-hidden="true"/><span className="sr-only">{en ? 'Remove filter' : 'Bỏ bộ lọc'} {chip.label}</span></button>)}</div>}
 
         <details className="filter-details group border-t border-black/10 pt-3 dark:border-white/10">
-          <summary className="filter-summary btn-secondary flex cursor-pointer list-none items-center justify-between gap-3 [&::-webkit-details-marker]:hidden">
+          <summary aria-controls="transaction-detailed-filters" className="filter-summary btn-secondary flex cursor-pointer list-none items-center justify-between gap-3 [&::-webkit-details-marker]:hidden">
             <span>{en ? 'Detailed filters' : 'Bộ lọc chi tiết'}{activeFilterCount ? ` (${activeFilterCount})` : ''}</span>
             <ChevronDown className="shrink-0 transition-transform group-open:rotate-180" size={18} aria-hidden="true" />
           </summary>
-          <div className="ui-enter mt-3 grid items-stretch gap-3 md:grid-cols-3 xl:grid-cols-4 [&_.field]:py-2 [&_.field]:text-sm [&_.label]:mb-1 [&_.label]:leading-tight">
+          <div id="transaction-detailed-filters" className="ui-enter mt-3 grid items-stretch gap-3 md:grid-cols-3 xl:grid-cols-4 [&_.field]:py-2 [&_.field]:text-sm [&_.label]:mb-1 [&_.label]:leading-tight">
           <label>
             <span className="label">{en ? 'Transaction type' : 'Loại giao dịch'}</span>
             <select className="field" value={transactionType} onChange={(event) => setTransactionType(event.target.value)}><option value="">{en ? 'All types' : 'Tất cả loại'}</option><option value="Chi tiêu">{en ? 'Money out' : 'Tiền ra'}</option><option value="Thu nhập">{en ? 'Money in' : 'Tiền vào'}</option></select>
@@ -1435,14 +1437,24 @@ export function Transactions() {
         </div>
       </div>
       {selectMode && (
-        <div className="sticky top-2 z-40 flex w-full items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--primary-soft)] p-2.5 shadow-md backdrop-blur dark:border-white/15 dark:bg-[var(--surface)]/95">
+        <div className="sticky top-[calc(4.25rem+env(safe-area-inset-top))] z-40 flex w-full items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--primary-soft)] p-2.5 shadow-md backdrop-blur dark:border-white/15 dark:bg-[var(--surface)]/95">
           <div className="min-w-0 flex-1"><p className="break-words text-sm font-bold">{en ? `Selected ${selectedIds.size} transaction(s)` : `Đã chọn ${selectedIds.size} giao dịch`}</p><p className="hidden text-xs text-gray-500 dark:text-gray-400 sm:block">{en ? 'Up to 100 transactions per batch' : 'Tối đa 100 giao dịch mỗi lần'}</p></div>
           <button type="button" className="btn-secondary shrink-0 px-3 text-sm" onClick={() => setSelectedIds(new Set(rows.slice(0, 100).map((item) => item.id)))}>{en ? 'Select all' : 'Chọn tất cả'}</button>
           {showTrash && <button type="button" className="grid size-11 shrink-0 place-items-center rounded-xl bg-red-600 text-white shadow-sm" disabled={rows.length === 0 || bulkEditBusy} onClick={() => { setSelectedIds(new Set(rows.slice(0, 100).map((item) => item.id))); window.setTimeout(() => void permanentlyDeleteSelected(), 0); }} aria-label={en ? 'Delete all transactions in trash' : 'Xóa tất cả giao dịch trong thùng rác'} title={en ? 'Delete all transactions in trash' : 'Xóa tất cả giao dịch trong thùng rác'}><Trash2 size={18} aria-hidden="true"/></button>}
           {showTrash ? <button type="button" className="grid size-11 shrink-0 place-items-center rounded-xl bg-[var(--primary)] text-[var(--primary-contrast)]" disabled={selectedIds.size === 0 || bulkEditBusy} onClick={() => void restoreSelected()} aria-label={en ? 'Restore selected transactions' : 'Khôi phục các giao dịch đã chọn'} title={en ? 'Restore selected transactions' : 'Khôi phục các giao dịch đã chọn'}><RotateCcw size={18} aria-hidden="true"/></button> : <><button type="button" className="grid size-11 shrink-0 place-items-center rounded-xl bg-[var(--primary)] text-[var(--primary-contrast)]" disabled={selectedIds.size === 0 || bulkEditBusy} onClick={() => { setDeleteError(''); setBulkEditOpen(true); }} aria-label={en ? 'Edit selected transactions' : 'Sửa các giao dịch đã chọn'} title={en ? 'Edit selected transactions' : 'Sửa các giao dịch đã chọn'}><Pencil size={18} aria-hidden="true"/></button><button type="button" className="grid size-11 shrink-0 place-items-center rounded-xl bg-red-600 text-white" disabled={!canBulkDelete || bulkEditBusy} onClick={() => void bulkDelete()} aria-label={canBulkDelete ? (en ? 'Delete selected transactions' : 'Xóa các giao dịch đã chọn') : (en ? 'You can only delete transactions you created' : 'Chỉ có thể xóa giao dịch do bạn tạo')} title={canBulkDelete ? (en ? 'Delete selected transactions' : 'Xóa các giao dịch đã chọn') : (en ? 'You can only delete transactions you created' : 'Chỉ có thể xóa giao dịch do bạn tạo')}><Trash2 size={18} aria-hidden="true"/></button></>}
         </div>
       )}
-      <div key={resultKey} className="transactions-table space-y-2 overflow-visible md:space-y-0 md:overflow-x-auto md:rounded-2xl md:border">
+      <div
+        key={resultKey}
+        className="transactions-table space-y-2 overflow-visible outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] md:space-y-0 md:overflow-x-auto md:rounded-2xl md:border"
+        role="region"
+        aria-label={showTrash ? (en ? 'Deleted transactions table' : 'Bảng giao dịch đã xóa') : (en ? 'Transactions table' : 'Bảng giao dịch')}
+        aria-describedby="transactions-table-hint"
+        tabIndex={0}
+      >
+        <p id="transactions-table-hint" className="px-1 text-xs text-[var(--muted)] xl:hidden">
+          {en ? 'Swipe or scroll horizontally to review all columns.' : 'Vuốt hoặc cuộn ngang để xem đủ các cột.'}
+        </p>
         <div className={`hidden w-full min-w-[1080px] gap-1 rounded-t-2xl bg-[var(--surface-muted)] p-3 text-sm font-bold md:grid ${selectMode ? 'grid-cols-[32px_80px_minmax(180px,1fr)_190px_160px_190px_220px]' : 'grid-cols-[80px_minmax(180px,1fr)_190px_160px_190px_220px]'}`}>
           {selectMode && <input type="checkbox" className="size-5 accent-[var(--primary)]" aria-label={en ? 'Select all visible transactions' : 'Chọn tất cả giao dịch đang hiển thị'} checked={rows.length > 0 && rows.slice(0, 100).every((item) => selectedIds.has(item.id))} onChange={(event) => setSelectedIds(event.target.checked ? new Set(rows.slice(0, 100).map((item) => item.id)) : new Set())} />}
           <span>{en ? 'Date' : 'Ngày'}</span>
@@ -1487,17 +1499,17 @@ export function Transactions() {
       )}
       {bulkEditMounted && (
         <div className={`fixed inset-0 z-[70] grid place-items-start bg-black/35 p-3 sm:p-4 ${bulkEditOpen ? 'ui-overlay-enter' : 'ui-overlay-exit'}`} role="presentation">
-            <section role="dialog" aria-modal="true" aria-labelledby="bulk-edit-title" className={`mt-32 max-h-[calc(100dvh-8rem)] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl dark:bg-[var(--surface)] sm:mt-20 sm:max-h-[78dvh] sm:translate-x-32 sm:rounded-3xl sm:p-5 ${bulkEditOpen ? 'ui-dialog-enter' : 'ui-dialog-exit'}`}>
-            <div className="flex items-start justify-between gap-3"><div><h2 id="bulk-edit-title" className="text-xl font-extrabold">Sửa {selectedIds.size} giao dịch</h2><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Chỉ các trường có giá trị mới sẽ được cập nhật.</p></div><button type="button" className="icon-button" title="Đóng sửa hàng loạt" aria-label="Đóng sửa hàng loạt" onClick={() => setBulkEditOpen(false)}><X size={20} aria-hidden="true"/></button></div>
+            <section ref={bulkEditPanelRef} role="dialog" aria-modal="true" aria-labelledby="bulk-edit-title" aria-describedby="bulk-edit-description" className={`mt-16 max-h-[calc(100dvh-8rem)] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl dark:bg-[var(--surface)] sm:mt-20 sm:max-h-[78dvh] sm:translate-x-32 sm:rounded-3xl sm:p-5 ${bulkEditOpen ? 'ui-dialog-enter' : 'ui-dialog-exit'}`}>
+            <div className="flex items-start justify-between gap-3"><div><h2 id="bulk-edit-title" className="text-xl font-extrabold">{en ? `Edit ${selectedIds.size} transactions` : `Sửa ${selectedIds.size} giao dịch`}</h2><p id="bulk-edit-description" className="mt-1 text-sm text-gray-500 dark:text-gray-400">{en ? 'Only fields with a value will be updated.' : 'Chỉ các trường có giá trị mới sẽ được cập nhật.'}</p></div><button type="button" className="icon-button" title={en ? 'Close bulk edit' : 'Đóng sửa hàng loạt'} aria-label={en ? 'Close bulk edit' : 'Đóng sửa hàng loạt'} onClick={() => setBulkEditOpen(false)}><X size={20} aria-hidden="true"/></button></div>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <BulkSelect label="Mục đích" value={bulkEditValues.purposeId} onChange={(value) => setBulkEditValues((current) => ({ ...current, purposeId: value }))} options={purposes} language={language} />
-              <BulkSelect label="Danh mục" value={bulkEditValues.expenseTypeId} onChange={(value) => setBulkEditValues((current) => ({ ...current, expenseTypeId: value }))} options={expenseTypes} language={language} />
-              <BulkSelect label="Phương thức thanh toán" value={bulkEditValues.paymentMethodId} onChange={(value) => setBulkEditValues((current) => ({ ...current, paymentMethodId: value }))} options={paymentMethods} language={language} />
-              <BulkSelect label="Trạng thái" value={bulkEditValues.status} onChange={(value) => setBulkEditValues((current) => ({ ...current, status: value }))} options={[{ id: 'Thực tế', name: 'Thực tế' }, { id: 'Dự kiến', name: 'Dự kiến' }]} />
+              <BulkSelect label={en ? 'Purpose' : 'Mục đích'} value={bulkEditValues.purposeId} onChange={(value) => setBulkEditValues((current) => ({ ...current, purposeId: value }))} options={purposes} language={language} />
+              <BulkSelect label={en ? 'Category' : 'Danh mục'} value={bulkEditValues.expenseTypeId} onChange={(value) => setBulkEditValues((current) => ({ ...current, expenseTypeId: value }))} options={expenseTypes} language={language} />
+              <BulkSelect label={en ? 'Payment method' : 'Phương thức thanh toán'} value={bulkEditValues.paymentMethodId} onChange={(value) => setBulkEditValues((current) => ({ ...current, paymentMethodId: value }))} options={paymentMethods} language={language} />
+              <BulkSelect label={en ? 'Status' : 'Trạng thái'} value={bulkEditValues.status} onChange={(value) => setBulkEditValues((current) => ({ ...current, status: value }))} options={[{ id: 'Thực tế', name: 'Thực tế', nameEn: 'Actual' }, { id: 'Dự kiến', name: 'Dự kiến', nameEn: 'Planned' }]} language={language} />
             </div>
-            <div className="mt-4 rounded-xl bg-amber-50 p-2.5 text-sm text-amber-900 dark:bg-amber-950/30 dark:text-amber-100"><strong>Xem trước:</strong> {Object.values(bulkEditValues).filter(Boolean).length ? `${selectedIds.size} giao dịch · ${Object.values(bulkEditValues).filter(Boolean).length} trường sẽ cập nhật.` : 'Chưa chọn trường nào để thay đổi.'}</div>
+            <div className="mt-4 rounded-xl bg-amber-50 p-2.5 text-sm text-amber-900 dark:bg-amber-950/30 dark:text-amber-100"><strong>{en ? 'Preview:' : 'Xem trước:'}</strong> {Object.values(bulkEditValues).filter(Boolean).length ? (en ? `${selectedIds.size} transactions · ${Object.values(bulkEditValues).filter(Boolean).length} fields will update.` : `${selectedIds.size} giao dịch · ${Object.values(bulkEditValues).filter(Boolean).length} trường sẽ cập nhật.`) : (en ? 'No fields selected.' : 'Chưa chọn trường nào để thay đổi.')}</div>
             {deleteError && <p role="alert" className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">{deleteError}</p>}
-            <div className="mt-5 grid grid-cols-2 gap-2"><button type="button" className="btn-secondary" disabled={bulkEditBusy} onClick={() => setBulkEditOpen(false)}>Hủy</button><button type="button" className="btn-primary" disabled={bulkEditBusy || Object.values(bulkEditValues).every((value) => !value)} onClick={() => void applyBulkEdit()}>{bulkEditBusy ? 'Đang cập nhật…' : 'Xác nhận cập nhật'}</button></div>
+            <div className="mt-5 grid grid-cols-2 gap-2"><button type="button" className="btn-secondary" data-dialog-autofocus disabled={bulkEditBusy} onClick={() => setBulkEditOpen(false)}>{en ? 'Cancel' : 'Hủy'}</button><button type="button" className="btn-primary" disabled={bulkEditBusy || Object.values(bulkEditValues).every((value) => !value)} onClick={() => void applyBulkEdit()}>{bulkEditBusy ? (en ? 'Updating…' : 'Đang cập nhật…') : (en ? 'Confirm update' : 'Xác nhận cập nhật')}</button></div>
           </section>
         </div>
       )}
@@ -1522,7 +1534,7 @@ function BulkSelect({
     <label className="min-w-0">
       <span className="label">{label}</span>
       <select className="field" value={value} onChange={(event) => onChange(event.target.value)}>
-        <option value="">Không thay đổi</option>
+        <option value="">{language === 'en' ? 'No change' : 'Không thay đổi'}</option>
         {options.map((option) => <option key={option.id} value={option.id}>{getCatalogDisplayName(option, language)}</option>)}
       </select>
     </label>
