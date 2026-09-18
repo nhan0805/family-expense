@@ -161,17 +161,19 @@ Supabase pg_cron
 ### New-family catalog defaults
 
 ```text
-Catalog-default migration selects the most complete existing family once
+Catalog migration seeds an initial snapshot; a family owner can promote
+their active catalogs from the Catalogs screen
   → system catalog template tables
   → create_family()/seed_family_defaults()
   → new family receives a copied catalog snapshot
 ```
 
 The system catalog template is configuration rather than tenant data. It has
-RLS with no direct client table privileges and is managed only by migrations.
-When no existing family is available, new-family onboarding keeps using the
-built-in catalog fallback; required savings/gold codes remain present even
-when the source family has customized labels.
+RLS with no direct client table privileges and is updated only through the
+owner-guarded promotion RPC exposed from the Catalogs screen. When no
+template exists, new-family onboarding keeps using the built-in catalog
+fallback; required savings/gold codes remain present even when the source
+family has customized labels.
 
 ## Core entities and relationships
 
