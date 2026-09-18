@@ -4,10 +4,10 @@
 
 ## Current state
 
-- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; `main` hiện có runtime merge commit `57484d5` sau PR [#226](https://github.com/nhan0805/family-expense/pull/226). [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/4f4a5e15-5c3d-44f3-8356-afbdd78e89ea) đã pass; smoke `/`, `/dang-nhap` và `/thanh-vien` đều trả HTTP 200.
-- Code trên `main` đã gồm PR [#225](https://github.com/nhan0805/family-expense/pull/225), xử lý fallback xóa gia đình; PR [#226](https://github.com/nhan0805/family-expense/pull/226), khôi phục toggle giao diện Sáng/Tối bằng icon và bỏ trạng thái theme `system`; cùng các release trước.
-- CI hậu merge [run 35361342048](https://github.com/nhan0805/family-expense/actions/runs/35361342048) của merge commit `57484d5` pass quality, E2E, db-security và performance budget; Cloudflare Pages production check cũng pass. PR #226 chỉ thay đổi frontend, không có migration Supabase mới.
-- Nhánh release/status hiện tại: `codex/release-status-theme-toggle-20260918`, được đồng bộ từ `origin/main` sau khi PR #226 merge để ghi nhận release; thay đổi tài liệu này không tạo thêm production deploy.
+- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; `main` hiện có runtime merge commit `c3ad680` sau PR [#229](https://github.com/nhan0805/family-expense/pull/229). [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/08331e1e-c64e-48ca-8be0-f10499544df6) đã pass; smoke `/`, `/dang-nhap` và `/thanh-vien` đều trả HTTP 200.
+- Code trên `main` đã gồm PR [#229](https://github.com/nhan0805/family-expense/pull/229), sửa lỗi RPC xóa gia đình khi còn mặc định giao dịch tự động; PR [#225](https://github.com/nhan0805/family-expense/pull/225), xử lý fallback xóa gia đình; PR [#226](https://github.com/nhan0805/family-expense/pull/226), khôi phục toggle giao diện Sáng/Tối bằng icon và bỏ trạng thái theme `system`; cùng các release trước.
+- CI hậu merge [run 35369914230](https://github.com/nhan0805/family-expense/actions/runs/35369914230) của merge commit `c3ad680` pass quality, E2E, db-security và Cloudflare Pages; [Supabase Production Deploy run 35369914157](https://github.com/nhan0805/family-expense/actions/runs/35369914157) cũng pass và đã áp dụng migration production.
+- Nhánh release/status hiện tại được đồng bộ từ `origin/main` sau khi PR #229 merge để ghi nhận release; thay đổi tài liệu này không tạo thêm production deploy.
 - Đã cập nhật CI/preview cho `merge_group`, thu hẹp trigger Supabase và chuẩn hóa single-writer cho tài liệu release; chưa bật Merge Queue/branch protection trên GitHub.
 - Bản đồ kiến trúc ổn định nằm trong [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md); quy tắc phân loại tài liệu nằm trong [`docs/AI_CONTEXT_GUIDE.md`](docs/AI_CONTEXT_GUIDE.md).
 
@@ -35,6 +35,13 @@
 - Semantic embedding/search production path đã bị loại bỏ; không đưa lại nếu chưa có quyết định kiến trúc mới.
 
 ## Recently completed
+
+### Sửa lỗi RPC không xóa được gia đình khi có mặc định giao dịch tự động
+
+- Nguyên nhân: `automatic_transaction_defaults` tham chiếu các catalog của family, trong khi trigger bảo vệ catalog báo `CATALOG_IN_USE` khi RPC xóa family cascade qua các catalog; vì vậy giao diện có thể báo không còn giao dịch hoạt động nhưng thao tác xóa vẫn rollback.
+- Migration `supabase/migrations/202609182100_family_delete_automatic_defaults.sql` thay thế `delete_empty_family` để xóa các mặc định giao dịch tự động sau giao dịch đã xóa mềm và trước khi xóa family/catalog; thêm regression assertion trong `supabase/tests/family_delete.sql`.
+- Kiểm thử: CI hậu merge [run 35369914230](https://github.com/nhan0805/family-expense/actions/runs/35369914230) pass quality, E2E, db-security và performance budget; pgTAP local không chạy vì Supabase/Postgres local chưa khởi động.
+- Triển khai: PR [#229](https://github.com/nhan0805/family-expense/pull/229) merge vào `main` tại commit `c3ad680`; [Supabase Production Deploy run 35369914157](https://github.com/nhan0805/family-expense/actions/runs/35369914157) và [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/08331e1e-c64e-48ca-8be0-f10499544df6) pass; smoke production `/`, `/dang-nhap` và `/thanh-vien` đều trả HTTP 200.
 
 ### Khôi phục toggle giao diện Sáng/Tối
 
@@ -193,7 +200,7 @@
 
 ## Current work
 
-PR #214 đã hoàn tất quality gate, merge vào `main` và deploy production thành công. Lỗi icon bị chồng lên chữ ở form đăng nhập đã được sửa; nếu cần chỉnh tiếp, bắt đầu từ `origin/main`. Các thay đổi working tree ngoài release này không được đưa vào production.
+PR #229 đã hoàn tất quality gate, merge vào `main` và deploy production thành công. Lỗi RPC xóa gia đình do còn mặc định giao dịch tự động đã được sửa; nếu cần chỉnh tiếp, bắt đầu từ `origin/main`. Các thay đổi working tree ngoài release này không được đưa vào production.
 
 ## Pending tasks
 
