@@ -5,6 +5,7 @@ import { useOptionalLanguage } from '../context/LanguageContext';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { EmptyState, Skeleton } from '../components/AsyncStates';
 import { useFeedback } from '../components/Feedback';
+import { userFacingError } from '../lib/errorRecovery';
 
 type Member = {
   id: string;
@@ -259,13 +260,18 @@ export function Members() {
     if (!confirmed) return;
     setBusy(true);
     setMessage('');
-    const result = await deleteFamily();
-    setBusy(false);
-    if (result) {
-      setMessage(result);
-      return;
+    try {
+      const result = await deleteFamily();
+      if (result) {
+        setMessage(result);
+        return;
+      }
+      window.location.assign('/tao-gia-dinh');
+    } catch (error) {
+      setMessage(userFacingError(error, 'Không thể xóa gia đình. Vui lòng thử lại.'));
+    } finally {
+      setBusy(false);
     }
-    window.location.assign('/tao-gia-dinh');
   };
 
   return (
@@ -482,10 +488,11 @@ export function Members() {
             type="button"
             className="danger-button mt-4 px-4"
             disabled={busy || canDeleteFamily !== true}
+            aria-busy={busy}
             onClick={() => void removeFamily()}
           >
             <Trash2 className="mr-2 inline" size={17} />
-            {en ? 'Delete family' : 'Xóa gia đình'}
+            {busy ? (en ? 'Deleting family…' : 'Đang xóa gia đình…') : (en ? 'Delete family' : 'Xóa gia đình')}
           </button>
         </section>
       )}
