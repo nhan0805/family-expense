@@ -35,10 +35,14 @@ describe('xác thực tài khoản', () => {
     renderLogin();
 
     expect(screen.getByRole('heading', { name: 'Đăng nhập' })).toBeInTheDocument();
-    expect(screen.getByLabelText('Email')).toHaveAttribute('name', 'email');
-    expect(screen.getByLabelText('Email')).toHaveAttribute('autocomplete', 'email');
-    expect(screen.getByLabelText('Mật khẩu')).toHaveAttribute('name', 'password');
-    expect(screen.getByLabelText('Mật khẩu')).toHaveAttribute('autocomplete', 'current-password');
+    const emailInput = screen.getByLabelText('Email');
+    const passwordInput = screen.getByLabelText('Mật khẩu');
+    expect(emailInput).toHaveAttribute('name', 'email');
+    expect(emailInput).toHaveAttribute('autocomplete', 'email');
+    expect(emailInput).toHaveClass('pl-10');
+    expect(passwordInput).toHaveAttribute('name', 'password');
+    expect(passwordInput).toHaveAttribute('autocomplete', 'current-password');
+    expect(passwordInput).toHaveClass('pl-10', 'pr-12');
     expect(screen.getByRole('button', { name: 'Hiện mật khẩu' })).toHaveAttribute('aria-pressed', 'false');
   });
 
