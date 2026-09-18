@@ -2,6 +2,13 @@
 
 ## 2026-09-18
 
+### Thu gọn nút xóa thành viên
+
+- Nút `Xóa thành viên` trên màn hình Thành viên chỉ còn icon thùng rác, vẫn giữ `aria-label`/tooltip và vùng chạm tối thiểu; các nút xóa gia đình, giao dịch, chi phí định kỳ và thông báo giữ lại giao diện có nhãn như trước.
+- Files: `src/pages/Members.tsx`, `src/pages/Members.test.tsx`. Không đổi schema, RLS/RPC, Edge Function hoặc dữ liệu.
+- Kiểm thử: Vitest 48 file/232 test, TypeScript, ESLint, Vite build, performance budget, E2E, db-security và `git diff --check` pass; E2E local skip theo auth/demo guard hiện có.
+- Triển khai: PR [#217](https://github.com/nhan0805/family-expense/pull/217) merge vào `main` tại commit `111118a`; CI hậu merge [run 35314416000](https://github.com/nhan0805/family-expense/actions/runs/35314416000) và [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/9cdff4e5-a0d1-490d-baec-2c765e43c21b) đều pass; smoke `https://family-expense-8fo.pages.dev/` trả HTTP 200.
+
 ### Sửa icon bị chồng lên chữ trong màn hình đăng nhập
 
 - Sửa cascade của `.field` để các utility `pl-10`/`pr-12` giữ đúng khoảng trống cho icon email, khóa và nút hiện mật khẩu; bổ sung regression assertion trong `src/pages/Login.test.tsx`.
