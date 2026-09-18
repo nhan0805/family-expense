@@ -39,6 +39,7 @@ export function Members() {
     currentUserEmail,
     currentUserId,
     currentUserRole,
+    transactions = [],
     updateFamilyName,
     deleteFamily,
   } = useApp();
@@ -54,6 +55,10 @@ export function Members() {
   const [familyNameInput, setFamilyNameInput] = useState(familyName);
   const isOwner = currentUserRole === 'owner';
   const [canDeleteFamily, setCanDeleteFamily] = useState<boolean | null>(null);
+  const localCanDeleteFamily = !transactions.some((transaction) => !transaction.deletedAt);
+  const deletionEligibility = isSupabaseConfigured
+    ? canDeleteFamily
+    : localCanDeleteFamily;
 
   const loadMembers = useCallback(async () => {
     setLoadingMembers(true);
@@ -245,12 +250,8 @@ export function Members() {
   };
 
   const removeFamily = async () => {
-    if (canDeleteFamily !== true) {
-      setMessage(
-        canDeleteFamily === false
-          ? 'Hãy xóa hết giao dịch trước khi xóa gia đình.'
-          : 'Chưa thể kiểm tra điều kiện xóa. Vui lòng tải lại trang rồi thử lại.',
-      );
+    if (deletionEligibility === false) {
+      setMessage('Hãy xóa hết giao dịch trước khi xóa gia đình.');
       return;
     }
     const confirmed = await askConfirm({
@@ -482,9 +483,9 @@ export function Members() {
             {en ? 'Delete family' : 'Xóa gia đình'}
           </h3>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {canDeleteFamily === false
+            {deletionEligibility === false
               ? (en ? 'Delete all transactions before deleting the family.' : 'Hãy xóa hết giao dịch trước khi xóa gia đình.')
-              : canDeleteFamily === null
+              : deletionEligibility === null
                 ? (en ? 'Checking deletion requirements…' : 'Đang kiểm tra điều kiện xóa…')
                 : (en ? 'No active transactions remain; the family can be deleted.' : 'Không còn giao dịch hoạt động; gia đình có thể xóa.')}
           </p>
@@ -498,7 +499,7 @@ export function Members() {
             <Trash2 className="mr-2 inline" size={17} />
             {busy
               ? (en ? 'Deleting family…' : 'Đang xóa gia đình…')
-              : canDeleteFamily === null
+              : deletionEligibility === null
                 ? (en ? 'Checking deletion…' : 'Đang kiểm tra điều kiện xóa…')
                 : (en ? 'Delete family' : 'Xóa gia đình')}
           </button>

@@ -5,9 +5,13 @@ import { supabase } from '../lib/supabase';
 import { FeedbackProvider } from '../components/Feedback';
 import { Members } from './Members';
 
+const supabaseMode = vi.hoisted(() => ({ configured: true }));
+
 vi.mock('../context/AppContext', () => ({ useApp: vi.fn() }));
 vi.mock('../lib/supabase', () => ({
-  isSupabaseConfigured: true,
+  get isSupabaseConfigured() {
+    return supabaseMode.configured;
+  },
   supabase: { rpc: vi.fn().mockResolvedValue({ data: [], error: null }) },
 }));
 
@@ -16,6 +20,7 @@ describe('Members', () => {
 
   afterEach(() => {
     cleanup();
+    supabaseMode.configured = true;
     vi.clearAllMocks();
   });
 
@@ -170,6 +175,58 @@ describe('Members', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Hệ thống phản hồi quá lâu');
     expect(deleteFamily).toHaveBeenCalledOnce();
     expect(deleteButton).toBeEnabled();
+  });
+
+  it('vẫn gọi RPC xóa khi kiểm tra điều kiện trước đó bị lỗi', async () => {
+    const deleteFamily = vi.fn().mockResolvedValue('Không thể xóa gia đình.');
+    vi.mocked(supabase.rpc)
+      .mockResolvedValueOnce({ data: [], error: null } as never)
+      .mockRejectedValueOnce(new Error('network request failed'));
+    vi.mocked(useApp).mockReturnValue({
+      familyId: 'family-1',
+      familyName: 'Gia đình của tôi',
+      currentUserEmail: 'owner@example.com',
+      currentUserId: 'owner-1',
+      currentUserRole: 'owner',
+      updateFamilyName: vi.fn(),
+      deleteFamily,
+    } as unknown as ReturnType<typeof useApp>);
+
+    renderMembers();
+
+    const deleteButton = await screen.findByRole('button', { name: 'Đang kiểm tra điều kiện xóa…' });
+    fireEvent.click(deleteButton);
+    const dialog = await screen.findByRole('alertdialog');
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Xóa gia đình' }));
+
+    await waitFor(() => expect(deleteFamily).toHaveBeenCalledOnce());
+    expect(await screen.findByRole('alert')).toHaveTextContent('Không thể xóa gia đình.');
+  });
+
+  it('cho phép xóa gia đình trong chế độ demo khi không còn giao dịch hoạt động', async () => {
+    supabaseMode.configured = false;
+    const deleteFamily = vi.fn().mockResolvedValue('Đã xóa gia đình demo.');
+    vi.mocked(useApp).mockReturnValue({
+      familyId: 'local-family',
+      familyName: 'Gia đình demo',
+      currentUserEmail: 'demo@family.local',
+      currentUserId: 'local-user',
+      currentUserRole: 'owner',
+      transactions: [],
+      updateFamilyName: vi.fn(),
+      deleteFamily,
+    } as unknown as ReturnType<typeof useApp>);
+
+    renderMembers();
+
+    const deleteButton = await screen.findByRole('button', { name: 'Xóa gia đình' });
+    expect(deleteButton).toBeEnabled();
+    fireEvent.click(deleteButton);
+    const dialog = await screen.findByRole('alertdialog');
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Xóa gia đình' }));
+
+    await waitFor(() => expect(deleteFamily).toHaveBeenCalledOnce());
+    expect(await screen.findByRole('alert')).toHaveTextContent('Đã xóa gia đình demo.');
   });
 
   it('cho nút phản hồi rõ ràng khi gia đình còn giao dịch hoạt động', async () => {
