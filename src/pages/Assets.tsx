@@ -2,6 +2,7 @@ import {
   Archive,
   Banknote,
   ChevronDown,
+  CircleDollarSign,
   Gem,
   Crown,
   Landmark,
@@ -10,6 +11,7 @@ import {
   Plus,
   ReceiptText,
   RotateCcw,
+  Save,
   Trash2,
   WalletCards,
   X,
@@ -989,15 +991,30 @@ export function Assets() {
         <GoldHoldingStat label={en ? 'Estimated P/L' : 'Lãi/lỗ tạm tính'} value={goldHoldingSummary.unrealizedPnl === null ? '—' : formatSignedVnd(goldHoldingSummary.unrealizedPnl)} tone={goldHoldingSummary.unrealizedPnl === null ? 'neutral' : goldHoldingSummary.unrealizedPnl >= 0 ? 'positive' : 'negative'} />
       </div>
       <div className="border-b border-black/10 p-4 dark:border-white/10 sm:p-5">
-        <form className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start" onSubmit={saveGoldBuybackPrice}>
-          <label className="block min-w-0">
-            <span className="label">{en ? 'Shared shop buy-back price / mace (VND)' : 'Giá tiệm mua vào dùng chung / chỉ (VND)'}</span>
-            <input className="field" inputMode="numeric" value={goldBuybackPriceInput} disabled={!canManage || busy === 'gold-price'} onChange={(event) => setGoldBuybackPriceInput(formatAssetMoneyInput(event.target.value))} placeholder={en ? 'Optional' : 'Không bắt buộc'} />
-            <span className="mt-1 block text-xs text-gray-500">{en ? 'Used for all gold and estimated P/L. Leave empty to hide the estimate.' : 'Áp dụng cho tất cả vàng và lãi/lỗ tạm tính. Để trống nếu chưa muốn tính.'}</span>
-          </label>
-          {canManage && <button type="submit" className="btn-primary inline-flex w-full items-center justify-center gap-2 sm:mt-6 sm:w-auto" disabled={Boolean(busy)}>{busy === 'gold-price' && <LoaderCircle size={16} className="animate-spin" aria-hidden="true" />}{en ? 'Save shared price' : 'Lưu giá dùng chung'}</button>}
-        </form>
-        {formError && <div role="alert" className="inline-feedback inline-feedback-error mt-3">{formError}</div>}
+        <div className="gold-price-panel">
+          <div className="gold-price-panel-heading">
+            <span className="gold-price-panel-icon" aria-hidden="true"><CircleDollarSign size={22} /></span>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h4 id="gold-buyback-price-title" className="text-base font-extrabold leading-tight">{en ? 'Shared shop buy-back price' : 'Giá tiệm mua vào dùng chung'}</h4>
+                <span className={`gold-price-status ${goldBuybackPricePerChi == null ? 'gold-price-status-empty' : 'gold-price-status-active'}`} aria-live="polite">{goldBuybackPricePerChi == null ? (en ? 'Not set' : 'Chưa thiết lập') : (en ? 'Applied to all gold' : 'Đang áp dụng')}</span>
+              </div>
+              <p className="gold-price-panel-description">{en ? 'Used to estimate the current value and unrealized P/L of your gold.' : 'Dùng để ước tính giá trị hiện tại và lãi/lỗ tạm tính của toàn bộ vàng đang giữ.'}</p>
+            </div>
+          </div>
+          <form className="gold-price-form" aria-labelledby="gold-buyback-price-title" onSubmit={saveGoldBuybackPrice}>
+            <label className="block min-w-0" htmlFor="gold-buyback-price">
+              <span id="gold-buyback-price-label" className="label">{en ? 'Buy-back price / mace (VND)' : 'Giá mua vào / chỉ (VND)'}</span>
+              <span className="gold-price-input-wrap">
+                <input id="gold-buyback-price" aria-label={en ? 'Shared shop buy-back price / mace (VND)' : 'Giá tiệm mua vào dùng chung / chỉ (VND)'} className="field gold-price-input" inputMode="numeric" value={goldBuybackPriceInput} disabled={!canManage || busy === 'gold-price'} onChange={(event) => setGoldBuybackPriceInput(formatAssetMoneyInput(event.target.value))} placeholder={en ? 'Enter a price' : 'Nhập giá mua vào'} />
+                <span className="gold-price-unit" aria-hidden="true">VND</span>
+              </span>
+            </label>
+            {canManage && <button type="submit" aria-label={en ? 'Save shared price' : 'Lưu giá dùng chung'} className="btn-primary gold-price-submit inline-flex w-full items-center justify-center gap-2 sm:w-auto" disabled={Boolean(busy)}>{busy === 'gold-price' ? <LoaderCircle size={17} className="animate-spin" aria-hidden="true" /> : <Save size={17} aria-hidden="true" />}{en ? 'Save price' : 'Lưu giá'}</button>}
+            <p className="gold-price-helper">{en ? 'Leave empty if you do not want to calculate the estimate yet.' : 'Để trống nếu bạn chưa muốn tính giá trị ước tính.'}</p>
+          </form>
+          {formError && <div role="alert" className="inline-feedback inline-feedback-error mt-3 sm:col-span-2">{formError}</div>}
+        </div>
       </div>
       {activeGold.length ? <div className="space-y-3 p-3 sm:p-4">{activeGold.map((asset) => <GoldRow key={asset.id} asset={asset} canManage={canManage} busy={busy} en={en} onEdit={() => openGoldEditor(asset)} onDelete={() => void deleteGold(asset)} />)}</div> : <EmptyState title={en ? 'No gold yet' : 'Chưa có vàng'} description={en ? 'Add a purchase with its quantity and price.' : 'Thêm lần mua với số chỉ và giá mua.'} action={canManage ? <button type="button" className="btn-secondary asset-add-button asset-add-gold inline-flex items-center gap-2" onClick={() => openGoldEditor()}><Plus size={16} aria-hidden="true" />{en ? 'Add gold' : 'Thêm vàng'}</button> : undefined} />}
       {soldGold.length > 0 && <details className="border-t border-black/10 dark:border-white/10"><summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 p-4 font-bold [&::-webkit-details-marker]:hidden"><span>{en ? 'Sold gold' : 'Vàng đã bán'} ({soldGold.length})</span><ChevronDown size={18} aria-hidden="true" /></summary><div className="space-y-3 p-3 sm:p-4">{soldGold.map((asset) => <GoldRow key={asset.id} asset={asset} canManage={canManage} busy={busy} en={en} onEdit={() => undefined} onArchive={() => void archiveGold(asset)} onDelete={() => void deleteGold(asset)} sold />)}</div></details>}
