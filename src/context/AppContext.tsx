@@ -624,18 +624,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setTransactions([]);
       return null;
     }
-    const { error: rpcError } = await supabase.rpc('delete_empty_family', {
-      p_family_id: familyId,
-    });
-    if (rpcError) {
-      if (
-        rpcError.message.includes('FAMILY_HAS_ACTIVE_TRANSACTIONS') ||
-        rpcError.message.includes('FAMILY_HAS_TRANSACTIONS')
-      )
-        return 'Hãy xóa hết giao dịch trước khi xóa gia đình.';
-      if (rpcError.message.includes('FORBIDDEN'))
-        return 'Chỉ chủ gia đình mới được xóa gia đình.';
-      return userFacingError(rpcError, 'Không thể xóa gia đình.');
+    try {
+      const { error: rpcError } = await supabase.rpc('delete_empty_family', {
+        p_family_id: familyId,
+      });
+      if (rpcError) {
+        if (
+          rpcError.message.includes('FAMILY_HAS_ACTIVE_TRANSACTIONS') ||
+          rpcError.message.includes('FAMILY_HAS_TRANSACTIONS')
+        )
+          return 'Hãy xóa hết giao dịch trước khi xóa gia đình.';
+        if (rpcError.message.includes('FORBIDDEN'))
+          return 'Chỉ chủ gia đình mới được xóa gia đình.';
+        return userFacingError(rpcError, 'Không thể xóa gia đình.');
+      }
+    } catch (error) {
+      return userFacingError(error, 'Không thể xóa gia đình. Vui lòng thử lại.');
     }
     setFamilyId('');
     setFamilyName('Gia đình của tôi');

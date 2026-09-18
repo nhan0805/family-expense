@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useApp } from '../context/AppContext';
 import { supabase } from '../lib/supabase';
@@ -142,5 +142,33 @@ describe('Members', () => {
 
     await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Không thể hoàn tất thao tác thành viên.'));
     expect(screen.queryByLabelText('Đang tải thành viên')).not.toBeInTheDocument();
+  });
+
+  it('hiển thị lỗi và kết thúc loading khi xóa gia đình bị reject', async () => {
+    const deleteFamily = vi.fn().mockRejectedValue(new Error('SUPABASE_REQUEST_TIMEOUT'));
+    vi.mocked(supabase.rpc)
+      .mockResolvedValueOnce({ data: [], error: null } as never)
+      .mockResolvedValueOnce({ data: true, error: null } as never);
+    vi.mocked(useApp).mockReturnValue({
+      familyId: 'family-1',
+      familyName: 'Gia đình của tôi',
+      currentUserEmail: 'owner@example.com',
+      currentUserId: 'owner-1',
+      currentUserRole: 'owner',
+      updateFamilyName: vi.fn(),
+      deleteFamily,
+    } as unknown as ReturnType<typeof useApp>);
+
+    renderMembers();
+
+    const deleteButton = await screen.findByRole('button', { name: 'Xóa gia đình' });
+    await waitFor(() => expect(deleteButton).toBeEnabled());
+    fireEvent.click(deleteButton);
+    const dialog = await screen.findByRole('alertdialog');
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Xóa gia đình' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Hệ thống phản hồi quá lâu');
+    expect(deleteFamily).toHaveBeenCalledOnce();
+    expect(deleteButton).toBeEnabled();
   });
 });
