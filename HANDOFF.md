@@ -1,13 +1,13 @@
 # Family Finance — Development Handoff
 
-> Cập nhật: **18/09/2026** (`Asia/Ho_Chi_Minh`)
+> Cập nhật: **19/09/2026** (`Asia/Ho_Chi_Minh`)
 
 ## Current state
 
-- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; `main` hiện có runtime merge commit `048ab60` sau PR [#230](https://github.com/nhan0805/family-expense/pull/230). [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/96974dcf-aef4-4b14-8a08-c1dd86322791) đã pass; smoke `/` trả HTTP 200.
-- Code trên `main` đã gồm PR [#230](https://github.com/nhan0805/family-expense/pull/230), chuẩn hóa trạng thái giao dịch mới do AI gợi ý theo phương thức thanh toán; cùng PR [#225](https://github.com/nhan0805/family-expense/pull/225) và [#226](https://github.com/nhan0805/family-expense/pull/226).
-- CI hậu merge [run 35370991235](https://github.com/nhan0805/family-expense/actions/runs/35370991235) của merge commit `048ab60` pass quality, coverage, build/performance, E2E và db-security. PR #230 chỉ thay đổi frontend và test, không có migration Supabase mới.
-- Nhánh release/status hiện tại: `codex/release-status-ai-transaction-20260918`, được đồng bộ từ `origin/main` sau khi PR #230 merge để ghi nhận release; thay đổi tài liệu này không tạo thêm production deploy.
+- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; `main` hiện có runtime merge commit `7621980` sau PR [#232](https://github.com/nhan0805/family-expense/pull/232). PR [#231](https://github.com/nhan0805/family-expense/pull/231) đã đưa panel giá mua vào vàng dùng chung lên production tại merge commit `eba74e5`; [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/263765b5-f0ec-4e0d-8c3c-6f0812ec970f) pass; smoke `/`, `/dang-nhap` và `/thanh-vien` đều trả HTTP 200.
+- Code trên `main` đã gồm PR [#231](https://github.com/nhan0805/family-expense/pull/231), làm mới panel cài đặt giá mua vào vàng dùng chung; PR [#232](https://github.com/nhan0805/family-expense/pull/232), loại bỏ khoảng trống ngang không cần thiết của bảng giao dịch; PR [#230](https://github.com/nhan0805/family-expense/pull/230), chuẩn hóa trạng thái giao dịch AI; cùng các release trước. PR [#235](https://github.com/nhan0805/family-expense/pull/235) chỉ cập nhật release docs.
+- CI hậu merge [run 35371516601](https://github.com/nhan0805/family-expense/actions/runs/35371516601) của merge commit `eba74e5` pass quality, E2E và db-security sau một lần retry do Supabase CLI API rate limit; Cloudflare Pages production check cũng pass. PR #231 chỉ thay đổi frontend, không có migration Supabase mới.
+- Nhánh release/status hiện tại: `codex/release-status-gold-price-panel-20260919`, được đồng bộ từ `origin/main` sau khi PR #231 merge để ghi nhận release; thay đổi tài liệu này không tạo thêm production deploy.
 - Đã cập nhật CI/preview cho `merge_group`, thu hẹp trigger Supabase và chuẩn hóa single-writer cho tài liệu release; chưa bật Merge Queue/branch protection trên GitHub.
 - Bản đồ kiến trúc ổn định nằm trong [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md); quy tắc phân loại tài liệu nằm trong [`docs/AI_CONTEXT_GUIDE.md`](docs/AI_CONTEXT_GUIDE.md).
 
@@ -35,6 +35,13 @@
 - Semantic embedding/search production path đã bị loại bỏ; không đưa lại nếu chưa có quyết định kiến trúc mới.
 
 ## Recently completed
+
+### Làm đẹp panel giá mua vào vàng dùng chung
+
+- Khu vực nhập giá mua vào được chuyển thành panel riêng có icon, trạng thái `Chưa thiết lập`/`Đang áp dụng`, mô tả ngắn, đơn vị VND trong ô nhập và nút lưu gọn hơn; bố cục responsive, dark mode và trạng thái lỗi được giữ rõ ràng.
+- Files: `src/pages/Assets.tsx`, `src/index.css`, `src/pages/Assets.ui.test.tsx`. Không đổi schema, RLS/RPC, Edge Function hoặc dữ liệu production.
+- Kiểm thử: local Vitest 49 file/242 test, TypeScript, ESLint, Vite build, performance budget và `git diff --check` pass; CI hậu merge [run 35371516601](https://github.com/nhan0805/family-expense/actions/runs/35371516601) pass quality, E2E và db-security.
+- Triển khai: PR [#231](https://github.com/nhan0805/family-expense/pull/231) merge tại commit `eba74e5`; [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/263765b5-f0ec-4e0d-8c3c-6f0812ec970f) pass; production bundle đã xác nhận `gold-price-panel`; smoke `/`, `/dang-nhap` và `/thanh-vien` trả HTTP 200.
 
 ### Đặt giao dịch AI thẻ tín dụng/trả góp ở trạng thái Dự kiến
 

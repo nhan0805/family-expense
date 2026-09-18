@@ -1,5 +1,14 @@
 # Nhật ký thay đổi Family Expense
 
+## 2026-09-19
+
+### Làm đẹp panel giá mua vào vàng dùng chung
+
+- Khu vực nhập giá mua vào được chuyển thành panel cài đặt riêng có icon, trạng thái thiết lập, mô tả ngắn, đơn vị VND trong ô nhập và nút lưu gọn hơn; bố cục responsive/dark mode rõ ràng hơn.
+- Files: `src/pages/Assets.tsx`, `src/index.css`, `src/pages/Assets.ui.test.tsx`. Không đổi schema, RLS/RPC, Edge Function hoặc dữ liệu production.
+- Kiểm thử: Vitest 49 file/242 test, TypeScript, ESLint, Vite build, performance budget và `git diff --check` pass; CI hậu merge [run 35371516601](https://github.com/nhan0805/family-expense/actions/runs/35371516601) pass quality, E2E và db-security.
+- Triển khai: PR [#231](https://github.com/nhan0805/family-expense/pull/231) merge tại commit `eba74e5`; [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/263765b5-f0ec-4e0d-8c3c-6f0812ec970f) pass; bundle production đã xác nhận `gold-price-panel`; smoke các route chính trả HTTP 200.
+
 ## 2026-09-18
 
 ### Đặt giao dịch AI thẻ tín dụng/trả góp ở trạng thái Dự kiến
