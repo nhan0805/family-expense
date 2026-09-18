@@ -15,6 +15,7 @@ import {
   getLocalAssetData,
   isLocalAssetTransaction,
   recordLocalGoldSaleAggregate,
+  restoreLocalGoldSale,
   recordLocalSavingsMovement,
   recordLocalGoldSale,
   settleLocalSavingsAccount,
@@ -145,6 +146,35 @@ describe('asset domain', () => {
     expect(data.goldAssets).toEqual(expect.arrayContaining([
       expect.objectContaining({ id: 'gold-1', remainingQuantityChi: 0, status: 'sold' }),
       expect.objectContaining({ id: 'gold-2', remainingQuantityChi: 1.5, status: 'active' }),
+    ]));
+  });
+
+  it('restores an aggregate local sale and removes its linked income transaction', () => {
+    upsertLocalGoldAsset('family-a', goldAssetInputSchema.parse({
+      purchaseDate: '2026-01-01',
+      quantityChi: 1,
+      purchasePricePerChi: 7_500_000,
+    }), 'gold-1', null);
+    upsertLocalGoldAsset('family-a', goldAssetInputSchema.parse({
+      purchaseDate: '2026-02-01',
+      quantityChi: 2,
+      purchasePricePerChi: 8_000_000,
+    }), 'gold-2', null);
+    const sale = recordLocalGoldSaleAggregate('family-a', {
+      saleDate: '2026-03-01',
+      quantityChi: 1.5,
+      salePricePerChi: 9_000_000,
+      paymentMethodId: 'cash',
+    }, 'tx-sale');
+
+    const restored = restoreLocalGoldSale('family-a', sale.sales[0]!.id);
+    const data = getLocalAssetData('family-a');
+
+    expect(restored.transactionIds).toEqual(['tx-sale']);
+    expect(data.goldSales).toEqual([]);
+    expect(data.goldAssets).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: 'gold-1', remainingQuantityChi: 1, status: 'active' }),
+      expect.objectContaining({ id: 'gold-2', remainingQuantityChi: 2, status: 'active' }),
     ]));
   });
 

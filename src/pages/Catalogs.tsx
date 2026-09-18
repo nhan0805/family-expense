@@ -1,5 +1,5 @@
 import { Check, Pencil, Plus, Search, Tags, Trash2, X } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useApp, type CatalogKind } from '../context/AppContext';
 import { useOptionalLanguage } from '../context/LanguageContext';
 import { EmptyState } from '../components/AsyncStates';
@@ -41,6 +41,7 @@ export function Catalogs() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const openEditor = (kind: CatalogKind, item?: CatalogItem) => {
+    setActiveKind(kind);
     setEditor({ kind, id: item?.id });
     setName(item?.name || '');
     setNameEn(item?.nameEn || '');
@@ -50,6 +51,7 @@ export function Catalogs() {
     setError('');
     setErrorKind(null);
   };
+
   const closeEditor = () => {
     setEditor(null);
     setName('');
@@ -207,11 +209,24 @@ function Catalog({
   const displayLanguage = isEnglish ? 'en' : 'vi';
   const visibleIcons = searchCatalogIcons(iconQuery);
   const SelectedIcon = getCatalogIcon(icon);
+  const editorRef = useRef<HTMLFormElement | null>(null);
+
+  useEffect(() => {
+    if (!isEditingHere) return;
+    const frame = window.requestAnimationFrame(() => {
+      const form = editorRef.current;
+      if (!form) return;
+      const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
+      form.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' });
+      form.querySelector<HTMLElement>('[data-editor-focus]')?.focus({ preventScroll: true });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [editor, isEditingHere]);
   return <section className="catalog-card card p-4 sm:p-5">
     <div className="catalog-card-header mb-3"><h3 className="font-bold lg:whitespace-nowrap">{title}</h3>{canManage && <button type="button" className="catalog-add-button btn-secondary flex items-center gap-1 text-sm" onClick={() => onOpen(kind)}><Plus size={16} aria-hidden="true" />{isEnglish ? 'Add' : 'Thêm'}</button>}</div>
-    {isEditingHere && <form className="catalog-editor mb-3 space-y-2" onSubmit={onSubmit}>
+    {isEditingHere && <form ref={editorRef} className="catalog-editor mb-3 scroll-mt-24 space-y-2" onSubmit={onSubmit}>
       <div className="flex items-center justify-between"><label className="label mb-0" htmlFor={`catalog-${kind}`}>{editor?.id ? (isEnglish ? `Vietnamese ${title.toLocaleLowerCase('en-US')} name` : `Đổi tên ${title.toLocaleLowerCase('vi-VN')}`) : (isEnglish ? `Vietnamese ${title.toLocaleLowerCase('en-US')} name` : `Tên ${title.toLocaleLowerCase('vi-VN')}`)}</label><button type="button" className="icon-button" title={isEnglish ? 'Close editor' : 'Đóng biểu mẫu'} aria-label={isEnglish ? 'Close editor' : 'Đóng biểu mẫu'} onClick={onClose}><X size={17} aria-hidden="true" /></button></div>
-      <input id={`catalog-${kind}`} className="field" autoFocus maxLength={100} required value={name} onChange={(event) => onNameChange(event.target.value)} placeholder={isEnglish ? `Enter Vietnamese ${title.toLocaleLowerCase('en-US')} name` : `Nhập tên ${title.toLocaleLowerCase('vi-VN')}`} />
+      <input id={`catalog-${kind}`} data-editor-focus className="field" maxLength={100} required value={name} onChange={(event) => onNameChange(event.target.value)} placeholder={isEnglish ? `Enter Vietnamese ${title.toLocaleLowerCase('en-US')} name` : `Nhập tên ${title.toLocaleLowerCase('vi-VN')}`} />
       <label className="label mb-0" htmlFor={`catalog-${kind}-en`}>{isEnglish ? 'English name (optional)' : 'Tên tiếng Anh (không bắt buộc)'}</label>
       <input id={`catalog-${kind}-en`} className="field" maxLength={100} value={nameEn} onChange={(event) => onNameEnChange(event.target.value)} placeholder={isEnglish ? `Enter English ${title.toLocaleLowerCase('en-US')} name` : 'Nhập tên tiếng Anh để hiển thị khi dùng English'} />
       <div className="space-y-2">

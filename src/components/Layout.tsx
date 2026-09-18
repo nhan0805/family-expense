@@ -36,8 +36,10 @@ export function Layout() {
     return () => window.clearTimeout(timeout);
   }, [menuMounted, open]);
   useEffect(() => {
-    if (isTransactionForm) return;
-    const frame = window.requestAnimationFrame(() => mainRef.current?.focus());
+    const frame = window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      if (!isTransactionForm) mainRef.current?.focus();
+    });
     return () => window.cancelAnimationFrame(frame);
   }, [isTransactionForm, pathname]);
   useEffect(() => {

@@ -106,8 +106,10 @@ export function RecurringExpenses() {
   const [pageError, setPageError] = useState('');
   const [editor, setEditor] = useState<EditorValues | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editorScrollRequest, setEditorScrollRequest] = useState(0);
   const [editorError, setEditorError] = useState('');
   const [busyId, setBusyId] = useState<string | null>(null);
+  const editorRef = useRef<HTMLElement | null>(null);
   const canManage = currentUserRole === 'owner';
   const defaultPaymentMethodId = paymentMethods.find((item) => item.name === 'Chuyển khoản')?.id || paymentMethods[0]?.id || '';
 
@@ -170,6 +172,7 @@ export function RecurringExpenses() {
       });
     }
     setEditorError('');
+    setEditorScrollRequest((value) => value + 1);
   };
 
   const closeEditor = () => {
@@ -177,6 +180,18 @@ export function RecurringExpenses() {
     setEditingId(null);
     setEditorError('');
   };
+
+  useEffect(() => {
+    if (!editorScrollRequest) return;
+    const frame = window.requestAnimationFrame(() => {
+      const form = editorRef.current;
+      if (!form) return;
+      const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
+      form.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' });
+      form.querySelector<HTMLElement>('[data-editor-focus]')?.focus({ preventScroll: true });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [editorScrollRequest]);
 
   const refreshRelatedQueries = async () => {
     if (!isSupabaseConfigured) return;
@@ -389,10 +404,10 @@ export function RecurringExpenses() {
 
     {pageError && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300">{pageError}<button type="button" className="btn-secondary mt-3 block" onClick={() => void loadItems()}>{en ? 'Try again' : 'Thử lại'}</button></div>}
 
-    {editor && canManage && <section className="card p-4 sm:p-5" aria-labelledby="recurring-editor-title">
+    {editor && canManage && <section ref={editorRef} className="card scroll-mt-24 p-4 sm:p-5" aria-labelledby="recurring-editor-title">
       <div className="mb-4 flex items-start justify-between gap-3"><div><p className="page-kicker"><CalendarClock size={16} aria-hidden="true" />{editingId ? (en ? 'Edit template' : 'Chỉnh sửa mẫu') : (en ? 'New template' : 'Mẫu mới')}</p><h3 id="recurring-editor-title" className="text-lg font-extrabold">{editingId ? (en ? 'Update recurring expense' : 'Cập nhật khoản chi định kỳ') : (en ? 'Create recurring expense' : 'Tạo khoản chi định kỳ')}</h3></div><button type="button" className="icon-button" aria-label={en ? 'Close editor' : 'Đóng biểu mẫu'} onClick={closeEditor}><X size={19} /></button></div>
       <form className="grid gap-4 md:grid-cols-2" onSubmit={(event) => void save(event)}>
-        <label><span className="label">{en ? 'Template name' : 'Tên mẫu'}</span><input className="field" maxLength={100} required value={editor.name} onChange={(event) => setEditor({ ...editor, name: event.target.value })} placeholder={en ? 'e.g. Electricity bill' : 'Ví dụ: Tiền điện'} /></label>
+        <label><span className="label">{en ? 'Template name' : 'Tên mẫu'}</span><input data-editor-focus className="field" maxLength={100} required value={editor.name} onChange={(event) => setEditor({ ...editor, name: event.target.value })} placeholder={en ? 'e.g. Electricity bill' : 'Ví dụ: Tiền điện'} /></label>
         <label><span className="label">{en ? 'Description' : 'Nội dung giao dịch'}</span><input className="field" maxLength={200} required value={editor.description} onChange={(event) => setEditor({ ...editor, description: event.target.value })} placeholder={en ? 'e.g. Electricity' : 'Ví dụ: Tiền điện'} /></label>
         <label><span className="label">{en ? 'Amount (VND)' : 'Số tiền (VND)'}</span><input className="field" inputMode="numeric" required value={displayAmount(editor.amount)} onChange={(event) => setEditor({ ...editor, amount: event.target.value })} placeholder="300.000" /></label>
         <label><span className="label">{en ? 'Frequency' : 'Tần suất'}</span><select className="field" value={editor.frequency} onChange={(event) => setEditor({ ...editor, frequency: event.target.value as RecurringFrequency })}>{recurringFrequencies.map((frequency) => <option key={frequency} value={frequency}>{frequencyLabel(frequency, en)}</option>)}</select></label>
