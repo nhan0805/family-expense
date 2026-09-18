@@ -90,16 +90,22 @@ describe('TransactionRow', () => {
     expect(onRestore).toHaveBeenCalledOnce();
   });
 
-  it('đặt nút thao tác desktop cạnh số tiền để giảm cuộn ngang', () => {
+  it('co giãn bảng desktop theo chiều rộng và chỉ dành chỗ cho nút thực tế', () => {
     renderRow();
     const desktopRow = document.querySelector<HTMLElement>('.transaction-table-row');
-    expect(desktopRow).toHaveClass('w-full', 'md:min-w-[1080px]');
-    expect(desktopRow?.className).toContain('md:grid-cols-[80px_minmax(180px,1fr)_190px_160px_190px_220px]');
+    expect(desktopRow).toHaveClass('w-full', 'min-w-0');
+    expect(desktopRow).not.toHaveClass('md:min-w-[1080px]');
+    expect(desktopRow?.className).toContain('md:grid-cols-[minmax(0,5rem)_minmax(0,1.65fr)_minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,1.1fr)_minmax(0,1.25fr)]');
 
     const amount = desktopRow?.querySelector('.transaction-row-amount');
     const actions = desktopRow?.querySelector('.transaction-row-actions');
     expect(amount?.parentElement).toBe(actions?.parentElement);
     expect(actions).toHaveClass('w-[88px]', 'grid-cols-2');
+  });
+
+  it('không dành thêm chiều rộng khi member chỉ có nút sao chép', () => {
+    renderRow({ currentUserRole: 'member', currentUserId: 'another-user' });
+    expect(document.querySelector('.transaction-row-actions')).toHaveClass('w-11', 'grid-cols-1');
   });
 
   it('giữ tên mục đích và các nút desktop trong vùng cột riêng', () => {
