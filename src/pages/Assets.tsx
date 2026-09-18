@@ -16,7 +16,8 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { EmptyState, PageSkeleton } from '../components/AsyncStates';
+import { EmptyState, ErrorState, PageSkeleton } from '../components/AsyncStates';
+import { Amount } from '../components/ui/Amount';
 import { useFeedback } from '../components/Feedback';
 import { useApp } from '../context/AppContext';
 import { useOptionalLanguage } from '../context/LanguageContext';
@@ -897,7 +898,7 @@ export function Assets() {
   if (isSupabaseConfigured && assetQuery.isPending)
     return <PageSkeleton label={en ? 'Loading assets…' : 'Đang tải tài sản…'} />;
   if (assetQuery.isError && !data)
-    return <div role="alert" className="card border-red-200 bg-red-50 p-5 text-sm text-red-800 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-200"><p className="font-semibold">{en ? 'Could not load assets.' : 'Không thể tải dữ liệu tài sản.'}</p><button type="button" className="btn-secondary mt-3" onClick={() => void assetQuery.refetch()}>{en ? 'Retry' : 'Thử lại'}</button></div>;
+    return <ErrorState title={en ? 'Could not load assets.' : 'Không thể tải dữ liệu tài sản.'} retryLabel={en ? 'Retry' : 'Thử lại'} onRetry={() => void assetQuery.refetch()} />;
 
   const allGoldSales = data?.goldSales || [];
 
@@ -1009,7 +1010,7 @@ export function Assets() {
 }
 
 function AssetKpi({ label, value, icon: Icon, tone, meta }: { label: string; value: number; icon: typeof Landmark; tone: 'emerald' | 'amber' | 'violet' | 'sky'; meta: string }) {
-  return <div className="card min-w-0 p-3 sm:p-4"><div className="flex items-start gap-2"><span className={`grid size-9 shrink-0 place-items-center rounded-xl kpi-tone-${tone}`}><Icon size={18} aria-hidden="true" /></span><p className="min-w-0 flex-1 break-words text-xs font-semibold leading-tight text-gray-500 dark:text-gray-400">{label}</p></div><p className="mt-2 break-words text-lg font-extrabold leading-tight sm:text-xl">{formatVnd(value)}</p><p className="mt-2 break-words text-xs leading-tight text-gray-500 dark:text-gray-400">{meta}</p></div>;
+  return <div className="card min-w-0 p-3 sm:p-4"><div className="flex items-start gap-2"><span className={`grid size-9 shrink-0 place-items-center rounded-xl kpi-tone-${tone}`}><Icon size={18} aria-hidden="true" /></span><p className="min-w-0 flex-1 break-words text-xs font-semibold leading-tight text-gray-500 dark:text-gray-400">{label}</p></div><Amount value={value} className="mt-2 block break-words text-lg font-extrabold leading-tight sm:text-xl" label={label} /><p className="mt-2 break-words text-xs leading-tight text-gray-500 dark:text-gray-400">{meta}</p></div>;
 }
 
 function GoldHoldingStat({ label, value, tone = 'neutral' }: { label: string; value: string; tone?: 'neutral' | 'positive' | 'negative' }) {

@@ -4,8 +4,10 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { useLanguage } from '../context/LanguageContext';
 import { authErrorMessage } from '../lib/errorRecovery';
+import { StatusMessage } from '../components/ui/StatusMessage';
 
 type Mode = 'login' | 'signup' | 'magic' | 'forgot';
+type MessageTone = 'info' | 'error' | 'success';
 
 export function Login() {
   const { language } = useLanguage(); const en = language === 'en';
@@ -16,35 +18,41 @@ export function Login() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState('');
+  const [messageTone, setMessageTone] = useState<MessageTone>('info');
   const [fieldError, setFieldError] = useState<'email' | 'password' | null>(null);
   const [busy, setBusy] = useState(false);
 
   const changeMode = (nextMode: Mode) => {
     setMessage('');
+    setMessageTone('info');
     setFieldError(null);
     setShowPassword(false);
     setMode(nextMode);
+  };
+  const setFeedback = (nextMessage: string, tone: MessageTone) => {
+    setMessage(nextMessage);
+    setMessageTone(tone);
   };
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!email.trim()) {
       setFieldError('email');
-      setMessage(en ? 'Enter your email.' : 'Vui lòng nhập email.');
+      setFeedback(en ? 'Enter your email.' : 'Vui lòng nhập email.', 'error');
       return;
     }
     if (mode !== 'magic' && mode !== 'forgot' && password.length < 6) {
       setFieldError('password');
-      setMessage(en ? 'Password must be at least 6 characters.' : 'Mật khẩu phải có ít nhất 6 ký tự.');
+      setFeedback(en ? 'Password must be at least 6 characters.' : 'Mật khẩu phải có ít nhất 6 ký tự.', 'error');
       return;
     }
     setFieldError(null);
     setBusy(true);
-    setMessage(en ? 'Processing…' : 'Đang xử lý…');
+    setFeedback(en ? 'Processing…' : 'Đang xử lý…', 'info');
 
     if (!isSupabaseConfigured) {
       setBusy(false);
-      setMessage(en ? 'Supabase is not configured.' : 'Ứng dụng chưa được cấu hình Supabase.');
+      setFeedback(en ? 'Supabase is not configured.' : 'Ứng dụng chưa được cấu hình Supabase.', 'error');
       return;
     }
 
@@ -55,10 +63,10 @@ export function Login() {
           redirectTo: `${origin}/dat-lai-mat-khau`,
         });
         if (error) {
-          setMessage(authErrorMessage(error, en));
+          setFeedback(authErrorMessage(error, en), 'error');
           return;
         }
-        setMessage(en ? 'Password reset link sent. Check your email.' : 'Đã gửi liên kết đặt lại mật khẩu. Vui lòng kiểm tra email.');
+        setFeedback(en ? 'Password reset link sent. Check your email.' : 'Đã gửi liên kết đặt lại mật khẩu. Vui lòng kiểm tra email.', 'success');
         return;
       }
 
@@ -69,21 +77,21 @@ export function Login() {
           : await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: `${origin}/` } });
 
       if (result.error) {
-        setMessage(authErrorMessage(result.error, en));
+        setFeedback(authErrorMessage(result.error, en), 'error');
         return;
       }
       if (mode === 'magic') {
-        setMessage(en ? 'Magic link sent. Check your email.' : 'Đã gửi liên kết đăng nhập. Vui lòng kiểm tra email.');
+        setFeedback(en ? 'Magic link sent. Check your email.' : 'Đã gửi liên kết đăng nhập. Vui lòng kiểm tra email.', 'success');
         return;
       }
       if (mode === 'signup' && !result.data.session) {
-        setMessage(en ? 'Account created. Confirm your email before logging in.' : 'Tài khoản đã được tạo. Vui lòng xác nhận email trước khi đăng nhập.');
+        setFeedback(en ? 'Account created. Confirm your email before logging in.' : 'Tài khoản đã được tạo. Vui lòng xác nhận email trước khi đăng nhập.', 'success');
         return;
       }
       const from = (location.state as { from?: string } | null)?.from || '/';
       navigate(from, { replace: true });
     } catch (error) {
-      setMessage(authErrorMessage(error, en));
+      setFeedback(authErrorMessage(error, en), 'error');
     } finally {
       setBusy(false);
     }
@@ -188,7 +196,7 @@ export function Login() {
             </div>
           </form>
 
-          {message && <p id="auth-message" role="status" aria-live="polite" className="mt-5 rounded-xl border border-[var(--border)] bg-[var(--surface-subtle)] px-3 py-2.5 text-sm leading-6 text-[var(--muted)]">{message}</p>}
+          {message && <StatusMessage id="auth-message" tone={messageTone} className="mt-5 leading-6">{message}</StatusMessage>}
           <div className="mt-6 flex flex-wrap items-center justify-between gap-2 border-t border-[var(--border)] pt-4 text-sm">
             {mode === 'login' && <><button className="min-h-11 rounded-lg px-2 font-semibold text-[var(--muted)] transition hover:bg-[var(--surface-subtle)] hover:text-[var(--primary)]" type="button" onClick={() => changeMode('forgot')}>{en ? 'Forgot password?' : 'Quên mật khẩu?'}</button><button className="min-h-11 rounded-lg px-2 font-semibold text-[var(--primary)] transition hover:bg-[var(--primary-soft)]" type="button" onClick={() => changeMode('magic')}>Magic link</button></>}
             {(mode === 'signup' || mode === 'magic' || mode === 'forgot') && <button className="min-h-11 rounded-lg px-2 font-semibold text-[var(--primary)] transition hover:bg-[var(--primary-soft)]" type="button" onClick={() => changeMode('login')}>{en ? 'Back to log in' : 'Về đăng nhập'}</button>}

@@ -1,6 +1,7 @@
 import { AlertTriangle, CheckCircle2, Info, X } from 'lucide-react';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useOptionalLanguage } from '../context/LanguageContext';
+import { Dialog } from './ui/Dialog';
 
 type ToastTone = 'success' | 'error' | 'info';
 type Toast = { id: number; message: string; tone: ToastTone };
@@ -17,8 +18,6 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
   const [dialog, setDialog] = useState<ConfirmOptions | null>(null);
   const [dialogClosing, setDialogClosing] = useState(false);
   const resolver = useRef<((value: boolean) => void) | null>(null);
-  const dialogRef = useRef<HTMLElement | null>(null);
-  const dialogTriggerRef = useRef<HTMLElement | null>(null);
   const closingToastIdsRef = useRef(new Set<number>());
   const timeoutIdsRef = useRef(new Set<number>());
   const nextId = useRef(1);
@@ -59,7 +58,6 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
     scheduleTimeout(() => dismissToast(id), 3500);
   }, [dismissToast, scheduleTimeout]);
   const askConfirm = useCallback((options: ConfirmOptions) => new Promise<boolean>((resolve) => {
-    dialogTriggerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     resolver.current = resolve;
     setDialogClosing(false);
     setDialog(options);
@@ -72,35 +70,13 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
     scheduleTimeout(() => {
       setDialog(null);
       setDialogClosing(false);
-      dialogTriggerRef.current?.focus();
-      dialogTriggerRef.current = null;
     }, 180);
   }, [dialogClosing, scheduleTimeout]);
-  useEffect(() => {
-    if (!dialog) return;
-    const focusTimer = window.setTimeout(() => dialogRef.current?.querySelector<HTMLElement>('button')?.focus(), 0);
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        closeDialog(false);
-        return;
-      }
-      if (event.key !== 'Tab' || !dialogRef.current) return;
-      const focusable = Array.from(dialogRef.current.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')).filter((element) => !element.hasAttribute('disabled'));
-      if (!focusable.length) return;
-      const first = focusable[0]!;
-      const last = focusable[focusable.length - 1]!;
-      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
-      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => { window.clearTimeout(focusTimer); document.removeEventListener('keydown', handleKeyDown); };
-  }, [closeDialog, dialog]);
   const value = useMemo(() => ({ notify, askConfirm }), [notify, askConfirm]);
 
   return <FeedbackContext.Provider value={value}>{children}
-    <div className="pointer-events-none fixed inset-x-3 top-3 z-[80] flex flex-col items-end gap-2 sm:inset-x-auto sm:right-4 sm:top-4" aria-live="polite">{toasts.map((toast) => { const Icon = toast.tone === 'success' ? CheckCircle2 : toast.tone === 'error' ? AlertTriangle : Info; return <div key={toast.id} className={`pointer-events-auto flex w-full max-w-sm items-center gap-3 rounded-2xl border bg-[var(--surface)] p-3 shadow-xl ${closingToastIds.has(toast.id) ? 'ui-toast-exit' : 'ui-enter'} ${toast.tone === 'error' ? 'border-[var(--danger)] text-[var(--danger-strong)]' : toast.tone === 'success' ? 'border-[var(--success)] text-[var(--success-strong)]' : 'border-[var(--info)] text-[var(--info-strong)]'}`}><Icon size={19} className="shrink-0" aria-hidden="true"/><span className="min-w-0 flex-1 text-sm font-medium">{toast.message}</span><button type="button" className="grid min-h-11 min-w-11 place-items-center rounded-lg" aria-label="Đóng thông báo" onClick={() => dismissToast(toast.id)}><X size={16} aria-hidden="true"/></button></div>; })}</div>
-    {dialog && <div className={`fixed inset-0 z-[90] grid place-items-end bg-black/45 p-0 backdrop-blur-[2px] sm:place-items-center sm:p-4 ${dialogClosing ? 'ui-overlay-exit' : 'ui-overlay-enter'}`} role="presentation"><section ref={dialogRef} role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" className={`w-full max-w-md rounded-t-3xl bg-[var(--surface)] p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-2xl sm:rounded-3xl sm:pb-5 ${dialogClosing ? 'ui-dialog-exit' : 'ui-dialog-enter'}`}><span className={`mb-4 grid size-11 place-items-center rounded-2xl ${dialog.danger ? 'bg-[var(--danger-soft)] text-[var(--danger-strong)]' : 'bg-[var(--warning-soft)] text-[var(--warning-strong)]'}`}><AlertTriangle size={22} aria-hidden="true"/></span><h2 id="confirm-title" className="text-lg font-extrabold">{dialog.title}</h2><p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{dialog.description}</p><div className="mt-5 grid grid-cols-2 gap-2"><button type="button" className="btn-secondary" onClick={() => closeDialog(false)}>{en ? 'Cancel' : 'Hủy'}</button><button type="button" className={dialog.danger ? 'min-h-11 rounded-xl bg-[var(--danger)] px-4 py-3 font-bold text-white transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]' : 'btn-primary'} onClick={() => closeDialog(true)}>{dialog.confirmLabel || (en ? 'Confirm' : 'Xác nhận')}</button></div></section></div>}
+    <div className="pointer-events-none fixed inset-x-3 top-3 z-[80] flex flex-col items-end gap-2 sm:inset-x-auto sm:right-4 sm:top-4" aria-live="polite">{toasts.map((toast) => { const Icon = toast.tone === 'success' ? CheckCircle2 : toast.tone === 'error' ? AlertTriangle : Info; return <div key={toast.id} className={`pointer-events-auto flex w-full max-w-sm items-center gap-3 rounded-2xl border bg-[var(--surface)] p-3 shadow-xl ${closingToastIds.has(toast.id) ? 'ui-toast-exit' : 'ui-enter'} ${toast.tone === 'error' ? 'border-[var(--danger)] text-[var(--danger-strong)]' : toast.tone === 'success' ? 'border-[var(--success)] text-[var(--success-strong)]' : 'border-[var(--info)] text-[var(--info-strong)]'}`} role={toast.tone === 'error' ? 'alert' : 'status'}><Icon size={19} className="shrink-0" aria-hidden="true"/><span className="min-w-0 flex-1 text-sm font-medium">{toast.message}</span><button type="button" className="grid min-h-11 min-w-11 place-items-center rounded-lg" aria-label={en ? 'Close notification' : 'Đóng thông báo'} onClick={() => dismissToast(toast.id)}><X size={16} aria-hidden="true"/></button></div>; })}</div>
+    {dialog && <Dialog open onClose={() => closeDialog(false)} title={dialog.title} description={dialog.description} role="alertdialog" closing={dialogClosing} panelClassName="sm:max-w-md"><span className={`mb-4 mt-4 grid size-11 place-items-center rounded-2xl ${dialog.danger ? 'bg-[var(--danger-soft)] text-[var(--danger-strong)]' : 'bg-[var(--warning-soft)] text-[var(--warning-strong)]'}`}><AlertTriangle size={22} aria-hidden="true"/></span><div className="grid grid-cols-2 gap-2"><button type="button" className="btn-secondary" data-dialog-autofocus onClick={() => closeDialog(false)}>{en ? 'Cancel' : 'Hủy'}</button><button type="button" className={dialog.danger ? 'min-h-11 rounded-xl bg-[var(--danger)] px-4 py-3 font-bold text-white transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]' : 'btn-primary'} onClick={() => closeDialog(true)}>{dialog.confirmLabel || (en ? 'Confirm' : 'Xác nhận')}</button></div></Dialog>}
   </FeedbackContext.Provider>;
 }
 

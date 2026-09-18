@@ -27,6 +27,7 @@ import {
   type BudgetNotification,
 } from '../lib/budgetNotifications';
 import { isSupabaseConfigured } from '../lib/supabase';
+import { useFocusTrap } from './ui/Dialog';
 
 const emptyCatalogItems: CatalogItem[] = [];
 const emptyTransactions: Transaction[] = [];
@@ -94,8 +95,8 @@ function notificationLabel(notification: BudgetNotification, language: 'vi' | 'e
 
 function notificationTone(notification: BudgetNotification) {
   return notification.kind === 'over'
-    ? 'border-rose-200 bg-rose-50 dark:border-rose-900/60 dark:bg-rose-950/30'
-    : 'border-amber-200 bg-amber-50 dark:border-amber-900/60 dark:bg-amber-950/30';
+    ? 'border-[var(--danger)] bg-[var(--danger-soft)]'
+    : 'border-[var(--warning)] bg-[var(--warning-soft)]';
 }
 
 export function BudgetNotifications() {
@@ -110,6 +111,8 @@ export function BudgetNotifications() {
   const { notify, askConfirm } = useFeedback();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const panelRef = useFocusTrap<HTMLElement>(open, { onEscape: () => setOpen(false) });
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const confirmingIdRef = useRef<string | null>(null);
   const [dueError, setDueError] = useState('');
@@ -177,15 +180,8 @@ export function BudgetNotifications() {
       const target = event.target;
       if (target instanceof Node && !containerRef.current?.contains(target)) setOpen(false);
     };
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false);
-    };
     document.addEventListener('pointerdown', closeOnOutsidePointer);
-    document.addEventListener('keydown', closeOnEscape);
-    return () => {
-      document.removeEventListener('pointerdown', closeOnOutsidePointer);
-      document.removeEventListener('keydown', closeOnEscape);
-    };
+    return () => document.removeEventListener('pointerdown', closeOnOutsidePointer);
   }, [open]);
 
   if (!familyId) return null;
@@ -194,6 +190,9 @@ export function BudgetNotifications() {
   const readCount = notifications.length - unreadCount;
   const attentionCount = unreadCount + dueTransactions.length;
   const notificationTitle = en ? 'Notifications' : 'Thông báo';
+  const notificationButtonLabel = attentionCount > 0
+    ? `${notificationTitle}, ${attentionCount} ${en ? 'items need attention' : 'mục cần chú ý'}`
+    : notificationTitle;
   const visibleNotifications = notifications.slice(0, 12);
   const markRead = (id: string) => {
     markBudgetNotificationRead(id);
@@ -250,9 +249,10 @@ export function BudgetNotifications() {
   return (
     <div ref={containerRef} className="relative">
       <button
+        ref={triggerRef}
         type="button"
         className="icon-button relative"
-        aria-label={notificationTitle}
+        aria-label={notificationButtonLabel}
         aria-expanded={open}
         aria-controls="budget-notifications-panel"
         title={notificationTitle}
@@ -262,7 +262,7 @@ export function BudgetNotifications() {
         {attentionCount > 0 && (
           <span
             className="absolute -right-0.5 -top-0.5 grid min-w-5 -translate-y-1/4 translate-x-1/4 place-items-center rounded-full bg-[var(--danger)] px-1 text-[10px] font-extrabold leading-5 text-white"
-            aria-label={`${attentionCount} ${en ? 'notifications need attention' : 'mục cần chú ý'}`}
+            aria-hidden="true"
           >
             {attentionCount > 99 ? '99+' : attentionCount}
           </span>
@@ -272,13 +272,16 @@ export function BudgetNotifications() {
         <section
           id="budget-notifications-panel"
           role="dialog"
+          ref={panelRef}
+          aria-modal="false"
           aria-label={notificationTitle}
+          aria-describedby="budget-notifications-description"
           className="absolute right-0 top-12 z-50 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-2xl"
         >
           <div className="flex items-center justify-between gap-3 border-b border-[var(--border)] px-4 py-3">
             <div>
               <h2 className="font-extrabold">{notificationTitle}</h2>
-              <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-300">
+              <p id="budget-notifications-description" className="mt-0.5 text-xs text-gray-500 dark:text-gray-300">
                 {attentionCount > 0 ? `${attentionCount} ${en ? 'items need attention' : 'mục cần chú ý'}` : t('allBudgetNotificationsRead')}
               </p>
             </div>
@@ -286,35 +289,35 @@ export function BudgetNotifications() {
               {unreadCount > 0 && <button type="button" className="min-h-11 rounded-lg px-2 text-xs font-bold text-[var(--primary)] hover:bg-[var(--primary-soft)] hover:underline" onClick={markAllRead}>
                 {t('markAllRead')}
               </button>}
-              {readCount > 0 && <button type="button" className="inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-xs font-bold text-red-700 hover:bg-red-50 hover:underline dark:text-red-300 dark:hover:bg-red-950/30" onClick={deleteRead}>
+              {readCount > 0 && <button type="button" className="inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-xs font-bold text-[var(--danger-strong)] hover:bg-[var(--danger-soft)] hover:underline" onClick={deleteRead}>
                 <Trash2 size={14} aria-hidden="true" />
                 {en ? 'Delete read' : 'Xóa đã đọc'}
               </button>}
             </div>}
           </div>
-          {dueTransactions.length > 0 && <div className="border-b border-amber-200 bg-amber-50/70 p-3 dark:border-amber-900/60 dark:bg-amber-950/20">
+          {dueTransactions.length > 0 && <div className="border-b border-[var(--warning)] bg-[var(--warning-soft)] p-3">
             <div className="flex flex-col gap-2">
               <div className="min-w-0">
                 <h3 className="break-words font-bold">{en ? 'Planned transactions due' : 'Giao dịch dự kiến tới hạn'}</h3>
-                <p className="mt-0.5 text-xs text-amber-900/75 dark:text-amber-100/75">{en ? `${dueTransactions.length} transaction(s) need confirmation.` : `${dueTransactions.length} giao dịch cần xác nhận.`}</p>
+                <p className="mt-0.5 text-xs text-[var(--warning-strong)]">{en ? `${dueTransactions.length} transaction(s) need confirmation.` : `${dueTransactions.length} giao dịch cần xác nhận.`}</p>
               </div>
               {dueTransactions.length > 1 && <button type="button" className="btn-primary self-start px-3 py-2 text-xs" disabled={Boolean(confirmingId)} onClick={() => void confirmDueTransactions(dueTransactions)}>
                 {en ? 'Confirm all' : 'Xác nhận tất cả'}
               </button>}
             </div>
-            {dueError && <p role="alert" className="mt-2 rounded-lg border border-red-200 bg-red-50 p-2 text-xs text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300">{dueError}</p>}
-            <ul aria-label={en ? 'Due planned transactions' : 'Danh sách giao dịch dự kiến tới hạn'} className="mt-2 max-h-64 overflow-y-auto overscroll-contain pr-1 divide-y divide-amber-200/70 dark:divide-amber-900/50">
+            {dueError && <p role="alert" className="mt-2 rounded-lg border border-[var(--danger)] bg-[var(--danger-soft)] p-2 text-xs text-[var(--danger-strong)]">{dueError}</p>}
+            <ul aria-label={en ? 'Due planned transactions' : 'Danh sách giao dịch dự kiến tới hạn'} className="mt-2 max-h-64 overflow-y-auto overscroll-contain pr-1 divide-y divide-[var(--warning)]">
               {dueTransactions.map((transaction) => <li key={transaction.id} className="flex flex-wrap items-center justify-between gap-3 py-2">
                 <div className="min-w-0">
                   <p className="break-words text-sm font-semibold [overflow-wrap:anywhere]">{transaction.description}</p>
-                  <p className="text-[11px] text-amber-900/70 dark:text-amber-100/70">{formatDueDate(transaction.transactionDate, language)} · {formatMoney(transaction.amount, language)}</p>
+                  <p className="text-[11px] text-[var(--warning-strong)]">{formatDueDate(transaction.transactionDate, language)} · {formatMoney(transaction.amount, language)}</p>
                 </div>
-                <button type="button" className="min-h-11 shrink-0 rounded-lg px-3 py-2 text-xs font-bold text-amber-800 hover:bg-amber-100 dark:text-amber-200 dark:hover:bg-amber-950/50" disabled={Boolean(confirmingId)} onClick={() => void confirmDueTransactions([transaction])}>
+                <button type="button" className="min-h-11 shrink-0 rounded-lg px-3 py-2 text-xs font-bold text-[var(--warning-strong)] hover:bg-[var(--surface-hover)]" disabled={Boolean(confirmingId)} onClick={() => void confirmDueTransactions([transaction])}>
                   {confirmingId === transaction.id ? (en ? 'Confirming…' : 'Đang xác nhận…') : (en ? 'Confirm' : 'Xác nhận')}
                 </button>
               </li>)}
             </ul>
-            {dueTransactions.length > 5 && <p className="mt-2 text-[11px] text-amber-900/70 dark:text-amber-100/70">{en ? `Scroll to view all ${dueTransactions.length} transactions.` : `Cuộn để xem tất cả ${dueTransactions.length} giao dịch.`}</p>}
+            {dueTransactions.length > 5 && <p className="mt-2 text-[11px] text-[var(--warning-strong)]">{en ? `Scroll to view all ${dueTransactions.length} transactions.` : `Cuộn để xem tất cả ${dueTransactions.length} giao dịch.`}</p>}
           </div>}
           {visibleNotifications.length > 0 ? (
             <ul className="max-h-[min(28rem,calc(100vh-10rem))] overflow-y-auto p-2">
@@ -331,7 +334,7 @@ export function BudgetNotifications() {
                       onClick={() => { markRead(notification.id); setOpen(false); }}
                     >
                       <div className="flex items-start gap-2">
-                        <Icon size={18} className={notification.kind === 'over' ? 'mt-0.5 shrink-0 text-rose-700 dark:text-rose-300' : 'mt-0.5 shrink-0 text-amber-700 dark:text-amber-300'} aria-hidden="true" />
+                        <Icon size={18} className={notification.kind === 'over' ? 'mt-0.5 shrink-0 text-[var(--danger-strong)]' : 'mt-0.5 shrink-0 text-[var(--warning-strong)]'} aria-hidden="true" />
                         <div className="min-w-0 flex-1">
                           <p className="font-bold leading-snug">{notificationLabel(notification, language)}: {name}</p>
                           <p className="mt-1 text-xs text-gray-700 dark:text-gray-200">{notificationMessage(notification, language)}</p>
@@ -346,7 +349,7 @@ export function BudgetNotifications() {
             </ul>
           ) : (
             <div className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-300">
-              <Check size={24} className="mx-auto mb-2 text-emerald-600 dark:text-emerald-300" aria-hidden="true" />
+              <Check size={24} className="mx-auto mb-2 text-[var(--success-strong)]" aria-hidden="true" />
               {t('noBudgetNotifications')}
             </div>
           )}

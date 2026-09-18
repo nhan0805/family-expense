@@ -3,13 +3,16 @@
 :root {
   --app-bg: #f8fafc;
   --surface: #ffffff;
+  --surface-hover: #f8fafc;
   --surface-muted: #f1f5f9;
   --surface-subtle: #f8fafc;
   --border: #e2e8f0;
   --border-strong: #cbd5e1;
   --text: #0f172a;
   --muted: #475569;
+  --text-on-primary: #ffffff;
   --primary: #1e40af;
+  --primary-hover: #1d4ed8;
   --primary-strong: #1d4ed8;
   --primary-soft: #eff6ff;
   --primary-contrast: #ffffff;
@@ -28,6 +31,7 @@
   --accent-soft: #ede9fe;
   --accent-strong: #6d28d9;
   --focus-ring: #2563eb;
+  --overlay: rgb(15 23 42 / 45%);
   --chart-1: #1e40af;
   --chart-2: #059669;
   --chart-3: #d97706;
@@ -41,20 +45,27 @@
   --chart-axis: #475569;
   --chart-cursor: #f1f5f9;
   --radius-card: 1rem;
+  --radius-control: .75rem;
+  --radius-dialog: 1.5rem;
   --shadow-card: 0 1px 2px #102a2112, 0 8px 24px #102a2108;
   --shadow-card-hover: 0 10px 28px #102a2117;
+  --shadow-interactive: 0 10px 28px #102a2117;
+  --shadow-overlay: 0 18px 48px #102a2126;
 }
 
 .dark {
   --app-bg: #282a36;
   --surface: #343746;
+  --surface-hover: #3b3e4f;
   --surface-muted: #44475a;
   --surface-subtle: #2f3140;
   --border: rgba(248, 248, 242, .14);
   --border-strong: #6272a4;
   --text: #f8f8f2;
   --muted: #c6c8d3;
+  --text-on-primary: #282a36;
   --primary: #bd93f9;
+  --primary-hover: #caa9fa;
   --primary-strong: #caa9fa;
   --primary-soft: #443750;
   --primary-contrast: #282a36;
@@ -73,6 +84,7 @@
   --accent-soft: #443750;
   --accent-strong: #bd93f9;
   --focus-ring: #8be9fd;
+  --overlay: rgb(25 26 33 / 65%);
   --chart-1: #bd93f9;
   --chart-2: #50fa7b;
   --chart-3: #ffb86c;
@@ -87,6 +99,8 @@
   --chart-cursor: #44475a;
   --shadow-card: 0 1px 2px #191a2140, 0 8px 24px #191a2130;
   --shadow-card-hover: 0 10px 28px #191a2150;
+  --shadow-interactive: 0 10px 28px #191a2150;
+  --shadow-overlay: 0 18px 48px #191a2160;
   color-scheme: dark;
 }
 
@@ -160,6 +174,14 @@ body {
 .dark ::selection {
   background: color-mix(in srgb, var(--primary) 36%, var(--surface));
   color: var(--text);
+}
+
+.transaction-income-row {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--success-soft) 72%, var(--surface)) 0%, color-mix(in srgb, var(--success-soft) 32%, transparent) 58%, transparent 100%);
+}
+
+.transaction-expense-row {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--danger-soft) 72%, var(--surface)) 0%, color-mix(in srgb, var(--danger-soft) 32%, transparent) 58%, transparent 100%);
 }
 
 .safe-bottom {
@@ -397,7 +419,7 @@ body {
     max-width: 100%;
     min-height: 2.75rem;
     border: 1px solid var(--border-strong);
-    border-radius: .75rem;
+    border-radius: var(--radius-control);
     background: var(--surface);
     color: var(--text);
     padding: .7rem .8rem;
@@ -485,8 +507,8 @@ body {
 }
 
 .btn-primary:hover:not(:disabled) {
-  border-color: var(--primary-strong);
-  background: var(--primary-strong);
+  border-color: var(--primary-hover);
+  background: var(--primary-hover);
   box-shadow: 0 8px 18px #1e40af30;
 }
 

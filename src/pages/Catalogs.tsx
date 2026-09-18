@@ -1,5 +1,5 @@
 import { Check, Pencil, Plus, Search, Tags, Trash2, X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { useApp, type CatalogKind } from '../context/AppContext';
 import { useOptionalLanguage } from '../context/LanguageContext';
 import { EmptyState } from '../components/AsyncStates';
@@ -39,6 +39,7 @@ export function Catalogs() {
   const [errorKind, setErrorKind] = useState<CatalogKind | null>(null);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const tabRefs = useRef<Record<CatalogKind, HTMLButtonElement | null>>({ purpose: null, expenseType: null, paymentMethod: null });
 
   const openEditor = (kind: CatalogKind, item?: CatalogItem) => {
     setActiveKind(kind);
@@ -119,6 +120,24 @@ export function Catalogs() {
     { kind: 'expenseType', title: isEnglish ? 'Expense type' : 'Danh mục', items: expenseTypes },
     { kind: 'paymentMethod', title: isEnglish ? 'Payment method' : 'Phương thức thanh toán', items: paymentMethods },
   ];
+  const handleTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>, currentKind: CatalogKind) => {
+    const currentIndex = catalogTabs.findIndex((tab) => tab.kind === currentKind);
+    const nextIndex = event.key === 'Home'
+      ? 0
+      : event.key === 'End'
+        ? catalogTabs.length - 1
+        : event.key === 'ArrowRight' || event.key === 'ArrowDown'
+          ? (currentIndex + 1) % catalogTabs.length
+          : event.key === 'ArrowLeft' || event.key === 'ArrowUp'
+            ? (currentIndex - 1 + catalogTabs.length) % catalogTabs.length
+            : null;
+    if (nextIndex === null) return;
+    event.preventDefault();
+    const nextKind = catalogTabs[nextIndex]?.kind;
+    if (!nextKind) return;
+    setActiveKind(nextKind);
+    tabRefs.current[nextKind]?.focus();
+  };
   return <div className="catalogs-page space-y-5">
     <div className="page-header">
       <p className="page-kicker"><Tags size={16} aria-hidden="true" />{isEnglish ? 'Family setup' : 'Thiết lập gia đình'}</p>
@@ -127,16 +146,19 @@ export function Catalogs() {
         ? (isEnglish ? 'You can add, rename and delete unused categories.' : 'Bạn có thể thêm, đổi tên và xóa danh mục chưa được sử dụng.')
         : (isEnglish ? 'You can view categories. Only the family owner can edit them.' : 'Bạn có thể xem danh mục. Chỉ chủ gia đình mới có quyền chỉnh sửa.')}</p>
     </div>
-    <div className="catalog-tabs" role="tablist" aria-label={isEnglish ? 'Catalog groups' : 'Nhóm danh mục'}>
+    <div className="catalog-tabs" role="tablist" aria-orientation="horizontal" aria-label={isEnglish ? 'Catalog groups' : 'Nhóm danh mục'}>
       {catalogTabs.map(({ kind, title }) => <button
         key={kind}
+        ref={(element) => { tabRefs.current[kind] = element; }}
         id={`catalog-tab-${kind}`}
         type="button"
         role="tab"
         aria-selected={activeKind === kind}
         aria-controls={`catalog-panel-${kind}`}
+        tabIndex={activeKind === kind ? 0 : -1}
         className="catalog-tab"
         onClick={() => setActiveKind(kind)}
+        onKeyDown={(event) => handleTabKeyDown(event, kind)}
       >{title}</button>)}
     </div>
     <div className="catalog-tab-panels">
@@ -243,8 +265,8 @@ function Catalog({
         </div>
         <label className="sr-only" htmlFor={`catalog-icon-search-${kind}`}>{isEnglish ? `Search icon for ${title}` : `Tìm biểu tượng cho ${title}`}</label>
         <input id={`catalog-icon-search-${kind}`} className="field" value={iconQuery} onChange={(event) => onIconQueryChange(event.target.value)} placeholder={isEnglish ? 'Search by icon name or keyword' : 'Tìm theo tên icon hoặc từ khóa'} />
-        {visibleIcons.length ? <div className="grid max-h-56 grid-cols-4 gap-2 overflow-y-auto rounded-xl border border-black/10 p-2 dark:border-white/10 sm:grid-cols-6" role="listbox" aria-label={isEnglish ? `Icons for ${title}` : `Biểu tượng cho ${title}`}>
-          {visibleIcons.map(({ key, label, Icon }) => <button key={key} type="button" role="option" aria-selected={icon === key} title={label} className={`flex min-h-16 flex-col items-center justify-center gap-1 rounded-lg border p-2 text-[11px] transition ${icon === key ? 'border-[var(--primary)] bg-[var(--primary-soft)] text-[var(--primary)]' : 'border-transparent text-gray-600 hover:border-black/10 hover:bg-black/[.03] dark:text-gray-300 dark:hover:border-white/10 dark:hover:bg-white/5'}`} onClick={() => onIconChange(key)}><span className="relative"><Icon size={20} aria-hidden="true" />{icon === key && <Check size={11} className="absolute -right-2 -top-1 rounded-full bg-[var(--primary)] text-[var(--primary-contrast)]" aria-hidden="true" />}</span><span className="max-w-full truncate">{label}</span></button>)}
+        {visibleIcons.length ? <div className="grid max-h-56 grid-cols-4 gap-2 overflow-y-auto rounded-xl border border-black/10 p-2 dark:border-white/10 sm:grid-cols-6" role="group" aria-label={isEnglish ? `Icons for ${title}` : `Biểu tượng cho ${title}`}>
+          {visibleIcons.map(({ key, label, Icon }) => <button key={key} type="button" aria-pressed={icon === key} aria-label={isEnglish ? `${label}${icon === key ? ' (selected)' : ''}` : `${label}${icon === key ? ' (đã chọn)' : ''}`} title={label} className={`flex min-h-16 flex-col items-center justify-center gap-1 rounded-lg border p-2 text-[11px] transition ${icon === key ? 'border-[var(--primary)] bg-[var(--primary-soft)] text-[var(--primary)]' : 'border-transparent text-gray-600 hover:border-black/10 hover:bg-black/[.03] dark:text-gray-300 dark:hover:border-white/10 dark:hover:bg-white/5'}`} onClick={() => onIconChange(key)}><span className="relative"><Icon size={20} aria-hidden="true" />{icon === key && <Check size={11} className="absolute -right-2 -top-1 rounded-full bg-[var(--primary)] text-[var(--primary-contrast)]" aria-hidden="true" />}</span><span className="max-w-full truncate">{label}</span></button>)}
         </div> : <p className="rounded-xl border border-dashed border-black/10 p-3 text-center text-sm text-gray-500 dark:border-white/10 dark:text-gray-400">{isEnglish ? 'No matching icon.' : 'Không tìm thấy biểu tượng phù hợp.'}</p>}
       </div>
       {kind === 'purpose' && <label className="flex items-start gap-2 rounded-xl border border-black/10 bg-black/[.02] p-3 text-sm dark:border-white/10 dark:bg-white/[.03]">

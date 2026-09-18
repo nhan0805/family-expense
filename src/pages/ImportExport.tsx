@@ -525,6 +525,15 @@ export function ImportExport() {
             <Mail size={18} />
             {emailBusy ? (en ? 'Sending…' : 'Đang gửi…') : (en ? 'Send transaction list' : 'Gửi danh sách giao dịch')}
           </button>
+          {(!isSupabaseConfigured || !familyId || currentUserRole !== 'owner') && (
+            <p className="mt-2 text-xs text-[var(--muted)]" role="note">
+              {!isSupabaseConfigured
+                ? (en ? 'Connect Supabase to enable email export.' : 'Kết nối Supabase để bật xuất dữ liệu qua email.')
+                : currentUserRole !== 'owner'
+                  ? (en ? 'Only the family owner can send this export.' : 'Chỉ chủ gia đình mới có thể gửi bản xuất này.')
+                  : (en ? 'An active family is required.' : 'Cần có gia đình đang hoạt động.')}
+            </p>
+          )}
           {emailMessage && (
             <p className="mt-3 text-sm" role="status" aria-live="polite">
               {emailMessage}
@@ -547,9 +556,16 @@ export function ImportExport() {
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               {en ? 'Choose an .xlsx file downloaded from the app. Data is saved only after you review and confirm it.' : 'Chọn file .xlsx được tải từ ứng dụng. Dữ liệu chỉ được ghi sau khi bạn kiểm tra và xác nhận.'}
             </p>
+            <ol className="mt-3 grid gap-1 text-xs text-[var(--muted)] sm:grid-cols-4" aria-label={en ? 'Import steps' : 'Các bước import'}>
+              <li className={fileName ? 'font-semibold text-[var(--success-strong)]' : 'font-semibold text-[var(--primary)]'}>{en ? '1. Choose' : '1. Chọn file'}</li>
+              <li className={checkingFile || validRows.length > 0 || importErrors.length > 0 ? 'font-semibold text-[var(--primary)]' : ''}>{en ? '2. Validate' : '2. Kiểm tra'}</li>
+              <li className={validRows.length > 0 || importErrors.length > 0 ? 'font-semibold text-[var(--primary)]' : ''}>{en ? '3. Review' : '3. Xem lại'}</li>
+              <li className={validRows.length > 0 && !checkingFile ? 'font-semibold text-[var(--primary)]' : ''}>{en ? '4. Confirm' : '4. Xác nhận'}</li>
+            </ol>
           </div>
         </div>
         <div className="space-y-4 p-4 sm:p-5">
+          <h4 className="text-sm font-extrabold">{en ? '1. Choose a file' : '1. Chọn file'}</h4>
           <div
             role="group"
             aria-labelledby="import-upload-title"
@@ -625,6 +641,7 @@ export function ImportExport() {
           )}
           {(validRows.length > 0 || importErrors.length > 0) && (
             <>
+              <h4 className="text-sm font-extrabold">{en ? '2. Validate and review' : '2. Kiểm tra và xem lại'}</h4>
               <div className="data-stats grid grid-cols-3">
                 <Stat
                   label={en ? 'Valid' : 'Hợp lệ'}
@@ -649,6 +666,7 @@ export function ImportExport() {
               )}
               <div className="data-preview-wrap">
                 <p className="mb-2 text-xs text-gray-500 dark:text-gray-400 sm:hidden">{en ? 'Swipe horizontally to review all columns.' : 'Vuốt ngang để xem đủ các cột.'}</p>
+                <p className="mb-2 text-xs text-[var(--muted)]">{en ? `Showing the first ${Math.min(100, validRows.length + importErrors.length).toLocaleString('en-US')} rows in the preview${validRows.length + importErrors.length > 100 ? ' (preview capped at 100 rows).' : '.'}` : `Đang hiển thị ${Math.min(100, validRows.length + importErrors.length).toLocaleString('vi-VN')} dòng đầu trong phần xem trước${validRows.length + importErrors.length > 100 ? ' (giới hạn 100 dòng).' : '.'}`}</p>
                 <div className="data-preview max-h-80 overflow-auto rounded-xl border" role="region" aria-label={en ? 'Import preview table' : 'Bảng xem trước dữ liệu import'} tabIndex={0}>
                 <table className="w-full min-w-[700px] text-left text-sm">
                   <thead className="bg-[var(--surface-muted)]">
@@ -670,8 +688,8 @@ export function ImportExport() {
                         <td>{r.duplicate ? (en ? 'Possible duplicate' : 'Có thể trùng') : (en ? 'Valid' : 'Hợp lệ')}</td>
                       </tr>
                     ))}
-                    {importErrors.slice(0, 100).map((r) => (
-                      <tr className="border-t border-black/10 text-red-700 dark:border-white/10 dark:text-red-300" key={r.rowNumber}>
+                    {importErrors.slice(0, Math.max(0, 100 - Math.min(validRows.length, 100))).map((r) => (
+                      <tr className="border-t border-black/10 text-red-700 dark:border-white/10 dark:text-red-300" key={`error-${r.rowNumber}`}>
                         <td className="p-2">{r.rowNumber}</td>
                         <td colSpan={3}>{r.messages.join('; ')}</td>
                         <td>{en ? 'Error' : 'Lỗi'}</td>
@@ -681,8 +699,11 @@ export function ImportExport() {
                 </table>
                 </div>
               </div>
+              <h4 className="text-sm font-extrabold">{en ? '3. Confirm import' : '3. Xác nhận import'}</h4>
+              <p id="import-confirm-hint" className="text-xs text-[var(--muted)]">{en ? 'Rows marked as possible duplicates stay excluded until you opt in.' : 'Các dòng có thể trùng sẽ tiếp tục bị loại trừ cho đến khi bạn chủ động chọn import.'}</p>
               <button
                 className="btn-primary"
+                aria-describedby="import-confirm-hint"
                 disabled={
                   importBusy ||
                   validRows.every((r) => r.duplicate && !includeDuplicates)

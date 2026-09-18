@@ -11,6 +11,14 @@
 - Đã cập nhật CI/preview cho `merge_group`, thu hẹp trigger Supabase và chuẩn hóa single-writer cho tài liệu release; chưa bật Merge Queue/branch protection trên GitHub.
 - Bản đồ kiến trúc ổn định nằm trong [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md); quy tắc phân loại tài liệu nằm trong [`docs/AI_CONTEXT_GUIDE.md`](docs/AI_CONTEXT_GUIDE.md).
 
+## UI/UX audit snapshot
+
+- Đã hoàn tất audit UI/UX toàn bộ frontend ngày **18/09/2026** bằng `ui-ux-pro-max-skill`; báo cáo đầy đủ ở [`docs/UI_UX_AUDIT.md`](docs/UI_UX_AUDIT.md) và roadmap ở [`docs/UI_UX_IMPROVEMENT_PLAN.md`](docs/UI_UX_IMPROVEMENT_PLAN.md). Bản tiếng Việt tương ứng là [`docs/UI_UX_AUDIT.vi.md`](docs/UI_UX_AUDIT.vi.md) và [`docs/UI_UX_IMPROVEMENT_PLAN.vi.md`](docs/UI_UX_IMPROVEMENT_PLAN.vi.md).
+- Phạm vi gồm 15 route pattern, 15 page module/16 trạng thái vận hành, 8 shared UI modules, 15 vấn đề consistency, 15 vấn đề UX và 14 vấn đề accessibility. Không có P0; roadmap gồm 8 P1, 10 P2 và 5 P3.
+- Ưu tiên batch đầu: chuẩn hóa focus/semantics cho dialog-popover, thống nhất error recovery của form, làm rõ route Settings, giảm độ dày bộ lọc/bulk edit trên mobile, củng cố semantic color tokens và hoàn tất nhãn song ngữ.
+- Audit chỉ tạo tài liệu và không thay đổi runtime app, business logic, schema, RLS/RPC, Edge Function hoặc dữ liệu. Kết quả phản ánh working tree hiện tại và giữ nguyên các thay đổi có sẵn.
+- Kiểm thử snapshot hiện tại: TypeScript, ESLint, 48 Vitest files/233 tests và Vite build đều pass; build vẫn có cảnh báo chunk lớn XLSX/ExcelJS/chart như known issue. Live smoke chỉ kiểm tra `/dang-nhap` ở 1280px vì protected routes yêu cầu Supabase auth chưa dùng credential test.
+
 ## Current system state
 
 - Frontend React 19/TypeScript/Vite, React Router, Tailwind, TanStack Query, React Hook Form/Zod, Recharts và PWA.
@@ -18,7 +26,7 @@
 - Dữ liệu nghiệp vụ được scope theo `family_id`; owner/member permissions phải được bảo vệ ở RLS/RPC.
 - App có demo fallback khi Supabase chưa cấu hình.
 - Module Tài sản theo dõi sổ tiết kiệm và từng dòng vàng, liên kết các thay đổi tiền mặt với `transactions` bằng source `asset`; các migration asset, bộ lọc cá nhân và cấu hình giao dịch tự động hiện đã có trên `main` qua các PR tương ứng.
-- `/cai-dat/giao-dich` vẫn là route cài đặt bộ lọc mặc định cá nhân; mục này được ẩn khỏi menu bên cạnh để menu gọn hơn nhưng không xóa tính năng hoặc deep link.
+- `/cai-dat` là route canonical cho Settings; `/cai-dat/giao-dich` vẫn được giữ làm deep link tương thích và redirect sang `/cai-dat?tab=filters`.
 - Production đã có bảng/cấu hình mặc định giao dịch tự động, migration `202609170002_savings_book_save_recovery.sql` và `202609170006_gold_asset_save_recovery.sql`; RPC lưu sổ/lô vàng chỉ yêu cầu catalog khi thực sự tạo hoặc cập nhật giao dịch liên kết.
 - Mapping `gold_purchase`/`gold_sale` của family hiện có và family mới mặc định dùng mục đích Đầu tư, danh mục Vàng và Chuyển khoản; RPC mua vàng đọc mapping này thay vì hard-code danh mục.
 - Giao dịch định kỳ được tạo bởi RPC/job database với idempotent run history. Các màn hình liên quan tự refetch dữ liệu server mỗi 30 giây và khi quay lại foreground.

@@ -5,6 +5,9 @@ import { supabase } from '../lib/supabase';
 import { useLanguage } from '../context/LanguageContext';
 import { authErrorMessage } from '../lib/errorRecovery';
 import { AuthShell } from '../components/AuthShell';
+import { StatusMessage } from '../components/ui/StatusMessage';
+
+type MessageTone = 'info' | 'error' | 'success';
 
 export function ResetPassword() {
   const { language } = useLanguage(); const en = language === 'en';
@@ -17,6 +20,12 @@ export function ResetPassword() {
   const [ready, setReady] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState(en ? 'Verifying link…' : 'Đang xác minh liên kết…');
+  const [messageTone, setMessageTone] = useState<MessageTone>('info');
+
+  const setFeedback = (nextMessage: string, tone: MessageTone) => {
+    setMessage(nextMessage);
+    setMessageTone(tone);
+  };
 
   useEffect(() => {
     let active = true;
@@ -32,17 +41,17 @@ export function ResetPassword() {
       }
       if (!active) return;
       if (error || !session) {
-        setMessage(error ? authErrorMessage(error, en) : (en ? 'The password reset link is invalid or expired.' : 'Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.'));
+        setFeedback(error ? authErrorMessage(error, en) : (en ? 'The password reset link is invalid or expired.' : 'Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.'), 'error');
         return;
       }
       setReady(true);
-      setMessage('');
+      setFeedback('', 'info');
     };
     void checkSession();
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
       if (active && event === 'PASSWORD_RECOVERY' && session) {
         setReady(true);
-        setMessage('');
+        setFeedback('', 'info');
       }
     });
     return () => { active = false; listener.subscription.unsubscribe(); };
@@ -52,26 +61,26 @@ export function ResetPassword() {
     event.preventDefault();
     if (password.length < 8) {
       setFieldError('password');
-      setMessage(en ? 'Password must be at least 8 characters.' : 'Mật khẩu phải có ít nhất 8 ký tự.');
+      setFeedback(en ? 'Password must be at least 8 characters.' : 'Mật khẩu phải có ít nhất 8 ký tự.', 'error');
       return;
     }
     if (password !== confirmation) {
       setFieldError('confirmation');
-      setMessage(en ? 'Passwords do not match.' : 'Hai mật khẩu chưa khớp.');
+      setFeedback(en ? 'Passwords do not match.' : 'Hai mật khẩu chưa khớp.', 'error');
       return;
     }
     setFieldError(null);
     setBusy(true);
-    setMessage(en ? 'Updating password…' : 'Đang cập nhật mật khẩu…');
+    setFeedback(en ? 'Updating password…' : 'Đang cập nhật mật khẩu…', 'info');
     try {
       const { error } = await supabase.auth.updateUser({ password });
       if (error) {
-        setMessage(authErrorMessage(error, en));
+        setFeedback(authErrorMessage(error, en), 'error');
         return;
       }
       navigate('/', { replace: true });
     } catch (error) {
-      setMessage(authErrorMessage(error, en));
+      setFeedback(authErrorMessage(error, en), 'error');
     } finally {
       setBusy(false);
     }
@@ -85,7 +94,7 @@ export function ResetPassword() {
         <label><span className="label">{en ? 'Confirm new password' : 'Nhập lại mật khẩu mới'}</span><span className="relative block"><input className="field pr-12" type={showConfirmation ? 'text' : 'password'} autoComplete="new-password" minLength={8} required aria-invalid={fieldError === 'confirmation'} aria-describedby={fieldError === 'confirmation' ? 'reset-message' : undefined} value={confirmation} onChange={(event) => { setConfirmation(event.target.value); setFieldError(null); }} /><button type="button" className="icon-button absolute inset-y-0 right-1" aria-label={showConfirmation ? (en ? 'Hide confirmation' : 'Ẩn mật khẩu xác nhận') : (en ? 'Show confirmation' : 'Hiện mật khẩu xác nhận')} aria-pressed={showConfirmation} onClick={() => setShowConfirmation((value) => !value)}>{showConfirmation ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}</button></span></label>
         <button type="submit" className="btn-primary w-full" disabled={busy}>{busy ? (en ? 'Updating…' : 'Đang cập nhật…') : (en ? 'Save new password' : 'Lưu mật khẩu mới')}</button>
       </>}
-      {message && <p id="reset-message" role="status" className="rounded-xl bg-[var(--surface-muted)] p-3 text-sm text-[var(--muted)]" aria-live="polite">{message}</p>}
+      {message && <StatusMessage id="reset-message" tone={messageTone}>{message}</StatusMessage>}
       {!ready && <Link className="text-sm font-semibold text-[var(--primary)]" to="/dang-nhap">{en ? 'Back to log in' : 'Quay lại đăng nhập'}</Link>}
     </form>
   </AuthShell>;

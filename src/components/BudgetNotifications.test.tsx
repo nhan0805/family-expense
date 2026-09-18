@@ -75,15 +75,15 @@ describe('BudgetNotifications', () => {
     renderNotifications();
 
     await waitFor(() => expect(screen.getByText(/Sinh hoạt đã dùng 80% ngân sách/)).toBeInTheDocument());
-    expect(screen.getByRole('button', { name: 'Thông báo' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Thông báo/ })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Thông báo' }));
+    fireEvent.click(screen.getByRole('button', { name: /Thông báo/ }));
     expect(screen.getByRole('dialog', { name: 'Thông báo' })).toBeInTheDocument();
     expect(screen.getByText('Sắp vượt ngân sách: Sinh hoạt')).toBeInTheDocument();
-    expect(screen.getByLabelText('1 mục cần chú ý')).toBeInTheDocument();
+    expect(screen.getByText('1 mục cần chú ý')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('link', { name: /Sắp vượt ngân sách: Sinh hoạt/ }));
-    await waitFor(() => expect(screen.queryByLabelText('1 mục cần chú ý')).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByText('1 mục cần chú ý')).not.toBeInTheDocument());
   });
 
   it('dịch chuông và nội dung cảnh báo sang tiếng Anh', async () => {
@@ -92,7 +92,7 @@ describe('BudgetNotifications', () => {
     renderNotifications('en');
 
     await waitFor(() => expect(screen.getByText(/Family living has reached 80%/)).toBeInTheDocument());
-    fireEvent.click(screen.getByRole('button', { name: 'Notifications' }));
+    fireEvent.click(screen.getByRole('button', { name: /Notifications/ }));
     expect(screen.getByText('Near limit: Family living')).toBeInTheDocument();
   });
 
@@ -102,7 +102,7 @@ describe('BudgetNotifications', () => {
     renderNotifications();
 
     await waitFor(() => expect(screen.getByText(/Sinh hoạt đã dùng 80% ngân sách/)).toBeInTheDocument());
-    fireEvent.click(screen.getByRole('button', { name: 'Thông báo' }));
+    fireEvent.click(screen.getByRole('button', { name: /Thông báo/ }));
     expect(screen.getByRole('dialog', { name: 'Thông báo' })).toBeInTheDocument();
 
     fireEvent.pointerDown(document.body);
@@ -116,9 +116,9 @@ describe('BudgetNotifications', () => {
     renderNotifications();
 
     await waitFor(() => expect(screen.getByText(/Sinh hoạt đã dùng 80% ngân sách/)).toBeInTheDocument());
-    fireEvent.click(screen.getByRole('button', { name: 'Thông báo' }));
+    fireEvent.click(screen.getByRole('button', { name: /Thông báo/ }));
     fireEvent.click(screen.getByRole('link', { name: /Sắp vượt ngân sách: Sinh hoạt/ }));
-    fireEvent.click(screen.getByRole('button', { name: 'Thông báo' }));
+    fireEvent.click(screen.getByRole('button', { name: /Thông báo/ }));
 
     fireEvent.click(screen.getByRole('button', { name: 'Xóa đã đọc' }));
     expect(screen.queryByText('Sắp vượt ngân sách: Sinh hoạt')).not.toBeInTheDocument();
@@ -141,7 +141,7 @@ describe('BudgetNotifications', () => {
     confirmPlannedTransaction.mockClear();
     renderNotifications();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Thông báo' }));
+    fireEvent.click(screen.getByRole('button', { name: /Thông báo/ }));
     expect(screen.getByRole('heading', { name: 'Giao dịch dự kiến tới hạn' })).toHaveClass('break-words');
     fireEvent.click(screen.getByRole('button', { name: 'Xác nhận' }));
     const dialog = screen.getByRole('alertdialog');
@@ -166,7 +166,7 @@ describe('BudgetNotifications', () => {
     } as unknown as ReturnType<typeof useApp>);
     renderNotifications();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Thông báo' }));
+    fireEvent.click(screen.getByRole('button', { name: /Thông báo/ }));
     const dueList = screen.getByRole('list', { name: 'Danh sách giao dịch dự kiến tới hạn' });
     expect(dueList).toHaveClass('max-h-64', 'overflow-y-auto', 'overscroll-contain');
     plannedTransactions.forEach(({ description }) => expect(screen.getByText(description)).toBeInTheDocument());
