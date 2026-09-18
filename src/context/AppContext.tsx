@@ -77,6 +77,54 @@ const localFamilyId = 'local-family';
 const localDemoEmail = 'demo@family.local';
 const localDemoDisplayName = 'Chủ gia đình';
 
+const clearLocalFamilyData = (familyId: string) => {
+  if (typeof window === 'undefined') return;
+  try {
+    const scopedKeys = [
+      `family-expense:savings-accounts:${familyId}`,
+      `family-expense:savings-movements:${familyId}`,
+      `family-expense:gold-assets:${familyId}`,
+      `family-expense:gold-sales:${familyId}`,
+      `family-expense:gold-buyback-price:${familyId}`,
+      `family-expense:recurring-expenses:${familyId}`,
+      `family-expense:automatic-transaction-defaults:${familyId}`,
+      `family-expense:transaction-filter-preference:${familyId}:`,
+      `family-expense:transaction-draft:${familyId}`,
+    ];
+    scopedKeys.forEach((key) => window.localStorage.removeItem(key));
+    for (const key of Object.keys(window.localStorage)) {
+      if (key && scopedKeys.some((prefix) => key.startsWith(prefix))) {
+        window.localStorage.removeItem(key);
+      }
+    }
+
+    // The local fallback has one demo family, so these legacy global stores
+    // are family data as well. Keep language/theme preferences untouched.
+    window.localStorage.removeItem('family-expense-budgets');
+    const notificationKey = 'family-expense-budget-notifications';
+    const rawNotifications = window.localStorage.getItem(notificationKey);
+    if (rawNotifications) {
+      const notifications = JSON.parse(rawNotifications) as unknown;
+      if (Array.isArray(notifications)) {
+        window.localStorage.setItem(
+          notificationKey,
+          JSON.stringify(
+            notifications.filter(
+              (item) =>
+                !item ||
+                typeof item !== 'object' ||
+                (item as { familyId?: unknown }).familyId !== familyId,
+            ),
+          ),
+        );
+      }
+    }
+  } catch {
+    // A locked/unavailable localStorage must not prevent the in-memory demo
+    // family from being reset.
+  }
+};
+
 const getAuthDisplayName = (user: User) => {
   const metadataName = [user.user_metadata?.full_name, user.user_metadata?.name]
     .find((value): value is string => typeof value === 'string' && value.trim().length > 0)
@@ -615,6 +663,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const deleteFamily = useCallback(async () => {
     if (!isSupabaseConfigured) {
+      clearLocalFamilyData(localFamilyId);
       setFamilyId('');
       setFamilyName('Gia đình của tôi');
       setCurrentUserRole(null);
@@ -644,6 +693,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setFamilyId('');
     setFamilyName('Gia đình của tôi');
     setCurrentUserRole(null);
+    setPurposes([]);
+    setExpenseTypes([]);
+    setPaymentMethods([]);
     setTransactions([]);
     return null;
   }, [familyId]);
