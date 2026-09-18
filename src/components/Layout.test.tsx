@@ -1,7 +1,7 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { Link, MemoryRouter, Route, Routes } from 'react-router-dom';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useApp } from '../context/AppContext';
 import { FeedbackProvider } from './Feedback';
 import { Layout } from './Layout';
@@ -56,6 +56,11 @@ describe('Layout mobile navigation', () => {
       online: true,
       reloadApp: vi.fn(),
     } as unknown as ReturnType<typeof useApp>);
+    vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it('đưa Thành viên vào menu Thêm thay vì taskbar mobile', () => {
@@ -90,5 +95,26 @@ describe('Layout mobile navigation', () => {
     fireEvent.click(within(bottomNav!).getByRole('button', { name: 'Thêm' }));
     expect(screen.getByRole('link', { name: 'Thành viên' })).toHaveAttribute('href', '/thanh-vien');
     expect(screen.getByRole('link', { name: 'Chi phí định kỳ' })).toHaveAttribute('href', '/chi-phi-dinh-ky');
+  });
+
+  it('đưa viewport về đầu khi chuyển sang form chỉnh sửa giao dịch', async () => {
+    render(
+      <FeedbackProvider>
+        <QueryClientProvider client={new QueryClient()}>
+          <MemoryRouter initialEntries={['/']}>
+            <Routes>
+              <Route element={<Layout />}>
+                <Route index element={<Link to="/giao-dich/transaction-1">Sửa</Link>} />
+                <Route path="/giao-dich/:id" element={<div>Form sửa giao dịch</div>} />
+              </Route>
+            </Routes>
+          </MemoryRouter>
+        </QueryClientProvider>
+      </FeedbackProvider>,
+    );
+
+    fireEvent.click(screen.getByRole('link', { name: 'Sửa' }));
+    expect(await screen.findByText('Form sửa giao dịch')).toBeInTheDocument();
+    await waitFor(() => expect(window.scrollTo).toHaveBeenLastCalledWith({ top: 0, left: 0, behavior: 'auto' }));
   });
 });

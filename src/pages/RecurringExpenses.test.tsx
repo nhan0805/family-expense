@@ -12,6 +12,7 @@ vi.mock('../context/AppContext', () => ({ useApp: vi.fn() }));
 vi.mock('../lib/supabase', () => ({ isSupabaseConfigured: false }));
 
 const mockedUseApp = vi.mocked(useApp);
+const scrollIntoView = vi.fn();
 
 function appState(role: 'owner' | 'member') {
   return {
@@ -45,6 +46,8 @@ describe('Chi phí định kỳ', () => {
   beforeEach(() => {
     window.localStorage.clear();
     mockedUseApp.mockReset();
+    scrollIntoView.mockClear();
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, value: scrollIntoView });
   });
 
   afterEach(() => {
@@ -69,6 +72,24 @@ describe('Chi phí định kỳ', () => {
     expect(await screen.findByText('Tiền điện')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Tạo giao dịch đến hạn' }));
     expect(await screen.findByText('Đã tạo 1 giao dịch dự kiến.')).toBeInTheDocument();
+  });
+
+  it('đưa tới form khi sửa mẫu ở cuối danh sách', async () => {
+    mockedUseApp.mockReturnValue(appState('owner'));
+    upsertLocalRecurringExpense('local-family', {
+      name: 'Tiền điện',
+      template: { transactionType: 'Chi tiêu', description: 'Tiền điện', amount: 300000, purposeId: 'p1', expenseTypeId: 'e1', paymentMethodId: 'm1', note: null },
+      frequency: 'monthly',
+      nextRunDate: '2099-09-05',
+      endDate: null,
+    });
+    renderPage();
+
+    expect(await screen.findByText('Tiền điện')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Sửa' }));
+
+    await waitFor(() => expect(scrollIntoView).toHaveBeenCalledWith(expect.objectContaining({ behavior: 'smooth', block: 'start' })));
+    expect(screen.getByLabelText('Tên mẫu')).toHaveFocus();
   });
 
   it('giữ màn hình ở chế độ chỉ xem cho member', async () => {

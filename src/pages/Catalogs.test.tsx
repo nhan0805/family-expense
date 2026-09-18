@@ -10,6 +10,7 @@ const mockedUseApp = vi.mocked(useApp);
 const addCatalogItem = vi.fn();
 const updateCatalogItem = vi.fn();
 const deleteCatalogItem = vi.fn();
+const scrollIntoView = vi.fn();
 
 function appState(role: 'owner' | 'member') {
   return {
@@ -36,6 +37,7 @@ describe('Quản lý danh mục', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, value: scrollIntoView });
     addCatalogItem.mockResolvedValue(null);
     updateCatalogItem.mockResolvedValue(null);
     deleteCatalogItem.mockResolvedValue(null);
@@ -82,6 +84,8 @@ describe('Quản lý danh mục', () => {
     renderCatalogs();
 
     fireEvent.click(screen.getByRole('button', { name: 'Sửa Sinh hoạt' }));
+    await waitFor(() => expect(scrollIntoView).toHaveBeenCalledWith(expect.objectContaining({ behavior: 'smooth', block: 'start' })));
+    expect(screen.getByLabelText('Đổi tên mục đích')).toHaveFocus();
     fireEvent.change(screen.getByLabelText('Đổi tên mục đích'), { target: { value: 'Gia đình' } });
     fireEvent.click(screen.getByRole('button', { name: 'Lưu tên mới' }));
     await waitFor(() => expect(updateCatalogItem).toHaveBeenCalledWith('purpose', 'p1', 'Gia đình', '', 'house', true));
