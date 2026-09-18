@@ -97,6 +97,37 @@ describe('Layout mobile navigation', () => {
     expect(screen.getByRole('link', { name: 'Chi phí định kỳ' })).toHaveAttribute('href', '/chi-phi-dinh-ky');
   });
 
+  it('không chuyển sang onboarding khi phiên đăng nhập còn đang tải gia đình', () => {
+    vi.mocked(useApp).mockReturnValue({
+      familyId: '',
+      familyName: 'Gia đình của tôi',
+      currentUserEmail: 'owner@example.com',
+      currentUserDisplayName: 'Chủ gia đình',
+      loading: true,
+      authenticated: true,
+      error: null,
+      online: true,
+      reloadApp: vi.fn(),
+    } as unknown as ReturnType<typeof useApp>);
+
+    render(
+      <FeedbackProvider>
+        <QueryClientProvider client={new QueryClient()}>
+          <MemoryRouter initialEntries={['/']}>
+            <Routes>
+              <Route element={<Layout />}>
+                <Route path="*" element={<div>Trang hiện tại</div>} />
+              </Route>
+            </Routes>
+          </MemoryRouter>
+        </QueryClientProvider>
+      </FeedbackProvider>,
+    );
+
+    expect(screen.getByRole('status', { name: 'Đang tải dữ liệu gia đình…' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Tạo gia đình mới' })).not.toBeInTheDocument();
+  });
+
   it('đưa viewport về đầu khi chuyển sang form chỉnh sửa giao dịch', async () => {
     render(
       <FeedbackProvider>
