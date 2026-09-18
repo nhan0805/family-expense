@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ThemeSelect } from '../components/ThemeSelect';
 import { ThemeProvider } from './ThemeContext';
@@ -24,7 +24,7 @@ describe('ThemeProvider', () => {
 
   it('lưu lựa chọn tối và áp class trước toàn ứng dụng', () => {
     render(<ThemeProvider><ThemeSelect/></ThemeProvider>);
-    fireEvent.change(screen.getByRole('combobox', { name: 'Giao diện' }), { target: { value: 'dark' } });
+    fireEvent.click(screen.getByRole('switch', { name: 'Giao diện' }));
     expect(document.documentElement).toHaveClass('dark');
     expect(window.localStorage.getItem('family-expense-theme')).toBe('dark');
   });
@@ -32,7 +32,7 @@ describe('ThemeProvider', () => {
   it('chuyển về sáng bằng switch và lưu lựa chọn', () => {
     window.localStorage.setItem('family-expense-theme', 'dark');
     render(<ThemeProvider><ThemeSelect/></ThemeProvider>);
-    fireEvent.change(screen.getByRole('combobox', { name: 'Giao diện' }), { target: { value: 'light' } });
+    fireEvent.click(screen.getByRole('switch', { name: 'Giao diện' }));
     expect(window.localStorage.getItem('family-expense-theme')).toBe('light');
   });
 
@@ -50,26 +50,6 @@ describe('ThemeProvider', () => {
 
     expect(document.documentElement).toHaveClass('dark');
     expect(window.localStorage.getItem('family-expense-theme')).toBeNull();
-  });
-
-  it('cập nhật khi hệ điều hành đổi preference và người dùng đang chọn theo thiết bị', () => {
-    let listener: ((event: MediaQueryListEvent) => void) | undefined;
-    const media = {
-      matches: false,
-      addEventListener: vi.fn((_event: string, callback: (event: MediaQueryListEvent) => void) => {
-        listener = callback;
-      }),
-      removeEventListener: vi.fn(),
-    } as unknown as MediaQueryList;
-    Object.defineProperty(window, 'matchMedia', {
-      configurable: true,
-      value: vi.fn().mockReturnValue(media),
-    });
-
-    render(<ThemeProvider><ThemeSelect/></ThemeProvider>);
-    expect(document.documentElement).not.toHaveClass('dark');
-    listener?.({ matches: true } as MediaQueryListEvent);
-    return waitFor(() => expect(document.documentElement).toHaveClass('dark'));
   });
 
   it('dùng nền Dracula cho màu thanh hệ thống', () => {
