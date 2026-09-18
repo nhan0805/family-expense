@@ -2,6 +2,13 @@
 
 ## 2026-09-18
 
+### Đặt giao dịch AI thẻ tín dụng/trả góp ở trạng thái Dự kiến
+
+- Khi AI gợi ý giao dịch mới, trạng thái được chuẩn hóa theo phương thức thanh toán: `Thẻ tín dụng` và `Trả góp` dùng `Dự kiến`; khi sửa giao dịch hiện có, trạng thái AI trả về được giữ nguyên.
+- Files: `src/pages/TransactionForm.tsx`, `src/pages/TransactionForm.test.tsx`. Không đổi schema, RLS/RPC, Edge Function hoặc dữ liệu production.
+- Kiểm thử: CI hậu merge [run 35370991235](https://github.com/nhan0805/family-expense/actions/runs/35370991235) pass quality, coverage, build/performance, E2E và db-security.
+- Triển khai: PR [#230](https://github.com/nhan0805/family-expense/pull/230) merge vào `main` tại commit `048ab60`; [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/96974dcf-aef4-4b14-8a08-c1dd86322791) pass; smoke `https://family-expense-8fo.pages.dev/` trả HTTP 200.
+
 ### Khôi phục toggle giao diện Sáng/Tối
 
 - Yêu cầu: Đưa nút Giao diện về toggle Sáng/Tối bằng icon như trước, không dùng lựa chọn Theo thiết bị.

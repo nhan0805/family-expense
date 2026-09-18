@@ -36,8 +36,16 @@ select ok(
   'clients cannot access template rows directly'
 );
 select ok(
-  to_regprocedure('public.save_system_catalog_template(uuid)') is null,
-  'browser catalog template save RPC has been removed'
+  to_regprocedure('public.save_system_catalog_template(uuid)') is not null
+  and exists(
+    select 1
+    from pg_proc
+    where oid = 'public.save_system_catalog_template(uuid)'::regprocedure
+      and prosecdef
+  )
+  and pg_get_functiondef('public.save_system_catalog_template(uuid)'::regprocedure) ilike '%is_family_owner%'
+  and pg_get_functiondef('public.save_system_catalog_template(uuid)'::regprocedure) ilike '%system_catalog_template_items%',
+  'owner-guarded catalog template promotion is available to the browser'
 );
 select ok(
   exists(select 1 from pg_proc where oid = 'public.seed_family_defaults(uuid)'::regprocedure and prosecdef),

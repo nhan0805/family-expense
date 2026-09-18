@@ -60,6 +60,7 @@ type AppState = {
     budgetEnabled?: boolean,
   ) => Promise<string | null>;
   deleteCatalogItem: (kind: CatalogKind, id: string) => Promise<string | null>;
+  saveCatalogDefaults: () => Promise<string | null>;
   confirmPlannedTransaction: (id: string) => Promise<string | null>;
   updateFamilyName: (name: string) => Promise<string | null>;
   createFamily: (name: string) => Promise<string | null>;
@@ -576,6 +577,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [familyId, transactions],
   );
 
+  const saveCatalogDefaults = useCallback(async () => {
+    if (!familyId) return 'Không tìm thấy gia đình hiện tại.';
+    if (currentUserRole !== 'owner') return 'Chỉ chủ gia đình mới có quyền cập nhật mặc định.';
+    if (!purposes.length || !expenseTypes.length || !paymentMethods.length) {
+      return 'Cần có ít nhất một mục đang hoạt động trong cả ba nhóm danh mục.';
+    }
+    if (!isSupabaseConfigured) return null;
+    const { error: rpcError } = await supabase.rpc('save_system_catalog_template', {
+      p_family_id: familyId,
+    });
+    if (rpcError) {
+      if (rpcError.message.includes('INVALID_CATALOG_TEMPLATE'))
+        return 'Cần có ít nhất một mục đang hoạt động trong cả ba nhóm danh mục.';
+      if (rpcError.message.includes('FORBIDDEN') || rpcError.code === '42501')
+        return 'Chỉ chủ gia đình mới có quyền cập nhật mặc định.';
+      return userFacingError(rpcError, 'Không thể cập nhật bộ mặc định cho gia đình mới.');
+    }
+    return null;
+  }, [currentUserRole, expenseTypes.length, familyId, paymentMethods.length, purposes.length]);
+
   const confirmPlannedTransaction = useCallback(
     async (id: string) => {
       const markAsActual = () =>
@@ -721,6 +742,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addCatalogItem,
       updateCatalogItem,
       deleteCatalogItem,
+      saveCatalogDefaults,
       confirmPlannedTransaction,
       updateFamilyName,
       createFamily,
@@ -745,6 +767,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addCatalogItem,
       updateCatalogItem,
       deleteCatalogItem,
+      saveCatalogDefaults,
       confirmPlannedTransaction,
       updateFamilyName,
       createFamily,
