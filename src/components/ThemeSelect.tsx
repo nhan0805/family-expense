@@ -1,9 +1,9 @@
 import { Globe2, Moon, Sun } from 'lucide-react';
-import { useTheme } from '../context/ThemeContext';
+import { useOptionalTheme } from '../context/ThemeContext';
 import { useOptionalLanguage } from '../context/LanguageContext';
 
 export function ThemeSelect({ compact = false }: { compact?: boolean }) {
-  const { preference, setPreference } = useTheme();
+  const { preference, setPreference } = useOptionalTheme();
   const { language, setLanguage, t } = useOptionalLanguage();
   const Icon = preference === 'dark' ? Moon : Sun;
   const Switch = ({ checked, onClick, ariaLabel, kind }: { checked: boolean; onClick: () => void; ariaLabel: string; kind: 'theme' | 'language' }) => <button type="button" role="switch" aria-checked={checked} aria-label={ariaLabel} onClick={onClick} className={`relative inline-flex min-h-11 w-16 shrink-0 cursor-pointer items-center rounded-full p-1 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${kind === 'language' ? (checked ? 'bg-[var(--primary)]' : 'bg-slate-500 dark:bg-slate-600') : (checked ? 'bg-[var(--primary)]' : 'bg-slate-300 dark:bg-[var(--border-strong)]')}`}><span className={`grid size-8 place-items-center rounded-full bg-white text-[10px] font-extrabold shadow-sm transition-transform ${checked ? 'translate-x-6' : 'translate-x-0'} ${kind === 'language' ? 'text-[var(--primary)] dark:text-[var(--primary-contrast)]' : ''}`}>{kind === 'theme' ? (checked ? <Moon size={14} className="text-[var(--primary)] dark:text-[var(--primary-contrast)]" aria-hidden="true" /> : <Sun size={14} className="text-amber-600" aria-hidden="true" />) : (checked ? 'EN' : 'VI')}</span></button>;
