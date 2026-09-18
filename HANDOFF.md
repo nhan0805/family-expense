@@ -4,10 +4,10 @@
 
 ## Current state
 
-- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; `main` hiện có runtime merge commit `7621980` sau PR [#232](https://github.com/nhan0805/family-expense/pull/232). PR [#231](https://github.com/nhan0805/family-expense/pull/231) đã đưa panel giá mua vào vàng dùng chung lên production tại merge commit `eba74e5`; [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/263765b5-f0ec-4e0d-8c3c-6f0812ec970f) pass; smoke `/`, `/dang-nhap` và `/thanh-vien` đều trả HTTP 200.
-- Code trên `main` đã gồm PR [#231](https://github.com/nhan0805/family-expense/pull/231), làm mới panel cài đặt giá mua vào vàng dùng chung; PR [#232](https://github.com/nhan0805/family-expense/pull/232), loại bỏ khoảng trống ngang không cần thiết của bảng giao dịch; PR [#230](https://github.com/nhan0805/family-expense/pull/230), chuẩn hóa trạng thái giao dịch AI; cùng các release trước. PR [#235](https://github.com/nhan0805/family-expense/pull/235) chỉ cập nhật release docs.
-- CI hậu merge [run 35371516601](https://github.com/nhan0805/family-expense/actions/runs/35371516601) của merge commit `eba74e5` pass quality, E2E và db-security sau một lần retry do Supabase CLI API rate limit; Cloudflare Pages production check cũng pass. PR #231 chỉ thay đổi frontend, không có migration Supabase mới.
-- Nhánh release/status hiện tại: `codex/release-status-gold-price-panel-20260919`, được đồng bộ từ `origin/main` sau khi PR #231 merge để ghi nhận release; thay đổi tài liệu này không tạo thêm production deploy.
+- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; `main` hiện có runtime merge commit `5fa6c20` sau PR [#241](https://github.com/nhan0805/family-expense/pull/241). [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/d9b585e9-1f53-46a8-b91d-55f56244077b) pass; smoke `/`, `/dang-nhap` và `/thanh-vien` đều trả HTTP 200.
+- Code trên `main` đã gồm PR [#234](https://github.com/nhan0805/family-expense/pull/234), cho owner đặt bộ mục đích/danh mục/phương thức thanh toán hiện tại làm mặc định cho gia đình tạo mới; các PR [#238](https://github.com/nhan0805/family-expense/pull/238), [#239](https://github.com/nhan0805/family-expense/pull/239) và [#241](https://github.com/nhan0805/family-expense/pull/241) đồng bộ thứ tự/lịch sử migration để production apply được thay đổi; cùng các release trước.
+- CI hậu merge [run 35375328631](https://github.com/nhan0805/family-expense/actions/runs/35375328631) của merge commit `5fa6c20` pass quality, E2E và db-security. [Supabase Production Deploy run 35375328575](https://github.com/nhan0805/family-expense/actions/runs/35375328575) pass migration và Edge Functions; migration `202609190001_restore_catalog_template_promotion.sql` đã apply thành công.
+- Nhánh release/status hiện tại: `codex/release-status-catalog-defaults-20260919`, được đồng bộ từ `origin/main` sau deploy để ghi nhận release; thay đổi tài liệu này không tạo thêm production deploy.
 - Đã cập nhật CI/preview cho `merge_group`, thu hẹp trigger Supabase và chuẩn hóa single-writer cho tài liệu release; chưa bật Merge Queue/branch protection trên GitHub.
 - Bản đồ kiến trúc ổn định nằm trong [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md); quy tắc phân loại tài liệu nằm trong [`docs/AI_CONTEXT_GUIDE.md`](docs/AI_CONTEXT_GUIDE.md).
 
@@ -35,6 +35,14 @@
 - Semantic embedding/search production path đã bị loại bỏ; không đưa lại nếu chưa có quyết định kiến trúc mới.
 
 ## Recently completed
+
+### Đặt bộ danh mục hiện tại làm mặc định cho gia đình mới
+
+- Owner có nút `Đặt bộ hiện tại làm mặc định` trong màn hình Danh mục. Nút lấy các mục active hiện tại của Mục đích chi, Loại chi phí và Phương thức thanh toán làm template cho onboarding gia đình mới; gia đình hiện tại và các gia đình đã tồn tại không bị thay đổi.
+- RPC owner-guarded `public.save_system_catalog_template(uuid)` ghi lại snapshot vào `system_catalog_template_items`/`system_catalog_template_meta`; kiểm tra owner, không cho lưu nếu một nhóm catalog rỗng và giữ mapping field rõ ràng.
+- Files: `src/pages/Catalogs.tsx`, `src/context/AppContext.tsx`, `src/pages/Catalogs.test.tsx`, `supabase/migrations/202609180003_restore_catalog_template_promotion.sql`, `supabase/migrations/202609190001_restore_catalog_template_promotion.sql`, `supabase/tests/system_catalog_template.sql`, `README.md`, `docs/PROJECT_MAP.md`.
+- Kiểm thử: Vitest full suite 49 file/240 test, TypeScript, ESLint, Vite build, coverage, performance budget, E2E và db-security đều pass qua CI; Postgres local trên máy phát triển không chạy nên không rehearsal local.
+- Triển khai: PR [#234](https://github.com/nhan0805/family-expense/pull/234) merge tại commit `78911d7`; các PR sửa migration #238/#239/#241 hoàn tất tại runtime merge `5fa6c20`; [Supabase Production Deploy run 35375328575](https://github.com/nhan0805/family-expense/actions/runs/35375328575), [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/d9b585e9-1f53-46a8-b91d-55f56244077b) và smoke production pass.
 
 ### Làm đẹp panel giá mua vào vàng dùng chung
 
