@@ -160,6 +160,11 @@ body {
   contain-intrinsic-size: 0 8rem;
 }
 
+.transaction-row-shell-menu-open {
+  content-visibility: visible;
+  contain: none;
+}
+
 @media (min-width: 768px) {
   .transaction-row-shell {
     contain-intrinsic-size: 0 4.25rem;
