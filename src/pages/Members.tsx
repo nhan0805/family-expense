@@ -245,8 +245,12 @@ export function Members() {
   };
 
   const removeFamily = async () => {
-    if (!canDeleteFamily) {
-      setMessage('Hãy xóa hết giao dịch trước khi xóa gia đình.');
+    if (canDeleteFamily !== true) {
+      setMessage(
+        canDeleteFamily === false
+          ? 'Hãy xóa hết giao dịch trước khi xóa gia đình.'
+          : 'Chưa thể kiểm tra điều kiện xóa. Vui lòng tải lại trang rồi thử lại.',
+      );
       return;
     }
     const confirmed = await askConfirm({
@@ -487,12 +491,16 @@ export function Members() {
           <button
             type="button"
             className="danger-button mt-4 px-4"
-            disabled={busy || canDeleteFamily !== true}
+            disabled={busy}
             aria-busy={busy}
             onClick={() => void removeFamily()}
           >
             <Trash2 className="mr-2 inline" size={17} />
-            {busy ? (en ? 'Deleting family…' : 'Đang xóa gia đình…') : (en ? 'Delete family' : 'Xóa gia đình')}
+            {busy
+              ? (en ? 'Deleting family…' : 'Đang xóa gia đình…')
+              : canDeleteFamily === null
+                ? (en ? 'Checking deletion…' : 'Đang kiểm tra điều kiện xóa…')
+                : (en ? 'Delete family' : 'Xóa gia đình')}
           </button>
         </section>
       )}

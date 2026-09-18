@@ -17,6 +17,13 @@
 - Kiểm thử: CI hậu merge [run 35321384794](https://github.com/nhan0805/family-expense/actions/runs/35321384794) pass quality, E2E, db-security và performance budget; local Vitest 48 file/233 test cũng pass.
 - Triển khai: PR [#220](https://github.com/nhan0805/family-expense/pull/220) merge vào `main` tại commit `6cae993`; [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/92188dea-0df1-4ed0-9a4c-0f5bcc8b15d8) pass; không có migration Supabase mới; smoke `https://family-expense-8fo.pages.dev/` và các route `/dang-nhap`, `/thanh-vien` trả HTTP 200.
 
+### Hiển thị phản hồi khi chưa đủ điều kiện xóa gia đình
+
+- Nút xóa không còn bị disabled im lặng khi `can_delete_family` đang kiểm tra hoặc trả về `false`; nhãn nút thể hiện trạng thái kiểm tra, còn giao dịch hoạt động sẽ hiện hướng dẫn xóa giao dịch trước.
+- Files: `src/pages/Members.tsx`, `src/pages/Members.test.tsx`. Không đổi schema, RLS/RPC hoặc dữ liệu.
+- Kiểm thử: CI hậu merge [run 35324182447](https://github.com/nhan0805/family-expense/actions/runs/35324182447) pass quality, E2E, db-security và performance budget; local Vitest 48 file/234 test cũng pass.
+- Triển khai: PR [#222](https://github.com/nhan0805/family-expense/pull/222) merge vào `main` tại commit `4ec799c`; [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/df2c7ab6-3982-4ef9-81a0-3fe9c5927706) pass; không có migration Supabase mới; smoke `https://family-expense-8fo.pages.dev/` và các route `/dang-nhap`, `/thanh-vien` trả HTTP 200.
+
 ### Thu gọn nút xóa thành viên
 
 - Nút `Xóa thành viên` trên màn hình Thành viên chỉ còn icon thùng rác, vẫn giữ `aria-label`/tooltip và vùng chạm tối thiểu; các nút xóa gia đình, giao dịch, chi phí định kỳ và thông báo giữ lại giao diện có nhãn như trước.
