@@ -2,6 +2,13 @@
 
 ## 2026-09-18
 
+### Sửa lỗi RPC không xóa được gia đình khi có mặc định giao dịch tự động
+
+- Nguyên nhân: `automatic_transaction_defaults` tham chiếu các catalog của family, còn guard xóa catalog chặn cascade bằng lỗi `CATALOG_IN_USE`; do đó family không có giao dịch hoạt động vẫn không xóa được.
+- Migration `supabase/migrations/202609182100_family_delete_automatic_defaults.sql` cập nhật `delete_empty_family` để xóa mặc định giao dịch tự động trước khi xóa family và các catalog; thêm assertion regression trong `supabase/tests/family_delete.sql`.
+- Kiểm thử: CI hậu merge [run 35369914230](https://github.com/nhan0805/family-expense/actions/runs/35369914230) pass quality, coverage, build/performance, E2E và db-security; pgTAP local chưa chạy vì Supabase/Postgres local chưa khởi động.
+- Triển khai: PR [#229](https://github.com/nhan0805/family-expense/pull/229) merge vào `main` tại commit `c3ad680`; [Supabase Production Deploy](https://github.com/nhan0805/family-expense/actions/runs/35369914157) và [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/08331e1e-c64e-48ca-8be0-f10499544df6) pass; smoke `https://family-expense-8fo.pages.dev/`, `/dang-nhap` và `/thanh-vien` đều trả HTTP 200.
+
 ### Khôi phục toggle giao diện Sáng/Tối
 
 - Yêu cầu: Đưa nút Giao diện về toggle Sáng/Tối bằng icon như trước, không dùng lựa chọn Theo thiết bị.
