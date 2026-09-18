@@ -104,6 +104,9 @@ describe('Members', () => {
     const currentUserRow = screen.getByRole('article', { name: 'Nhan, tài khoản đang đăng nhập' });
     expect(currentUserRow).toHaveClass('member-row-current');
     expect(within(currentUserRow).getByText('Bạn')).toBeInTheDocument();
+    const removeButton = within(currentUserRow).getByRole('button', { name: 'Xóa Nhan' });
+    expect(removeButton.textContent).toBe('');
+    expect(removeButton).toHaveAttribute('title', 'Xóa Nhan');
   });
 
   it('không giữ loading vô hạn khi chưa có familyId', async () => {

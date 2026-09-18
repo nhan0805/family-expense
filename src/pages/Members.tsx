@@ -439,12 +439,11 @@ export function Members() {
                         type="button"
                         title={en ? `Remove ${member.display_name}` : `Xóa ${member.display_name}`}
                         aria-label={`${en ? 'Remove' : 'Xóa'} ${member.display_name}`}
-                        className="danger-button flex min-h-11 min-w-11 items-center justify-center gap-1 px-3 py-2 text-sm"
+                        className="asset-action-button asset-icon-action danger-button inline-flex items-center justify-center"
                         disabled={busy}
                         onClick={() => void removeMember(member)}
                       >
-                        <Trash2 size={17} aria-hidden="true" />
-                        <span className="hidden sm:inline">{en ? 'Remove' : 'Xóa'}</span>
+                        <Trash2 size={18} aria-hidden="true" />
                       </button>
                     )}
                   </div>
