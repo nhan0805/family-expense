@@ -27,5 +27,8 @@ describe('CreateFamily', () => {
     expect(
       screen.getByRole('button', { name: 'Đăng xuất' }),
     ).toBeInTheDocument();
+    const themeToggle = screen.getByRole('switch', { name: 'Giao diện' });
+    expect(themeToggle.parentElement?.children).toHaveLength(1);
+    expect(screen.queryByText('1 / 1')).not.toBeInTheDocument();
   });
 });
