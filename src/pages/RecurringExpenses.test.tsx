@@ -1,11 +1,22 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FeedbackProvider } from '../components/Feedback';
 import { useApp } from '../context/AppContext';
 import { LanguageProvider } from '../context/LanguageContext';
-import { deleteLocalRecurringExpense, todayInVietnam, upsertLocalRecurringExpense } from '../lib/recurringExpense';
+import {
+  deleteLocalRecurringExpense,
+  todayInVietnam,
+  upsertLocalRecurringExpense,
+} from '../lib/recurringExpense';
 import { RecurringExpenses } from './RecurringExpenses';
 
 vi.mock('../context/AppContext', () => ({ useApp: vi.fn() }));
@@ -47,7 +58,10 @@ describe('Chi phí định kỳ', () => {
     window.localStorage.clear();
     mockedUseApp.mockReset();
     scrollIntoView.mockClear();
-    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, value: scrollIntoView });
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+      configurable: true,
+      value: scrollIntoView,
+    });
   });
 
   afterEach(() => {
@@ -60,25 +74,51 @@ describe('Chi phí định kỳ', () => {
     renderPage();
 
     fireEvent.click(screen.getByRole('button', { name: 'Thêm khoản định kỳ' }));
-    fireEvent.change(screen.getByLabelText('Tên mẫu'), { target: { value: 'Tiền điện' } });
-    fireEvent.change(screen.getByLabelText('Nội dung giao dịch'), { target: { value: 'Tiền điện' } });
-    fireEvent.change(screen.getByLabelText('Số tiền (VND)'), { target: { value: '300000' } });
-    fireEvent.change(screen.getByLabelText('Mục đích'), { target: { value: 'p1' } });
-    fireEvent.change(screen.getByLabelText('Danh mục'), { target: { value: 'e1' } });
-    fireEvent.change(screen.getByLabelText('Phương thức thanh toán'), { target: { value: 'm1' } });
-    fireEvent.change(screen.getByLabelText('Ngày chạy tiếp theo'), { target: { value: todayInVietnam() } });
+    fireEvent.change(screen.getByLabelText('Tên mẫu'), {
+      target: { value: 'Tiền điện' },
+    });
+    fireEvent.change(screen.getByLabelText('Nội dung giao dịch'), {
+      target: { value: 'Tiền điện' },
+    });
+    fireEvent.change(screen.getByLabelText('Số tiền (VND)'), {
+      target: { value: '300000' },
+    });
+    fireEvent.change(screen.getByLabelText('Mục đích'), {
+      target: { value: 'p1' },
+    });
+    fireEvent.change(screen.getByLabelText('Danh mục'), {
+      target: { value: 'e1' },
+    });
+    fireEvent.change(screen.getByLabelText('Phương thức thanh toán'), {
+      target: { value: 'm1' },
+    });
+    fireEvent.change(screen.getByLabelText('Ngày chạy tiếp theo'), {
+      target: { value: todayInVietnam() },
+    });
     fireEvent.click(screen.getByRole('button', { name: 'Lưu mẫu' }));
 
     expect(await screen.findByText('Tiền điện')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Kiểm tra và tạo giao dịch đến hạn' }));
-    expect(await screen.findByText('Đã tạo 1 giao dịch dự kiến.')).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Kiểm tra và tạo giao dịch đến hạn' }),
+    );
+    expect(
+      await screen.findByText('Đã tạo 1 giao dịch dự kiến.'),
+    ).toBeInTheDocument();
   });
 
   it('đưa tới form khi sửa mẫu ở cuối danh sách', async () => {
     mockedUseApp.mockReturnValue(appState('owner'));
     upsertLocalRecurringExpense('local-family', {
       name: 'Tiền điện',
-      template: { transactionType: 'Chi tiêu', description: 'Tiền điện', amount: 300000, purposeId: 'p1', expenseTypeId: 'e1', paymentMethodId: 'm1', note: null },
+      template: {
+        transactionType: 'Chi tiêu',
+        description: 'Tiền điện',
+        amount: 300000,
+        purposeId: 'p1',
+        expenseTypeId: 'e1',
+        paymentMethodId: 'm1',
+        note: null,
+      },
       frequency: 'monthly',
       nextRunDate: '2099-09-05',
       endDate: null,
@@ -88,25 +128,73 @@ describe('Chi phí định kỳ', () => {
     expect(await screen.findByText('Tiền điện')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Sửa' }));
 
-    await waitFor(() => expect(scrollIntoView).toHaveBeenCalledWith(expect.objectContaining({ behavior: 'smooth', block: 'start' })));
+    await waitFor(() =>
+      expect(scrollIntoView).toHaveBeenCalledWith(
+        expect.objectContaining({ behavior: 'smooth', block: 'start' }),
+      ),
+    );
     expect(screen.getByLabelText('Tên mẫu')).toHaveFocus();
+  });
+
+  it('hiển thị card định kỳ gọn với trạng thái và metadata trực quan', async () => {
+    mockedUseApp.mockReturnValue(appState('owner'));
+    upsertLocalRecurringExpense('local-family', {
+      name: 'Tiền điện',
+      template: {
+        transactionType: 'Chi tiêu',
+        description: 'Tiền điện tháng này',
+        amount: 300000,
+        purposeId: 'p1',
+        expenseTypeId: 'e1',
+        paymentMethodId: 'm1',
+        note: null,
+      },
+      frequency: 'monthly',
+      nextRunDate: '2099-09-05',
+      endDate: null,
+    });
+    renderPage();
+
+    const card = await screen.findByRole('article', { name: 'Tiền điện' });
+    expect(card).toHaveClass('card', 'card-interactive');
+    expect(within(card).getByText('Đang chạy')).toBeInTheDocument();
+    expect(within(card).getByText('Hàng tháng')).toBeInTheDocument();
+    expect(within(card).getByText('Kỳ tiếp theo')).toBeInTheDocument();
+    expect(within(card).getByText('Chuyển khoản')).toBeInTheDocument();
   });
 
   it('giữ màn hình ở chế độ chỉ xem cho member', async () => {
     mockedUseApp.mockReturnValue(appState('member'));
     renderPage();
 
-    await waitFor(() => expect(screen.getByRole('heading', { name: 'Chi phí định kỳ', level: 2 })).toBeInTheDocument());
-    expect(screen.queryByRole('button', { name: 'Thêm khoản định kỳ' })).not.toBeInTheDocument();
-    expect(screen.getByText('Chủ gia đình chưa thiết lập khoản chi định kỳ nào.')).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        screen.getByRole('heading', { name: 'Chi phí định kỳ', level: 2 }),
+      ).toBeInTheDocument(),
+    );
+    expect(
+      screen.queryByRole('button', { name: 'Thêm khoản định kỳ' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText('Chủ gia đình chưa thiết lập khoản chi định kỳ nào.'),
+    ).toBeInTheDocument();
   });
 
   it('không giữ loading vô hạn khi chưa có familyId', async () => {
-    mockedUseApp.mockReturnValue({ ...appState('member'), familyId: '' } as unknown as ReturnType<typeof useApp>);
+    mockedUseApp.mockReturnValue({
+      ...appState('member'),
+      familyId: '',
+    } as unknown as ReturnType<typeof useApp>);
     renderPage();
 
-    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Không tìm thấy gia đình đang hoạt động.'));
-    expect(screen.queryByLabelText('Đang tải khoản chi định kỳ…')).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'Không tìm thấy gia đình đang hoạt động.',
+      ),
+    );
+    expect(
+      screen.queryByLabelText('Đang tải khoản chi định kỳ…'),
+    ).not.toBeInTheDocument();
   });
 
   it('không hiển thị nút xóa cho member dù đã có mẫu', async () => {
@@ -129,7 +217,9 @@ describe('Chi phí định kỳ', () => {
     renderPage();
 
     expect(await screen.findByText('Tiền điện')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Xóa' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Xóa' }),
+    ).not.toBeInTheDocument();
   });
 
   it('cho owner xóa mềm mẫu và ẩn khỏi danh sách', async () => {
@@ -137,24 +227,46 @@ describe('Chi phí định kỳ', () => {
     renderPage();
 
     fireEvent.click(screen.getByRole('button', { name: 'Thêm khoản định kỳ' }));
-    fireEvent.change(screen.getByLabelText('Tên mẫu'), { target: { value: 'Tiền điện' } });
-    fireEvent.change(screen.getByLabelText('Nội dung giao dịch'), { target: { value: 'Tiền điện' } });
-    fireEvent.change(screen.getByLabelText('Số tiền (VND)'), { target: { value: '300000' } });
-    fireEvent.change(screen.getByLabelText('Mục đích'), { target: { value: 'p1' } });
-    fireEvent.change(screen.getByLabelText('Danh mục'), { target: { value: 'e1' } });
-    fireEvent.change(screen.getByLabelText('Phương thức thanh toán'), { target: { value: 'm1' } });
+    fireEvent.change(screen.getByLabelText('Tên mẫu'), {
+      target: { value: 'Tiền điện' },
+    });
+    fireEvent.change(screen.getByLabelText('Nội dung giao dịch'), {
+      target: { value: 'Tiền điện' },
+    });
+    fireEvent.change(screen.getByLabelText('Số tiền (VND)'), {
+      target: { value: '300000' },
+    });
+    fireEvent.change(screen.getByLabelText('Mục đích'), {
+      target: { value: 'p1' },
+    });
+    fireEvent.change(screen.getByLabelText('Danh mục'), {
+      target: { value: 'e1' },
+    });
+    fireEvent.change(screen.getByLabelText('Phương thức thanh toán'), {
+      target: { value: 'm1' },
+    });
     fireEvent.click(screen.getByRole('button', { name: 'Lưu mẫu' }));
 
     expect(await screen.findByText('Tiền điện')).toBeInTheDocument();
-    const moreActions = document.querySelector('summary[aria-label="Thao tác khác"]');
+    const moreActions = document.querySelector(
+      'summary[aria-label="Thao tác khác"]',
+    );
     expect(moreActions).toBeInTheDocument();
     fireEvent.click(moreActions!);
     fireEvent.click(screen.getByRole('button', { name: 'Xóa' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Xóa mẫu' }));
 
-    await waitFor(() => expect(screen.getByText('Mẫu định kỳ đã xóa')).toBeInTheDocument());
-    expect(screen.getByRole('button', { name: 'Khôi phục' })).toBeInTheDocument();
-    const stored = JSON.parse(window.localStorage.getItem('family-expense:recurring-expenses:local-family') || '[]') as Array<{ deletedAt?: string; active?: boolean }>;
+    await waitFor(() =>
+      expect(screen.getByText('Mẫu định kỳ đã xóa')).toBeInTheDocument(),
+    );
+    expect(
+      screen.getByRole('button', { name: 'Khôi phục' }),
+    ).toBeInTheDocument();
+    const stored = JSON.parse(
+      window.localStorage.getItem(
+        'family-expense:recurring-expenses:local-family',
+      ) || '[]',
+    ) as Array<{ deletedAt?: string; active?: boolean }>;
     expect(stored[0]?.deletedAt).toBeTruthy();
     expect(stored[0]?.active).toBe(false);
   });
@@ -163,7 +275,15 @@ describe('Chi phí định kỳ', () => {
     mockedUseApp.mockReturnValue(appState('owner'));
     const item = upsertLocalRecurringExpense('local-family', {
       name: 'Tiền điện',
-      template: { transactionType: 'Chi tiêu', description: 'Tiền điện', amount: 300000, purposeId: 'p1', expenseTypeId: 'e1', paymentMethodId: 'm1', note: null },
+      template: {
+        transactionType: 'Chi tiêu',
+        description: 'Tiền điện',
+        amount: 300000,
+        purposeId: 'p1',
+        expenseTypeId: 'e1',
+        paymentMethodId: 'm1',
+        note: null,
+      },
       frequency: 'monthly',
       nextRunDate: '2099-09-05',
       endDate: null,
@@ -173,18 +293,36 @@ describe('Chi phí định kỳ', () => {
 
     expect(await screen.findByText('Mẫu định kỳ đã xóa')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Khôi phục' }));
-    fireEvent.click(await screen.findByRole('button', { name: 'Khôi phục mẫu' }));
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Khôi phục mẫu' }),
+    );
 
-    await waitFor(() => expect(screen.queryByText('Mẫu định kỳ đã xóa')).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.queryByText('Mẫu định kỳ đã xóa')).not.toBeInTheDocument(),
+    );
     expect(screen.getByRole('button', { name: 'Xóa' })).toBeInTheDocument();
-    expect(JSON.parse(window.localStorage.getItem('family-expense:recurring-expenses:local-family') || '[]')[0]?.deletedAt).toBeNull();
+    expect(
+      JSON.parse(
+        window.localStorage.getItem(
+          'family-expense:recurring-expenses:local-family',
+        ) || '[]',
+      )[0]?.deletedAt,
+    ).toBeNull();
   });
 
   it('cho owner xóa cứng mẫu đã xóa mềm', async () => {
     mockedUseApp.mockReturnValue(appState('owner'));
     const item = upsertLocalRecurringExpense('local-family', {
       name: 'Tiền điện',
-      template: { transactionType: 'Chi tiêu', description: 'Tiền điện', amount: 300000, purposeId: 'p1', expenseTypeId: 'e1', paymentMethodId: 'm1', note: null },
+      template: {
+        transactionType: 'Chi tiêu',
+        description: 'Tiền điện',
+        amount: 300000,
+        purposeId: 'p1',
+        expenseTypeId: 'e1',
+        paymentMethodId: 'm1',
+        note: null,
+      },
       frequency: 'monthly',
       nextRunDate: '2099-09-05',
       endDate: null,
@@ -194,10 +332,20 @@ describe('Chi phí định kỳ', () => {
 
     expect(await screen.findByText('Mẫu định kỳ đã xóa')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Xóa vĩnh viễn' }));
-    fireEvent.click(await screen.findByRole('button', { name: 'Xóa vĩnh viễn mẫu' }));
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Xóa vĩnh viễn mẫu' }),
+    );
 
-    await waitFor(() => expect(screen.queryByText('Mẫu định kỳ đã xóa')).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.queryByText('Mẫu định kỳ đã xóa')).not.toBeInTheDocument(),
+    );
     expect(screen.queryByText('Tiền điện')).not.toBeInTheDocument();
-    expect(JSON.parse(window.localStorage.getItem('family-expense:recurring-expenses:local-family') || '[]')).toHaveLength(0);
+    expect(
+      JSON.parse(
+        window.localStorage.getItem(
+          'family-expense:recurring-expenses:local-family',
+        ) || '[]',
+      ),
+    ).toHaveLength(0);
   });
 });
