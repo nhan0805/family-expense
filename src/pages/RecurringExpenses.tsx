@@ -1,6 +1,30 @@
-import { Activity, CalendarClock, Clock3, Layers3, MoreHorizontal, PauseCircle, Pencil, PlayCircle, Plus, RefreshCw, Repeat2, RotateCcw, SkipForward, Trash2, X } from 'lucide-react';
+import {
+  Activity,
+  CalendarClock,
+  Clock3,
+  CreditCard,
+  Layers3,
+  MoreHorizontal,
+  PauseCircle,
+  Pencil,
+  PlayCircle,
+  Plus,
+  RefreshCw,
+  Repeat2,
+  RotateCcw,
+  SkipForward,
+  Trash2,
+  X,
+} from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+} from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { EmptyState, PageSkeleton } from '../components/AsyncStates';
 import { Amount } from '../components/ui/Amount';
@@ -72,16 +96,37 @@ const frequencyLabel = (frequency: RecurringFrequency, en: boolean) => {
   return en ? 'Monthly' : 'Hàng tháng';
 };
 
-const inputAmount = (value: string) => value.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
-const displayAmount = (value: string) => inputAmount(value).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+const inputAmount = (value: string) =>
+  value.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
+const displayAmount = (value: string) =>
+  inputAmount(value).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 
 function recurringError(error: unknown, en: boolean, fallback: string) {
   const raw = error instanceof Error ? error.message.toLowerCase() : '';
-  if (raw.includes('forbidden') || raw.includes('42501')) return en ? 'Only the family owner can change recurring expenses.' : 'Chỉ chủ gia đình mới có quyền thay đổi khoản chi định kỳ.';
-  if (raw.includes('invalid_name')) return en ? 'Enter a recurring expense name.' : 'Vui lòng nhập tên khoản chi định kỳ.';
-  if (raw.includes('invalid_frequency')) return en ? 'This frequency is not supported.' : 'Tần suất này chưa được hỗ trợ.';
-  if (raw.includes('purpose_not_found') || raw.includes('expense_type_not_found') || raw.includes('payment_method_not_found')) return en ? 'A selected category is no longer available.' : 'Một danh mục đã chọn không còn khả dụng.';
-  if (raw.includes('generation_failed') || raw.includes('invalid_template')) return en ? 'The recurring template could not generate a transaction. Review its categories and try again.' : 'Mẫu định kỳ chưa thể tạo giao dịch. Hãy kiểm tra lại danh mục rồi thử lại.';
+  if (raw.includes('forbidden') || raw.includes('42501'))
+    return en
+      ? 'Only the family owner can change recurring expenses.'
+      : 'Chỉ chủ gia đình mới có quyền thay đổi khoản chi định kỳ.';
+  if (raw.includes('invalid_name'))
+    return en
+      ? 'Enter a recurring expense name.'
+      : 'Vui lòng nhập tên khoản chi định kỳ.';
+  if (raw.includes('invalid_frequency'))
+    return en
+      ? 'This frequency is not supported.'
+      : 'Tần suất này chưa được hỗ trợ.';
+  if (
+    raw.includes('purpose_not_found') ||
+    raw.includes('expense_type_not_found') ||
+    raw.includes('payment_method_not_found')
+  )
+    return en
+      ? 'A selected category is no longer available.'
+      : 'Một danh mục đã chọn không còn khả dụng.';
+  if (raw.includes('generation_failed') || raw.includes('invalid_template'))
+    return en
+      ? 'The recurring template could not generate a transaction. Review its categories and try again.'
+      : 'Mẫu định kỳ chưa thể tạo giao dịch. Hãy kiểm tra lại danh mục rồi thử lại.';
   return en ? fallback : userFacingError(error, fallback);
 }
 
@@ -112,7 +157,10 @@ export function RecurringExpenses() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const editorRef = useRef<HTMLElement | null>(null);
   const canManage = currentUserRole === 'owner';
-  const defaultPaymentMethodId = paymentMethods.find((item) => item.name === 'Chuyển khoản')?.id || paymentMethods[0]?.id || '';
+  const defaultPaymentMethodId =
+    paymentMethods.find((item) => item.name === 'Chuyển khoản')?.id ||
+    paymentMethods[0]?.id ||
+    '';
 
   const loadItems = useCallback(async () => {
     setLoading(true);
@@ -120,7 +168,11 @@ export function RecurringExpenses() {
     if (!familyId) {
       setItems([]);
       setDeletedItems([]);
-      setPageError(en ? 'No active family was found. Please reload and try again.' : 'Không tìm thấy gia đình đang hoạt động. Vui lòng tải lại rồi thử lại.');
+      setPageError(
+        en
+          ? 'No active family was found. Please reload and try again.'
+          : 'Không tìm thấy gia đình đang hoạt động. Vui lòng tải lại rồi thử lại.',
+      );
       setLoading(false);
       return;
     }
@@ -130,14 +182,29 @@ export function RecurringExpenses() {
         setItems(loaded.filter((item) => !item.deletedAt));
         setDeletedItems(loaded.filter((item) => Boolean(item.deletedAt)));
       } else {
-        const created = generateLocalDueTransactions(familyId, currentUserId, transactions);
-        if (created.length) setTransactions((current) => [...current, ...created]);
+        const created = generateLocalDueTransactions(
+          familyId,
+          currentUserId,
+          transactions,
+        );
+        if (created.length)
+          setTransactions((current) => [...current, ...created]);
         setItems(getLocalRecurringExpenses(familyId));
-        setDeletedItems(canManage ? getLocalDeletedRecurringExpenses(familyId) : []);
+        setDeletedItems(
+          canManage ? getLocalDeletedRecurringExpenses(familyId) : [],
+        );
       }
     } catch (error) {
       reportClientError(error, 'query');
-      setPageError(recurringError(error, en, en ? 'Could not load recurring expenses.' : 'Không thể tải khoản chi định kỳ.'));
+      setPageError(
+        recurringError(
+          error,
+          en,
+          en
+            ? 'Could not load recurring expenses.'
+            : 'Không thể tải khoản chi định kỳ.',
+        ),
+      );
     } finally {
       setLoading(false);
     }
@@ -147,11 +214,40 @@ export function RecurringExpenses() {
     void loadItems();
   }, [loadItems]);
 
-  const purposeNames = useMemo(() => new Map(purposes.map((item) => [item.id, getCatalogDisplayName(item, language)])), [language, purposes]);
-  const expenseTypeNames = useMemo(() => new Map(expenseTypes.map((item) => [item.id, getCatalogDisplayName(item, language)])), [expenseTypes, language]);
-  const paymentMethodNames = useMemo(() => new Map(paymentMethods.map((item) => [item.id, getCatalogDisplayName(item, language)])), [language, paymentMethods]);
+  const purposeNames = useMemo(
+    () =>
+      new Map(
+        purposes.map((item) => [
+          item.id,
+          getCatalogDisplayName(item, language),
+        ]),
+      ),
+    [language, purposes],
+  );
+  const expenseTypeNames = useMemo(
+    () =>
+      new Map(
+        expenseTypes.map((item) => [
+          item.id,
+          getCatalogDisplayName(item, language),
+        ]),
+      ),
+    [expenseTypes, language],
+  );
+  const paymentMethodNames = useMemo(
+    () =>
+      new Map(
+        paymentMethods.map((item) => [
+          item.id,
+          getCatalogDisplayName(item, language),
+        ]),
+      ),
+    [language, paymentMethods],
+  );
   const activeCount = items.filter((item) => item.active).length;
-  const dueCount = items.filter((item) => item.active && item.nextRunDate <= todayInVietnam()).length;
+  const dueCount = items.filter(
+    (item) => item.active && item.nextRunDate <= todayInVietnam(),
+  ).length;
 
   const openEditor = (item?: RecurringExpense) => {
     if (!item) {
@@ -187,9 +283,16 @@ export function RecurringExpenses() {
     const frame = window.requestAnimationFrame(() => {
       const form = editorRef.current;
       if (!form) return;
-      const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
-      form.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' });
-      form.querySelector<HTMLElement>('[data-editor-focus]')?.focus({ preventScroll: true });
+      const prefersReducedMotion =
+        window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ??
+        false;
+      form.scrollIntoView({
+        behavior: prefersReducedMotion ? 'auto' : 'smooth',
+        block: 'start',
+      });
+      form
+        .querySelector<HTMLElement>('[data-editor-focus]')
+        ?.focus({ preventScroll: true });
     });
     return () => window.cancelAnimationFrame(frame);
   }, [editorScrollRequest]);
@@ -201,7 +304,9 @@ export function RecurringExpenses() {
       queryClient.invalidateQueries({ queryKey: ['dashboard-due', familyId] }),
       queryClient.invalidateQueries({ queryKey: ['dashboard-data', familyId] }),
       queryClient.invalidateQueries({ queryKey: ['budgets', familyId] }),
-      queryClient.invalidateQueries({ queryKey: ['transaction-years', familyId] }),
+      queryClient.invalidateQueries({
+        queryKey: ['transaction-years', familyId],
+      }),
     ]);
   };
 
@@ -224,106 +329,234 @@ export function RecurringExpenses() {
       endDate: editor.endDate || null,
     });
     if (!parsed.success) {
-      setEditorError(parsed.error.issues[0]?.message || (en ? 'Review the form.' : 'Hãy kiểm tra lại biểu mẫu.'));
+      setEditorError(
+        parsed.error.issues[0]?.message ||
+          (en ? 'Review the form.' : 'Hãy kiểm tra lại biểu mẫu.'),
+      );
       return;
     }
     if (isSupabaseConfigured && !online) {
-      setEditorError(en ? 'Reconnect before saving.' : 'Hãy kết nối lại trước khi lưu.');
+      setEditorError(
+        en ? 'Reconnect before saving.' : 'Hãy kết nối lại trước khi lưu.',
+      );
       return;
     }
     setBusyId(editingId || 'new');
     setEditorError('');
     try {
       const saved = isSupabaseConfigured
-        ? await upsertRecurringExpense(familyId, parsed.data, editingId || undefined)
-        : upsertLocalRecurringExpense(familyId, parsed.data, editingId || undefined);
-      setItems((current) => [saved, ...current.filter((item) => item.id !== saved.id)].sort((a, b) => Number(b.active) - Number(a.active) || a.nextRunDate.localeCompare(b.nextRunDate)));
+        ? await upsertRecurringExpense(
+            familyId,
+            parsed.data,
+            editingId || undefined,
+          )
+        : upsertLocalRecurringExpense(
+            familyId,
+            parsed.data,
+            editingId || undefined,
+          );
+      setItems((current) =>
+        [saved, ...current.filter((item) => item.id !== saved.id)].sort(
+          (a, b) =>
+            Number(b.active) - Number(a.active) ||
+            a.nextRunDate.localeCompare(b.nextRunDate),
+        ),
+      );
       closeEditor();
       notify(en ? 'Recurring expense saved.' : 'Đã lưu khoản chi định kỳ.');
     } catch (error) {
       reportClientError(error, 'mutation');
-      setEditorError(recurringError(error, en, en ? 'Could not save the recurring expense.' : 'Không thể lưu khoản chi định kỳ.'));
+      setEditorError(
+        recurringError(
+          error,
+          en,
+          en
+            ? 'Could not save the recurring expense.'
+            : 'Không thể lưu khoản chi định kỳ.',
+        ),
+      );
     } finally {
       setBusyId(null);
     }
   };
 
   const toggleActive = async (item: RecurringExpense) => {
-    if (!await askConfirm({
-      title: item.active ? (en ? 'Pause this recurring expense?' : 'Tạm dừng khoản chi định kỳ?') : (en ? 'Resume this recurring expense?' : 'Tiếp tục khoản chi định kỳ?'),
-      description: item.active ? (en ? 'No new planned transactions will be created while it is paused.' : 'Khi tạm dừng, hệ thống sẽ không tạo giao dịch dự kiến mới.') : (en ? 'Its next scheduled date will be kept.' : 'Ngày chạy tiếp theo sẽ được giữ nguyên.'),
-      confirmLabel: item.active ? (en ? 'Pause' : 'Tạm dừng') : (en ? 'Resume' : 'Tiếp tục'),
-    })) return;
+    if (
+      !(await askConfirm({
+        title: item.active
+          ? en
+            ? 'Pause this recurring expense?'
+            : 'Tạm dừng khoản chi định kỳ?'
+          : en
+            ? 'Resume this recurring expense?'
+            : 'Tiếp tục khoản chi định kỳ?',
+        description: item.active
+          ? en
+            ? 'No new planned transactions will be created while it is paused.'
+            : 'Khi tạm dừng, hệ thống sẽ không tạo giao dịch dự kiến mới.'
+          : en
+            ? 'Its next scheduled date will be kept.'
+            : 'Ngày chạy tiếp theo sẽ được giữ nguyên.',
+        confirmLabel: item.active
+          ? en
+            ? 'Pause'
+            : 'Tạm dừng'
+          : en
+            ? 'Resume'
+            : 'Tiếp tục',
+      }))
+    )
+      return;
     setBusyId(item.id);
     try {
-      if (isSupabaseConfigured) await setRecurringExpenseActive(familyId, item.id, !item.active);
+      if (isSupabaseConfigured)
+        await setRecurringExpenseActive(familyId, item.id, !item.active);
       else setLocalRecurringExpenseActive(familyId, item.id, !item.active);
-      setItems((current) => current.map((entry) => entry.id === item.id ? { ...entry, active: !item.active } : entry));
-      notify(item.active ? (en ? 'Recurring expense paused.' : 'Đã tạm dừng khoản chi định kỳ.') : (en ? 'Recurring expense resumed.' : 'Đã tiếp tục khoản chi định kỳ.'));
+      setItems((current) =>
+        current.map((entry) =>
+          entry.id === item.id ? { ...entry, active: !item.active } : entry,
+        ),
+      );
+      notify(
+        item.active
+          ? en
+            ? 'Recurring expense paused.'
+            : 'Đã tạm dừng khoản chi định kỳ.'
+          : en
+            ? 'Recurring expense resumed.'
+            : 'Đã tiếp tục khoản chi định kỳ.',
+      );
     } catch (error) {
-      notify(recurringError(error, en, en ? 'Could not update this recurring expense.' : 'Không thể cập nhật khoản chi định kỳ.'), 'error');
+      notify(
+        recurringError(
+          error,
+          en,
+          en
+            ? 'Could not update this recurring expense.'
+            : 'Không thể cập nhật khoản chi định kỳ.',
+        ),
+        'error',
+      );
     } finally {
       setBusyId(null);
     }
   };
 
   const skipNext = async (item: RecurringExpense) => {
-    if (!await askConfirm({
-      title: en ? 'Skip the next occurrence?' : 'Bỏ qua kỳ tiếp theo?',
-      description: en ? `No transaction will be created for ${formatDateOnlyVi(item.nextRunDate)}.` : `Kỳ ngày ${formatDateOnlyVi(item.nextRunDate)} sẽ không tạo giao dịch.`,
-      confirmLabel: en ? 'Skip occurrence' : 'Bỏ qua kỳ',
-    })) return;
+    if (
+      !(await askConfirm({
+        title: en ? 'Skip the next occurrence?' : 'Bỏ qua kỳ tiếp theo?',
+        description: en
+          ? `No transaction will be created for ${formatDateOnlyVi(item.nextRunDate)}.`
+          : `Kỳ ngày ${formatDateOnlyVi(item.nextRunDate)} sẽ không tạo giao dịch.`,
+        confirmLabel: en ? 'Skip occurrence' : 'Bỏ qua kỳ',
+      }))
+    )
+      return;
     setBusyId(item.id);
     try {
       const nextRunDate = isSupabaseConfigured
         ? await skipRecurringOccurrence(familyId, item.id)
         : skipLocalRecurringOccurrence(familyId, item.id);
-      setItems((current) => current.map((entry) => entry.id === item.id ? { ...entry, nextRunDate: nextRunDate || entry.nextRunDate, active: nextRunDate ? (entry.endDate ? nextRunDate <= entry.endDate : entry.active) : false, lastErrorCode: null } : entry));
-      await queryClient.invalidateQueries({ queryKey: ['recurring-runs', familyId, item.id] });
-      notify(en ? 'The next occurrence was skipped.' : 'Đã bỏ qua kỳ tiếp theo.');
+      setItems((current) =>
+        current.map((entry) =>
+          entry.id === item.id
+            ? {
+                ...entry,
+                nextRunDate: nextRunDate || entry.nextRunDate,
+                active: nextRunDate
+                  ? entry.endDate
+                    ? nextRunDate <= entry.endDate
+                    : entry.active
+                  : false,
+                lastErrorCode: null,
+              }
+            : entry,
+        ),
+      );
+      await queryClient.invalidateQueries({
+        queryKey: ['recurring-runs', familyId, item.id],
+      });
+      notify(
+        en ? 'The next occurrence was skipped.' : 'Đã bỏ qua kỳ tiếp theo.',
+      );
     } catch (error) {
-      notify(recurringError(error, en, en ? 'Could not skip the occurrence.' : 'Không thể bỏ qua kỳ.'), 'error');
+      notify(
+        recurringError(
+          error,
+          en,
+          en ? 'Could not skip the occurrence.' : 'Không thể bỏ qua kỳ.',
+        ),
+        'error',
+      );
     } finally {
       setBusyId(null);
     }
   };
 
   const deleteItem = async (item: RecurringExpense) => {
-    if (!await askConfirm({
-      title: en ? 'Delete this recurring expense?' : 'Xóa khoản chi định kỳ này?',
-      description: en ? 'The template will be hidden and will no longer create transactions. Existing transactions will be kept.' : 'Mẫu sẽ được ẩn và không tạo giao dịch mới nữa. Các giao dịch đã tạo vẫn được giữ nguyên.',
-      confirmLabel: en ? 'Delete template' : 'Xóa mẫu',
-      danger: true,
-    })) return;
+    if (
+      !(await askConfirm({
+        title: en
+          ? 'Delete this recurring expense?'
+          : 'Xóa khoản chi định kỳ này?',
+        description: en
+          ? 'The template will be hidden and will no longer create transactions. Existing transactions will be kept.'
+          : 'Mẫu sẽ được ẩn và không tạo giao dịch mới nữa. Các giao dịch đã tạo vẫn được giữ nguyên.',
+        confirmLabel: en ? 'Delete template' : 'Xóa mẫu',
+        danger: true,
+      }))
+    )
+      return;
     setBusyId(item.id);
     try {
       if (isSupabaseConfigured) await deleteRecurringExpense(familyId, item.id);
       else deleteLocalRecurringExpense(familyId, item.id);
       setItems((current) => current.filter((entry) => entry.id !== item.id));
-      setDeletedItems((current) => [{
-        ...item,
-        active: false,
-        deletedActiveBefore: item.active,
-        deletedAt: new Date().toISOString(),
-        deletedBy: currentUserId,
-      }, ...current.filter((entry) => entry.id !== item.id)]);
+      setDeletedItems((current) => [
+        {
+          ...item,
+          active: false,
+          deletedActiveBefore: item.active,
+          deletedAt: new Date().toISOString(),
+          deletedBy: currentUserId,
+        },
+        ...current.filter((entry) => entry.id !== item.id),
+      ]);
       notify(en ? 'Recurring expense deleted.' : 'Đã xóa khoản chi định kỳ.');
     } catch (error) {
-      notify(recurringError(error, en, en ? 'Could not delete this recurring expense.' : 'Không thể xóa khoản chi định kỳ.'), 'error');
+      notify(
+        recurringError(
+          error,
+          en,
+          en
+            ? 'Could not delete this recurring expense.'
+            : 'Không thể xóa khoản chi định kỳ.',
+        ),
+        'error',
+      );
     } finally {
       setBusyId(null);
     }
   };
 
   const restoreItem = async (item: RecurringExpense) => {
-    if (!await askConfirm({
-      title: en ? 'Restore this recurring expense?' : 'Khôi phục khoản chi định kỳ này?',
-      description: en ? 'The template will return to its previous active or paused state. Existing transactions will be kept.' : 'Mẫu sẽ quay lại trạng thái trước khi xóa. Các giao dịch đã tạo vẫn được giữ nguyên.',
-      confirmLabel: en ? 'Restore template' : 'Khôi phục mẫu',
-    })) return;
+    if (
+      !(await askConfirm({
+        title: en
+          ? 'Restore this recurring expense?'
+          : 'Khôi phục khoản chi định kỳ này?',
+        description: en
+          ? 'The template will return to its previous active or paused state. Existing transactions will be kept.'
+          : 'Mẫu sẽ quay lại trạng thái trước khi xóa. Các giao dịch đã tạo vẫn được giữ nguyên.',
+        confirmLabel: en ? 'Restore template' : 'Khôi phục mẫu',
+      }))
+    )
+      return;
     setBusyId(item.id);
     try {
-      if (isSupabaseConfigured) await restoreRecurringExpense(familyId, item.id);
+      if (isSupabaseConfigured)
+        await restoreRecurringExpense(familyId, item.id);
       else restoreLocalRecurringExpense(familyId, item.id);
       const restored = {
         ...item,
@@ -333,31 +566,73 @@ export function RecurringExpenses() {
         deletedBy: null,
         lastErrorCode: null,
       };
-      setDeletedItems((current) => current.filter((entry) => entry.id !== item.id));
-      setItems((current) => [restored, ...current.filter((entry) => entry.id !== item.id)].sort((a, b) => Number(b.active) - Number(a.active) || a.nextRunDate.localeCompare(b.nextRunDate)));
-      notify(en ? 'Recurring expense restored.' : 'Đã khôi phục khoản chi định kỳ.');
+      setDeletedItems((current) =>
+        current.filter((entry) => entry.id !== item.id),
+      );
+      setItems((current) =>
+        [restored, ...current.filter((entry) => entry.id !== item.id)].sort(
+          (a, b) =>
+            Number(b.active) - Number(a.active) ||
+            a.nextRunDate.localeCompare(b.nextRunDate),
+        ),
+      );
+      notify(
+        en ? 'Recurring expense restored.' : 'Đã khôi phục khoản chi định kỳ.',
+      );
     } catch (error) {
-      notify(recurringError(error, en, en ? 'Could not restore this recurring expense.' : 'Không thể khôi phục khoản chi định kỳ.'), 'error');
+      notify(
+        recurringError(
+          error,
+          en,
+          en
+            ? 'Could not restore this recurring expense.'
+            : 'Không thể khôi phục khoản chi định kỳ.',
+        ),
+        'error',
+      );
     } finally {
       setBusyId(null);
     }
   };
 
   const permanentlyDeleteItem = async (item: RecurringExpense) => {
-    if (!await askConfirm({
-      title: en ? 'Delete this template permanently?' : 'Xóa vĩnh viễn mẫu này?',
-      description: en ? 'The template and its run history will be permanently removed. Existing transactions will be kept and cannot be linked back to this template.' : 'Mẫu và lịch sử kỳ chạy sẽ bị xóa vĩnh viễn. Các giao dịch đã tạo vẫn được giữ nguyên nhưng không còn liên kết với mẫu.',
-      confirmLabel: en ? 'Delete permanently' : 'Xóa vĩnh viễn mẫu',
-      danger: true,
-    })) return;
+    if (
+      !(await askConfirm({
+        title: en
+          ? 'Delete this template permanently?'
+          : 'Xóa vĩnh viễn mẫu này?',
+        description: en
+          ? 'The template and its run history will be permanently removed. Existing transactions will be kept and cannot be linked back to this template.'
+          : 'Mẫu và lịch sử kỳ chạy sẽ bị xóa vĩnh viễn. Các giao dịch đã tạo vẫn được giữ nguyên nhưng không còn liên kết với mẫu.',
+        confirmLabel: en ? 'Delete permanently' : 'Xóa vĩnh viễn mẫu',
+        danger: true,
+      }))
+    )
+      return;
     setBusyId(item.id);
     try {
-      if (isSupabaseConfigured) await permanentlyDeleteRecurringExpense(familyId, item.id);
+      if (isSupabaseConfigured)
+        await permanentlyDeleteRecurringExpense(familyId, item.id);
       else permanentlyDeleteLocalRecurringExpense(familyId, item.id);
-      setDeletedItems((current) => current.filter((entry) => entry.id !== item.id));
-      notify(en ? 'Recurring expense permanently deleted.' : 'Đã xóa vĩnh viễn mẫu định kỳ.');
+      setDeletedItems((current) =>
+        current.filter((entry) => entry.id !== item.id),
+      );
+      notify(
+        en
+          ? 'Recurring expense permanently deleted.'
+          : 'Đã xóa vĩnh viễn mẫu định kỳ.',
+      );
     } catch (error) {
-      notify(recurringError(error, en, en ? 'Could not permanently delete this recurring expense.' : 'Không thể xóa vĩnh viễn mẫu định kỳ.'), 'error');
+      notify(
+        recurringError(
+          error,
+          en,
+          en
+            ? 'Could not permanently delete this recurring expense.'
+            : 'Không thể xóa vĩnh viễn mẫu định kỳ.',
+        ),
+        'error',
+      );
     } finally {
       setBusyId(null);
     }
@@ -365,85 +640,685 @@ export function RecurringExpenses() {
 
   const retryGeneration = async () => {
     if (isSupabaseConfigured && !online) {
-      notify(en ? 'Reconnect before retrying.' : 'Hãy kết nối lại trước khi thử lại.', 'error');
+      notify(
+        en
+          ? 'Reconnect before retrying.'
+          : 'Hãy kết nối lại trước khi thử lại.',
+        'error',
+      );
       return;
     }
     setBusyId('generation');
     try {
       let count = 0;
-      if (isSupabaseConfigured) count = await generateDueRecurringTransactions(familyId);
+      if (isSupabaseConfigured)
+        count = await generateDueRecurringTransactions(familyId);
       else {
-        const created = generateLocalDueTransactions(familyId, currentUserId, transactions);
+        const created = generateLocalDueTransactions(
+          familyId,
+          currentUserId,
+          transactions,
+        );
         count = created.length;
-        if (created.length) setTransactions((current) => [...current, ...created]);
+        if (created.length)
+          setTransactions((current) => [...current, ...created]);
       }
       await refreshRelatedQueries();
-      await queryClient.invalidateQueries({ queryKey: ['recurring-runs', familyId] });
+      await queryClient.invalidateQueries({
+        queryKey: ['recurring-runs', familyId],
+      });
       await loadItems();
-      notify(count ? (en ? `Created ${count} planned transaction(s).` : `Đã tạo ${count} giao dịch dự kiến.`) : (en ? 'There are no due occurrences.' : 'Không có kỳ nào đến hạn cần tạo.'));
+      notify(
+        count
+          ? en
+            ? `Created ${count} planned transaction(s).`
+            : `Đã tạo ${count} giao dịch dự kiến.`
+          : en
+            ? 'There are no due occurrences.'
+            : 'Không có kỳ nào đến hạn cần tạo.',
+      );
     } catch (error) {
-      notify(recurringError(error, en, en ? 'Could not generate due transactions.' : 'Không thể tự tạo giao dịch đến hạn.'), 'error');
+      notify(
+        recurringError(
+          error,
+          en,
+          en
+            ? 'Could not generate due transactions.'
+            : 'Không thể tự tạo giao dịch đến hạn.',
+        ),
+        'error',
+      );
     } finally {
       setBusyId(null);
     }
   };
 
-  if (loading) return <PageSkeleton label={en ? 'Loading recurring expenses…' : 'Đang tải khoản chi định kỳ…'} />;
+  if (loading)
+    return (
+      <PageSkeleton
+        label={
+          en ? 'Loading recurring expenses…' : 'Đang tải khoản chi định kỳ…'
+        }
+      />
+    );
 
-  return <div className="space-y-5">
-    <header className="page-header flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-      <div>
-        <p className="page-kicker"><Repeat2 size={16} aria-hidden="true" />{en ? 'Automatic planning' : 'Tự động lập kế hoạch'}</p>
-        <h2 className="page-title">{en ? 'Recurring expenses' : 'Chi phí định kỳ'}</h2>
-        <p className="page-subtitle">{canManage ? (en ? 'The app creates a planned transaction on each due date. Confirm it before it becomes actual.' : 'Ứng dụng tự tạo giao dịch dự kiến khi đến ngày. Hãy xác nhận trước khi giao dịch thành thực tế.') : (en ? 'View the family recurring expenses. Only the owner can make changes.' : 'Xem các khoản chi định kỳ của gia đình. Chỉ chủ gia đình mới có quyền chỉnh sửa.')}</p>
+  return (
+    <div className="space-y-5">
+      <header className="page-header flex flex-col gap-4 rounded-2xl border border-[var(--border)] bg-gradient-to-br from-[var(--surface)] via-[var(--surface)] to-[var(--primary-soft)] p-4 shadow-[var(--shadow-card)] sm:p-5 lg:flex-row lg:items-end lg:justify-between">
+        <div className="min-w-0">
+          <p className="page-kicker">
+            <Repeat2 size={16} aria-hidden="true" />
+            {en ? 'Automatic planning' : 'Tự động lập kế hoạch'}
+          </p>
+          <h2 className="page-title">
+            {en ? 'Recurring expenses' : 'Chi phí định kỳ'}
+          </h2>
+          <p className="page-subtitle">
+            {canManage
+              ? en
+                ? 'The app creates a planned transaction on each due date. Confirm it before it becomes actual.'
+                : 'Ứng dụng tự tạo giao dịch dự kiến khi đến ngày. Hãy xác nhận trước khi giao dịch thành thực tế.'
+              : en
+                ? 'View the family recurring expenses. Only the owner can make changes.'
+                : 'Xem các khoản chi định kỳ của gia đình. Chỉ chủ gia đình mới có quyền chỉnh sửa.'}
+          </p>
+        </div>
+        {canManage && (
+          <div className="grid w-full gap-2 sm:grid-cols-2 lg:w-[32rem] lg:shrink-0">
+            <button
+              type="button"
+              className="btn-secondary recurring-toolbar-button inline-flex w-full items-center justify-center gap-2"
+              disabled={busyId === 'generation'}
+              onClick={() => void retryGeneration()}
+            >
+              <RefreshCw size={17} aria-hidden="true" />
+              {busyId === 'generation'
+                ? en
+                  ? 'Checking…'
+                  : 'Đang kiểm tra…'
+                : en
+                  ? 'Check and create due transactions'
+                  : 'Kiểm tra và tạo giao dịch đến hạn'}
+            </button>
+            <button
+              type="button"
+              className="btn-primary recurring-toolbar-button inline-flex w-full items-center justify-center gap-2"
+              onClick={() => openEditor()}
+            >
+              <Plus size={17} aria-hidden="true" />
+              {en ? 'Add recurring expense' : 'Thêm khoản định kỳ'}
+            </button>
+          </div>
+        )}
+      </header>
+      {canManage && (
+        <div className="flex items-start gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] px-3 py-2.5 text-xs text-[var(--muted)]">
+          <Clock3 className="mt-0.5 shrink-0" size={15} aria-hidden="true" />
+          <p>
+            {en
+              ? 'The daily job already checks due dates. This action safely retries the same check and will not duplicate an occurrence.'
+              : 'Job hằng ngày đã tự kiểm tra ngày đến hạn. Thao tác này chỉ kiểm tra lại an toàn và không tạo trùng một kỳ.'}
+          </p>
+        </div>
+      )}
+
+      {pageError && (
+        <div
+          role="alert"
+          className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300"
+        >
+          {pageError}
+          <button
+            type="button"
+            className="btn-secondary mt-3 block"
+            onClick={() => void loadItems()}
+          >
+            {en ? 'Try again' : 'Thử lại'}
+          </button>
+        </div>
+      )}
+
+      {editor && canManage && (
+        <section
+          ref={editorRef}
+          className="card scroll-mt-24 p-4 sm:p-5"
+          aria-labelledby="recurring-editor-title"
+        >
+          <div className="mb-4 flex items-start justify-between gap-3">
+            <div>
+              <p className="page-kicker">
+                <CalendarClock size={16} aria-hidden="true" />
+                {editingId
+                  ? en
+                    ? 'Edit template'
+                    : 'Chỉnh sửa mẫu'
+                  : en
+                    ? 'New template'
+                    : 'Mẫu mới'}
+              </p>
+              <h3
+                id="recurring-editor-title"
+                className="text-lg font-extrabold"
+              >
+                {editingId
+                  ? en
+                    ? 'Update recurring expense'
+                    : 'Cập nhật khoản chi định kỳ'
+                  : en
+                    ? 'Create recurring expense'
+                    : 'Tạo khoản chi định kỳ'}
+              </h3>
+            </div>
+            <button
+              type="button"
+              className="icon-button"
+              aria-label={en ? 'Close editor' : 'Đóng biểu mẫu'}
+              onClick={closeEditor}
+            >
+              <X size={19} />
+            </button>
+          </div>
+          <form
+            className="grid gap-4 md:grid-cols-2"
+            onSubmit={(event) => void save(event)}
+          >
+            <label>
+              <span className="label">{en ? 'Template name' : 'Tên mẫu'}</span>
+              <input
+                data-editor-focus
+                className="field"
+                maxLength={100}
+                required
+                value={editor.name}
+                onChange={(event) =>
+                  setEditor({ ...editor, name: event.target.value })
+                }
+                placeholder={en ? 'e.g. Electricity bill' : 'Ví dụ: Tiền điện'}
+              />
+            </label>
+            <label>
+              <span className="label">
+                {en ? 'Description' : 'Nội dung giao dịch'}
+              </span>
+              <input
+                className="field"
+                maxLength={200}
+                required
+                value={editor.description}
+                onChange={(event) =>
+                  setEditor({ ...editor, description: event.target.value })
+                }
+                placeholder={en ? 'e.g. Electricity' : 'Ví dụ: Tiền điện'}
+              />
+            </label>
+            <label>
+              <span className="label">
+                {en ? 'Amount (VND)' : 'Số tiền (VND)'}
+              </span>
+              <input
+                className="field"
+                inputMode="numeric"
+                required
+                value={displayAmount(editor.amount)}
+                onChange={(event) =>
+                  setEditor({ ...editor, amount: event.target.value })
+                }
+                placeholder="300.000"
+              />
+            </label>
+            <label>
+              <span className="label">{en ? 'Frequency' : 'Tần suất'}</span>
+              <select
+                className="field"
+                value={editor.frequency}
+                onChange={(event) =>
+                  setEditor({
+                    ...editor,
+                    frequency: event.target.value as RecurringFrequency,
+                  })
+                }
+              >
+                {recurringFrequencies.map((frequency) => (
+                  <option key={frequency} value={frequency}>
+                    {frequencyLabel(frequency, en)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span className="label">{en ? 'Purpose' : 'Mục đích'}</span>
+              <select
+                className="field"
+                required
+                value={editor.purposeId}
+                onChange={(event) =>
+                  setEditor({ ...editor, purposeId: event.target.value })
+                }
+              >
+                <option value="">
+                  {en ? 'Select a purpose' : 'Chọn mục đích'}
+                </option>
+                {purposes.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {getCatalogDisplayName(item, language)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span className="label">{en ? 'Expense type' : 'Danh mục'}</span>
+              <select
+                className="field"
+                required
+                value={editor.expenseTypeId}
+                onChange={(event) =>
+                  setEditor({ ...editor, expenseTypeId: event.target.value })
+                }
+              >
+                <option value="">
+                  {en ? 'Select an expense type' : 'Chọn danh mục'}
+                </option>
+                {expenseTypes.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {getCatalogDisplayName(item, language)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span className="label">
+                {en ? 'Payment method' : 'Phương thức thanh toán'}
+              </span>
+              <select
+                className="field"
+                required
+                value={editor.paymentMethodId}
+                onChange={(event) =>
+                  setEditor({ ...editor, paymentMethodId: event.target.value })
+                }
+              >
+                <option value="">
+                  {en
+                    ? 'Select a payment method'
+                    : 'Chọn phương thức thanh toán'}
+                </option>
+                {paymentMethods.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {getCatalogDisplayName(item, language)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span className="label">
+                {en ? 'Next due date' : 'Ngày chạy tiếp theo'}
+              </span>
+              <input
+                className="field"
+                type="date"
+                required
+                value={editor.nextRunDate}
+                onChange={(event) =>
+                  setEditor({ ...editor, nextRunDate: event.target.value })
+                }
+              />
+            </label>
+            <label>
+              <span className="label">
+                {en ? 'End date (optional)' : 'Ngày kết thúc (không bắt buộc)'}
+              </span>
+              <input
+                className="field"
+                type="date"
+                value={editor.endDate}
+                onChange={(event) =>
+                  setEditor({ ...editor, endDate: event.target.value })
+                }
+              />
+            </label>
+            <label className="md:col-span-2">
+              <span className="label">
+                {en ? 'Note (optional)' : 'Ghi chú (không bắt buộc)'}
+              </span>
+              <textarea
+                className="field min-h-20"
+                maxLength={500}
+                value={editor.note}
+                onChange={(event) =>
+                  setEditor({ ...editor, note: event.target.value })
+                }
+              />
+            </label>
+            {editorError && (
+              <p
+                role="alert"
+                className="md:col-span-2 text-sm text-red-600 dark:text-red-300"
+              >
+                {editorError}
+              </p>
+            )}
+            <div className="flex gap-2 md:col-span-2">
+              <button
+                type="button"
+                className="btn-secondary flex-1"
+                onClick={closeEditor}
+              >
+                {en ? 'Cancel' : 'Hủy'}
+              </button>
+              <button
+                type="submit"
+                className="btn-primary flex-1"
+                disabled={busyId === (editingId || 'new')}
+              >
+                {busyId === (editingId || 'new')
+                  ? en
+                    ? 'Saving…'
+                    : 'Đang lưu…'
+                  : en
+                    ? 'Save template'
+                    : 'Lưu mẫu'}
+              </button>
+            </div>
+          </form>
+        </section>
+      )}
+
+      <section
+        className="grid grid-cols-1 gap-2.5 sm:grid-cols-3 sm:gap-3"
+        aria-label={
+          en ? 'Recurring expense summary' : 'Tóm tắt chi phí định kỳ'
+        }
+      >
+        <SummaryCard
+          icon={Activity}
+          label={en ? 'Active templates' : 'Mẫu đang hoạt động'}
+          value={activeCount}
+          tone="violet"
+        />
+        <SummaryCard
+          icon={Clock3}
+          label={en ? 'Due today or earlier' : 'Đã đến hạn'}
+          value={dueCount}
+          tone="amber"
+        />
+        <SummaryCard
+          icon={Layers3}
+          label={en ? 'All templates' : 'Tổng số mẫu'}
+          value={items.length + deletedItems.length}
+          tone="blue"
+        />
+      </section>
+
+      {!items.length ? (
+        <section className="card">
+          <EmptyState
+            icon={Repeat2}
+            title={
+              en ? 'No recurring expenses yet' : 'Chưa có khoản chi định kỳ'
+            }
+            description={
+              canManage
+                ? en
+                  ? 'Add a template and the app will create planned transactions automatically on due dates.'
+                  : 'Thêm một mẫu để ứng dụng tự tạo giao dịch dự kiến khi đến ngày.'
+                : en
+                  ? 'The family owner has not set up any recurring expenses.'
+                  : 'Chủ gia đình chưa thiết lập khoản chi định kỳ nào.'
+            }
+            action={
+              canManage ? (
+                <button
+                  type="button"
+                  className="btn-primary inline-flex items-center gap-2"
+                  onClick={() => openEditor()}
+                >
+                  <Plus size={17} />
+                  {en ? 'Add the first template' : 'Thêm mẫu đầu tiên'}
+                </button>
+              ) : undefined
+            }
+          />
+        </section>
+      ) : (
+        <section className="space-y-3" aria-labelledby="active-recurring-title">
+          <div className="flex flex-col gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-card)] sm:flex-row sm:items-center sm:justify-between sm:p-5">
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[var(--primary-soft)] text-[var(--primary-strong)]">
+                <Repeat2 size={20} aria-hidden="true" />
+              </span>
+              <div className="min-w-0">
+                <h3
+                  id="active-recurring-title"
+                  className="text-lg font-extrabold"
+                >
+                  {en ? 'Recurring templates' : 'Các mẫu định kỳ'}
+                </h3>
+                <p className="mt-1 text-sm text-[var(--muted)]">
+                  {en
+                    ? 'A compact view of the family’s automatic plans.'
+                    : 'Danh sách gọn các kế hoạch tự động của gia đình.'}
+                </p>
+              </div>
+            </div>
+            <span className="inline-flex min-h-9 shrink-0 items-center justify-center gap-1.5 self-start rounded-full border border-[var(--border)] bg-[var(--success-soft)] px-3 py-1.5 text-sm font-bold text-[var(--success-strong)] sm:self-auto">
+              <Activity size={15} aria-hidden="true" />
+              VND · {activeCount} {en ? 'active' : 'đang chạy'}
+            </span>
+          </div>
+          <div className="grid gap-3 lg:grid-cols-2">
+            {items.map((item) => (
+              <RecurringRow
+                key={item.id}
+                item={item}
+                familyId={familyId}
+                en={en}
+                canManage={canManage}
+                busy={busyId === item.id}
+                purposeName={purposeNames.get(item.template.purposeId) || '—'}
+                expenseTypeName={
+                  expenseTypeNames.get(item.template.expenseTypeId) || '—'
+                }
+                paymentMethodName={
+                  paymentMethodNames.get(item.template.paymentMethodId) || '—'
+                }
+                onEdit={() => openEditor(item)}
+                onToggle={() => void toggleActive(item)}
+                onSkip={() => void skipNext(item)}
+                onDelete={() => void deleteItem(item)}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {canManage && deletedItems.length > 0 && (
+        <section
+          className="space-y-3"
+          aria-labelledby="deleted-recurring-title"
+        >
+          <div className="flex flex-col gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-card)] sm:flex-row sm:items-center sm:justify-between sm:p-5">
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[var(--danger-soft)] text-[var(--danger-strong)]">
+                <Trash2 size={19} aria-hidden="true" />
+              </span>
+              <div className="min-w-0">
+                <h3
+                  id="deleted-recurring-title"
+                  className="text-lg font-extrabold"
+                >
+                  {en ? 'Deleted recurring templates' : 'Mẫu định kỳ đã xóa'}
+                </h3>
+                <p className="mt-1 text-sm text-[var(--muted)]">
+                  {en
+                    ? 'Restore a template or permanently remove it. Existing transactions are not affected.'
+                    : 'Khôi phục mẫu hoặc xóa vĩnh viễn. Các giao dịch đã tạo không bị ảnh hưởng.'}
+                </p>
+              </div>
+            </div>
+            <span className="inline-flex min-h-9 shrink-0 items-center justify-center gap-1.5 self-start rounded-full border border-[var(--border)] bg-[var(--danger-soft)] px-3 py-1.5 text-sm font-bold text-[var(--danger-strong)] sm:self-auto">
+              <Trash2 size={15} aria-hidden="true" />
+              {deletedItems.length} {en ? 'in trash' : 'trong thùng rác'}
+            </span>
+          </div>
+          <div className="grid gap-3 lg:grid-cols-2">
+            {deletedItems.map((item) => (
+              <RecurringRow
+                key={item.id}
+                item={item}
+                familyId={familyId}
+                en={en}
+                canManage
+                busy={busyId === item.id}
+                deleted
+                purposeName={purposeNames.get(item.template.purposeId) || '—'}
+                expenseTypeName={
+                  expenseTypeNames.get(item.template.expenseTypeId) || '—'
+                }
+                paymentMethodName={
+                  paymentMethodNames.get(item.template.paymentMethodId) || '—'
+                }
+                onRestore={() => void restoreItem(item)}
+                onPermanentlyDelete={() => void permanentlyDeleteItem(item)}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
+  );
+}
+
+function SummaryCard({
+  icon: Icon,
+  label,
+  value,
+  tone,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: number;
+  tone: 'violet' | 'amber' | 'blue';
+}) {
+  const toneClass =
+    tone === 'violet'
+      ? 'border-l-[var(--accent-strong)] bg-[var(--accent-soft)] text-[var(--accent-strong)]'
+      : tone === 'amber'
+        ? 'border-l-[var(--warning-strong)] bg-[var(--warning-soft)] text-[var(--warning-strong)]'
+        : 'border-l-[var(--info-strong)] bg-[var(--info-soft)] text-[var(--info-strong)]';
+  return (
+    <div className="card relative flex min-w-0 items-center gap-3 overflow-hidden border-l-4 p-3.5 sm:p-4">
+      <span
+        className={`grid size-10 shrink-0 place-items-center rounded-xl ${toneClass}`}
+      >
+        <Icon size={19} aria-hidden="true" />
+      </span>
+      <div className="min-w-0">
+        <p className="truncate text-xs font-semibold text-[var(--muted)]">
+          {label}
+        </p>
+        <p className="mt-1 text-2xl font-extrabold leading-none tabular-nums">
+          {value}
+        </p>
       </div>
-      {canManage && <div className="grid w-full gap-2 sm:grid-cols-2 lg:w-[32rem]">
-        <button type="button" className="btn-secondary recurring-toolbar-button inline-flex w-full items-center justify-center gap-2" disabled={busyId === 'generation'} onClick={() => void retryGeneration()}><RefreshCw size={17} aria-hidden="true" />{busyId === 'generation' ? (en ? 'Checking…' : 'Đang kiểm tra…') : (en ? 'Check and create due transactions' : 'Kiểm tra và tạo giao dịch đến hạn')}</button>
-        <button type="button" className="btn-primary recurring-toolbar-button inline-flex w-full items-center justify-center gap-2" onClick={() => openEditor()}><Plus size={17} aria-hidden="true" />{en ? 'Add recurring expense' : 'Thêm khoản định kỳ'}</button>
-      </div>}
-    </header>
-    {canManage && <p className="-mt-2 text-xs text-[var(--muted)]">{en ? 'The daily job already checks due dates. This action safely retries the same check and will not duplicate an occurrence.' : 'Job hằng ngày đã tự kiểm tra ngày đến hạn. Thao tác này chỉ kiểm tra lại an toàn và không tạo trùng một kỳ.'}</p>}
-
-    {pageError && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300">{pageError}<button type="button" className="btn-secondary mt-3 block" onClick={() => void loadItems()}>{en ? 'Try again' : 'Thử lại'}</button></div>}
-
-    {editor && canManage && <section ref={editorRef} className="card scroll-mt-24 p-4 sm:p-5" aria-labelledby="recurring-editor-title">
-      <div className="mb-4 flex items-start justify-between gap-3"><div><p className="page-kicker"><CalendarClock size={16} aria-hidden="true" />{editingId ? (en ? 'Edit template' : 'Chỉnh sửa mẫu') : (en ? 'New template' : 'Mẫu mới')}</p><h3 id="recurring-editor-title" className="text-lg font-extrabold">{editingId ? (en ? 'Update recurring expense' : 'Cập nhật khoản chi định kỳ') : (en ? 'Create recurring expense' : 'Tạo khoản chi định kỳ')}</h3></div><button type="button" className="icon-button" aria-label={en ? 'Close editor' : 'Đóng biểu mẫu'} onClick={closeEditor}><X size={19} /></button></div>
-      <form className="grid gap-4 md:grid-cols-2" onSubmit={(event) => void save(event)}>
-        <label><span className="label">{en ? 'Template name' : 'Tên mẫu'}</span><input data-editor-focus className="field" maxLength={100} required value={editor.name} onChange={(event) => setEditor({ ...editor, name: event.target.value })} placeholder={en ? 'e.g. Electricity bill' : 'Ví dụ: Tiền điện'} /></label>
-        <label><span className="label">{en ? 'Description' : 'Nội dung giao dịch'}</span><input className="field" maxLength={200} required value={editor.description} onChange={(event) => setEditor({ ...editor, description: event.target.value })} placeholder={en ? 'e.g. Electricity' : 'Ví dụ: Tiền điện'} /></label>
-        <label><span className="label">{en ? 'Amount (VND)' : 'Số tiền (VND)'}</span><input className="field" inputMode="numeric" required value={displayAmount(editor.amount)} onChange={(event) => setEditor({ ...editor, amount: event.target.value })} placeholder="300.000" /></label>
-        <label><span className="label">{en ? 'Frequency' : 'Tần suất'}</span><select className="field" value={editor.frequency} onChange={(event) => setEditor({ ...editor, frequency: event.target.value as RecurringFrequency })}>{recurringFrequencies.map((frequency) => <option key={frequency} value={frequency}>{frequencyLabel(frequency, en)}</option>)}</select></label>
-        <label><span className="label">{en ? 'Purpose' : 'Mục đích'}</span><select className="field" required value={editor.purposeId} onChange={(event) => setEditor({ ...editor, purposeId: event.target.value })}><option value="">{en ? 'Select a purpose' : 'Chọn mục đích'}</option>{purposes.map((item) => <option key={item.id} value={item.id}>{getCatalogDisplayName(item, language)}</option>)}</select></label>
-        <label><span className="label">{en ? 'Expense type' : 'Danh mục'}</span><select className="field" required value={editor.expenseTypeId} onChange={(event) => setEditor({ ...editor, expenseTypeId: event.target.value })}><option value="">{en ? 'Select an expense type' : 'Chọn danh mục'}</option>{expenseTypes.map((item) => <option key={item.id} value={item.id}>{getCatalogDisplayName(item, language)}</option>)}</select></label>
-        <label><span className="label">{en ? 'Payment method' : 'Phương thức thanh toán'}</span><select className="field" required value={editor.paymentMethodId} onChange={(event) => setEditor({ ...editor, paymentMethodId: event.target.value })}><option value="">{en ? 'Select a payment method' : 'Chọn phương thức thanh toán'}</option>{paymentMethods.map((item) => <option key={item.id} value={item.id}>{getCatalogDisplayName(item, language)}</option>)}</select></label>
-        <label><span className="label">{en ? 'Next due date' : 'Ngày chạy tiếp theo'}</span><input className="field" type="date" required value={editor.nextRunDate} onChange={(event) => setEditor({ ...editor, nextRunDate: event.target.value })} /></label>
-        <label><span className="label">{en ? 'End date (optional)' : 'Ngày kết thúc (không bắt buộc)'}</span><input className="field" type="date" value={editor.endDate} onChange={(event) => setEditor({ ...editor, endDate: event.target.value })} /></label>
-        <label className="md:col-span-2"><span className="label">{en ? 'Note (optional)' : 'Ghi chú (không bắt buộc)'}</span><textarea className="field min-h-20" maxLength={500} value={editor.note} onChange={(event) => setEditor({ ...editor, note: event.target.value })} /></label>
-        {editorError && <p role="alert" className="md:col-span-2 text-sm text-red-600 dark:text-red-300">{editorError}</p>}
-        <div className="flex gap-2 md:col-span-2"><button type="button" className="btn-secondary flex-1" onClick={closeEditor}>{en ? 'Cancel' : 'Hủy'}</button><button type="submit" className="btn-primary flex-1" disabled={busyId === (editingId || 'new')}>{busyId === (editingId || 'new') ? (en ? 'Saving…' : 'Đang lưu…') : (en ? 'Save template' : 'Lưu mẫu')}</button></div>
-      </form>
-    </section>}
-
-    <section className="grid grid-cols-1 gap-2.5 sm:grid-cols-3 sm:gap-3" aria-label={en ? 'Recurring expense summary' : 'Tóm tắt chi phí định kỳ'}><SummaryCard icon={Activity} label={en ? 'Active templates' : 'Mẫu đang hoạt động'} value={activeCount} tone="violet" /><SummaryCard icon={Clock3} label={en ? 'Due today or earlier' : 'Đã đến hạn'} value={dueCount} tone="amber" /><SummaryCard icon={Layers3} label={en ? 'All templates' : 'Tổng số mẫu'} value={items.length + deletedItems.length} tone="blue" /></section>
-
-    {!items.length ? <section className="card"><EmptyState icon={Repeat2} title={en ? 'No recurring expenses yet' : 'Chưa có khoản chi định kỳ'} description={canManage ? (en ? 'Add a template and the app will create planned transactions automatically on due dates.' : 'Thêm một mẫu để ứng dụng tự tạo giao dịch dự kiến khi đến ngày.') : (en ? 'The family owner has not set up any recurring expenses.' : 'Chủ gia đình chưa thiết lập khoản chi định kỳ nào.')} action={canManage ? <button type="button" className="btn-primary inline-flex items-center gap-2" onClick={() => openEditor()}><Plus size={17} />{en ? 'Add the first template' : 'Thêm mẫu đầu tiên'}</button> : undefined} /></section> : <section className="card overflow-hidden"><div className="flex flex-col gap-2 border-b border-black/10 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-white/10"><div><h3 className="text-lg font-extrabold">{en ? 'Recurring templates' : 'Các mẫu định kỳ'}</h3><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{en ? 'Due templates are generated by the daily background job.' : 'Mẫu đến hạn được job nền hằng ngày tự động tạo giao dịch.'}</p></div><span className="ui-chip">VND · {activeCount} {en ? 'active' : 'đang chạy'}</span></div><div className="divide-y divide-black/10 dark:divide-white/10">{items.map((item) => <RecurringRow key={item.id} item={item} familyId={familyId} en={en} canManage={canManage} busy={busyId === item.id} purposeName={purposeNames.get(item.template.purposeId) || '—'} expenseTypeName={expenseTypeNames.get(item.template.expenseTypeId) || '—'} paymentMethodName={paymentMethodNames.get(item.template.paymentMethodId) || '—'} onEdit={() => openEditor(item)} onToggle={() => void toggleActive(item)} onSkip={() => void skipNext(item)} onDelete={() => void deleteItem(item)} />)}</div></section>}
-
-    {canManage && deletedItems.length > 0 && <section className="card overflow-hidden" aria-labelledby="deleted-recurring-title"><div className="flex flex-col gap-2 border-b border-black/10 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-white/10"><div><h3 id="deleted-recurring-title" className="text-lg font-extrabold">{en ? 'Deleted recurring templates' : 'Mẫu định kỳ đã xóa'}</h3><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{en ? 'Restore a template or permanently remove it. Existing transactions are not affected.' : 'Khôi phục mẫu hoặc xóa vĩnh viễn. Các giao dịch đã tạo không bị ảnh hưởng.'}</p></div><span className="ui-chip">{deletedItems.length} {en ? 'in trash' : 'trong thùng rác'}</span></div><div className="divide-y divide-black/10 dark:divide-white/10">{deletedItems.map((item) => <RecurringRow key={item.id} item={item} familyId={familyId} en={en} canManage busy={busyId === item.id} deleted purposeName={purposeNames.get(item.template.purposeId) || '—'} expenseTypeName={expenseTypeNames.get(item.template.expenseTypeId) || '—'} paymentMethodName={paymentMethodNames.get(item.template.paymentMethodId) || '—'} onRestore={() => void restoreItem(item)} onPermanentlyDelete={() => void permanentlyDeleteItem(item)} />)}</div></section>}
-  </div>;
+    </div>
+  );
 }
 
-function SummaryCard({ icon: Icon, label, value, tone }: { icon: LucideIcon; label: string; value: number; tone: 'violet' | 'amber' | 'blue' }) {
-  const toneClass = tone === 'violet'
-    ? 'bg-[var(--accent-soft)] text-[var(--accent-strong)]'
-    : tone === 'amber'
-      ? 'bg-[var(--warning-soft)] text-[var(--warning-strong)]'
-      : 'bg-[var(--info-soft)] text-[var(--info-strong)]';
-  return <div className="card flex items-center gap-3 p-3.5 sm:p-4"><span className={`grid size-10 shrink-0 place-items-center rounded-xl ${toneClass}`}><Icon size={19} aria-hidden="true" /></span><div className="min-w-0"><p className="truncate text-xs font-semibold text-gray-500 dark:text-gray-400">{label}</p><p className="mt-1 text-2xl font-extrabold leading-none">{value}</p></div></div>;
+type RecurringTone = 'violet' | 'blue' | 'amber' | 'green' | 'neutral';
+
+const recurringToneClasses: Record<RecurringTone, string> = {
+  violet:
+    'border-[var(--border)] bg-[var(--accent-soft)] text-[var(--accent-strong)]',
+  blue: 'border-[var(--border)] bg-[var(--info-soft)] text-[var(--info-strong)]',
+  amber:
+    'border-[var(--border)] bg-[var(--warning-soft)] text-[var(--warning-strong)]',
+  green:
+    'border-[var(--border)] bg-[var(--success-soft)] text-[var(--success-strong)]',
+  neutral:
+    'border-[var(--border)] bg-[var(--surface-muted)] text-[var(--muted)]',
+};
+
+function ToneBadge({
+  icon: Icon,
+  tone,
+  children,
+}: {
+  icon: LucideIcon;
+  tone: RecurringTone;
+  children: string;
+}) {
+  return (
+    <span
+      className={`inline-flex min-h-7 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold ${recurringToneClasses[tone]}`}
+    >
+      <Icon size={13} aria-hidden="true" />
+      {children}
+    </span>
+  );
 }
 
-function RecurringRow({ item, familyId, en, canManage, busy, purposeName, expenseTypeName, paymentMethodName, onEdit, onToggle, onSkip, onDelete, deleted = false, onRestore = () => undefined, onPermanentlyDelete = () => undefined }: { item: RecurringExpense; familyId: string; en: boolean; canManage: boolean; busy: boolean; purposeName: string; expenseTypeName: string; paymentMethodName: string; onEdit?: () => void; onToggle?: () => void; onSkip?: () => void; onDelete?: () => void; deleted?: boolean; onRestore?: () => void; onPermanentlyDelete?: () => void }) {
+function MetaChip({
+  icon: Icon,
+  label,
+  tone,
+}: {
+  icon: LucideIcon;
+  label: string;
+  tone: RecurringTone;
+}) {
+  return (
+    <span
+      className={`flex min-w-0 items-center gap-1.5 rounded-xl border px-2.5 py-2 text-xs font-semibold ${recurringToneClasses[tone]}`}
+      title={label}
+    >
+      <Icon size={14} className="shrink-0" aria-hidden="true" />
+      <span className="min-w-0 truncate">{label}</span>
+    </span>
+  );
+}
+
+function RecurringRow({
+  item,
+  familyId,
+  en,
+  canManage,
+  busy,
+  purposeName,
+  expenseTypeName,
+  paymentMethodName,
+  onEdit,
+  onToggle,
+  onSkip,
+  onDelete,
+  deleted = false,
+  onRestore = () => undefined,
+  onPermanentlyDelete = () => undefined,
+}: {
+  item: RecurringExpense;
+  familyId: string;
+  en: boolean;
+  canManage: boolean;
+  busy: boolean;
+  purposeName: string;
+  expenseTypeName: string;
+  paymentMethodName: string;
+  onEdit?: () => void;
+  onToggle?: () => void;
+  onSkip?: () => void;
+  onDelete?: () => void;
+  deleted?: boolean;
+  onRestore?: () => void;
+  onPermanentlyDelete?: () => void;
+}) {
   const due = !deleted && item.active && item.nextRunDate <= todayInVietnam();
-  const forecastDates = recurringForecastDates(item.nextRunDate, item.frequency, item.anchorDay, item.anchorMonth, item.endDate, 4);
+  const forecastDates = recurringForecastDates(
+    item.nextRunDate,
+    item.frequency,
+    item.anchorDay,
+    item.anchorMonth,
+    item.endDate,
+    4,
+  );
   const [showHistory, setShowHistory] = useState(false);
   const historyQuery = useQuery({
     queryKey: ['recurring-runs', familyId, item.id],
@@ -455,13 +1330,353 @@ function RecurringRow({ item, familyId, en, canManage, busy, purposeName, expens
   const history = historyQuery.data || [];
   const actionMenuRef = useRef<HTMLDetailsElement | null>(null);
   const closeActionMenu = () => actionMenuRef.current?.removeAttribute('open');
-  return <article className={`p-4 sm:p-5 ${deleted || !item.active ? 'opacity-70' : ''}`}>
-    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-      <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h4 className="text-base font-extrabold">{item.name}</h4><span className={`ui-chip ${item.active ? '' : 'opacity-70'}`}>{deleted ? (en ? 'Deleted' : 'Đã xóa') : item.active ? (en ? 'Active' : 'Đang chạy') : (en ? 'Paused' : 'Tạm dừng')}</span>{due && <span className="rounded-full border border-[var(--warning)] bg-[var(--warning-soft)] px-2 py-0.5 text-xs font-semibold text-[var(--warning-strong)]">{en ? 'Due' : 'Đến hạn'}</span>}</div><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{item.template.description} · <strong className="text-gray-800 dark:text-gray-100"><Amount value={item.template.amount} /></strong></p><div className="mt-3 flex flex-wrap gap-1.5 text-xs text-gray-600 dark:text-gray-300"><span className="ui-chip">{frequencyLabel(item.frequency, en)}</span><span className="ui-chip">{purposeName}</span><span className="ui-chip">{expenseTypeName}</span><span className="ui-chip">{paymentMethodName}</span></div><p className="mt-3 flex flex-wrap items-center gap-2 text-sm"><CalendarClock size={16} aria-hidden="true" /><span>{en ? 'Next:' : 'Kỳ tiếp theo:'} <strong>{formatDateOnlyVi(item.nextRunDate)}</strong></span>{item.endDate && <span className="text-gray-500 dark:text-gray-400">· {en ? `Until ${formatDateOnlyVi(item.endDate)}` : `Đến ${formatDateOnlyVi(item.endDate)}`}</span>}</p>{forecastDates.length > 1 && <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300"><span className="font-semibold">{en ? 'Coming next:' : 'Các kỳ tiếp:'}</span>{forecastDates.slice(1).map((date) => <span key={date} className="ui-chip">{formatDateOnlyVi(date)}</span>)}</div>}{item.lastErrorCode && <p role="alert" className="mt-2 text-sm text-red-600 dark:text-red-300">{en ? 'The last automatic generation failed. Review the template and retry.' : 'Lần tự tạo gần nhất bị lỗi. Hãy kiểm tra mẫu và thử lại.'}</p>}</div>
-      {canManage && deleted ? <div className="grid w-full grid-cols-2 gap-1.5 sm:grid-cols-3 lg:w-auto"><button type="button" className="btn-secondary inline-flex w-full items-center justify-center gap-1 whitespace-nowrap px-2.5 py-2 text-sm" aria-expanded={showHistory} onClick={() => setShowHistory((value) => !value)}><CalendarClock size={16} aria-hidden="true" />{showHistory ? (en ? 'Hide history' : 'Ẩn lịch sử') : (en ? 'Run history' : 'Lịch sử kỳ chạy')}</button><button type="button" className="btn-secondary inline-flex w-full items-center justify-center gap-1 whitespace-nowrap px-2.5 py-2 text-sm" disabled={busy} onClick={onRestore}><RotateCcw size={16} aria-hidden="true" />{en ? 'Restore' : 'Khôi phục'}</button><button type="button" className="btn-secondary inline-flex w-full items-center justify-center gap-1 whitespace-nowrap px-2.5 py-2 text-sm text-red-700 dark:text-red-300" disabled={busy} onClick={onPermanentlyDelete}><Trash2 size={16} aria-hidden="true" />{en ? 'Delete permanently' : 'Xóa vĩnh viễn'}</button></div> : canManage ? <div className="flex w-full items-center gap-1.5 lg:w-auto"><button type="button" className="btn-secondary inline-flex min-w-0 flex-1 items-center justify-center gap-1 whitespace-nowrap px-2.5 py-2 text-sm lg:flex-none" disabled={busy} onClick={onEdit}><Pencil size={16} aria-hidden="true" />{en ? 'Edit' : 'Sửa'}</button><button type="button" className="btn-secondary inline-flex min-w-0 flex-1 items-center justify-center gap-1 whitespace-nowrap px-2.5 py-2 text-sm lg:flex-none" disabled={busy} onClick={onToggle}>{item.active ? <PauseCircle size={16} aria-hidden="true" /> : <PlayCircle size={16} aria-hidden="true" />}{item.active ? (en ? 'Pause' : 'Tạm dừng') : (en ? 'Resume' : 'Tiếp tục')}</button><details ref={actionMenuRef} className="group relative"><summary className="icon-button shrink-0 list-none border border-[var(--border-strong)] bg-[var(--surface)] [&::-webkit-details-marker]:hidden" aria-label={en ? 'More recurring expense actions' : 'Thao tác khác'}><MoreHorizontal size={19} aria-hidden="true" /></summary><div className="absolute right-0 top-full z-20 mt-2 grid w-56 gap-1 rounded-xl border border-[var(--border-strong)] bg-[var(--surface)] p-1.5 shadow-xl"><button type="button" className="btn-secondary inline-flex w-full items-center justify-start gap-2 text-sm" aria-expanded={showHistory} onClick={() => { setShowHistory((value) => !value); closeActionMenu(); }}><CalendarClock size={16} aria-hidden="true" />{showHistory ? (en ? 'Hide history' : 'Ẩn lịch sử') : (en ? 'Run history' : 'Lịch sử kỳ chạy')}</button><button type="button" className="btn-secondary inline-flex w-full items-center justify-start gap-2 text-sm" disabled={busy || !item.active} onClick={() => { onSkip?.(); closeActionMenu(); }}><SkipForward size={16} aria-hidden="true" />{en ? 'Skip' : 'Bỏ qua'}</button><button type="button" className="btn-secondary inline-flex w-full items-center justify-start gap-2 text-sm text-red-700 dark:text-red-300" disabled={busy} onClick={() => { onDelete?.(); closeActionMenu(); }}><Trash2 size={16} aria-hidden="true" />{en ? 'Delete' : 'Xóa'}</button></div></details></div> : <div className="flex w-full lg:w-auto"><button type="button" className="btn-secondary inline-flex w-full items-center justify-center gap-1 whitespace-nowrap px-2.5 py-2 text-sm" aria-expanded={showHistory} onClick={() => setShowHistory((value) => !value)}><CalendarClock size={16} aria-hidden="true" />{showHistory ? (en ? 'Hide history' : 'Ẩn lịch sử') : (en ? 'Run history' : 'Lịch sử kỳ chạy')}</button></div>}
-    </div>
-    {showHistory && <div className="mt-4 rounded-2xl border border-[var(--border)] bg-[var(--surface-muted)] p-3 text-sm" aria-live="polite">
-      {!isSupabaseConfigured ? <p className="text-gray-500 dark:text-gray-400">{en ? 'Run history is available after connecting Supabase.' : 'Lịch sử kỳ chạy sẽ có khi kết nối Supabase.'}</p> : historyQuery.isPending ? <p className="text-gray-500 dark:text-gray-400">{en ? 'Loading run history…' : 'Đang tải lịch sử kỳ chạy…'}</p> : historyQuery.isError ? <div role="alert" className="text-red-700 dark:text-red-300"><p>{en ? 'Could not load run history.' : 'Không thể tải lịch sử kỳ chạy.'}</p><button type="button" className="btn-secondary mt-2" onClick={() => void historyQuery.refetch()}>{en ? 'Try again' : 'Thử lại'}</button></div> : history.length ? <ul className="grid gap-2 sm:grid-cols-2">{history.map((run) => <li key={run.id} className="flex items-center justify-between gap-3 rounded-xl bg-[var(--surface)] p-2.5"><span><strong>{formatDateOnlyVi(run.occurrenceDate)}</strong><span className="ml-2 text-xs text-gray-500 dark:text-gray-400">{formatDateOnlyVi(run.performedAt.slice(0, 10))}</span></span><span className={`ui-chip ${run.status === 'generated' ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-800 dark:text-amber-200'}`}>{run.status === 'generated' ? (en ? 'Generated' : 'Đã tạo') : (en ? 'Skipped' : 'Đã bỏ qua')}</span></li>)}</ul> : <p className="text-gray-500 dark:text-gray-400">{en ? 'No run history yet.' : 'Chưa có lịch sử kỳ chạy.'}</p>}
-   </div>}
-  </article>;
+  const statusTone: RecurringTone =
+    deleted || !item.active ? 'neutral' : 'green';
+  const statusIcon = deleted ? Trash2 : item.active ? PlayCircle : PauseCircle;
+  const statusLabel = deleted
+    ? en
+      ? 'Deleted'
+      : 'Đã xóa'
+    : item.active
+      ? en
+        ? 'Active'
+        : 'Đang chạy'
+      : en
+        ? 'Paused'
+        : 'Tạm dừng';
+  const railClass = deleted
+    ? 'bg-[var(--muted)]'
+    : due
+      ? 'bg-[var(--warning)]'
+      : item.active
+        ? 'bg-[var(--success)]'
+        : 'bg-[var(--border-strong)]';
+  return (
+    <article
+      aria-labelledby={`recurring-${item.id}-title`}
+      className={`card card-interactive relative overflow-visible p-4 sm:p-5 ${deleted || !item.active ? 'opacity-75' : ''}`}
+    >
+      <span
+        aria-hidden="true"
+        className={`absolute inset-y-4 left-0 w-1 rounded-r-full ${railClass}`}
+      />
+      <div className="flex min-w-0 flex-col gap-4">
+        <div className="flex min-w-0 flex-col gap-3">
+          <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h4
+                  id={`recurring-${item.id}-title`}
+                  className="min-w-0 break-words text-base font-extrabold"
+                >
+                  {item.name}
+                </h4>
+                <ToneBadge icon={statusIcon} tone={statusTone}>
+                  {statusLabel}
+                </ToneBadge>
+                {due && (
+                  <ToneBadge icon={Clock3} tone="amber">
+                    {en ? 'Due' : 'Đến hạn'}
+                  </ToneBadge>
+                )}
+              </div>
+              {item.template.description.trim() !== item.name.trim() && (
+                <p
+                  className="mt-1 min-w-0 truncate text-sm text-[var(--muted)]"
+                  title={item.template.description}
+                >
+                  {item.template.description}
+                </p>
+              )}
+            </div>
+            <div className="shrink-0 sm:text-right">
+              <p className="text-[10px] font-bold uppercase tracking-[.12em] text-[var(--muted)]">
+                {en ? 'Amount' : 'Số tiền'}
+              </p>
+              <strong
+                className={`mt-0.5 block text-lg font-extrabold tabular-nums ${deleted ? 'text-[var(--muted)]' : 'text-[var(--danger-strong)]'}`}
+              >
+                <Amount value={item.template.amount} />
+              </strong>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <MetaChip
+              icon={Repeat2}
+              label={frequencyLabel(item.frequency, en)}
+              tone="violet"
+            />
+            <MetaChip icon={Layers3} label={purposeName} tone="blue" />
+            <MetaChip icon={Activity} label={expenseTypeName} tone="amber" />
+            <MetaChip
+              icon={CreditCard}
+              label={paymentMethodName}
+              tone="green"
+            />
+          </div>
+          <div
+            className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border px-3 py-2.5 ${recurringToneClasses[due ? 'amber' : 'blue']}`}
+          >
+            <div className="flex min-w-0 items-center gap-2">
+              <CalendarClock
+                className="shrink-0"
+                size={17}
+                aria-hidden="true"
+              />
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-[.12em]">
+                  {due
+                    ? en
+                      ? 'Due now'
+                      : 'Đã đến hạn'
+                    : en
+                      ? 'Next run'
+                      : 'Kỳ tiếp theo'}
+                </p>
+                <p className="text-sm font-extrabold tabular-nums">
+                  {formatDateOnlyVi(item.nextRunDate)}
+                </p>
+              </div>
+            </div>
+            {item.endDate && (
+              <span className="text-xs font-semibold">
+                {en
+                  ? `Until ${formatDateOnlyVi(item.endDate)}`
+                  : `Đến ${formatDateOnlyVi(item.endDate)}`}
+              </span>
+            )}
+          </div>
+          {forecastDates.length > 1 && (
+            <div className="flex flex-wrap items-center gap-1.5 text-xs text-[var(--muted)]">
+              <span className="font-bold">
+                {en ? 'Coming next:' : 'Các kỳ tiếp:'}
+              </span>
+              {forecastDates.slice(1).map((date) => (
+                <span
+                  key={date}
+                  className="rounded-lg border border-[var(--border)] bg-[var(--surface-muted)] px-2 py-1 font-semibold tabular-nums"
+                >
+                  {formatDateOnlyVi(date)}
+                </span>
+              ))}
+            </div>
+          )}
+          {item.lastErrorCode && (
+            <p
+              role="alert"
+              className="mt-2 text-sm text-red-600 dark:text-red-300"
+            >
+              {en
+                ? 'The last automatic generation failed. Review the template and retry.'
+                : 'Lần tự tạo gần nhất bị lỗi. Hãy kiểm tra mẫu và thử lại.'}
+            </p>
+          )}
+        </div>
+        {canManage && deleted ? (
+          <div className="grid w-full grid-cols-2 gap-2 border-t border-[var(--border)] pt-3 sm:grid-cols-3 lg:w-auto">
+            <button
+              type="button"
+              className="btn-secondary inline-flex w-full items-center justify-center gap-1 whitespace-nowrap px-2.5 py-2 text-sm"
+              aria-expanded={showHistory}
+              onClick={() => setShowHistory((value) => !value)}
+            >
+              <CalendarClock size={16} aria-hidden="true" />
+              {showHistory
+                ? en
+                  ? 'Hide history'
+                  : 'Ẩn lịch sử'
+                : en
+                  ? 'Run history'
+                  : 'Lịch sử kỳ chạy'}
+            </button>
+            <button
+              type="button"
+              className="btn-secondary inline-flex w-full items-center justify-center gap-1 whitespace-nowrap px-2.5 py-2 text-sm"
+              disabled={busy}
+              onClick={onRestore}
+            >
+              <RotateCcw size={16} aria-hidden="true" />
+              {en ? 'Restore' : 'Khôi phục'}
+            </button>
+            <button
+              type="button"
+              className="btn-secondary inline-flex w-full items-center justify-center gap-1 whitespace-nowrap px-2.5 py-2 text-sm text-[var(--danger-strong)]"
+              disabled={busy}
+              onClick={onPermanentlyDelete}
+            >
+              <Trash2 size={16} aria-hidden="true" />
+              {en ? 'Delete permanently' : 'Xóa vĩnh viễn'}
+            </button>
+          </div>
+        ) : canManage ? (
+          <div className="flex w-full flex-wrap gap-2 border-t border-[var(--border)] pt-3 lg:w-auto">
+            <button
+              type="button"
+              className="btn-secondary inline-flex min-w-0 flex-1 items-center justify-center gap-1 whitespace-nowrap px-2.5 py-2 text-sm lg:flex-none"
+              disabled={busy}
+              onClick={onEdit}
+            >
+              <Pencil size={16} aria-hidden="true" />
+              {en ? 'Edit' : 'Sửa'}
+            </button>
+            <button
+              type="button"
+              className={`btn-secondary inline-flex min-w-0 flex-1 items-center justify-center gap-1 whitespace-nowrap px-2.5 py-2 text-sm lg:flex-none ${item.active ? 'border-[var(--warning)] bg-[var(--warning-soft)] text-[var(--warning-strong)]' : 'border-[var(--success)] bg-[var(--success-soft)] text-[var(--success-strong)]'}`}
+              disabled={busy}
+              onClick={onToggle}
+            >
+              {item.active ? (
+                <PauseCircle size={16} aria-hidden="true" />
+              ) : (
+                <PlayCircle size={16} aria-hidden="true" />
+              )}
+              {item.active
+                ? en
+                  ? 'Pause'
+                  : 'Tạm dừng'
+                : en
+                  ? 'Resume'
+                  : 'Tiếp tục'}
+            </button>
+            <details ref={actionMenuRef} className="group relative">
+              <summary
+                className="icon-button shrink-0 list-none border border-[var(--border-strong)] bg-[var(--surface)] [&::-webkit-details-marker]:hidden"
+                aria-label={
+                  en ? 'More recurring expense actions' : 'Thao tác khác'
+                }
+              >
+                <MoreHorizontal size={19} aria-hidden="true" />
+              </summary>
+              <div className="absolute right-0 top-full z-20 mt-2 grid w-56 gap-1 rounded-xl border border-[var(--border-strong)] bg-[var(--surface)] p-1.5 shadow-xl">
+                <button
+                  type="button"
+                  className="btn-secondary inline-flex w-full items-center justify-start gap-2 text-sm"
+                  aria-expanded={showHistory}
+                  onClick={() => {
+                    setShowHistory((value) => !value);
+                    closeActionMenu();
+                  }}
+                >
+                  <CalendarClock size={16} aria-hidden="true" />
+                  {showHistory
+                    ? en
+                      ? 'Hide history'
+                      : 'Ẩn lịch sử'
+                    : en
+                      ? 'Run history'
+                      : 'Lịch sử kỳ chạy'}
+                </button>
+                <button
+                  type="button"
+                  className="btn-secondary inline-flex w-full items-center justify-start gap-2 text-sm"
+                  disabled={busy || !item.active}
+                  onClick={() => {
+                    onSkip?.();
+                    closeActionMenu();
+                  }}
+                >
+                  <SkipForward size={16} aria-hidden="true" />
+                  {en ? 'Skip' : 'Bỏ qua'}
+                </button>
+                <button
+                  type="button"
+                  className="btn-secondary inline-flex w-full items-center justify-start gap-2 text-sm text-[var(--danger-strong)]"
+                  disabled={busy}
+                  onClick={() => {
+                    onDelete?.();
+                    closeActionMenu();
+                  }}
+                >
+                  <Trash2 size={16} aria-hidden="true" />
+                  {en ? 'Delete' : 'Xóa'}
+                </button>
+              </div>
+            </details>
+          </div>
+        ) : (
+          <div className="flex w-full border-t border-[var(--border)] pt-3 lg:w-auto">
+            <button
+              type="button"
+              className="btn-secondary inline-flex w-full items-center justify-center gap-1 whitespace-nowrap px-2.5 py-2 text-sm"
+              aria-expanded={showHistory}
+              onClick={() => setShowHistory((value) => !value)}
+            >
+              <CalendarClock size={16} aria-hidden="true" />
+              {showHistory
+                ? en
+                  ? 'Hide history'
+                  : 'Ẩn lịch sử'
+                : en
+                  ? 'Run history'
+                  : 'Lịch sử kỳ chạy'}
+            </button>
+          </div>
+        )}
+      </div>
+      {showHistory && (
+        <div
+          className="mt-4 rounded-2xl border border-[var(--border)] bg-[var(--surface-muted)] p-3 text-sm"
+          aria-live="polite"
+        >
+          {!isSupabaseConfigured ? (
+            <p className="text-gray-500 dark:text-gray-400">
+              {en
+                ? 'Run history is available after connecting Supabase.'
+                : 'Lịch sử kỳ chạy sẽ có khi kết nối Supabase.'}
+            </p>
+          ) : historyQuery.isPending ? (
+            <p className="text-gray-500 dark:text-gray-400">
+              {en ? 'Loading run history…' : 'Đang tải lịch sử kỳ chạy…'}
+            </p>
+          ) : historyQuery.isError ? (
+            <div role="alert" className="text-red-700 dark:text-red-300">
+              <p>
+                {en
+                  ? 'Could not load run history.'
+                  : 'Không thể tải lịch sử kỳ chạy.'}
+              </p>
+              <button
+                type="button"
+                className="btn-secondary mt-2"
+                onClick={() => void historyQuery.refetch()}
+              >
+                {en ? 'Try again' : 'Thử lại'}
+              </button>
+            </div>
+          ) : history.length ? (
+            <ul className="grid gap-2 sm:grid-cols-2">
+              {history.map((run) => (
+                <li
+                  key={run.id}
+                  className="flex items-center justify-between gap-3 rounded-xl bg-[var(--surface)] p-2.5"
+                >
+                  <span>
+                    <strong>{formatDateOnlyVi(run.occurrenceDate)}</strong>
+                    <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+                      {formatDateOnlyVi(run.performedAt.slice(0, 10))}
+                    </span>
+                  </span>
+                  <span
+                    className={`ui-chip ${run.status === 'generated' ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-800 dark:text-amber-200'}`}
+                  >
+                    {run.status === 'generated'
+                      ? en
+                        ? 'Generated'
+                        : 'Đã tạo'
+                      : en
+                        ? 'Skipped'
+                        : 'Đã bỏ qua'}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-gray-500 dark:text-gray-400">
+              {en ? 'No run history yet.' : 'Chưa có lịch sử kỳ chạy.'}
+            </p>
+          )}
+        </div>
+      )}
+    </article>
+  );
 }
