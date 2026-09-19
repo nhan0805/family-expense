@@ -2,6 +2,14 @@
 
 ## 2026-09-19
 
+### Thiết kế lại card Chi phí định kỳ
+
+- Trang Chi phí định kỳ chuyển sang bố cục responsive dạng lưới, với card có thanh trạng thái và badge rõ cho `Đang chạy`, `Tạm dừng`, `Đến hạn` hoặc `Đã xóa`; các metadata về tần suất, mục đích, danh mục và phương thức thanh toán được trình bày bằng chip có icon.
+- Card tách riêng số tiền, kỳ tiếp theo, ngày kết thúc và các kỳ dự báo tiếp theo; nhóm thao tác owner được thu gọn theo mobile nhưng vẫn giữ Sửa, Tạm dừng/Tiếp tục, Bỏ qua, lịch sử kỳ chạy, xóa mềm, khôi phục và xóa vĩnh viễn. Member vẫn chỉ xem.
+- Files: `src/pages/RecurringExpenses.tsx`, `src/pages/RecurringExpenses.test.tsx`. Không đổi schema, API, RLS/RPC, Edge Function hoặc dữ liệu production.
+- Kiểm thử: recurring Vitest `9/9`, full Vitest `49 file/246 test`, TypeScript, ESLint, Vite build và `git diff --check` pass; build vẫn có cảnh báo chunk lớn XLSX/ExcelJS/chart như known issue.
+- Trạng thái: commit `371a3a0` trên branch `codex/recurring-ui-redesign-20260919`; chưa merge vào `main` và chưa deploy production.
+
 ### Đặt bộ danh mục hiện tại làm mặc định cho gia đình mới
 
 - Owner có thể xác nhận bộ `Mục đích chi`, `Loại chi phí` và `Phương thức thanh toán` active của gia đình hiện tại làm template mặc định cho các gia đình tạo sau này. Gia đình hiện tại và các gia đình đã tồn tại không bị thay đổi.

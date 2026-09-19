@@ -7,7 +7,7 @@
 - Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; `main` hiện có runtime merge commit `5fa6c20` sau PR [#241](https://github.com/nhan0805/family-expense/pull/241). [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/d9b585e9-1f53-46a8-b91d-55f56244077b) pass; smoke `/`, `/dang-nhap` và `/thanh-vien` đều trả HTTP 200.
 - Code trên `main` đã gồm PR [#234](https://github.com/nhan0805/family-expense/pull/234), cho owner đặt bộ mục đích/danh mục/phương thức thanh toán hiện tại làm mặc định cho gia đình tạo mới; các PR [#238](https://github.com/nhan0805/family-expense/pull/238), [#239](https://github.com/nhan0805/family-expense/pull/239) và [#241](https://github.com/nhan0805/family-expense/pull/241) đồng bộ thứ tự/lịch sử migration để production apply được thay đổi; cùng các release trước.
 - CI hậu merge [run 35375328631](https://github.com/nhan0805/family-expense/actions/runs/35375328631) của merge commit `5fa6c20` pass quality, E2E và db-security. [Supabase Production Deploy run 35375328575](https://github.com/nhan0805/family-expense/actions/runs/35375328575) pass migration và Edge Functions; migration `202609190001_restore_catalog_template_promotion.sql` đã apply thành công.
-- Nhánh release/status hiện tại: `codex/release-status-catalog-defaults-20260919`, được đồng bộ từ `origin/main` sau deploy để ghi nhận release; thay đổi tài liệu này không tạo thêm production deploy.
+- Nhánh làm việc hiện tại: `codex/recurring-ui-redesign-20260919`, đang chứa commit `371a3a0` thiết kế lại card Chi phí định kỳ trên nền `origin/main`; chưa có PR/merge/deploy production cho thay đổi này.
 - Đã cập nhật CI/preview cho `merge_group`, thu hẹp trigger Supabase và chuẩn hóa single-writer cho tài liệu release; chưa bật Merge Queue/branch protection trên GitHub.
 - Bản đồ kiến trúc ổn định nằm trong [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md); quy tắc phân loại tài liệu nằm trong [`docs/AI_CONTEXT_GUIDE.md`](docs/AI_CONTEXT_GUIDE.md).
 
@@ -35,6 +35,14 @@
 - Semantic embedding/search production path đã bị loại bỏ; không đưa lại nếu chưa có quyết định kiến trúc mới.
 
 ## Recently completed
+
+### Thiết kế lại card Chi phí định kỳ (chưa merge/deploy)
+
+- Trang Chi phí định kỳ dùng bố cục responsive dạng lưới; mỗi card có thanh trạng thái, badge `Đang chạy`/`Tạm dừng`/`Đến hạn`/`Đã xóa`, chip metadata có icon, panel kỳ tiếp theo/ngày kết thúc và dự báo các kỳ kế tiếp.
+- Nhóm thao tác owner được tổ chức lại để gọn trên mobile: Sửa và Tạm dừng/Tiếp tục hiển thị trực tiếp, còn Bỏ qua, lịch sử kỳ chạy và Xóa nằm trong menu; khu vực thùng rác vẫn có Khôi phục và Xóa vĩnh viễn. Member giữ chế độ chỉ xem.
+- Files: `src/pages/RecurringExpenses.tsx`, `src/pages/RecurringExpenses.test.tsx`. Không đổi schema, API, RLS/RPC, Edge Function hoặc dữ liệu production.
+- Kiểm thử local: recurring Vitest `9/9`, full Vitest `49 file/246 test`, TypeScript, ESLint, Vite build và `git diff --check` pass; build vẫn có cảnh báo chunk lớn XLSX/ExcelJS/chart như known issue.
+- Commit: `371a3a0` trên `codex/recurring-ui-redesign-20260919`; cần review/merge trước khi cập nhật trạng thái production.
 
 ### Đặt bộ danh mục hiện tại làm mặc định cho gia đình mới
 
