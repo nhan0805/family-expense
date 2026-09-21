@@ -27,7 +27,7 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { useOptionalLanguage } from '../context/LanguageContext';
@@ -57,6 +57,7 @@ import {
   formatAmountFilterInput as formatAmountFilterInputShared,
   getVietnamCurrentPeriod,
   hasExplicitTransactionFilterParams,
+  hasOnlySystemDefaultTransactionFilterParams,
   normalizeAmountFilterInput as normalizeAmountFilterInputShared,
   resolveTransactionFilterPreset,
   sanitizeTransactionFilterPreset,
@@ -325,7 +326,10 @@ export function Transactions() {
     currentUserRole,
   } = useApp();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [hasExplicitUrlFilters] = useState(() => hasExplicitTransactionFilterParams(searchParams));
+  const [hasExplicitUrlFilters] = useState(() => {
+    const hasUrlFilters = hasExplicitTransactionFilterParams(searchParams);
+    return hasUrlFilters && !hasOnlySystemDefaultTransactionFilterParams(searchParams);
+  });
   const initialPeriod = getInitialTransactionPeriod(
     searchParams.get('month'),
     searchParams.get('year'),
@@ -394,6 +398,12 @@ export function Transactions() {
     [purposes],
   );
   const [filtersInitialized, setFiltersInitialized] = useState(hasExplicitUrlFilters);
+  const [shouldSyncFiltersToUrl, setShouldSyncFiltersToUrl] = useState(hasExplicitUrlFilters);
+  const markFilterInteraction = () => setShouldSyncFiltersToUrl(true);
+  const updateFilter = <T,>(setter: Dispatch<SetStateAction<T>>, value: SetStateAction<NoInfer<T>>) => {
+    markFilterInteraction();
+    setter(value);
+  };
   const filterPreferenceQuery = useQuery({
     queryKey: ['transaction-filter-preference', familyId, currentUserId],
     queryFn: () => fetchTransactionFilterPreference(familyId, currentUserId),
@@ -442,7 +452,7 @@ export function Transactions() {
     return () => window.clearTimeout(timeout);
   }, [query]);
   useEffect(() => {
-    if (!filtersInitialized) return;
+    if (!filtersInitialized || !shouldSyncFiltersToUrl) return;
     // A filter initialization can finish in the same tick that the user
     // navigates to another page (for example, the add-transaction form).
     // Do not let a stale search-param update take the browser back to this
@@ -455,6 +465,9 @@ export function Transactions() {
     purposeIds.forEach((id) => params.append('purposeId', id));
     expenseTypeIds.forEach((id) => params.append('expenseTypeId', id));
     paymentMethodIds.forEach((id) => params.append('paymentMethodId', id));
+    excludePurposeIds.forEach((id) => params.append('excludePurposeId', id));
+    excludeExpenseTypeIds.forEach((id) => params.append('excludeExpenseTypeId', id));
+    excludePaymentMethodIds.forEach((id) => params.append('excludePaymentMethodId', id));
     if (amountMin) params.set('amountMin', amountMin);
     if (amountMax) params.set('amountMax', amountMax);
     if (dateFrom || dateTo) {
@@ -466,7 +479,7 @@ export function Transactions() {
     }
     if (sort !== 'date-desc') params.set('sort', sort);
     setSearchParams(params, { replace: true });
-  }, [amountMax, amountMin, dateFrom, dateTo, debouncedQuery, expenseTypeIds, filtersInitialized, month, paymentMethodIds, purposeIds, setSearchParams, sort, status, transactionType, year]);
+  }, [amountMax, amountMin, dateFrom, dateTo, debouncedQuery, excludeExpenseTypeIds, excludePaymentMethodIds, excludePurposeIds, expenseTypeIds, filtersInitialized, month, paymentMethodIds, purposeIds, setSearchParams, shouldSyncFiltersToUrl, sort, status, transactionType, year]);
   useEffect(() => {
     if (bulkEditOpen) {
       setBulkEditMounted(true);
@@ -683,20 +696,20 @@ export function Transactions() {
       </p>
     );
   const filterChips = [
-    transactionType && { key: 'transactionType', label: transactionType, clear: () => setTransactionType('') },
-    status && { key: 'status', label: status, clear: () => setStatus('') },
-    ...purposeIds.map((id) => ({ key: `purposeId-${id}`, label: getCatalogDisplayName(purposes.find((item) => item.id === id), language) || (en ? 'Purpose' : 'Mục đích'), clear: () => setPurposeIds((current) => current.filter((item) => item !== id)) })),
-    ...expenseTypeIds.map((id) => ({ key: `expenseTypeId-${id}`, label: getCatalogDisplayName(expenseTypes.find((item) => item.id === id), language) || (en ? 'Category' : 'Danh mục'), clear: () => setExpenseTypeIds((current) => current.filter((item) => item !== id)) })),
-    ...paymentMethodIds.map((id) => ({ key: `paymentMethodId-${id}`, label: getCatalogDisplayName(paymentMethods.find((item) => item.id === id), language) || (en ? 'Payment method' : 'Thanh toán'), clear: () => setPaymentMethodIds((current) => current.filter((item) => item !== id)) })),
-    ...excludePurposeIds.map((id) => ({ key: `excludePurposeId-${id}`, label: `${en ? 'Exclude purpose' : 'Trừ mục đích'}: ${getCatalogDisplayName(purposes.find((item) => item.id === id), language) || (en ? 'Purpose' : 'Mục đích')}`, clear: () => setExcludePurposeIds((current) => current.filter((item) => item !== id)) })),
-    ...excludeExpenseTypeIds.map((id) => ({ key: `excludeExpenseTypeId-${id}`, label: `${en ? 'Exclude category' : 'Trừ danh mục'}: ${getCatalogDisplayName(expenseTypes.find((item) => item.id === id), language) || (en ? 'Category' : 'Danh mục')}`, clear: () => setExcludeExpenseTypeIds((current) => current.filter((item) => item !== id)) })),
-    ...excludePaymentMethodIds.map((id) => ({ key: `excludePaymentMethodId-${id}`, label: `${en ? 'Exclude payment method' : 'Trừ phương thức'}: ${getCatalogDisplayName(paymentMethods.find((item) => item.id === id), language) || (en ? 'Payment method' : 'Phương thức')}`, clear: () => setExcludePaymentMethodIds((current) => current.filter((item) => item !== id)) })),
-    amountMin && { key: 'amountMin', label: `${en ? 'From' : 'Từ'} ${formatVnd(Number(amountMin))}`, clear: () => setAmountMin('') },
-    amountMax && { key: 'amountMax', label: `${en ? 'Up to' : 'Đến'} ${formatVnd(Number(amountMax))}`, clear: () => setAmountMax('') },
-    month && { key: 'month', label: en ? (englishMonthNames[Number(month) - 1] || `Month ${Number(month)}`) : `Tháng ${Number(month)}`, clear: () => setMonth('') },
-    year && { key: 'year', label: `${en ? 'Year' : 'Năm'} ${year}`, clear: () => setYear('') },
-    dateFrom && { key: 'dateFrom', label: `${en ? 'From' : 'Từ'} ${formatDateOnlyVi(dateFrom)}`, clear: () => setDateFrom('') },
-    dateTo && { key: 'dateTo', label: `${en ? 'To' : 'Đến'} ${formatDateOnlyVi(dateTo)}`, clear: () => setDateTo('') },
+    transactionType && { key: 'transactionType', label: transactionType, clear: () => updateFilter(setTransactionType, '') },
+    status && { key: 'status', label: status, clear: () => updateFilter(setStatus, '') },
+    ...purposeIds.map((id) => ({ key: `purposeId-${id}`, label: getCatalogDisplayName(purposes.find((item) => item.id === id), language) || (en ? 'Purpose' : 'Mục đích'), clear: () => updateFilter(setPurposeIds, (current) => current.filter((item) => item !== id)) })),
+    ...expenseTypeIds.map((id) => ({ key: `expenseTypeId-${id}`, label: getCatalogDisplayName(expenseTypes.find((item) => item.id === id), language) || (en ? 'Category' : 'Danh mục'), clear: () => updateFilter(setExpenseTypeIds, (current) => current.filter((item) => item !== id)) })),
+    ...paymentMethodIds.map((id) => ({ key: `paymentMethodId-${id}`, label: getCatalogDisplayName(paymentMethods.find((item) => item.id === id), language) || (en ? 'Payment method' : 'Thanh toán'), clear: () => updateFilter(setPaymentMethodIds, (current) => current.filter((item) => item !== id)) })),
+    ...excludePurposeIds.map((id) => ({ key: `excludePurposeId-${id}`, label: `${en ? 'Exclude purpose' : 'Trừ mục đích'}: ${getCatalogDisplayName(purposes.find((item) => item.id === id), language) || (en ? 'Purpose' : 'Mục đích')}`, clear: () => updateFilter(setExcludePurposeIds, (current) => current.filter((item) => item !== id)) })),
+    ...excludeExpenseTypeIds.map((id) => ({ key: `excludeExpenseTypeId-${id}`, label: `${en ? 'Exclude category' : 'Trừ danh mục'}: ${getCatalogDisplayName(expenseTypes.find((item) => item.id === id), language) || (en ? 'Category' : 'Danh mục')}`, clear: () => updateFilter(setExcludeExpenseTypeIds, (current) => current.filter((item) => item !== id)) })),
+    ...excludePaymentMethodIds.map((id) => ({ key: `excludePaymentMethodId-${id}`, label: `${en ? 'Exclude payment method' : 'Trừ phương thức'}: ${getCatalogDisplayName(paymentMethods.find((item) => item.id === id), language) || (en ? 'Payment method' : 'Phương thức')}`, clear: () => updateFilter(setExcludePaymentMethodIds, (current) => current.filter((item) => item !== id)) })),
+    amountMin && { key: 'amountMin', label: `${en ? 'From' : 'Từ'} ${formatVnd(Number(amountMin))}`, clear: () => updateFilter(setAmountMin, '') },
+    amountMax && { key: 'amountMax', label: `${en ? 'Up to' : 'Đến'} ${formatVnd(Number(amountMax))}`, clear: () => updateFilter(setAmountMax, '') },
+    month && { key: 'month', label: en ? (englishMonthNames[Number(month) - 1] || `Month ${Number(month)}`) : `Tháng ${Number(month)}`, clear: () => updateFilter(setMonth, '') },
+    year && { key: 'year', label: `${en ? 'Year' : 'Năm'} ${year}`, clear: () => updateFilter(setYear, '') },
+    dateFrom && { key: 'dateFrom', label: `${en ? 'From' : 'Từ'} ${formatDateOnlyVi(dateFrom)}`, clear: () => updateFilter(setDateFrom, '') },
+    dateTo && { key: 'dateTo', label: `${en ? 'To' : 'Đến'} ${formatDateOnlyVi(dateTo)}`, clear: () => updateFilter(setDateTo, '') },
   ].filter(Boolean) as { key: string; label: string; clear: () => void }[];
   const filteredTotal = isSupabaseConfigured
     ? (showTrash ? rows.reduce((total, transaction) => total + getTransactionTotalImpact(transaction.amount, transaction.transactionType), 0) : transactionQuery.data?.pages[0]?.totalAmount || 0)
@@ -712,22 +725,22 @@ export function Transactions() {
   const netIsPositive = filteredTotal > 0;
   const netIsNegative = filteredTotal < 0;
   const resetFilters = () => {
-    setQuery('');
-    setTransactionType('');
-    setStatus('');
-    setPurposeIds([]);
-    setExpenseTypeIds([]);
-    setPaymentMethodIds([]);
-    setExcludePurposeIds([]);
-    setExcludeExpenseTypeIds([]);
-    setExcludePaymentMethodIds([]);
-    setAmountMin('');
-    setAmountMax('');
-    setMonth('');
-    setYear('');
-    setDateFrom('');
-    setDateTo('');
-    setSort('date-desc');
+    updateFilter(setQuery, '');
+    updateFilter(setTransactionType, '');
+    updateFilter(setStatus, '');
+    updateFilter(setPurposeIds, []);
+    updateFilter(setExpenseTypeIds, []);
+    updateFilter(setPaymentMethodIds, []);
+    updateFilter(setExcludePurposeIds, []);
+    updateFilter(setExcludeExpenseTypeIds, []);
+    updateFilter(setExcludePaymentMethodIds, []);
+    updateFilter(setAmountMin, '');
+    updateFilter(setAmountMax, '');
+    updateFilter(setMonth, '');
+    updateFilter(setYear, '');
+    updateFilter(setDateFrom, '');
+    updateFilter(setDateTo, '');
+    updateFilter(setSort, 'date-desc');
   };
   const restoreSelected = async (selectedId?: string) => {
     const selectedTransactionIds = selectedId ? new Set([selectedId]) : selectedIds;
@@ -1032,7 +1045,7 @@ export function Transactions() {
         .filter(Boolean)
         .join(' ');
       if (!transcript) return;
-      setQuery((currentQuery) => [currentQuery.trim(), transcript].filter(Boolean).join(' '));
+      updateFilter(setQuery, (currentQuery) => [currentQuery.trim(), transcript].filter(Boolean).join(' '));
       setAiSearchCompleted(false);
       setAiSearchMessage('');
       setAiSearchError('');
@@ -1095,6 +1108,7 @@ export function Transactions() {
       const response = transactionSearchResponseSchema.safeParse(data);
       if (!response.success) throw new Error('AI_RESPONSE_INVALID');
       const { filters } = response.data;
+      markFilterInteraction();
       // Keep AI search on the reliable keyword RPC. If AI only identified
       // structured filters, leave the keyword empty so those filters can
       // still return matching transactions.
@@ -1194,7 +1208,7 @@ export function Transactions() {
                   className="field min-w-0"
                   style={{ paddingLeft: '2.75rem', paddingRight: voiceSupported ? '3rem' : undefined }}
                   value={query}
-                  onChange={(event) => { setQuery(event.target.value); setAiSearchCompleted(false); setAiSearchMessage(''); setAiSearchError(''); }}
+                  onChange={(event) => { updateFilter(setQuery, event.target.value); setAiSearchCompleted(false); setAiSearchMessage(''); setAiSearchError(''); }}
                   placeholder={en ? 'Search description or notes…' : 'Tìm nội dung hoặc ghi chú…'}
                 />
                 {voiceSupported && (
@@ -1228,7 +1242,7 @@ export function Transactions() {
             <select
               className="field"
               value={sort}
-              onChange={(event) => setSort(event.target.value as SortOption)}
+              onChange={(event) => updateFilter(setSort, event.target.value as SortOption)}
             >
               <option value="date-desc">{en ? 'Newest date' : 'Ngày mới nhất'}</option>
               <option value="date-asc">{en ? 'Oldest date' : 'Ngày cũ nhất'}</option>
@@ -1251,11 +1265,11 @@ export function Transactions() {
           <div id="transaction-detailed-filters" className="ui-enter mt-3 grid items-stretch gap-3 md:grid-cols-3 xl:grid-cols-4 [&_.field]:py-2 [&_.field]:text-sm [&_.label]:mb-1 [&_.label]:leading-tight">
           <label>
             <span className="label">{en ? 'Transaction type' : 'Loại giao dịch'}</span>
-            <select className="field" value={transactionType} onChange={(event) => setTransactionType(event.target.value)}><option value="">{en ? 'All types' : 'Tất cả loại'}</option><option value="Chi tiêu">{en ? 'Money out' : 'Tiền ra'}</option><option value="Thu nhập">{en ? 'Money in' : 'Tiền vào'}</option></select>
+            <select className="field" value={transactionType} onChange={(event) => updateFilter(setTransactionType, event.target.value)}><option value="">{en ? 'All types' : 'Tất cả loại'}</option><option value="Chi tiêu">{en ? 'Money out' : 'Tiền ra'}</option><option value="Thu nhập">{en ? 'Money in' : 'Tiền vào'}</option></select>
           </label>
           <label>
             <span className="label">{en ? 'Status' : 'Trạng thái'}</span>
-            <select className="field" value={status} onChange={(event) => setStatus(event.target.value)}>
+            <select className="field" value={status} onChange={(event) => updateFilter(setStatus, event.target.value)}>
               <option value="">{en ? 'All statuses' : 'Tất cả trạng thái'}</option>
               <option value="Thực tế">{en ? 'Actual' : 'Thực tế'}</option>
               <option value="Dự kiến">{en ? 'Planned' : 'Dự kiến'}</option>
@@ -1266,7 +1280,7 @@ export function Transactions() {
             label={en ? 'Purpose' : 'Mục đích'}
             values={purposeIds}
             options={purposes}
-            onChange={setPurposeIds}
+            onChange={(values) => updateFilter(setPurposeIds, values)}
             language={language}
             placeholder={en ? 'All purposes' : 'Tất cả mục đích'}
           />
@@ -1275,7 +1289,7 @@ export function Transactions() {
             label={en ? 'Category' : 'Danh mục'}
             values={expenseTypeIds}
             options={expenseTypes}
-            onChange={setExpenseTypeIds}
+            onChange={(values) => updateFilter(setExpenseTypeIds, values)}
             language={language}
             placeholder={en ? 'All categories' : 'Tất cả danh mục'}
           />
@@ -1284,7 +1298,7 @@ export function Transactions() {
             label={en ? 'Payment method' : 'Phương thức thanh toán'}
             values={paymentMethodIds}
             options={paymentMethods}
-            onChange={setPaymentMethodIds}
+            onChange={(values) => updateFilter(setPaymentMethodIds, values)}
             language={language}
             placeholder={en ? 'All payment methods' : 'Tất cả phương thức'}
           />
@@ -1293,7 +1307,7 @@ export function Transactions() {
             label={en ? 'Exclude purpose' : 'Không gồm mục đích'}
             values={excludePurposeIds}
             options={purposes}
-            onChange={setExcludePurposeIds}
+            onChange={(values) => updateFilter(setExcludePurposeIds, values)}
             language={language}
             placeholder={en ? 'No excluded purposes' : 'Không loại trừ mục đích'}
           />
@@ -1302,7 +1316,7 @@ export function Transactions() {
             label={en ? 'Exclude category' : 'Không gồm danh mục'}
             values={excludeExpenseTypeIds}
             options={expenseTypes}
-            onChange={setExcludeExpenseTypeIds}
+            onChange={(values) => updateFilter(setExcludeExpenseTypeIds, values)}
             language={language}
             placeholder={en ? 'No excluded categories' : 'Không loại trừ danh mục'}
           />
@@ -1311,7 +1325,7 @@ export function Transactions() {
             label={en ? 'Exclude payment method' : 'Không gồm phương thức'}
             values={excludePaymentMethodIds}
             options={paymentMethods}
-            onChange={setExcludePaymentMethodIds}
+            onChange={(values) => updateFilter(setExcludePaymentMethodIds, values)}
             language={language}
             placeholder={en ? 'No excluded methods' : 'Không loại trừ phương thức'}
           />
@@ -1322,7 +1336,7 @@ export function Transactions() {
               type="text"
               inputMode="numeric"
               value={formatAmountFilterInput(amountMin)}
-              onChange={(event) => setAmountMin(normalizeAmountFilterInput(event.target.value))}
+              onChange={(event) => updateFilter(setAmountMin, normalizeAmountFilterInput(event.target.value))}
             />
           </label>
           <label className="min-w-0">
@@ -1332,7 +1346,7 @@ export function Transactions() {
               type="text"
               inputMode="numeric"
               value={formatAmountFilterInput(amountMax)}
-              onChange={(event) => setAmountMax(normalizeAmountFilterInput(event.target.value))}
+              onChange={(event) => updateFilter(setAmountMax, normalizeAmountFilterInput(event.target.value))}
             />
           </label>
           <label>
@@ -1340,7 +1354,7 @@ export function Transactions() {
             <select
               className="field"
               value={month}
-              onChange={(event) => setMonth(event.target.value)}
+              onChange={(event) => updateFilter(setMonth, event.target.value)}
             >
               <option value="">{en ? 'All months' : 'Tất cả tháng'}</option>
               {monthOptions.map((option) => (
@@ -1355,7 +1369,7 @@ export function Transactions() {
             <select
               className="field"
               value={year}
-              onChange={(event) => setYear(event.target.value)}
+              onChange={(event) => updateFilter(setYear, event.target.value)}
             >
               <option value="">{en ? 'All years' : 'Tất cả năm'}</option>
               {availableYears.map((item) => (
@@ -1372,7 +1386,7 @@ export function Transactions() {
               type="date"
               value={dateFrom}
               max={dateTo || undefined}
-              onChange={(event) => setDateFrom(event.target.value)}
+              onChange={(event) => updateFilter(setDateFrom, event.target.value)}
             />
           </label>
           <label className="min-w-0">
@@ -1382,7 +1396,7 @@ export function Transactions() {
               type="date"
               value={dateTo}
               min={dateFrom || undefined}
-              onChange={(event) => setDateTo(event.target.value)}
+              onChange={(event) => updateFilter(setDateTo, event.target.value)}
             />
           </label>
           <div>

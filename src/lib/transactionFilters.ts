@@ -208,5 +208,20 @@ export const transactionFilterUrlKeys = [
 export const hasExplicitTransactionFilterParams = (searchParams: URLSearchParams) =>
   transactionFilterUrlKeys.some((key) => searchParams.has(key));
 
+/**
+ * Older versions wrote the system preset into the URL after the Transactions
+ * screen mounted. Treat that exact shape as internal state so it cannot mask a
+ * personal preset when the browser restores the app on a later launch.
+ */
+export const hasOnlySystemDefaultTransactionFilterParams = (searchParams: URLSearchParams) => {
+  const keys = Array.from(new Set(searchParams.keys()));
+  const systemKeys = new Set(['transactionType', 'status', 'month', 'year']);
+  if (keys.length !== systemKeys.size || keys.some((key) => !systemKeys.has(key))) return false;
+  if (searchParams.getAll('transactionType').length !== 1 || searchParams.get('transactionType') !== 'Chi tiêu') return false;
+  if (searchParams.getAll('status').length !== 1 || searchParams.get('status') !== 'Thực tế') return false;
+  return /^(0[1-9]|1[0-2])$/.test(searchParams.get('month') || '')
+    && /^\d{4}$/.test(searchParams.get('year') || '');
+};
+
 export const transactionTypeFromFilter = (value: string): TransactionType | '' =>
   value === 'Chi tiêu' || value === 'Thu nhập' ? value : '';
