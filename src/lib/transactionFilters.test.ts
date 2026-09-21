@@ -3,6 +3,7 @@ import {
   createSystemTransactionFilterPreset,
   getVietnamCurrentPeriod,
   hasExplicitTransactionFilterParams,
+  hasOnlySystemDefaultTransactionFilterParams,
   resolveTransactionFilterPreset,
   sanitizeTransactionFilterPreset,
   transactionFilterPresetSchema,
@@ -54,6 +55,12 @@ describe('bộ lọc giao dịch mặc định', () => {
   it('nhận diện đường dẫn có bộ lọc rõ ràng', () => {
     expect(hasExplicitTransactionFilterParams(new URLSearchParams('month=09'))).toBe(true);
     expect(hasExplicitTransactionFilterParams(new URLSearchParams())).toBe(false);
+  });
+
+  it('nhận diện query mặc định hệ thống do phiên bản cũ tự ghi', () => {
+    expect(hasOnlySystemDefaultTransactionFilterParams(new URLSearchParams('transactionType=Chi%20tiêu&status=Th%E1%BB%B1c%20t%E1%BA%BF&month=09&year=2026'))).toBe(true);
+    expect(hasOnlySystemDefaultTransactionFilterParams(new URLSearchParams('transactionType=Chi%20tiêu&status=Th%E1%BB%B1c%20t%E1%BA%BF&month=09&year=2026&purposeId=p1'))).toBe(false);
+    expect(hasOnlySystemDefaultTransactionFilterParams(new URLSearchParams('month=09&year=2026'))).toBe(false);
   });
 
   it('từ chối khoảng tiền ngược chiều', () => {
