@@ -302,6 +302,27 @@ describe('Giao dịch mobile', () => {
     expect(screen.getByText('Đã cập nhật 1 giao dịch.')).toBeInTheDocument();
   });
 
+  it('mở modal sửa hàng loạt sau khi chọn tất cả giao dịch đang hiển thị', async () => {
+    vi.mocked(useApp).mockReturnValue({
+      transactions: [{ id: 't1', transactionDate: '2026-09-01', transactionType: 'Chi tiêu', status: 'Thực tế', description: 'Đi chợ', amount: 250000, purposeId: 'p1', expenseTypeId: 'e1', paymentMethodId: 'm1', source: 'manual', aiGenerated: false, createdBy: 'u1' }],
+      setTransactions: vi.fn(), purposes: [{ id: 'p1', name: 'Sinh hoạt' }], expenseTypes: [{ id: 'e1', name: 'Thực phẩm' }], paymentMethods: [{ id: 'm1', name: 'Tiền mặt' }], familyId: 'f1', currentUserId: 'u1', currentUserRole: 'owner',
+    } as unknown as ReturnType<typeof useApp>);
+    render(<FeedbackProvider><QueryClientProvider client={new QueryClient()}><MemoryRouter initialEntries={['/giao-dich?month=09&year=2026']}><Transactions /></MemoryRouter></QueryClientProvider></FeedbackProvider>);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Chọn nhiều giao dịch' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Chọn tất cả' }));
+    const editButton = screen.getByRole('button', { name: 'Sửa các giao dịch đã chọn' });
+    expect(editButton).toBeEnabled();
+    editButton.focus();
+    fireEvent.click(editButton);
+
+    const dialog = await screen.findByRole('dialog', { name: 'Sửa 1 giao dịch' });
+    await waitFor(() => expect(within(dialog).getByRole('button', { name: 'Hủy' })).toHaveFocus());
+    fireEvent.keyDown(document, { key: 'Escape' });
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Sửa 1 giao dịch' })).not.toBeInTheDocument());
+    await waitFor(() => expect(editButton).toHaveFocus());
+  });
+
   it('hiển thị nút xóa hàng loạt khi đã chọn giao dịch có quyền xóa', () => {
     vi.mocked(useApp).mockReturnValue({
       transactions: [{ id: 't1', transactionDate: '2026-09-01', transactionType: 'Chi tiêu', status: 'Thực tế', description: 'Đi chợ', amount: 250000, purposeId: 'p1', expenseTypeId: 'e1', paymentMethodId: 'm1', source: 'manual', aiGenerated: false, createdBy: 'u1' }],

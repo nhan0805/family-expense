@@ -20,7 +20,7 @@ import { EmptyState, TransactionListSkeleton } from '../components/AsyncStates';
 import { MultiSelectField } from '../components/MultiSelectField';
 import { TransactionRow } from '../components/TransactionRow';
 import { useFeedback } from '../components/Feedback';
-import { useFocusTrap } from '../components/ui/Dialog';
+import { Dialog } from '../components/ui/Dialog';
 import {
   keepPreviousData,
   useInfiniteQuery,
@@ -381,10 +381,8 @@ export function Transactions() {
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkEditOpen, setBulkEditOpen] = useState(false);
-  const [bulkEditMounted, setBulkEditMounted] = useState(false);
   const [bulkEditBusy, setBulkEditBusy] = useState(false);
   const [bulkEditValues, setBulkEditValues] = useState<BulkEditValues>(emptyBulkEditValues);
-  const bulkEditPanelRef = useFocusTrap<HTMLElement>(bulkEditOpen, { onEscape: () => setBulkEditOpen(false) });
   const [showTrash, setShowTrash] = useState(false);
   const [aiSearchBusy, setAiSearchBusy] = useState(false);
   const [aiSearchCompleted, setAiSearchCompleted] = useState(false);
@@ -480,15 +478,6 @@ export function Transactions() {
     if (sort !== 'date-desc') params.set('sort', sort);
     setSearchParams(params, { replace: true });
   }, [amountMax, amountMin, dateFrom, dateTo, debouncedQuery, excludeExpenseTypeIds, excludePaymentMethodIds, excludePurposeIds, expenseTypeIds, filtersInitialized, month, paymentMethodIds, purposeIds, setSearchParams, shouldSyncFiltersToUrl, sort, status, transactionType, year]);
-  useEffect(() => {
-    if (bulkEditOpen) {
-      setBulkEditMounted(true);
-      return;
-    }
-    if (!bulkEditMounted) return;
-    const timeout = window.setTimeout(() => setBulkEditMounted(false), 180);
-    return () => window.clearTimeout(timeout);
-  }, [bulkEditMounted, bulkEditOpen]);
   const localAvailableYears = Array.from(
     new Set(
       transactions
@@ -1507,22 +1496,28 @@ export function Transactions() {
             : (en ? 'Load more transactions' : 'Tải thêm giao dịch')}
         </button>
       )}
-      {bulkEditMounted && (
-        <div className={`fixed inset-0 z-[70] grid place-items-start bg-black/35 p-3 sm:p-4 ${bulkEditOpen ? 'ui-overlay-enter' : 'ui-overlay-exit'}`} role="presentation">
-            <section ref={bulkEditPanelRef} role="dialog" aria-modal="true" aria-labelledby="bulk-edit-title" aria-describedby="bulk-edit-description" className={`mt-16 max-h-[calc(100dvh-8rem)] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl dark:bg-[var(--surface)] sm:mt-20 sm:max-h-[78dvh] sm:translate-x-32 sm:rounded-3xl sm:p-5 ${bulkEditOpen ? 'ui-dialog-enter' : 'ui-dialog-exit'}`}>
-            <div className="flex items-start justify-between gap-3"><div><h2 id="bulk-edit-title" className="text-xl font-extrabold">{en ? `Edit ${selectedIds.size} transactions` : `Sửa ${selectedIds.size} giao dịch`}</h2><p id="bulk-edit-description" className="mt-1 text-sm text-gray-500 dark:text-gray-400">{en ? 'Only fields with a value will be updated.' : 'Chỉ các trường có giá trị mới sẽ được cập nhật.'}</p></div><button type="button" className="icon-button" title={en ? 'Close bulk edit' : 'Đóng sửa hàng loạt'} aria-label={en ? 'Close bulk edit' : 'Đóng sửa hàng loạt'} onClick={() => setBulkEditOpen(false)}><X size={20} aria-hidden="true"/></button></div>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <BulkSelect label={en ? 'Purpose' : 'Mục đích'} value={bulkEditValues.purposeId} onChange={(value) => setBulkEditValues((current) => ({ ...current, purposeId: value }))} options={purposes} language={language} />
-              <BulkSelect label={en ? 'Category' : 'Danh mục'} value={bulkEditValues.expenseTypeId} onChange={(value) => setBulkEditValues((current) => ({ ...current, expenseTypeId: value }))} options={expenseTypes} language={language} />
-              <BulkSelect label={en ? 'Payment method' : 'Phương thức thanh toán'} value={bulkEditValues.paymentMethodId} onChange={(value) => setBulkEditValues((current) => ({ ...current, paymentMethodId: value }))} options={paymentMethods} language={language} />
-              <BulkSelect label={en ? 'Status' : 'Trạng thái'} value={bulkEditValues.status} onChange={(value) => setBulkEditValues((current) => ({ ...current, status: value }))} options={[{ id: 'Thực tế', name: 'Thực tế', nameEn: 'Actual' }, { id: 'Dự kiến', name: 'Dự kiến', nameEn: 'Planned' }]} language={language} />
-            </div>
-            <div className="mt-4 rounded-xl bg-amber-50 p-2.5 text-sm text-amber-900 dark:bg-amber-950/30 dark:text-amber-100"><strong>{en ? 'Preview:' : 'Xem trước:'}</strong> {Object.values(bulkEditValues).filter(Boolean).length ? (en ? `${selectedIds.size} transactions · ${Object.values(bulkEditValues).filter(Boolean).length} fields will update.` : `${selectedIds.size} giao dịch · ${Object.values(bulkEditValues).filter(Boolean).length} trường sẽ cập nhật.`) : (en ? 'No fields selected.' : 'Chưa chọn trường nào để thay đổi.')}</div>
-            {deleteError && <p role="alert" className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">{deleteError}</p>}
-            <div className="mt-5 grid grid-cols-2 gap-2"><button type="button" className="btn-secondary" data-dialog-autofocus disabled={bulkEditBusy} onClick={() => setBulkEditOpen(false)}>{en ? 'Cancel' : 'Hủy'}</button><button type="button" className="btn-primary" disabled={bulkEditBusy || Object.values(bulkEditValues).every((value) => !value)} onClick={() => void applyBulkEdit()}>{bulkEditBusy ? (en ? 'Updating…' : 'Đang cập nhật…') : (en ? 'Confirm update' : 'Xác nhận cập nhật')}</button></div>
-          </section>
+      <Dialog
+        open={bulkEditOpen}
+        onClose={() => setBulkEditOpen(false)}
+        title={en ? `Edit ${selectedIds.size} transactions` : `Sửa ${selectedIds.size} giao dịch`}
+        description={en ? 'Only fields with a value will be updated.' : 'Chỉ các trường có giá trị mới sẽ được cập nhật.'}
+        panelClassName="sm:max-w-lg"
+        footer={(
+          <div className="grid grid-cols-2 gap-2">
+            <button type="button" className="btn-secondary" data-dialog-autofocus disabled={bulkEditBusy} onClick={() => setBulkEditOpen(false)}>{en ? 'Cancel' : 'Hủy'}</button>
+            <button type="button" className="btn-primary" disabled={bulkEditBusy || Object.values(bulkEditValues).every((value) => !value)} onClick={() => void applyBulkEdit()}>{bulkEditBusy ? (en ? 'Updating…' : 'Đang cập nhật…') : (en ? 'Confirm update' : 'Xác nhận cập nhật')}</button>
+          </div>
+        )}
+      >
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <BulkSelect label={en ? 'Purpose' : 'Mục đích'} value={bulkEditValues.purposeId} onChange={(value) => setBulkEditValues((current) => ({ ...current, purposeId: value }))} options={purposes} language={language} />
+          <BulkSelect label={en ? 'Category' : 'Danh mục'} value={bulkEditValues.expenseTypeId} onChange={(value) => setBulkEditValues((current) => ({ ...current, expenseTypeId: value }))} options={expenseTypes} language={language} />
+          <BulkSelect label={en ? 'Payment method' : 'Phương thức thanh toán'} value={bulkEditValues.paymentMethodId} onChange={(value) => setBulkEditValues((current) => ({ ...current, paymentMethodId: value }))} options={paymentMethods} language={language} />
+          <BulkSelect label={en ? 'Status' : 'Trạng thái'} value={bulkEditValues.status} onChange={(value) => setBulkEditValues((current) => ({ ...current, status: value }))} options={[{ id: 'Thực tế', name: 'Thực tế', nameEn: 'Actual' }, { id: 'Dự kiến', name: 'Dự kiến', nameEn: 'Planned' }]} language={language} />
         </div>
-      )}
+        <div className="mt-4 rounded-xl bg-amber-50 p-2.5 text-sm text-amber-900 dark:bg-amber-950/30 dark:text-amber-100"><strong>{en ? 'Preview:' : 'Xem trước:'}</strong> {Object.values(bulkEditValues).filter(Boolean).length ? (en ? `${selectedIds.size} transactions · ${Object.values(bulkEditValues).filter(Boolean).length} fields will update.` : `${selectedIds.size} giao dịch · ${Object.values(bulkEditValues).filter(Boolean).length} trường sẽ cập nhật.`) : (en ? 'No fields selected.' : 'Chưa chọn trường nào để thay đổi.')}</div>
+        {deleteError && <p role="alert" className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">{deleteError}</p>}
+      </Dialog>
     </div>
   );
 }
