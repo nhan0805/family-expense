@@ -24,6 +24,18 @@ describe('Dialog primitive', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: 'Cancel' })).toHaveFocus());
   });
 
+  it('renders the fixed surface outside transformed page content', () => {
+    const host = document.createElement('div');
+    host.style.transform = 'translateY(8px)';
+    document.body.appendChild(host);
+
+    const { unmount } = render(<Harness />, { container: host });
+    expect(screen.getByRole('dialog').parentElement?.parentElement).toBe(document.body);
+
+    unmount();
+    host.remove();
+  });
+
   it('keeps focus inside and closes from Escape', async () => {
     const onClose = vi.fn();
     render(
