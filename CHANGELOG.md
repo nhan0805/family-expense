@@ -2,6 +2,14 @@
 
 ## 2026-09-21
 
+### Sửa nút sửa hàng loạt giao dịch không mở modal
+
+- Nguyên nhân: editor sửa hàng loạt tự mount qua state hiệu ứng riêng, không đồng bộ với focus trap nên thao tác từ thanh chọn nhiều có thể không render modal cập nhật.
+- Sau thay đổi: dùng `Dialog` dùng chung để modal render ngay khi bấm sửa, đồng thời giữ Escape, focus vào nút Hủy và trả focus về nút mở.
+- Files: `src/pages/Transactions.tsx`, `src/pages/Transactions.ui.test.tsx`. Không đổi schema, RLS/RPC, Edge Function hoặc dữ liệu production.
+- Kiểm thử: regression flow chọn tất cả → sửa hàng loạt pass; CI hậu merge quality, coverage, build/performance, E2E và db-security pass.
+- Triển khai: PR [#246](https://github.com/nhan0805/family-expense/pull/246) merge vào `main` tại commit `96c771d`; [CI hậu merge](https://github.com/nhan0805/family-expense/actions/runs/35625161670) và [Cloudflare Pages production check](https://github.com/nhan0805/family-expense/runs/106417981509) pass; smoke `/`, `/dang-nhap` và `/thanh-vien` đều trả HTTP 200.
+
 ### Khôi phục bộ lọc cá nhân sau khi mở lại ứng dụng
 
 - Sửa lỗi trình duyệt/PWA khôi phục query chứa bộ lọc mặc định hệ thống do phiên bản cũ tự ghi vào URL, khiến màn hình Giao dịch bỏ qua bộ lọc cá nhân đã lưu sau khi mở lại app. Query mặc định cũ nay được xem là trạng thái nội bộ; bộ lọc cá nhân được áp dụng ngay khi khởi tạo, còn deep link có bộ lọc rõ ràng vẫn được ưu tiên.

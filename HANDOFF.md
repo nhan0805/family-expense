@@ -4,10 +4,10 @@
 
 ## Current state
 
-- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; `main` hiện có runtime merge commit `56de116` sau PR [#244](https://github.com/nhan0805/family-expense/pull/244). [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/eed12de7-121c-4485-9f79-634fad4c1ecd) pass; smoke `/`, `/dang-nhap` và `/thanh-vien` đều trả HTTP 200.
+- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; `main` hiện có runtime merge commit `96c771d` sau PR [#246](https://github.com/nhan0805/family-expense/pull/246). [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/09329e0c-dc35-4b65-880d-a7c9c323bc8e) pass; smoke `/`, `/dang-nhap` và `/thanh-vien` đều trả HTTP 200.
 - Code trên `main` đã gồm PR [#234](https://github.com/nhan0805/family-expense/pull/234), cho owner đặt bộ mục đích/danh mục/phương thức thanh toán hiện tại làm mặc định cho gia đình tạo mới; các PR [#238](https://github.com/nhan0805/family-expense/pull/238), [#239](https://github.com/nhan0805/family-expense/pull/239) và [#241](https://github.com/nhan0805/family-expense/pull/241) đồng bộ thứ tự/lịch sử migration để production apply được thay đổi; cùng các release trước.
-- CI hậu merge [run 35616520648](https://github.com/nhan0805/family-expense/actions/runs/35616520648) của merge commit `56de116` pass quality, E2E, db-security và performance budget. Release này không có migration Supabase, Edge Function hoặc thay đổi dữ liệu production nên không chạy Supabase Production Deploy.
-- Nhánh release/status hiện tại: `codex/release-status-transaction-filter-20260921`, được đồng bộ từ `origin/main` sau deploy để ghi nhận release; thay đổi tài liệu này không tạo thêm production deploy.
+- CI hậu merge [run 35625161670](https://github.com/nhan0805/family-expense/actions/runs/35625161670) của merge commit `96c771d` pass quality, coverage, E2E, db-security và performance budget. Release này không có migration Supabase, Edge Function hoặc thay đổi dữ liệu production nên không chạy Supabase Production Deploy.
+- Nhánh release/status hiện tại: `codex/release-status-bulk-edit-modal-20260921`, được đồng bộ từ `origin/main` sau deploy để ghi nhận release; thay đổi tài liệu này không tạo thêm production deploy.
 - Đã cập nhật CI/preview cho `merge_group`, thu hẹp trigger Supabase và chuẩn hóa single-writer cho tài liệu release; chưa bật Merge Queue/branch protection trên GitHub.
 - Bản đồ kiến trúc ổn định nằm trong [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md); quy tắc phân loại tài liệu nằm trong [`docs/AI_CONTEXT_GUIDE.md`](docs/AI_CONTEXT_GUIDE.md).
 
@@ -35,6 +35,13 @@
 - Semantic embedding/search production path đã bị loại bỏ; không đưa lại nếu chưa có quyết định kiến trúc mới.
 
 ## Recently completed
+
+### Sửa nút sửa hàng loạt giao dịch không mở modal
+
+- Editor sửa hàng loạt giao dịch dùng `Dialog` dùng chung để render ngay sau khi người dùng chọn giao dịch và bấm sửa; Escape, focus ban đầu và focus restore hoạt động nhất quán với các dialog khác.
+- Files: `src/pages/Transactions.tsx`, `src/pages/Transactions.ui.test.tsx`. Không đổi schema, RLS/RPC, Edge Function hoặc dữ liệu production.
+- Kiểm thử: flow chọn tất cả → sửa hàng loạt, CI hậu merge quality/coverage/build/performance/E2E/db-security và smoke production đều pass.
+- Triển khai: PR [#246](https://github.com/nhan0805/family-expense/pull/246) merge tại commit `96c771d`; [Cloudflare Pages production check](https://github.com/nhan0805/family-expense/runs/106417981509) pass.
 
 ### Khôi phục bộ lọc cá nhân sau khi mở lại ứng dụng
 
