@@ -1,13 +1,13 @@
 # Family Finance — Development Handoff
 
-> Cập nhật: **19/09/2026** (`Asia/Ho_Chi_Minh`)
+> Cập nhật: **21/09/2026** (`Asia/Ho_Chi_Minh`)
 
 ## Current state
 
-- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; `main` hiện có runtime merge commit `5fa6c20` sau PR [#241](https://github.com/nhan0805/family-expense/pull/241). [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/d9b585e9-1f53-46a8-b91d-55f56244077b) pass; smoke `/`, `/dang-nhap` và `/thanh-vien` đều trả HTTP 200.
+- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; `main` hiện có runtime merge commit `56de116` sau PR [#244](https://github.com/nhan0805/family-expense/pull/244). [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/eed12de7-121c-4485-9f79-634fad4c1ecd) pass; smoke `/`, `/dang-nhap` và `/thanh-vien` đều trả HTTP 200.
 - Code trên `main` đã gồm PR [#234](https://github.com/nhan0805/family-expense/pull/234), cho owner đặt bộ mục đích/danh mục/phương thức thanh toán hiện tại làm mặc định cho gia đình tạo mới; các PR [#238](https://github.com/nhan0805/family-expense/pull/238), [#239](https://github.com/nhan0805/family-expense/pull/239) và [#241](https://github.com/nhan0805/family-expense/pull/241) đồng bộ thứ tự/lịch sử migration để production apply được thay đổi; cùng các release trước.
-- CI hậu merge [run 35375328631](https://github.com/nhan0805/family-expense/actions/runs/35375328631) của merge commit `5fa6c20` pass quality, E2E và db-security. [Supabase Production Deploy run 35375328575](https://github.com/nhan0805/family-expense/actions/runs/35375328575) pass migration và Edge Functions; migration `202609190001_restore_catalog_template_promotion.sql` đã apply thành công.
-- Nhánh release/status hiện tại: `codex/release-status-catalog-defaults-20260919`, được đồng bộ từ `origin/main` sau deploy để ghi nhận release; thay đổi tài liệu này không tạo thêm production deploy.
+- CI hậu merge [run 35616520648](https://github.com/nhan0805/family-expense/actions/runs/35616520648) của merge commit `56de116` pass quality, E2E, db-security và performance budget. Release này không có migration Supabase, Edge Function hoặc thay đổi dữ liệu production nên không chạy Supabase Production Deploy.
+- Nhánh release/status hiện tại: `codex/release-status-transaction-filter-20260921`, được đồng bộ từ `origin/main` sau deploy để ghi nhận release; thay đổi tài liệu này không tạo thêm production deploy.
 - Đã cập nhật CI/preview cho `merge_group`, thu hẹp trigger Supabase và chuẩn hóa single-writer cho tài liệu release; chưa bật Merge Queue/branch protection trên GitHub.
 - Bản đồ kiến trúc ổn định nằm trong [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md); quy tắc phân loại tài liệu nằm trong [`docs/AI_CONTEXT_GUIDE.md`](docs/AI_CONTEXT_GUIDE.md).
 
@@ -35,6 +35,14 @@
 - Semantic embedding/search production path đã bị loại bỏ; không đưa lại nếu chưa có quyết định kiến trúc mới.
 
 ## Recently completed
+
+### Khôi phục bộ lọc cá nhân sau khi mở lại ứng dụng
+
+- Query chứa đúng bộ lọc mặc định hệ thống do phiên bản cũ tự ghi vào URL không còn che khuất bộ lọc cá nhân đã lưu khi browser/PWA khôi phục phiên app. Bộ lọc cá nhân được áp dụng khi màn hình Giao dịch khởi tạo; các deep link có bộ lọc rõ ràng vẫn được giữ nguyên.
+- URL chỉ đồng bộ sau thao tác của người dùng và đã serialize các bộ lọc loại trừ mục đích, loại chi phí và phương thức thanh toán.
+- Files: `src/lib/transactionFilters.ts`, `src/lib/transactionFilters.test.ts`, `src/pages/Transactions.tsx`, `src/pages/Transactions.ui.test.tsx`. Không đổi schema, RLS/RPC, Edge Function hoặc dữ liệu production.
+- Kiểm thử: Vitest 49 file/248 test, TypeScript, ESLint, Vite build, performance budget, E2E, db-security và `git diff --check` pass qua CI/local.
+- Triển khai: PR [#244](https://github.com/nhan0805/family-expense/pull/244) merge tại commit `56de116`; [CI hậu merge](https://github.com/nhan0805/family-expense/actions/runs/35616520648), [Cloudflare Pages production](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/eed12de7-121c-4485-9f79-634fad4c1ecd) và smoke production `/`, `/dang-nhap`, `/thanh-vien` pass.
 
 ### Đặt bộ danh mục hiện tại làm mặc định cho gia đình mới
 

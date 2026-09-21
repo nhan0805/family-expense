@@ -1,5 +1,15 @@
 # Nhật ký thay đổi Family Expense
 
+## 2026-09-21
+
+### Khôi phục bộ lọc cá nhân sau khi mở lại ứng dụng
+
+- Sửa lỗi trình duyệt/PWA khôi phục query chứa bộ lọc mặc định hệ thống do phiên bản cũ tự ghi vào URL, khiến màn hình Giao dịch bỏ qua bộ lọc cá nhân đã lưu sau khi mở lại app. Query mặc định cũ nay được xem là trạng thái nội bộ; bộ lọc cá nhân được áp dụng ngay khi khởi tạo, còn deep link có bộ lọc rõ ràng vẫn được ưu tiên.
+- URL chỉ được đồng bộ sau thao tác lọc của người dùng và đã bao gồm các bộ lọc loại trừ mục đích, loại chi phí và phương thức thanh toán.
+- Files: `src/lib/transactionFilters.ts`, `src/lib/transactionFilters.test.ts`, `src/pages/Transactions.tsx`, `src/pages/Transactions.ui.test.tsx`. Không đổi schema, RLS/RPC, Edge Function hoặc dữ liệu production.
+- Kiểm thử: local Vitest 49 file/248 test, TypeScript, ESLint, Vite build, performance budget và `git diff --check` pass; CI hậu merge quality, E2E và db-security pass.
+- Triển khai: PR [#244](https://github.com/nhan0805/family-expense/pull/244) merge vào `main` tại commit `56de116`; [CI hậu merge](https://github.com/nhan0805/family-expense/actions/runs/35616520648) và [Cloudflare Pages production](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/eed12de7-121c-4485-9f79-634fad4c1ecd) pass; smoke `/`, `/dang-nhap` và `/thanh-vien` đều trả HTTP 200.
+
 ## 2026-09-19
 
 ### Đặt bộ danh mục hiện tại làm mặc định cho gia đình mới
