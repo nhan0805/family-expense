@@ -1,13 +1,13 @@
 # Family Finance — Development Handoff
 
-> Cập nhật: **21/09/2026** (`Asia/Ho_Chi_Minh`)
+> Cập nhật: **22/09/2026** (`Asia/Ho_Chi_Minh`)
 
 ## Current state
 
-- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; `main` hiện có runtime merge commit `96c771d` sau PR [#246](https://github.com/nhan0805/family-expense/pull/246). [Cloudflare Pages check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/09329e0c-dc35-4b65-880d-a7c9c323bc8e) pass; smoke `/`, `/dang-nhap` và `/thanh-vien` đều trả HTTP 200.
+- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; `main` hiện có runtime merge commit `4ae10a4` sau PR [#248](https://github.com/nhan0805/family-expense/pull/248). [Cloudflare Pages production check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/2b85028a-b515-4908-954c-1d22dc4964bd) pass; smoke `/`, `/dang-nhap` và `/thanh-vien` đều trả HTTP 200.
 - Code trên `main` đã gồm PR [#234](https://github.com/nhan0805/family-expense/pull/234), cho owner đặt bộ mục đích/danh mục/phương thức thanh toán hiện tại làm mặc định cho gia đình tạo mới; các PR [#238](https://github.com/nhan0805/family-expense/pull/238), [#239](https://github.com/nhan0805/family-expense/pull/239) và [#241](https://github.com/nhan0805/family-expense/pull/241) đồng bộ thứ tự/lịch sử migration để production apply được thay đổi; cùng các release trước.
-- CI hậu merge [run 35625161670](https://github.com/nhan0805/family-expense/actions/runs/35625161670) của merge commit `96c771d` pass quality, coverage, E2E, db-security và performance budget. Release này không có migration Supabase, Edge Function hoặc thay đổi dữ liệu production nên không chạy Supabase Production Deploy.
-- Nhánh release/status hiện tại: `codex/release-status-bulk-edit-modal-20260921`, được đồng bộ từ `origin/main` sau deploy để ghi nhận release; thay đổi tài liệu này không tạo thêm production deploy.
+- CI hậu merge [run 35675143304](https://github.com/nhan0805/family-expense/actions/runs/35675143304) của merge commit `4ae10a4` pass quality, coverage, E2E, db-security và performance budget. Release này không có migration Supabase, Edge Function hoặc thay đổi dữ liệu production nên không chạy Supabase Production Deploy.
+- Nhánh release/status hiện tại: `codex/release-status-mobile-dialog-20260922`, được đồng bộ từ `origin/main` sau deploy để ghi nhận release; thay đổi tài liệu này không tạo thêm production deploy.
 - Đã cập nhật CI/preview cho `merge_group`, thu hẹp trigger Supabase và chuẩn hóa single-writer cho tài liệu release; chưa bật Merge Queue/branch protection trên GitHub.
 - Bản đồ kiến trúc ổn định nằm trong [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md); quy tắc phân loại tài liệu nằm trong [`docs/AI_CONTEXT_GUIDE.md`](docs/AI_CONTEXT_GUIDE.md).
 
@@ -35,6 +35,13 @@
 - Semantic embedding/search production path đã bị loại bỏ; không đưa lại nếu chưa có quyết định kiến trúc mới.
 
 ## Recently completed
+
+### Neo modal Dialog đúng viewport trên mobile
+
+- Shared `Dialog` render overlay qua portal vào `document.body`, tránh wrapper route có `transform` làm `position: fixed` bị neo theo nội dung dài của trang. Modal sửa hàng loạt trên mobile luôn bám viewport và không cần scroll xuống cuối trang; focus trap, Escape và focus restore được giữ nguyên.
+- Files: `src/components/ui/Dialog.tsx`, `src/components/ui/Dialog.test.tsx`. Không đổi schema, RLS/RPC, Edge Function hoặc dữ liệu production.
+- Kiểm thử: local Vitest 49 file/250 test, TypeScript, ESLint, Vite build và `git diff --check` pass; CI hậu merge quality, coverage, E2E, db-security và performance budget pass.
+- Triển khai: PR [#248](https://github.com/nhan0805/family-expense/pull/248) merge tại commit `4ae10a4`; [CI hậu merge](https://github.com/nhan0805/family-expense/actions/runs/35675143304) và [Cloudflare Pages production check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/2b85028a-b515-4908-954c-1d22dc4964bd) pass; smoke `/`, `/dang-nhap` và `/thanh-vien` đều trả HTTP 200.
 
 ### Sửa nút sửa hàng loạt giao dịch không mở modal
 
