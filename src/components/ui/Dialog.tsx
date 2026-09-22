@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, type ReactNode, type RefObject } from 'react';
+import { createPortal } from 'react-dom';
 
 const focusableSelector = [
   'a[href]',
@@ -114,7 +115,7 @@ export function Dialog({
 
   if (!open) return null;
 
-  return (
+  const dialog = (
     <div
       className={`fixed inset-0 z-[90] grid place-items-end bg-[var(--overlay)] p-0 backdrop-blur-[2px] sm:place-items-center sm:p-4 ${closing ? 'ui-overlay-exit' : 'ui-overlay-enter'} ${className}`}
       role="presentation"
@@ -137,4 +138,9 @@ export function Dialog({
       </section>
     </div>
   );
+
+  // Keep fixed positioning relative to the viewport, even when the page content
+  // is inside an animated/transformed route wrapper.
+  if (typeof document === 'undefined') return dialog;
+  return createPortal(dialog, document.body);
 }
