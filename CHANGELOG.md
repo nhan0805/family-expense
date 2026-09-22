@@ -1,5 +1,15 @@
 # Nhật ký thay đổi Family Expense
 
+## 2026-09-22
+
+### Neo modal Dialog đúng viewport trên mobile
+
+- Nguyên nhân: route content dùng wrapper animation có `transform`, khiến overlay `position: fixed` của Dialog bị tính theo wrapper dài của trang; người dùng phải scroll xuống cuối mới thấy modal.
+- Shared `Dialog` hiện render qua portal vào `document.body`, nên modal sửa hàng loạt luôn bám viewport trên mobile; focus trap, Escape và focus restore vẫn giữ nguyên.
+- Files: `src/components/ui/Dialog.tsx`, `src/components/ui/Dialog.test.tsx`. Không đổi schema, RLS/RPC, Edge Function hoặc dữ liệu production.
+- Kiểm thử: local Vitest 49 file/250 test, TypeScript, ESLint, Vite build và `git diff --check` pass; CI hậu merge quality, coverage, E2E, db-security và performance budget pass.
+- Triển khai: PR [#248](https://github.com/nhan0805/family-expense/pull/248) merge vào `main` tại commit `4ae10a4`; [CI hậu merge](https://github.com/nhan0805/family-expense/actions/runs/35675143304) và [Cloudflare Pages production check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/2b85028a-b515-4908-954c-1d22dc4964bd) pass; smoke `/`, `/dang-nhap` và `/thanh-vien` đều trả HTTP 200.
+
 ## 2026-09-21
 
 ### Sửa nút sửa hàng loạt giao dịch không mở modal
