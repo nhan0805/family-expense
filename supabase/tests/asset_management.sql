@@ -7,10 +7,12 @@ select ok(
     select 1
     from pg_proc
     where oid = 'public.get_asset_summary(uuid)'::regprocedure
-      and pg_get_functiondef(oid) ilike '%Hoàn tiền%'
-      and pg_get_functiondef(oid) ilike '%Tạm ứng%'
+      and pg_get_functiondef(oid) ilike '%transaction_type = ''Thu nhập''%'
+      and pg_get_functiondef(oid) ilike '%transaction_type = ''Chi tiêu''%'
+      and pg_get_functiondef(oid) not ilike '%Hoàn tiền%'
+      and pg_get_functiondef(oid) not ilike '%Tạm ứng%'
   ),
-  'asset summary net cash includes refunds and advances'
+  'asset summary net cash uses the current transaction enum'
 );
 
 select ok(
