@@ -2,17 +2,19 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   fetchDashboardAggregate,
   fetchDashboardAggregates,
+  fetchDashboardDueTransactions,
   fetchTransactionPage,
   REMOTE_TRANSACTION_REFRESH_INTERVAL_MS,
 } from './transactionsApi';
 
-const { rpcMock } = vi.hoisted(() => ({ rpcMock: vi.fn() }));
+const { fromMock, rpcMock } = vi.hoisted(() => ({ fromMock: vi.fn(), rpcMock: vi.fn() }));
 
 vi.mock('./supabase', () => ({
-  supabase: { rpc: rpcMock },
+  supabase: { from: fromMock, rpc: rpcMock },
 }));
 
 afterEach(() => {
+  fromMock.mockReset();
   rpcMock.mockReset();
 });
 
@@ -96,6 +98,55 @@ describe('fetchTransactionPage keyword search', () => {
 describe('remote transaction refresh', () => {
   it('refreshes external transaction changes within a bounded interval', () => {
     expect(REMOTE_TRANSACTION_REFRESH_INTERVAL_MS).toBe(30_000);
+  });
+});
+
+describe('fetchDashboardDueTransactions', () => {
+  it('loads every due transaction instead of stopping at the first 20 rows', async () => {
+    const rows = Array.from({ length: 1001 }, (_, index) => ({
+      id: `transaction-${index + 1}`,
+      family_id: '11111111-1111-4111-8111-111111111111',
+      transaction_date: '2026-09-01',
+      transaction_type: 'Chi tiêu' as const,
+      status: 'Dự kiến' as const,
+      description: `Giao dịch ${index + 1}`,
+      amount: 100_000,
+      purpose_id: '22222222-2222-4222-8222-222222222222',
+      expense_type_id: '33333333-3333-4333-8333-333333333333',
+      beneficiary_id: null,
+      payment_method_id: null,
+      note: null,
+      source: 'manual' as const,
+      source_reference: null,
+      ai_generated: false,
+      created_by: '44444444-4444-4444-8444-444444444444',
+      created_at: '2026-09-01T00:00:00.000Z',
+      deleted_at: null,
+    }));
+    const query = {
+      select: vi.fn(),
+      eq: vi.fn(),
+      is: vi.fn(),
+      lte: vi.fn(),
+      order: vi.fn(),
+      range: vi.fn(),
+    };
+    Object.values(query).forEach((method) => method.mockReturnValue(query));
+    query.range.mockImplementation((from: number, to: number) => Promise.resolve({
+      data: rows.slice(from, to + 1),
+      error: null,
+    }));
+    fromMock.mockReturnValue(query);
+
+    const result = await fetchDashboardDueTransactions(
+      '11111111-1111-4111-8111-111111111111',
+      '2026-09-29',
+    );
+
+    expect(result).toHaveLength(1001);
+    expect(result.at(-1)?.description).toBe('Giao dịch 1001');
+    expect(query.range).toHaveBeenNthCalledWith(1, 0, 999);
+    expect(query.range).toHaveBeenNthCalledWith(2, 1000, 1999);
   });
 });
 

@@ -309,18 +309,30 @@ export async function fetchDashboardDueTransactions(
   familyId: string,
   today: string,
 ): Promise<Transaction[]> {
-  const { data, error } = await supabase
-    .from('transactions')
-    .select('*')
-    .eq('family_id', familyId)
-    .eq('status', 'Dự kiến')
-    .is('deleted_at', null)
-    .lte('transaction_date', today)
-    .order('transaction_date', { ascending: true })
-    .order('id', { ascending: true })
-    .limit(20);
-  if (error) throw error;
-  return ((data || []) as TransactionRow[]).map(mapTransactionRow);
+  const pageSize = 1000;
+  const rows: TransactionRow[] = [];
+  let offset = 0;
+
+  while (true) {
+    const { data, error } = await supabase
+      .from('transactions')
+      .select('*')
+      .eq('family_id', familyId)
+      .eq('status', 'Dự kiến')
+      .is('deleted_at', null)
+      .lte('transaction_date', today)
+      .order('transaction_date', { ascending: true })
+      .order('id', { ascending: true })
+      .range(offset, offset + pageSize - 1);
+    if (error) throw error;
+
+    const page = (data || []) as TransactionRow[];
+    rows.push(...page);
+    if (page.length < pageSize) break;
+    offset += pageSize;
+  }
+
+  return rows.map(mapTransactionRow);
 }
 
 export async function fetchDeletedTransactionPage(familyId: string, filters: ServerTransactionFilters, page: number, pageSize = 50) {
