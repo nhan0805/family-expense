@@ -1,13 +1,13 @@
 # Family Finance — Development Handoff
 
-> Cập nhật: **22/09/2026** (`Asia/Ho_Chi_Minh`)
+> Cập nhật: **29/09/2026** (`Asia/Ho_Chi_Minh`)
 
 ## Current state
 
-- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; `main` hiện có runtime merge commit `4ae10a4` sau PR [#248](https://github.com/nhan0805/family-expense/pull/248). [Cloudflare Pages production check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/2b85028a-b515-4908-954c-1d22dc4964bd) pass; smoke `/`, `/dang-nhap` và `/thanh-vien` đều trả HTTP 200.
+- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; `main` hiện có runtime merge commit `2511578` sau PR [#253](https://github.com/nhan0805/family-expense/pull/253). [Cloudflare Pages production check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/0cd2ecf6-830e-41fb-9c2b-326c4cb9b4fe) pass; smoke `/`, `/dang-nhap` và `/thanh-vien` đều trả HTTP 200.
 - Code trên `main` đã gồm PR [#234](https://github.com/nhan0805/family-expense/pull/234), cho owner đặt bộ mục đích/danh mục/phương thức thanh toán hiện tại làm mặc định cho gia đình tạo mới; các PR [#238](https://github.com/nhan0805/family-expense/pull/238), [#239](https://github.com/nhan0805/family-expense/pull/239) và [#241](https://github.com/nhan0805/family-expense/pull/241) đồng bộ thứ tự/lịch sử migration để production apply được thay đổi; cùng các release trước.
-- CI hậu merge [run 35675143304](https://github.com/nhan0805/family-expense/actions/runs/35675143304) của merge commit `4ae10a4` pass quality, coverage, E2E, db-security và performance budget. Release này không có migration Supabase, Edge Function hoặc thay đổi dữ liệu production nên không chạy Supabase Production Deploy.
-- Nhánh release/status hiện tại: `codex/release-status-mobile-dialog-20260922`, được đồng bộ từ `origin/main` sau deploy để ghi nhận release; thay đổi tài liệu này không tạo thêm production deploy.
+- CI hậu merge [run 36458109647](https://github.com/nhan0805/family-expense/actions/runs/36458109647) của merge commit `2511578` pass quality, coverage, E2E, db-security và performance budget. Release này không có migration Supabase, Edge Function hoặc thay đổi dữ liệu production nên không chạy Supabase Production Deploy.
+- Nhánh release/status hiện tại: `codex/release-status-savings-settlement-20260929`, được đồng bộ từ `origin/main` sau deploy để ghi nhận release; thay đổi tài liệu này không tạo thêm production deploy.
 - Đã cập nhật CI/preview cho `merge_group`, thu hẹp trigger Supabase và chuẩn hóa single-writer cho tài liệu release; chưa bật Merge Queue/branch protection trên GitHub.
 - Bản đồ kiến trúc ổn định nằm trong [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md); quy tắc phân loại tài liệu nằm trong [`docs/AI_CONTEXT_GUIDE.md`](docs/AI_CONTEXT_GUIDE.md).
 
@@ -35,6 +35,13 @@
 - Semantic embedding/search production path đã bị loại bỏ; không đưa lại nếu chưa có quyết định kiến trúc mới.
 
 ## Recently completed
+
+### Sổ đã tất toán không còn hiển thị quá hạn
+
+- Sổ tiết kiệm có trạng thái `closed` hoặc `archived` nay hiển thị `Đã tất toán` ở thẻ đáo hạn và dùng màu trung tính; chỉ sổ `active` mới được tính là còn hạn, đáo hạn hôm nay hoặc quá hạn.
+- Files: `src/pages/Assets.tsx`, `src/pages/Assets.ui.test.tsx`. Không đổi schema, RLS/RPC, Edge Function hoặc dữ liệu production.
+- Kiểm thử: Vitest 49 file/252 test, TypeScript, ESLint, Vite build, performance budget, E2E, db-security và `git diff --check` pass qua local/CI.
+- Triển khai: PR [#253](https://github.com/nhan0805/family-expense/pull/253) merge tại commit `2511578`; [CI hậu merge run 36458109647](https://github.com/nhan0805/family-expense/actions/runs/36458109647) và [Cloudflare Pages production check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/0cd2ecf6-830e-41fb-9c2b-326c4cb9b4fe) pass; không có Supabase Production Deploy. Smoke `/`, `/dang-nhap` và `/thanh-vien` đều trả HTTP 200.
 
 ### Neo modal Dialog đúng viewport trên mobile
 

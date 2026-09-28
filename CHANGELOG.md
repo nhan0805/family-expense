@@ -1,5 +1,14 @@
 # Nhật ký thay đổi Family Expense
 
+## 2026-09-29
+
+### Sổ đã tất toán không còn hiển thị quá hạn
+
+- Sổ tiết kiệm có trạng thái `closed` hoặc `archived` không còn bị thẻ đáo hạn tô đỏ và ghi `Đã quá hạn` sau ngày đáo hạn; thẻ hiển thị `Đã tất toán` với màu trung tính. Sổ `active` vẫn giữ nguyên cảnh báo quá hạn/đáo hạn sắp tới.
+- Files: `src/pages/Assets.tsx`, `src/pages/Assets.ui.test.tsx`. Không đổi schema, RLS/RPC, Edge Function hoặc dữ liệu production.
+- Kiểm thử: Vitest 49 file/252 test, TypeScript, ESLint, Vite build, performance budget, E2E, db-security và `git diff --check` pass.
+- Triển khai: PR [#253](https://github.com/nhan0805/family-expense/pull/253) merge tại commit `2511578`; [CI hậu merge run 36458109647](https://github.com/nhan0805/family-expense/actions/runs/36458109647) và [Cloudflare Pages production check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/0cd2ecf6-830e-41fb-9c2b-326c4cb9b4fe) pass; smoke production `/`, `/dang-nhap` và `/thanh-vien` đều trả HTTP 200. Không chạy Supabase Production Deploy vì không có thay đổi `supabase/`.
+
 ## 2026-09-22
 
 ### Neo modal Dialog đúng viewport trên mobile
