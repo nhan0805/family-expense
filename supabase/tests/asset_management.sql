@@ -1,6 +1,6 @@
 -- Structural tests for savings-book and gold asset management.
 begin;
-select plan(43);
+select plan(44);
 
 select ok(
   exists(
@@ -112,6 +112,14 @@ select ok(
   pg_get_functiondef('public.settle_savings_account(uuid,uuid,numeric,date,uuid,text)'::regprocedure) ilike '%settle_savings_account_internal%'
   and pg_get_functiondef('public.auto_settle_due_savings_accounts(date)'::regprocedure) ilike '%FOR UPDATE SKIP LOCKED%',
   'manual and automatic savings settlement share an idempotent locked path'
+);
+select ok(
+  pg_get_functiondef('public.settle_savings_account_internal(uuid,uuid,numeric,date,uuid,text,uuid)'::regprocedure) ilike '%public.automatic_transaction_defaults%'
+  and pg_get_functiondef('public.settle_savings_account_internal(uuid,uuid,numeric,date,uuid,text,uuid)'::regprocedure) ilike '%savings_settlement%'
+  and pg_get_functiondef('public.settle_savings_account_internal(uuid,uuid,numeric,date,uuid,text,uuid)'::regprocedure) ilike '%savings_interest%'
+  and pg_get_functiondef('public.settle_savings_account_internal(uuid,uuid,numeric,date,uuid,text,uuid)'::regprocedure) ilike '%asset-savings-settlement%'
+  and pg_get_functiondef('public.settle_savings_account_internal(uuid,uuid,numeric,date,uuid,text,uuid)'::regprocedure) ilike '%asset-savings-interest%',
+  'savings settlement honors automatic mappings with stable catalog fallbacks'
 );
 select ok(
   pg_get_functiondef('public.record_gold_sale_aggregate(uuid,date,numeric,numeric,uuid,text)'::regprocedure) ilike '%public.is_family_member(%'
