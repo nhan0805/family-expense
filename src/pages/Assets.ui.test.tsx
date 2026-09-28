@@ -308,6 +308,29 @@ describe('Tài sản', () => {
     expect(within(pricePanel!).getByText('Chưa thiết lập')).toBeInTheDocument();
   });
 
+  it.each(['closed', 'archived'] as const)('không hiển thị sổ %s đã tất toán là quá hạn', (status) => {
+    const settledSavingsAccount = {
+      ...savingsAccount,
+      id: `savings-settled-${status}`,
+      name: 'Sổ đã tất toán',
+      currentBalance: 0,
+      status,
+    };
+    localStorage.setItem(`family-expense:savings-accounts:${familyId}`, JSON.stringify([settledSavingsAccount]));
+    renderAssets([]);
+
+    if (status === 'archived') {
+      fireEvent.click(screen.getByText(/Sổ tiết kiệm đã lưu trữ/));
+    }
+    const savingsArticle = screen.getByText('ACB · Sổ đã tất toán').closest('article')!;
+    const maturityCard = within(savingsArticle).getByText('Đáo hạn').closest('.asset-stat-card')!;
+
+    expect(within(savingsArticle).getByText('Đã tất toán')).toBeInTheDocument();
+    expect(savingsArticle).not.toHaveTextContent('Đã quá hạn');
+    expect(maturityCard).toHaveClass('text-gray-600', 'dark:text-gray-300');
+    expect(maturityCard).not.toHaveClass('text-rose-700', 'dark:text-rose-300');
+  });
+
   it('hiển thị lô vàng theo holding card gọn, có phân cấp số liệu và nút icon', () => {
     localStorage.setItem(`family-expense:savings-accounts:${familyId}`, JSON.stringify([savingsAccount]));
     localStorage.setItem(`family-expense:savings-movements:${familyId}`, JSON.stringify([{
