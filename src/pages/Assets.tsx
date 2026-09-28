@@ -172,7 +172,7 @@ const interestMethodLabel = (value: SavingsAccount['interestMethod'], en: boolea
   return en ? 'At maturity' : 'Cuối kỳ';
 };
 
-export function assetError(error: unknown, en: boolean, fallback: string) {
+export function assetError(error: unknown, en: boolean, fallback: string, operation?: 'settlement') {
   const raw = errorText(error).toLowerCase();
   if (raw.includes('forbidden') || raw.includes('42501'))
     return en ? 'You must be a family member to change assets.' : 'Bạn phải là thành viên gia đình để thay đổi tài sản.';
@@ -190,10 +190,16 @@ export function assetError(error: unknown, en: boolean, fallback: string) {
     return en ? 'Sell all remaining gold before archiving it.' : 'Hãy bán hết vàng còn lại trước khi lưu trữ.';
   if (raw.includes('principal_edit_not_allowed'))
     return en ? 'The opening principal cannot be edited after the book is created.' : 'Không thể sửa tiền gốc sau khi đã tạo sổ.';
-  if (raw.includes('catalog_not_ready'))
+  if (raw.includes('catalog_not_ready')) {
+    if (operation === 'settlement') {
+      return en
+        ? 'The automatic transaction categories are not ready. Update the automatic transaction settings and try again.'
+        : 'Danh mục giao dịch tự động chưa sẵn sàng. Hãy cập nhật cài đặt giao dịch tự động rồi thử lại.';
+    }
     return en
       ? 'The automatic transaction categories are not ready. Uncheck automatic transaction creation to save the asset only, or update the automatic transaction settings and try again.'
       : 'Danh mục giao dịch tự động chưa sẵn sàng. Hãy bỏ chọn tự tạo giao dịch để chỉ lưu tài sản, hoặc cập nhật cài đặt giao dịch tự động rồi thử lại.';
+  }
   if (raw.includes('pgrst202') || raw.includes('could not find the function') || raw.includes('upsert_savings_account'))
     return en
       ? 'The savings-book service has not been updated yet. Reload the app and try again.'
@@ -691,7 +697,7 @@ export function Assets() {
       notify(en ? 'Savings book settled and cash recorded.' : 'Đã tất toán sổ và ghi nhận tiền gốc, tiền lãi.');
     } catch (error) {
       reportClientError(error, 'mutation');
-      setFormError(assetError(error, en, en ? 'Could not settle the savings book.' : 'Không thể tất toán sổ tiết kiệm.'));
+      setFormError(assetError(error, en, en ? 'Could not settle the savings book.' : 'Không thể tất toán sổ tiết kiệm.', 'settlement'));
     } finally {
       setBusy('');
     }

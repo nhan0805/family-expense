@@ -74,6 +74,8 @@ describe('Tài sản', () => {
   it('dịch đúng lỗi RPC catalog từ object Supabase', () => {
     expect(assetError({ code: 'P0001', message: 'CATALOG_NOT_READY' }, false, 'fallback')).toContain('bỏ chọn tự tạo giao dịch');
     expect(assetError({ code: 'P0001', message: 'CATALOG_NOT_READY' }, false, 'fallback')).toContain('chỉ lưu tài sản');
+    expect(assetError({ code: 'P0001', message: 'CATALOG_NOT_READY' }, false, 'fallback', 'settlement')).toContain('cập nhật cài đặt giao dịch tự động');
+    expect(assetError({ code: 'P0001', message: 'CATALOG_NOT_READY' }, false, 'fallback', 'settlement')).not.toContain('bỏ chọn tự tạo giao dịch');
   });
 
   it('xóa sổ tiết kiệm cùng giao dịch liên kết sau khi xác nhận', async () => {
