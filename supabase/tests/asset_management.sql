@@ -1,6 +1,17 @@
 -- Structural tests for savings-book and gold asset management.
 begin;
-select plan(44);
+select plan(45);
+
+select ok(
+  exists(
+    select 1
+    from pg_proc
+    where oid = 'public.get_asset_summary(uuid)'::regprocedure
+      and pg_get_functiondef(oid) ilike '%Hoàn tiền%'
+      and pg_get_functiondef(oid) ilike '%Tạm ứng%'
+  ),
+  'asset summary net cash includes refunds and advances'
+);
 
 select ok(
   exists(
