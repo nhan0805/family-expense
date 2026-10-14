@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Check, ChevronDown, FilePlus2, LoaderCircle, Mic, MicOff, Pencil, Sparkles, Trash2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { Controller, useForm, useWatch } from 'react-hook-form';
+import { Controller, useForm, useWatch, type FieldErrors } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { useOptionalLanguage } from '../context/LanguageContext';
@@ -161,7 +161,8 @@ export function TransactionForm() {
       aiGenerated: false,
     },
   });
-  const onInvalid = () => {
+  const onInvalid = (formErrors: FieldErrors<TransactionFormInput>) => {
+    if (formErrors.status) setExtrasOpen(true);
     window.requestAnimationFrame(() => errorSummaryRef.current?.focus());
   };
   const watchedForm = useWatch({ control });

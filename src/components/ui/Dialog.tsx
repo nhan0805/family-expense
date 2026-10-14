@@ -45,7 +45,11 @@ export function useFocusTrap<T extends HTMLElement>(
       if (!surface) return;
       const preferred = surface.querySelector<HTMLElement>('[data-dialog-autofocus]');
       const first = preferred || surface.querySelector<HTMLElement>(focusableSelector);
-      first?.focus();
+      if (first) {
+        first.focus();
+      } else {
+        surface.focus();
+      }
     }, 0);
 
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -127,6 +131,7 @@ export function Dialog({
         ref={panelRef}
         role={role}
         aria-modal="true"
+        tabIndex={-1}
         aria-labelledby={titleId}
         aria-describedby={description ? descriptionId : undefined}
         className={`max-h-[min(90dvh,48rem)] w-full max-w-md overflow-y-auto rounded-t-[var(--radius-dialog)] bg-[var(--surface)] p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-[var(--shadow-overlay)] sm:rounded-[var(--radius-dialog)] sm:pb-5 ${closing ? 'ui-dialog-exit' : 'ui-dialog-enter'} ${panelClassName}`}

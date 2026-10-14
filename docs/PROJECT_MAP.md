@@ -27,7 +27,7 @@ The browser is a React application backed by Supabase Auth, PostgreSQL, RLS, RPC
 ```text
 /
 ├── src/
-│   ├── components/       Shared layout, feedback, fields and transaction row UI
+│   ├── components/       Shared layout, feedback, fields, tabs and transaction row UI
 │   ├── context/          Auth/family bootstrap, language and theme state
 │   ├── lib/              Domain models, validation, API/RPC adapters, AI and imports
 │   ├── pages/            Routed screens and page-level tests
@@ -62,6 +62,7 @@ Generated/dependency output such as `node_modules/`, `dist/`, `coverage/`, Playw
 - `src/App.tsx` defines login, reset-password, family onboarding and authenticated routes.
 - `src/context/AppContext.tsx` loads the authenticated user, active family, role and catalogs; it also preserves demo fallback behavior and exposes family/member/catalog mutations.
 - `src/context/LanguageContext.tsx` and `src/context/ThemeContext.tsx` own cross-cutting presentation preferences.
+- `src/components/ui/` owns shared UI behavior: `Dialog` handles portal/focus/Escape/restore, `StatusMessage` handles accessible status tones, and `Primitives.tsx` provides the shared keyboard-aware `Tabs`, `IconButton` and field contract used by routed screens.
 
 ### Transactions
 

@@ -1,5 +1,5 @@
 import { Check, Copy, Pencil, Plus, Search, Tags, Trash2, X } from 'lucide-react';
-import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useApp, type CatalogKind } from '../context/AppContext';
 import { useOptionalLanguage } from '../context/LanguageContext';
 import { EmptyState } from '../components/AsyncStates';
@@ -11,6 +11,7 @@ import {
   searchCatalogIcons,
 } from '../lib/catalogIcons';
 import { getCatalogDisplayName, type CatalogItem } from '../lib/domain';
+import { Tabs } from '../components/ui/Primitives';
 
 type Editor = { kind: CatalogKind; id?: string } | null;
 
@@ -41,7 +42,6 @@ export function Catalogs() {
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [promotingDefaults, setPromotingDefaults] = useState(false);
-  const tabRefs = useRef<Record<CatalogKind, HTMLButtonElement | null>>({ purpose: null, expenseType: null, paymentMethod: null });
 
   const openEditor = (kind: CatalogKind, item?: CatalogItem) => {
     setActiveKind(kind);
@@ -147,24 +147,6 @@ export function Catalogs() {
     { kind: 'expenseType', title: isEnglish ? 'Expense type' : 'Danh mục', items: expenseTypes },
     { kind: 'paymentMethod', title: isEnglish ? 'Payment method' : 'Phương thức thanh toán', items: paymentMethods },
   ];
-  const handleTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>, currentKind: CatalogKind) => {
-    const currentIndex = catalogTabs.findIndex((tab) => tab.kind === currentKind);
-    const nextIndex = event.key === 'Home'
-      ? 0
-      : event.key === 'End'
-        ? catalogTabs.length - 1
-        : event.key === 'ArrowRight' || event.key === 'ArrowDown'
-          ? (currentIndex + 1) % catalogTabs.length
-          : event.key === 'ArrowLeft' || event.key === 'ArrowUp'
-            ? (currentIndex - 1 + catalogTabs.length) % catalogTabs.length
-            : null;
-    if (nextIndex === null) return;
-    event.preventDefault();
-    const nextKind = catalogTabs[nextIndex]?.kind;
-    if (!nextKind) return;
-    setActiveKind(nextKind);
-    tabRefs.current[nextKind]?.focus();
-  };
   return <div className="catalogs-page space-y-5">
     <div className="page-header">
       <p className="page-kicker"><Tags size={16} aria-hidden="true" />{isEnglish ? 'Family setup' : 'Thiết lập gia đình'}</p>
@@ -180,21 +162,13 @@ export function Catalogs() {
         <p className="text-xs text-gray-500 dark:text-gray-400">{isEnglish ? 'Used when a new family is created.' : 'Áp dụng khi tạo gia đình mới.'}</p>
       </div>}
     </div>
-    <div className="catalog-tabs" role="tablist" aria-orientation="horizontal" aria-label={isEnglish ? 'Catalog groups' : 'Nhóm danh mục'}>
-      {catalogTabs.map(({ kind, title }) => <button
-        key={kind}
-        ref={(element) => { tabRefs.current[kind] = element; }}
-        id={`catalog-tab-${kind}`}
-        type="button"
-        role="tab"
-        aria-selected={activeKind === kind}
-        aria-controls={`catalog-panel-${kind}`}
-        tabIndex={activeKind === kind ? 0 : -1}
-        className="catalog-tab"
-        onClick={() => setActiveKind(kind)}
-        onKeyDown={(event) => handleTabKeyDown(event, kind)}
-      >{title}</button>)}
-    </div>
+    <Tabs
+      tabs={catalogTabs.map(({ kind, title }) => ({ id: kind, label: title }))}
+      value={activeKind}
+      onChange={setActiveKind}
+      ariaLabel={isEnglish ? 'Catalog groups' : 'Nhóm danh mục'}
+      idPrefix="catalog"
+    />
     <div className="catalog-tab-panels">
       {catalogTabs.map(({ kind, title, items }) => <div
         key={kind}

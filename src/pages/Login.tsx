@@ -5,12 +5,13 @@ import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { useLanguage } from '../context/LanguageContext';
 import { authErrorMessage } from '../lib/errorRecovery';
 import { StatusMessage } from '../components/ui/StatusMessage';
+import { ThemeSelect } from '../components/ThemeSelect';
 
 type Mode = 'login' | 'signup' | 'magic' | 'forgot';
 type MessageTone = 'info' | 'error' | 'success';
 
 export function Login() {
-  const { language } = useLanguage(); const en = language === 'en';
+  const { language, t } = useLanguage(); const en = language === 'en';
   const navigate = useNavigate();
   const location = useLocation();
   const [mode, setMode] = useState<Mode>('login');
@@ -156,6 +157,9 @@ export function Login() {
             <span className="brand-mark" aria-hidden="true"><WalletCards size={22} /></span>
             <p className="brand-wordmark text-sm">FAMILY FINANCE</p>
           </div>
+          <div className="mb-5 flex justify-end">
+            <ThemeSelect compact showCompactIcon={false} showCompactLanguage />
+          </div>
 
           <div className="mb-7">
             <p className="text-sm font-bold text-[var(--primary)]">{modeEyebrow}</p>
@@ -198,7 +202,7 @@ export function Login() {
 
           {message && <StatusMessage id="auth-message" tone={messageTone} className="mt-5 leading-6">{message}</StatusMessage>}
           <div className="mt-6 flex flex-wrap items-center justify-between gap-2 border-t border-[var(--border)] pt-4 text-sm">
-            {mode === 'login' && <><button className="min-h-11 rounded-lg px-2 font-semibold text-[var(--muted)] transition hover:bg-[var(--surface-subtle)] hover:text-[var(--primary)]" type="button" onClick={() => changeMode('forgot')}>{en ? 'Forgot password?' : 'Quên mật khẩu?'}</button><button className="min-h-11 rounded-lg px-2 font-semibold text-[var(--primary)] transition hover:bg-[var(--primary-soft)]" type="button" onClick={() => changeMode('magic')}>Magic link</button></>}
+            {mode === 'login' && <><button className="min-h-11 rounded-lg px-2 font-semibold text-[var(--muted)] transition hover:bg-[var(--surface-subtle)] hover:text-[var(--primary)]" type="button" onClick={() => changeMode('forgot')}>{en ? 'Forgot password?' : 'Quên mật khẩu?'}</button><button className="min-h-11 rounded-lg px-2 font-semibold text-[var(--primary)] transition hover:bg-[var(--primary-soft)]" type="button" onClick={() => changeMode('magic')}>{t('magicLink')}</button></>}
             {(mode === 'signup' || mode === 'magic' || mode === 'forgot') && <button className="min-h-11 rounded-lg px-2 font-semibold text-[var(--primary)] transition hover:bg-[var(--primary-soft)]" type="button" onClick={() => changeMode('login')}>{en ? 'Back to log in' : 'Về đăng nhập'}</button>}
           </div>
         </section>

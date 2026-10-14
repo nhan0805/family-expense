@@ -3,13 +3,17 @@
 :root {
   --app-bg: #f8fafc;
   --surface: #ffffff;
+  --surface-elevated: #ffffff;
   --surface-hover: #f8fafc;
   --surface-muted: #f1f5f9;
   --surface-subtle: #f8fafc;
   --border: #e2e8f0;
   --border-strong: #cbd5e1;
   --text: #0f172a;
+  --text-primary: #0f172a;
   --muted: #475569;
+  --text-secondary: #475569;
+  --text-tertiary: #64748b;
   --text-on-primary: #ffffff;
   --primary: #1e40af;
   --primary-hover: #1d4ed8;
@@ -47,6 +51,15 @@
   --radius-card: 1rem;
   --radius-control: .75rem;
   --radius-dialog: 1.5rem;
+  --radius-sm: .5rem;
+  --radius-md: .75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --space-page: 1rem;
+  --space-section: 1.5rem;
+  --motion-fast: 150ms;
+  --motion-normal: 200ms;
+  --motion-slow: 280ms;
   --shadow-card: 0 1px 2px #102a2112, 0 8px 24px #102a2108;
   --shadow-card-hover: 0 10px 28px #102a2117;
   --shadow-interactive: 0 10px 28px #102a2117;
@@ -56,13 +69,17 @@
 .dark {
   --app-bg: #282a36;
   --surface: #343746;
+  --surface-elevated: #3b3e4f;
   --surface-hover: #3b3e4f;
   --surface-muted: #44475a;
   --surface-subtle: #2f3140;
   --border: rgba(248, 248, 242, .14);
   --border-strong: #6272a4;
   --text: #f8f8f2;
+  --text-primary: #f8f8f2;
   --muted: #c6c8d3;
+  --text-secondary: #c6c8d3;
+  --text-tertiary: #a8abbc;
   --text-on-primary: #282a36;
   --primary: #bd93f9;
   --primary-hover: #caa9fa;
@@ -106,6 +123,7 @@
 
 :root {
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  color-scheme: light;
   color: var(--text);
   background: var(--app-bg);
   font-synthesis: none;
@@ -134,6 +152,15 @@ body {
   min-height: 100vh;
   min-height: 100dvh;
   background: var(--app-bg);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
 }
 
 .skip-link {
@@ -187,6 +214,29 @@ body {
 
 .transaction-expense-row {
   background: linear-gradient(90deg, color-mix(in srgb, var(--danger-soft) 72%, var(--surface)) 0%, color-mix(in srgb, var(--danger-soft) 32%, transparent) 58%, transparent 100%);
+}
+
+.net-summary-card {
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-card);
+}
+
+.net-summary-card-danger {
+  border-color: color-mix(in srgb, var(--danger) 28%, var(--border));
+  background: color-mix(in srgb, var(--danger-soft) 58%, var(--surface));
+  color: var(--danger-strong);
+}
+
+.net-summary-card-success {
+  border-color: color-mix(in srgb, var(--success) 28%, var(--border));
+  background: color-mix(in srgb, var(--success-soft) 58%, var(--surface));
+  color: var(--success-strong);
+}
+
+.net-summary-card-neutral {
+  border-color: var(--border);
+  background: var(--surface-muted);
+  color: var(--text-secondary);
 }
 
 .safe-bottom {
@@ -369,6 +419,72 @@ body {
   line-height: 1.5;
 }
 
+.page-header {
+  min-width: 0;
+}
+
+.page-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .5rem;
+}
+
+.section-title {
+  color: var(--text-primary);
+  font-size: 1.125rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.section-description {
+  color: var(--text-secondary);
+  font-size: .875rem;
+  line-height: 1.5;
+}
+
+.status-message {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  gap: .625rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-muted);
+  padding: .75rem .875rem;
+  color: var(--text-primary);
+  font-size: .875rem;
+}
+
+.status-message-icon {
+  flex: 0 0 auto;
+  margin-top: .1rem;
+}
+
+.status-message-info {
+  border-color: color-mix(in srgb, var(--info) 35%, var(--border));
+  background: var(--info-soft);
+  color: var(--info-strong);
+}
+
+.status-message-success {
+  border-color: color-mix(in srgb, var(--success) 35%, var(--border));
+  background: var(--success-soft);
+  color: var(--success-strong);
+}
+
+.status-message-warning {
+  border-color: color-mix(in srgb, var(--warning) 40%, var(--border));
+  background: var(--warning-soft);
+  color: var(--warning-strong);
+}
+
+.status-message-error {
+  border-color: color-mix(in srgb, var(--danger) 40%, var(--border));
+  background: var(--danger-soft);
+  color: var(--danger-strong);
+}
+
 .card {
   border: 1px solid var(--border);
   background: var(--surface);
@@ -408,6 +524,37 @@ body {
 .kpi-tone-violet {
   background: var(--accent-soft);
   color: var(--accent-strong);
+}
+
+.asset-summary-card {
+  min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+}
+
+.asset-summary-card-total {
+  border-color: color-mix(in srgb, var(--accent-strong) 28%, var(--border));
+  background: color-mix(in srgb, var(--accent-soft) 68%, var(--surface));
+  color: var(--accent-strong);
+}
+
+.asset-summary-card-cash {
+  border-color: color-mix(in srgb, var(--info) 28%, var(--border));
+  background: color-mix(in srgb, var(--info-soft) 68%, var(--surface));
+  color: var(--info-strong);
+}
+
+.asset-summary-card-savings {
+  border-color: color-mix(in srgb, var(--success) 28%, var(--border));
+  background: color-mix(in srgb, var(--success-soft) 68%, var(--surface));
+  color: var(--success-strong);
+}
+
+.asset-summary-card-gold {
+  border-color: color-mix(in srgb, var(--warning) 32%, var(--border));
+  background: color-mix(in srgb, var(--warning-soft) 68%, var(--surface));
+  color: var(--warning-strong);
 }
 
 .budget-snapshot {
@@ -500,7 +647,7 @@ body {
   border-radius: .78rem;
   font-weight: 750;
   cursor: pointer;
-  transition: background-color .16s ease, border-color .16s ease, box-shadow .16s ease, color .16s ease, opacity .16s ease, transform .12s ease;
+  transition: background-color var(--motion-normal) ease, border-color var(--motion-normal) ease, box-shadow var(--motion-normal) ease, color var(--motion-normal) ease, opacity var(--motion-normal) ease, transform var(--motion-fast) ease;
 }
 
 .btn-primary {

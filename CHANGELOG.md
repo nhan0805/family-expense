@@ -1,5 +1,16 @@
 # Nhật ký thay đổi Family Expense
 
+## 2026-10-14
+
+### Triển khai batch hiện đại hóa UI/UX toàn app
+
+- Chuẩn hóa semantic token cho surface, typography, radius, spacing và motion; Dashboard tài sản và tóm tắt giao dịch dùng semantic color thay vì palette riêng theo feature.
+- Tạo contract UI dùng chung cho Tabs/IconButton/Field; Settings và Danh mục dùng chung keyboard behavior với Arrow/Home/End. Dialog và popover có fallback focus an toàn hơn, notification có nút đóng rõ ràng và nhãn VI/EN đầy đủ.
+- Auth có toggle giao diện/ngôn ngữ gọn trên Login, Reset Password và Create Family; menu mobile đánh dấu đúng nhóm “Thêm”; Transaction row và Magic link bản địa hóa accessible name.
+- Giao dịch có ô tìm kiếm native search, trạng thái số dòng đang hiển thị, clear nhanh và lọc nâng cao vẫn progressive disclosure; lỗi field `Trạng thái` tự mở phần nâng cao trước khi đưa focus về error summary.
+- Files chính: `src/index.css`, `src/components/ui/Primitives.tsx`, `src/components/ui/Dialog.tsx`, `src/components/ui/StatusMessage.tsx`, `src/components/BudgetNotifications.tsx`, `src/components/Layout.tsx`, `src/components/TransactionRow.tsx`, `src/components/ThemeSelect.tsx`, `src/components/AuthShell.tsx`, `src/context/LanguageContext.tsx`, `src/pages/{Login,ResetPassword,CreateFamily,Settings,Catalogs,Transactions,TransactionForm,Dashboard}.tsx`.
+- Không đổi schema, RLS/RPC, Edge Function, dependency hoặc dữ liệu production. Kiểm thử local: TypeScript, ESLint, Vitest `49 file / 253 test`, Vite build và `git diff --check` pass. Build vẫn ghi nhận cảnh báo chunk lớn XLSX/ExcelJS/chart hiện hữu.
+
 ## 2026-09-29
 
 ### Sổ đã tất toán không còn hiển thị quá hạn

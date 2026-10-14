@@ -17,7 +17,7 @@ export function CreateFamily() {
   const [signingOut, setSigningOut] = useState(false);
   if (loading)
     return (
-      <AuthShell maxWidth="max-w-2xl" showCompactThemeIcon={false}>
+      <AuthShell maxWidth="max-w-2xl" showCompactThemeIcon={false} showCompactLanguage>
         <div className="space-y-5" role="status" aria-live="polite">
           <span className="sr-only">{en ? 'Preparing your family space…' : 'Đang chuẩn bị không gian gia đình…'}</span>
           <div className="h-3 w-32 animate-pulse rounded-full bg-[var(--primary-soft)] motion-reduce:animate-none" aria-hidden="true" />
@@ -68,7 +68,7 @@ export function CreateFamily() {
     : ['Có sẵn danh mục mặc định ngay từ đầu.', 'Thêm những người bạn tin tưởng sau khi thiết lập.', 'Cả gia đình cùng theo dõi một bức tranh chung.'];
 
   return (
-    <AuthShell maxWidth="max-w-3xl" showCompactThemeIcon={false}>
+    <AuthShell maxWidth="max-w-3xl" showCompactThemeIcon={false} showCompactLanguage>
       <div className="mb-8">
         <div>
           <p className="page-kicker"><Sparkles size={15} aria-hidden="true" />{en ? 'First-time setup' : 'Thiết lập ban đầu'}</p>

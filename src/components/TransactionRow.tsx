@@ -79,6 +79,8 @@ export const TransactionRow = memo(function TransactionRow({
     copy: en ? 'Copy' : 'Sao chép',
     delete: en ? 'Delete' : 'Xóa',
   };
+  const transactionLabel = en ? 'Transaction' : 'Giao dịch';
+  const selectLabel = en ? 'Select transaction' : 'Chọn giao dịch';
   const tone = transaction.transactionType === 'Thu nhập'
     ? { rowClass: 'transaction-income-row', amountClass: 'text-[var(--success-strong)]' }
         : { rowClass: 'transaction-expense-row', amountClass: 'text-[var(--danger-strong)]' };
@@ -93,9 +95,9 @@ export const TransactionRow = memo(function TransactionRow({
 
   return (
     <div className={`transaction-row-shell${openMenu ? ' transaction-row-shell-menu-open' : ''}`}>
-      <article aria-label={`Giao dịch ${transaction.description}`} className={`transaction-card relative rounded-2xl border border-black/10 p-4 shadow-sm transition duration-150 hover:-translate-y-0.5 hover:shadow-md dark:border-white/10 md:hidden ${openMenu ? 'z-20' : ''} ${tone.rowClass}`}>
+      <article aria-label={`${transactionLabel} ${transaction.description}`} className={`transaction-card relative rounded-2xl border border-black/10 p-4 shadow-sm transition duration-150 hover:-translate-y-0.5 hover:shadow-md dark:border-white/10 md:hidden ${openMenu ? 'z-20' : ''} ${tone.rowClass}`}>
         <div className="flex items-start justify-between gap-3">
-          {selectMode && <input type="checkbox" className="mt-1 size-5 shrink-0 accent-[var(--primary)]" aria-label={`Chọn giao dịch ${transaction.description}`} checked={selected} onChange={() => onToggleSelected(transaction.id)} />}
+          {selectMode && <input type="checkbox" className="mt-1 size-5 shrink-0 accent-[var(--primary)]" aria-label={`${selectLabel} ${transaction.description}`} checked={selected} onChange={() => onToggleSelected(transaction.id)} />}
           <div className="min-w-0 flex-1">
             {showTrash ? <span className="block break-words text-base font-bold [overflow-wrap:anywhere]">{transaction.description}</span> : <Link to={`/giao-dich/${transaction.id}`} title={transaction.description} className="block break-words text-base font-bold active:opacity-70 [overflow-wrap:anywhere]">{transaction.description}</Link>}
             <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400"><span>{date}</span>{transaction.status === 'Dự kiến' && <span className="rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 font-semibold text-amber-900 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-200">{plannedLabel}</span>}{transaction.source === 'recurring' && <span className="ui-chip">{recurringLabel}</span>}</div>
@@ -106,7 +108,7 @@ export const TransactionRow = memo(function TransactionRow({
         {openMenu && <div className="absolute right-3 top-12 z-10 min-w-40 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)] p-1 shadow-xl" role="menu" aria-label={`${actionLabels.openActions} ${transaction.description}`}><Link className="flex min-h-11 items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-[var(--surface-subtle)]" to={`/giao-dich/${transaction.id}`} onClick={() => onToggleMenu(transaction.id)} role="menuitem"><Pencil size={16} aria-hidden="true" />{actionLabels.edit}</Link><button type="button" className="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-[var(--surface-subtle)]" disabled={copying} onClick={() => { onToggleMenu(transaction.id); onCopy(transaction); }} role="menuitem"><Copy size={16} aria-hidden="true" />{actionLabels.copy}</button>{canDelete && <button type="button" className="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-[var(--danger-strong)] hover:bg-[var(--danger-soft)]" disabled={deleting} onClick={() => { onToggleMenu(transaction.id); onRemove(transaction); }} role="menuitem"><Trash2 size={16} aria-hidden="true" />{actionLabels.delete}</button>}</div>}
       </article>
       <div className={`transaction-table-row hidden w-full min-w-0 gap-1 border-t border-black/5 p-3 transition-colors hover:brightness-[.98] dark:border-white/5 dark:hover:brightness-110 md:grid md:items-center ${desktopGridClass} ${tone.rowClass}`}>
-        {selectMode && <input type="checkbox" className="size-5 accent-[var(--primary)]" aria-label={`Chọn giao dịch ${transaction.description} trên bảng`} checked={selected} onChange={() => onToggleSelected(transaction.id)} />}
+        {selectMode && <input type="checkbox" className="size-5 accent-[var(--primary)]" aria-label={`${selectLabel} ${transaction.description} ${en ? 'in table' : 'trên bảng'}`} checked={selected} onChange={() => onToggleSelected(transaction.id)} />}
         <span className="min-w-0 whitespace-nowrap text-sm text-gray-500">{date}</span>
         <Link to={`/giao-dich/${transaction.id}`} title={transaction.description} className="min-w-0 truncate text-sm font-semibold hover:underline">{transaction.description}{transaction.status === 'Dự kiến' && <span className="ml-2 inline-flex rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 align-middle text-[11px] font-semibold text-amber-900 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-200">{plannedLabel}</span>}{transaction.source === 'recurring' && <span className="ui-chip ml-2 align-middle text-[11px]">{recurringLabel}</span>}<small className="mt-1 block font-normal text-gray-500 md:hidden">{purposeName} · {expenseTypeName} · {paymentMethodName}</small></Link>
         <CatalogValue name={purposeName} icon={purposeIcon} /><CatalogValue name={expenseTypeName} icon={expenseTypeIcon} /><CatalogValue name={paymentMethodName} icon={paymentMethodIcon} />
