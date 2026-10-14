@@ -1,5 +1,6 @@
 import {
   ChevronDown,
+  ChevronUp,
   RotateCcw,
   Search,
   Trash2,
@@ -386,6 +387,7 @@ export function Transactions() {
   const [aiSearchError, setAiSearchError] = useState('');
   const [voiceListening, setVoiceListening] = useState(false);
   const [voiceSupported] = useState(() => Boolean(getSpeechRecognition()));
+  const [showAllFilterChips, setShowAllFilterChips] = useState(false);
   const speechRecognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const systemDefaultPreset = useMemo(
     () => createSystemTransactionFilterPreset(purposes),
@@ -686,16 +688,27 @@ export function Transactions() {
     ...purposeIds.map((id) => ({ key: `purposeId-${id}`, label: getCatalogDisplayName(purposes.find((item) => item.id === id), language) || (en ? 'Purpose' : 'Mục đích'), clear: () => updateFilter(setPurposeIds, (current) => current.filter((item) => item !== id)) })),
     ...expenseTypeIds.map((id) => ({ key: `expenseTypeId-${id}`, label: getCatalogDisplayName(expenseTypes.find((item) => item.id === id), language) || (en ? 'Category' : 'Danh mục'), clear: () => updateFilter(setExpenseTypeIds, (current) => current.filter((item) => item !== id)) })),
     ...paymentMethodIds.map((id) => ({ key: `paymentMethodId-${id}`, label: getCatalogDisplayName(paymentMethods.find((item) => item.id === id), language) || (en ? 'Payment method' : 'Thanh toán'), clear: () => updateFilter(setPaymentMethodIds, (current) => current.filter((item) => item !== id)) })),
-    ...excludePurposeIds.map((id) => ({ key: `excludePurposeId-${id}`, label: `${en ? 'Exclude purpose' : 'Trừ mục đích'}: ${getCatalogDisplayName(purposes.find((item) => item.id === id), language) || (en ? 'Purpose' : 'Mục đích')}`, clear: () => updateFilter(setExcludePurposeIds, (current) => current.filter((item) => item !== id)) })),
-    ...excludeExpenseTypeIds.map((id) => ({ key: `excludeExpenseTypeId-${id}`, label: `${en ? 'Exclude category' : 'Trừ danh mục'}: ${getCatalogDisplayName(expenseTypes.find((item) => item.id === id), language) || (en ? 'Category' : 'Danh mục')}`, clear: () => updateFilter(setExcludeExpenseTypeIds, (current) => current.filter((item) => item !== id)) })),
-    ...excludePaymentMethodIds.map((id) => ({ key: `excludePaymentMethodId-${id}`, label: `${en ? 'Exclude payment method' : 'Trừ phương thức'}: ${getCatalogDisplayName(paymentMethods.find((item) => item.id === id), language) || (en ? 'Payment method' : 'Phương thức')}`, clear: () => updateFilter(setExcludePaymentMethodIds, (current) => current.filter((item) => item !== id)) })),
+    ...excludePurposeIds.map((id) => {
+      const value = getCatalogDisplayName(purposes.find((item) => item.id === id), language) || (en ? 'Purpose' : 'Mục đích');
+      return { key: `excludePurposeId-${id}`, label: `− ${value}`, accessibleLabel: `${en ? 'Exclude purpose' : 'Trừ mục đích'}: ${value}`, clear: () => updateFilter(setExcludePurposeIds, (current) => current.filter((item) => item !== id)) };
+    }),
+    ...excludeExpenseTypeIds.map((id) => {
+      const value = getCatalogDisplayName(expenseTypes.find((item) => item.id === id), language) || (en ? 'Category' : 'Danh mục');
+      return { key: `excludeExpenseTypeId-${id}`, label: `− ${value}`, accessibleLabel: `${en ? 'Exclude category' : 'Trừ danh mục'}: ${value}`, clear: () => updateFilter(setExcludeExpenseTypeIds, (current) => current.filter((item) => item !== id)) };
+    }),
+    ...excludePaymentMethodIds.map((id) => {
+      const value = getCatalogDisplayName(paymentMethods.find((item) => item.id === id), language) || (en ? 'Payment method' : 'Phương thức');
+      return { key: `excludePaymentMethodId-${id}`, label: `− ${value}`, accessibleLabel: `${en ? 'Exclude payment method' : 'Trừ phương thức'}: ${value}`, clear: () => updateFilter(setExcludePaymentMethodIds, (current) => current.filter((item) => item !== id)) };
+    }),
     amountMin && { key: 'amountMin', label: `${en ? 'From' : 'Từ'} ${formatVnd(Number(amountMin))}`, clear: () => updateFilter(setAmountMin, '') },
     amountMax && { key: 'amountMax', label: `${en ? 'Up to' : 'Đến'} ${formatVnd(Number(amountMax))}`, clear: () => updateFilter(setAmountMax, '') },
     month && { key: 'month', label: en ? (englishMonthNames[Number(month) - 1] || `Month ${Number(month)}`) : `Tháng ${Number(month)}`, clear: () => updateFilter(setMonth, '') },
     year && { key: 'year', label: `${en ? 'Year' : 'Năm'} ${year}`, clear: () => updateFilter(setYear, '') },
     dateFrom && { key: 'dateFrom', label: `${en ? 'From' : 'Từ'} ${formatDateOnlyVi(dateFrom)}`, clear: () => updateFilter(setDateFrom, '') },
     dateTo && { key: 'dateTo', label: `${en ? 'To' : 'Đến'} ${formatDateOnlyVi(dateTo)}`, clear: () => updateFilter(setDateTo, '') },
-  ].filter(Boolean) as { key: string; label: string; clear: () => void }[];
+  ].filter(Boolean) as { key: string; label: string; accessibleLabel?: string; clear: () => void }[];
+  const mobileFilterChipLimit = 3;
+  const overflowFilterChipCount = Math.max(filterChips.length - mobileFilterChipLimit, 0);
   const filteredTotal = isSupabaseConfigured
     ? (showTrash ? rows.reduce((total, transaction) => total + getTransactionTotalImpact(transaction.amount, transaction.transactionType), 0) : transactionQuery.data?.pages[0]?.totalAmount || 0)
     : rows.reduce(
@@ -726,6 +739,7 @@ export function Transactions() {
     updateFilter(setDateFrom, '');
     updateFilter(setDateTo, '');
     updateFilter(setSort, 'date-desc');
+    setShowAllFilterChips(false);
   };
   const restoreSelected = async (selectedId?: string) => {
     const selectedTransactionIds = selectedId ? new Set([selectedId]) : selectedIds;
@@ -1249,7 +1263,14 @@ export function Transactions() {
         {aiSearchError && <div role="alert" className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-red-50 p-2 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300"><span>{aiSearchError}</span><button type="button" className="btn-secondary px-3 py-1.5 text-xs" onClick={() => void runAiSearch()}>{en ? 'Retry' : 'Thử lại'}</button></div>}
         {aiSearchMessage && <p role="status" className="rounded-lg bg-emerald-50 p-2 text-sm text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200">{aiSearchMessage}</p>}
 
-        {filterChips.length > 0 && <div className="flex max-w-full flex-wrap gap-2 pb-1" aria-label={en ? 'Active filters' : 'Bộ lọc đang áp dụng'}>{filterChips.map((chip) => <button type="button" key={chip.key} onClick={chip.clear} className="filter-chip inline-flex min-h-11 max-w-full items-center gap-1 rounded-full px-3 py-2 text-xs font-semibold transition"><span className="min-w-0 break-words [overflow-wrap:anywhere]">{chip.label}</span><X size={13} aria-hidden="true"/><span className="sr-only">{en ? 'Remove filter' : 'Bỏ bộ lọc'} {chip.label}</span></button>)}</div>}
+        {filterChips.length > 0 && <div className="filter-chip-list flex max-w-full flex-wrap gap-1.5" aria-label={en ? 'Active filters' : 'Bộ lọc đang áp dụng'}>
+          {filterChips.map((chip, index) => {
+            const hiddenOnMobile = index >= mobileFilterChipLimit && !showAllFilterChips;
+            const accessibleLabel = chip.accessibleLabel || chip.label;
+            return <button type="button" key={chip.key} onClick={chip.clear} title={accessibleLabel} aria-label={`${en ? 'Remove filter' : 'Bỏ bộ lọc'}: ${accessibleLabel}`} className={`filter-chip inline-flex min-h-11 max-w-full items-center justify-center p-0 text-xs font-semibold transition ${hiddenOnMobile ? 'hidden sm:inline-flex' : ''}`}><span className="filter-chip-surface inline-flex min-h-8 max-w-full items-center gap-1 rounded-full px-2.5 py-1.5"><span className="min-w-0 max-w-[14rem] truncate sm:max-w-[20rem]">{chip.label}</span><X className="shrink-0" size={13} aria-hidden="true"/></span></button>;
+          })}
+          {overflowFilterChipCount > 0 && <button type="button" className="filter-chip filter-chip-toggle inline-flex min-h-11 max-w-full items-center justify-center p-0 text-xs font-semibold transition sm:hidden" aria-expanded={showAllFilterChips} aria-label={showAllFilterChips ? (en ? 'Hide extra filters' : 'Ẩn bớt bộ lọc') : (en ? `Show ${overflowFilterChipCount} more filters` : `Hiển thị thêm ${overflowFilterChipCount} bộ lọc`)} onClick={() => setShowAllFilterChips((current) => !current)}><span className="filter-chip-surface inline-flex min-h-8 items-center gap-1 rounded-full border-dashed px-2.5 py-1.5">{showAllFilterChips ? <ChevronUp size={14} aria-hidden="true"/> : <Plus size={14} aria-hidden="true"/>}<span>{showAllFilterChips ? (en ? 'Hide extra' : 'Ẩn bớt') : `+${overflowFilterChipCount} ${en ? 'more' : 'bộ lọc'}`}</span></span></button>}
+        </div>}
 
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-black/10 pt-2 text-xs text-[var(--muted)] dark:border-white/10">
           <p aria-live="polite">{showTrash ? (en ? `${rows.length.toLocaleString('en-US')} deleted transactions shown` : `Đang hiển thị ${rows.length.toLocaleString('vi-VN')} giao dịch đã xóa`) : (en ? `${rows.length.toLocaleString('en-US')} transactions shown` : `Đang hiển thị ${rows.length.toLocaleString('vi-VN')} giao dịch`)}</p>

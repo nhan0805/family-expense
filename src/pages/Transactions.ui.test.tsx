@@ -29,6 +29,11 @@ describe('Giao dịch mobile', () => {
     expect(screen.getByRole('region', { name: 'Tìm kiếm và bộ lọc giao dịch' })).toHaveClass('filter-panel');
     expect(screen.getByRole('region', { name: 'Tìm kiếm và bộ lọc giao dịch' })).toHaveClass('transaction-search-panel');
     expect(screen.getByRole('region', { name: 'Tìm kiếm và bộ lọc giao dịch' })).not.toHaveClass('sticky');
+    expect(screen.getByRole('button', { name: 'Hiển thị thêm 1 bộ lọc' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Bỏ bộ lọc: Năm 2026' })).toHaveClass('hidden', 'sm:inline-flex');
+    fireEvent.click(screen.getByRole('button', { name: 'Hiển thị thêm 1 bộ lọc' }));
+    expect(screen.getByRole('button', { name: 'Ẩn bớt bộ lọc' })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('button', { name: 'Bỏ bộ lọc: Năm 2026' })).toBeInTheDocument();
     const filterToggle = screen.getByText(/Bộ lọc chi tiết/);
     const filterDetails = filterToggle.closest('details');
     expect(filterDetails).not.toHaveAttribute('open');
