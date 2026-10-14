@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeftRight, Check, ChevronDown, LoaderCircle, Mic, MicOff, Sparkles, Trash2, X } from 'lucide-react';
+import { ArrowLeft, Check, ChevronDown, FilePlus2, LoaderCircle, Mic, MicOff, Pencil, Sparkles, Trash2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -561,8 +561,17 @@ export function TransactionForm() {
     );
   return (
     <div className="transaction-form-page mx-auto max-w-3xl space-y-5">
-      <div className="page-header">
-        <p className="page-kicker"><ArrowLeftRight size={16} aria-hidden="true" />{en ? 'Transaction' : 'Giao dịch'}</p>
+      <div className="page-header transaction-form-header">
+        <div className="transaction-form-header-top flex flex-wrap items-center justify-between gap-2">
+          <button type="button" className="transaction-back-action inline-flex min-h-11 items-center gap-2 rounded-xl px-2.5 text-sm font-semibold" onClick={() => void handleCancel()}>
+            <ArrowLeft size={17} aria-hidden="true" />
+            {en ? 'Back to transactions' : 'Quay lại danh sách'}
+          </button>
+          <span className="transaction-form-mode-chip ui-chip">
+            {id ? (en ? 'Editing transaction' : 'Đang sửa giao dịch') : (en ? 'New transaction' : 'Giao dịch mới')}
+          </span>
+        </div>
+        <p className="page-kicker transaction-form-kicker">{id ? <Pencil size={16} aria-hidden="true" /> : <FilePlus2 size={16} aria-hidden="true" />}{en ? 'Transaction entry' : 'Nhập giao dịch'}</p>
         <h2 className="page-title">
           {id ? (en ? 'Edit transaction' : 'Sửa giao dịch') : (en ? 'Add transaction' : 'Thêm giao dịch')}
         </h2>
@@ -571,7 +580,7 @@ export function TransactionForm() {
         </p>
       </div>
       <form
-        className="form-panel card grid gap-5 p-4 sm:p-6 md:grid-cols-3"
+        className="transaction-entry-panel form-panel card grid gap-5 p-4 sm:p-6 md:grid-cols-3"
         aria-label={en ? 'Transaction details' : 'Thông tin giao dịch'}
         aria-busy={saveBusy || deleteBusy}
         onSubmit={handleSubmit(onSubmit, onInvalid)}
@@ -763,9 +772,9 @@ export function TransactionForm() {
           {draftStatus === 'saved' && <p role="status" aria-live="polite" className="inline-feedback md:col-span-3">{en ? 'Draft saved on this device.' : 'Đã lưu bản nháp trên thiết bị.'}</p>}
           {draftStatus === 'unavailable' && <p role="status" aria-live="polite" className="inline-feedback inline-feedback-warning md:col-span-3">{en ? 'This browser could not save a local draft. Keep this page open until you save.' : 'Trình duyệt không thể lưu bản nháp cục bộ. Hãy giữ trang này mở cho đến khi lưu giao dịch.'}</p>}
           {saveError && <div role="alert" className="inline-feedback inline-feedback-error md:col-span-3"><p>{saveError}</p><button type="button" className="btn-secondary mt-2" disabled={saveBusy || deleteBusy || (isSupabaseConfigured && !online)} onClick={() => void handleSubmit(onSubmit, onInvalid)()}>{en ? 'Try again' : 'Thử lại'}</button></div>}
-          <div className="form-actions flex items-center gap-2 md:col-span-3">
+          <div className="form-actions transaction-entry-actions -mx-4 flex items-center gap-2 px-4 sm:-mx-6 sm:px-6 md:mx-0 md:px-0">
             <button
-              className="btn-primary h-12 min-w-0 flex-1 whitespace-nowrap px-3 md:flex-none md:px-4"
+              className="transaction-entry-submit btn-primary h-12 min-w-0 flex-1 whitespace-nowrap px-3 md:flex-none md:px-4"
               type="submit"
               disabled={saveBusy || deleteBusy}
             >

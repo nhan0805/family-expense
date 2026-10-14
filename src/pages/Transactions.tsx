@@ -1156,14 +1156,20 @@ export function Transactions() {
     <div className="transactions-page flex flex-col gap-5">
       <div className="page-header flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="page-kicker"><WalletCards size={16} aria-hidden="true" />{en ? 'Family ledger' : 'Sổ thu chi gia đình'}</p>
+          <p className="page-kicker transaction-list-kicker"><Search size={16} aria-hidden="true" />{en ? 'Transaction search' : 'Tra cứu giao dịch'}</p>
           <h2 className="page-title">{en ? 'Transactions' : 'Giao dịch'}</h2>
           <p className="page-subtitle">{en ? 'Search, review and organize every family transaction.' : 'Tìm kiếm, rà soát và sắp xếp mọi giao dịch của gia đình.'}</p>
         </div>
-        <Link to="/cai-dat?tab=filters" className="btn-secondary inline-flex items-center gap-2">
-          <Settings2 size={17} aria-hidden="true" />
-          {en ? 'Default filters' : 'Bộ lọc mặc định'}
-        </Link>
+        <div className="transaction-list-actions flex flex-wrap items-center gap-2">
+          <Link to="/giao-dich/moi" className="btn-primary inline-flex min-h-11 items-center gap-2 whitespace-nowrap px-3 sm:px-4">
+            <Plus size={17} aria-hidden="true" />
+            {en ? 'Add transaction' : 'Thêm giao dịch'}
+          </Link>
+          <Link to="/cai-dat?tab=filters" className="btn-secondary inline-flex items-center gap-2 whitespace-nowrap">
+            <Settings2 size={17} aria-hidden="true" />
+            {en ? 'Default filters' : 'Bộ lọc mặc định'}
+          </Link>
+        </div>
       </div>
       {deleteError && (
         <p
@@ -1183,7 +1189,7 @@ export function Transactions() {
         </div>
       )}
 
-      <section aria-label={en ? 'Transaction search and filters' : 'Tìm kiếm và bộ lọc giao dịch'} className="filter-panel card space-y-3 p-3 sm:p-4">
+      <section aria-label={en ? 'Transaction search and filters' : 'Tìm kiếm và bộ lọc giao dịch'} className="transaction-search-panel filter-panel card space-y-3 p-3 sm:p-4">
         <div className="grid gap-3 md:grid-cols-[minmax(240px,1fr)_220px]">
           <label className="col-span-2 md:col-span-1">
             <span className="label">{en ? 'Search' : 'Tìm kiếm'}</span>
