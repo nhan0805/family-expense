@@ -10,6 +10,12 @@
 - Giao dịch có ô tìm kiếm native search, trạng thái số dòng đang hiển thị, clear nhanh và lọc nâng cao vẫn progressive disclosure; lỗi field `Trạng thái` tự mở phần nâng cao trước khi đưa focus về error summary.
 - Files chính: `src/index.css`, `src/components/ui/Primitives.tsx`, `src/components/ui/Dialog.tsx`, `src/components/ui/StatusMessage.tsx`, `src/components/BudgetNotifications.tsx`, `src/components/Layout.tsx`, `src/components/TransactionRow.tsx`, `src/components/ThemeSelect.tsx`, `src/components/AuthShell.tsx`, `src/context/LanguageContext.tsx`, `src/pages/{Login,ResetPassword,CreateFamily,Settings,Catalogs,Transactions,TransactionForm,Dashboard}.tsx`.
 - Không đổi schema, RLS/RPC, Edge Function, dependency hoặc dữ liệu production. Kiểm thử local: TypeScript, ESLint, Vitest `49 file / 253 test`, Vite build và `git diff --check` pass. Build vẫn ghi nhận cảnh báo chunk lớn XLSX/ExcelJS/chart hiện hữu.
+
+### Thu gọn bộ lọc giao dịch trên mobile
+
+- Chip bộ lọc dùng visual pill gọn hơn nhưng vẫn giữ vùng bấm tối thiểu 44px; nhãn dài không còn tự xuống dòng và chip loại trừ hiển thị dạng `− Giá trị` để giảm độ rộng.
+- Mobile hiển thị ba chip đầu và nút `+N bộ lọc` để mở rộng; desktop vẫn hiển thị đầy đủ chip. Bổ sung regression coverage cho trạng thái thu gọn/mở rộng và accessible name.
+- Files: `src/pages/Transactions.tsx`, `src/pages/Transactions.ui.test.tsx`, `src/index.css`. Không đổi schema, RLS/RPC, Edge Function, dependency hoặc dữ liệu production.
 - Triển khai: PR [#257](https://github.com/nhan0805/family-expense/pull/257) merge vào `main` tại commit `bd968ca`; CI hậu merge [run 38506948097](https://github.com/nhan0805/family-expense/actions/runs/38506948097), [Cloudflare Pages production check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/733539e2-93c5-4e0c-914f-cf9617f82193) và smoke production `/`, `/dang-nhap`, `/thanh-vien` đều pass HTTP 200. Không chạy Supabase Production Deploy vì không có thay đổi `supabase/`.
 
 ## 2026-09-29
