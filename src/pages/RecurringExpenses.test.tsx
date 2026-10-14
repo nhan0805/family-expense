@@ -99,7 +99,7 @@ describe('Chi phí định kỳ', () => {
 
     expect(await screen.findByText('Tiền điện')).toBeInTheDocument();
     fireEvent.click(
-      screen.getByRole('button', { name: 'Kiểm tra và tạo giao dịch đến hạn' }),
+      screen.getByRole('button', { name: 'Tạo giao dịch đến hạn' }),
     );
     expect(
       await screen.findByText('Đã tạo 1 giao dịch dự kiến.'),

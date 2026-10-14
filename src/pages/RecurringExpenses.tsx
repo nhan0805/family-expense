@@ -737,8 +737,8 @@ export function RecurringExpenses() {
                   ? 'Checking…'
                   : 'Đang kiểm tra…'
                 : en
-                  ? 'Check and create due transactions'
-                  : 'Kiểm tra và tạo giao dịch đến hạn'}
+                  ? 'Create due transactions'
+                  : 'Tạo giao dịch đến hạn'}
             </button>
             <button
               type="button"
