@@ -206,18 +206,14 @@ export const getTransactionListTone = (
 ) => {
   if (transactionType === 'Thu nhập')
     return {
-      rowClass:
-        'bg-gradient-to-r from-emerald-100/90 via-emerald-50/55 to-transparent dark:from-emerald-400/15 dark:via-emerald-400/5 dark:to-transparent',
-      amountClass: 'text-emerald-700 dark:text-emerald-300',
-      badgeClass:
-        'border border-emerald-300 bg-emerald-200 text-emerald-950 shadow-sm dark:border-emerald-400/60 dark:bg-emerald-400/10 dark:text-emerald-200',
+      rowClass: 'transaction-income-row',
+      amountClass: 'text-[var(--success-strong)]',
+      badgeClass: 'border border-[var(--success-strong)] bg-[var(--success-soft)] text-[var(--success-strong)] shadow-sm',
     };
   return {
-    rowClass:
-      'bg-gradient-to-r from-rose-100/90 via-rose-50/55 to-transparent dark:from-rose-400/15 dark:via-rose-400/5 dark:to-transparent',
-    amountClass: 'text-rose-700 dark:text-rose-300',
-    badgeClass:
-      'border border-rose-300 bg-rose-200 text-rose-950 shadow-sm dark:border-rose-400/60 dark:bg-rose-400/10 dark:text-rose-200',
+    rowClass: 'transaction-expense-row',
+    amountClass: 'text-[var(--danger-strong)]',
+    badgeClass: 'border border-[var(--danger-strong)] bg-[var(--danger-soft)] text-[var(--danger-strong)] shadow-sm',
   };
 };
 
@@ -311,7 +307,7 @@ export const filterAndSortTransactions = (
 };
 
 export function Transactions() {
-  const { language } = useOptionalLanguage();
+  const { language, t } = useOptionalLanguage();
   const en = language === 'en';
   const { askConfirm, notify } = useFeedback();
   const queryClient = useQueryClient();
@@ -1201,6 +1197,9 @@ export function Transactions() {
                 />
                 <input
                   className="field min-w-0"
+                  type="search"
+                  enterKeyHint="search"
+                  autoComplete="off"
                   style={{ paddingLeft: '2.75rem', paddingRight: voiceSupported ? '3rem' : undefined }}
                   value={query}
                   onChange={(event) => { updateFilter(setQuery, event.target.value); setAiSearchCompleted(false); setAiSearchMessage(''); setAiSearchError(''); }}
@@ -1251,6 +1250,11 @@ export function Transactions() {
         {aiSearchMessage && <p role="status" className="rounded-lg bg-emerald-50 p-2 text-sm text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200">{aiSearchMessage}</p>}
 
         {filterChips.length > 0 && <div className="flex max-w-full flex-wrap gap-2 pb-1" aria-label={en ? 'Active filters' : 'Bộ lọc đang áp dụng'}>{filterChips.map((chip) => <button type="button" key={chip.key} onClick={chip.clear} className="filter-chip inline-flex min-h-11 max-w-full items-center gap-1 rounded-full px-3 py-2 text-xs font-semibold transition"><span className="min-w-0 break-words [overflow-wrap:anywhere]">{chip.label}</span><X size={13} aria-hidden="true"/><span className="sr-only">{en ? 'Remove filter' : 'Bỏ bộ lọc'} {chip.label}</span></button>)}</div>}
+
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-black/10 pt-2 text-xs text-[var(--muted)] dark:border-white/10">
+          <p aria-live="polite">{showTrash ? (en ? `${rows.length.toLocaleString('en-US')} deleted transactions shown` : `Đang hiển thị ${rows.length.toLocaleString('vi-VN')} giao dịch đã xóa`) : (en ? `${rows.length.toLocaleString('en-US')} transactions shown` : `Đang hiển thị ${rows.length.toLocaleString('vi-VN')} giao dịch`)}</p>
+          {hasFilters && <button type="button" className="min-h-11 rounded-lg px-2 font-bold text-[var(--primary)] hover:bg-[var(--primary-soft)] hover:underline" onClick={resetFilters}>{t('clearFilters')}</button>}
+        </div>
 
         <details className="filter-details group border-t border-black/10 pt-3 dark:border-white/10">
           <summary aria-controls="transaction-detailed-filters" className="filter-summary btn-secondary flex cursor-pointer list-none items-center justify-between gap-3 [&::-webkit-details-marker]:hidden">
@@ -1405,7 +1409,7 @@ export function Transactions() {
               onClick={resetFilters}
             >
               <RotateCcw size={17} aria-hidden="true" />
-              {en ? 'Clear filters' : 'Xóa bộ lọc'}
+              {t('clearFilters')}
             </button>
           </div>
           </div>
@@ -1414,10 +1418,10 @@ export function Transactions() {
 
       <section
         aria-label={en ? 'Net value for current filters' : 'Giá trị ròng theo bộ lọc'}
-        className={`net-summary-card flex flex-col gap-3 rounded-2xl border p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-5 ${netIsPositive ? 'border-rose-200 bg-gradient-to-br from-rose-50 to-white dark:border-rose-900/40 dark:from-rose-950/40 dark:to-white/5' : netIsNegative ? 'border-emerald-200 bg-gradient-to-br from-emerald-50 to-white dark:border-emerald-900/40 dark:from-emerald-950/40 dark:to-white/5' : 'border-slate-200 bg-gradient-to-br from-slate-50 to-white dark:border-slate-700 dark:from-slate-900/40 dark:to-white/5'}`}
+        className={`net-summary-card flex flex-col gap-3 rounded-2xl p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5 ${netIsPositive ? 'net-summary-card-danger' : netIsNegative ? 'net-summary-card-success' : 'net-summary-card-neutral'}`}
       >
         <div className="flex min-w-0 items-center gap-3">
-          <span className={`grid size-11 shrink-0 place-items-center rounded-xl text-white shadow-sm ${netIsPositive ? 'bg-rose-700' : netIsNegative ? 'bg-emerald-700' : 'bg-slate-600'}`}>
+          <span className={`grid size-11 shrink-0 place-items-center rounded-xl text-white shadow-sm ${netIsPositive ? 'bg-[var(--danger-strong)]' : netIsNegative ? 'bg-[var(--success-strong)]' : 'bg-[var(--text-secondary)]'}`}>
             <WalletCards size={22} aria-hidden="true" />
           </span>
           <div className="min-w-0">
@@ -1427,7 +1431,7 @@ export function Transactions() {
           </div>
         </div>
         <div className="sm:text-right">
-          <p className={`whitespace-nowrap text-2xl font-extrabold tracking-tight sm:text-3xl ${netIsPositive ? 'text-rose-700 dark:text-rose-300' : netIsNegative ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-700 dark:text-slate-300'}`}>
+          <p className="whitespace-nowrap text-2xl font-extrabold tracking-tight sm:text-3xl">
             {formatVnd(Math.abs(filteredTotal))}
           </p>
           <p className="mt-1 text-xs font-medium text-gray-500 dark:text-gray-400">

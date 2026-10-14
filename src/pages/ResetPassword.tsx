@@ -86,7 +86,7 @@ export function ResetPassword() {
     }
   };
 
-  return <AuthShell>
+  return <AuthShell showCompactLanguage>
     <form className="space-y-4" onSubmit={submit}>
       <h1 className="text-2xl font-extrabold">{en ? 'Reset password' : 'Đặt lại mật khẩu'}</h1>
       {ready && <>

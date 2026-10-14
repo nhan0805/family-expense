@@ -72,17 +72,15 @@ describe('sắp xếp giao dịch theo ngày', () => {
   });
 
   it('dùng màu riêng cho hai loại giao dịch trong danh sách', () => {
-    expect(getTransactionListTone('Thu nhập').amountClass).toContain('emerald');
-    expect(getTransactionListTone('Thu nhập').amountClass).toContain('dark:text-emerald-300');
-    expect(getTransactionListTone('Chi tiêu').amountClass).toContain('rose');
-    expect(getTransactionListTone('Chi tiêu').amountClass).toContain('dark:text-rose-300');
+    expect(getTransactionListTone('Thu nhập').amountClass).toContain('var(--success-strong)');
+    expect(getTransactionListTone('Chi tiêu').amountClass).toContain('var(--danger-strong)');
     for (const type of ['Thu nhập', 'Chi tiêu'] as const) {
       const tone = getTransactionListTone(type);
-      expect(tone.rowClass).toContain('bg-gradient-to-r');
+      expect(tone.rowClass).toContain(`transaction-${type === 'Thu nhập' ? 'income' : 'expense'}-row`);
       expect(tone.rowClass).not.toContain('border-l-');
       expect(tone.badgeClass).toContain('border');
       expect(tone.badgeClass).toContain('shadow-sm');
-      expect(tone.rowClass).toContain('dark:');
+      expect(tone.rowClass).toContain('transaction-');
     }
   });
 

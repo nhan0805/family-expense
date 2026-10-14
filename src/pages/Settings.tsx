@@ -1,7 +1,8 @@
 import { Settings2, SlidersHorizontal } from 'lucide-react';
-import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useOptionalLanguage } from '../context/LanguageContext';
+import { Tabs } from '../components/ui/Primitives';
 import { AutomaticTransactionSettings } from './AutomaticTransactionSettings';
 import { TransactionFilterSettings } from './TransactionFilterSettings';
 
@@ -29,30 +30,10 @@ export function Settings() {
   const requestedTab = searchParams.get('tab');
   const initialTab: SettingsTab = requestedTab === 'automatic' ? 'automatic' : 'filters';
   const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab);
-  const tabRefs = useRef<Record<SettingsTab, HTMLButtonElement | null>>({ filters: null, automatic: null });
 
   useEffect(() => {
     if (requestedTab === 'automatic' || requestedTab === 'filters') setActiveTab(requestedTab);
   }, [requestedTab]);
-
-  const handleTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>, currentTab: SettingsTab) => {
-    const currentIndex = settingsTabs.findIndex((tab) => tab.id === currentTab);
-    const nextIndex = event.key === 'Home'
-      ? 0
-      : event.key === 'End'
-        ? settingsTabs.length - 1
-        : event.key === 'ArrowRight' || event.key === 'ArrowDown'
-          ? (currentIndex + 1) % settingsTabs.length
-          : event.key === 'ArrowLeft' || event.key === 'ArrowUp'
-            ? (currentIndex - 1 + settingsTabs.length) % settingsTabs.length
-            : null;
-    if (nextIndex === null) return;
-    event.preventDefault();
-    const nextTab = settingsTabs[nextIndex]?.id;
-    if (!nextTab) return;
-    setActiveTab(nextTab);
-    tabRefs.current[nextTab]?.focus();
-  };
 
   return (
     <div className="settings-page flex flex-col gap-6">
@@ -62,21 +43,14 @@ export function Settings() {
         <p className="page-subtitle">{en ? 'Control your first view and the catalogs used by automatic transactions.' : 'Quản lý màn hình mở đầu và danh mục dùng cho các giao dịch tự động.'}</p>
       </header>
 
-      <div className="catalog-tabs settings-tabs" role="tablist" aria-label={en ? 'Settings sections' : 'Nhóm cài đặt'}>
-        {settingsTabs.map(({ id, icon: Icon, labelVi, labelEn }) => <button
-          key={id}
-          ref={(element) => { tabRefs.current[id] = element; }}
-          id={`settings-tab-${id}`}
-          type="button"
-          role="tab"
-          aria-selected={activeTab === id}
-          aria-controls={`settings-panel-${id}`}
-          tabIndex={activeTab === id ? 0 : -1}
-          className="catalog-tab inline-flex items-center justify-center gap-2"
-          onClick={() => setActiveTab(id)}
-          onKeyDown={(event) => handleTabKeyDown(event, id)}
-        ><Icon size={17} aria-hidden="true" /><span>{en ? labelEn : labelVi}</span></button>)}
-      </div>
+      <Tabs
+        className="settings-tabs"
+        tabs={settingsTabs.map(({ id, icon, labelVi, labelEn }) => ({ id, icon, label: en ? labelEn : labelVi }))}
+        value={activeTab}
+        onChange={setActiveTab}
+        ariaLabel={en ? 'Settings sections' : 'Nhóm cài đặt'}
+        idPrefix="settings"
+      />
 
       <div className="settings-tab-panels">
         <div id="settings-panel-filters" role="tabpanel" aria-labelledby="settings-tab-filters" hidden={activeTab !== 'filters'} className="settings-tab-panel">

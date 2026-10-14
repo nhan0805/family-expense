@@ -2,7 +2,7 @@ import { WalletCards } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { ThemeSelect } from './ThemeSelect';
 
-export function AuthShell({ children, maxWidth = 'max-w-md', showCompactThemeIcon = true }: { children: ReactNode; maxWidth?: string; showCompactThemeIcon?: boolean }) {
+export function AuthShell({ children, maxWidth = 'max-w-md', showCompactThemeIcon = true, showCompactLanguage = false }: { children: ReactNode; maxWidth?: string; showCompactThemeIcon?: boolean; showCompactLanguage?: boolean }) {
   return (
     <main className="grid min-h-dvh place-items-center bg-[var(--app-bg)] p-4">
       <div className={`card w-full ${maxWidth} p-7`}>
@@ -13,7 +13,7 @@ export function AuthShell({ children, maxWidth = 'max-w-md', showCompactThemeIco
           </span>
           <p className="brand-wordmark">FAMILY FINANCE</p>
           </div>
-          <ThemeSelect compact showCompactIcon={showCompactThemeIcon} />
+          <ThemeSelect compact showCompactIcon={showCompactThemeIcon} showCompactLanguage={showCompactLanguage} />
         </div>
         {children}
       </div>

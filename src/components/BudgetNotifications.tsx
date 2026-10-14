@@ -1,4 +1,4 @@
-import { Bell, Check, CircleAlert, Trash2, TriangleAlert } from 'lucide-react';
+import { Bell, Check, CircleAlert, Trash2, TriangleAlert, X } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -28,6 +28,7 @@ import {
 } from '../lib/budgetNotifications';
 import { isSupabaseConfigured } from '../lib/supabase';
 import { useFocusTrap } from './ui/Dialog';
+import { IconButton } from './ui/Primitives';
 
 const emptyCatalogItems: CatalogItem[] = [];
 const emptyTransactions: Transaction[] = [];
@@ -274,6 +275,7 @@ export function BudgetNotifications() {
           role="dialog"
           ref={panelRef}
           aria-modal="false"
+          tabIndex={-1}
           aria-label={notificationTitle}
           aria-describedby="budget-notifications-description"
           className="absolute right-0 top-12 z-50 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-2xl"
@@ -285,15 +287,18 @@ export function BudgetNotifications() {
                 {attentionCount > 0 ? `${attentionCount} ${en ? 'items need attention' : 'mục cần chú ý'}` : t('allBudgetNotificationsRead')}
               </p>
             </div>
-            {(unreadCount > 0 || readCount > 0) && <div className="flex flex-wrap items-center justify-end gap-2">
-              {unreadCount > 0 && <button type="button" className="min-h-11 rounded-lg px-2 text-xs font-bold text-[var(--primary)] hover:bg-[var(--primary-soft)] hover:underline" onClick={markAllRead}>
-                {t('markAllRead')}
-              </button>}
-              {readCount > 0 && <button type="button" className="inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-xs font-bold text-[var(--danger-strong)] hover:bg-[var(--danger-soft)] hover:underline" onClick={deleteRead}>
-                <Trash2 size={14} aria-hidden="true" />
-                {en ? 'Delete read' : 'Xóa đã đọc'}
-              </button>}
-            </div>}
+            <div className="flex flex-wrap items-center justify-end gap-1">
+              {(unreadCount > 0 || readCount > 0) && <div className="flex flex-wrap items-center justify-end gap-2">
+                {unreadCount > 0 && <button type="button" className="min-h-11 rounded-lg px-2 text-xs font-bold text-[var(--primary)] hover:bg-[var(--primary-soft)] hover:underline" onClick={markAllRead}>
+                  {t('markAllRead')}
+                </button>}
+                {readCount > 0 && <button type="button" className="inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-xs font-bold text-[var(--danger-strong)] hover:bg-[var(--danger-soft)] hover:underline" onClick={deleteRead}>
+                  <Trash2 size={14} aria-hidden="true" />
+                  {t('deleteRead')}
+                </button>}
+              </div>}
+              <IconButton icon={X} label={t('closeNotification')} data-dialog-autofocus onClick={() => setOpen(false)} />
+            </div>
           </div>
           {dueTransactions.length > 0 && <div className="border-b border-[var(--warning)] bg-[var(--warning-soft)] p-3">
             <div className="flex flex-col gap-2">

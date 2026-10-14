@@ -1,9 +1,11 @@
 # Family Finance — Development Handoff
 
-> Cập nhật: **29/09/2026** (`Asia/Ho_Chi_Minh`)
+> Cập nhật: **14/10/2026** (`Asia/Ho_Chi_Minh`)
 
 ## Current state
 
+- Working tree hiện có batch UI/UX chưa commit trên nền `main`: semantic token mới, shared Tabs/IconButton/Field, focus contract được củng cố, Settings/Danh mục dùng Tabs chung, auth có theme/language compact, menu mobile và filter giao dịch được tinh chỉnh. Không có thay đổi schema, RLS/RPC, Edge Function, dependency hoặc dữ liệu production.
+- Quality gate local của batch UI/UX: TypeScript, ESLint, Vitest `49 file/253 test`, Vite build và `git diff --check` pass. Build vẫn có cảnh báo chunk lớn XLSX/ExcelJS/chart như known issue.
 - Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; `main` hiện có runtime merge commit `2511578` sau PR [#253](https://github.com/nhan0805/family-expense/pull/253). [Cloudflare Pages production check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/0cd2ecf6-830e-41fb-9c2b-326c4cb9b4fe) pass; smoke `/`, `/dang-nhap` và `/thanh-vien` đều trả HTTP 200.
 - Code trên `main` đã gồm PR [#234](https://github.com/nhan0805/family-expense/pull/234), cho owner đặt bộ mục đích/danh mục/phương thức thanh toán hiện tại làm mặc định cho gia đình tạo mới; các PR [#238](https://github.com/nhan0805/family-expense/pull/238), [#239](https://github.com/nhan0805/family-expense/pull/239) và [#241](https://github.com/nhan0805/family-expense/pull/241) đồng bộ thứ tự/lịch sử migration để production apply được thay đổi; cùng các release trước.
 - CI hậu merge [run 36458109647](https://github.com/nhan0805/family-expense/actions/runs/36458109647) của merge commit `2511578` pass quality, coverage, E2E, db-security và performance budget. Release này không có migration Supabase, Edge Function hoặc thay đổi dữ liệu production nên không chạy Supabase Production Deploy.
