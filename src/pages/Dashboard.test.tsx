@@ -239,9 +239,15 @@ describe('Dashboard', () => {
   });
 
   it('giữ đúng bộ lọc khi mở giao dịch từ dòng top danh mục', () => {
+    const currentMonth = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Ho_Chi_Minh',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(new Date()).slice(0, 7);
     vi.mocked(useApp).mockReturnValue({
       transactions: [{
-        ...transaction('Gửi tiết kiệm tháng hiện tại', '2026-09-10', 35_000_000),
+        ...transaction('Gửi tiết kiệm tháng hiện tại', `${currentMonth}-10`, 35_000_000),
         purposeId: 'investment-purpose',
         expenseTypeId: 'savings-category',
       }],

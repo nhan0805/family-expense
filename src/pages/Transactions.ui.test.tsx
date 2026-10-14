@@ -24,7 +24,10 @@ describe('Giao dịch mobile', () => {
     } as unknown as ReturnType<typeof useApp>);
     render(<FeedbackProvider><QueryClientProvider client={new QueryClient()}><MemoryRouter initialEntries={['/giao-dich?month=09&year=2026']}><Transactions/></MemoryRouter></QueryClientProvider></FeedbackProvider>);
     expect(screen.getByRole('heading', { name: 'Giao dịch' })).toHaveClass('page-title');
+    expect(screen.getByText('Tra cứu giao dịch')).toHaveClass('transaction-list-kicker');
+    expect(screen.getByRole('link', { name: 'Thêm giao dịch' })).toHaveAttribute('href', '/giao-dich/moi');
     expect(screen.getByRole('region', { name: 'Tìm kiếm và bộ lọc giao dịch' })).toHaveClass('filter-panel');
+    expect(screen.getByRole('region', { name: 'Tìm kiếm và bộ lọc giao dịch' })).toHaveClass('transaction-search-panel');
     expect(screen.getByRole('region', { name: 'Tìm kiếm và bộ lọc giao dịch' })).not.toHaveClass('sticky');
     const filterToggle = screen.getByText(/Bộ lọc chi tiết/);
     const filterDetails = filterToggle.closest('details');

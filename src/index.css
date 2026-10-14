@@ -629,6 +629,19 @@ summary:focus-visible {
   box-shadow: var(--shadow-card);
 }
 
+.transaction-list-actions {
+  max-width: 100%;
+}
+
+.transaction-list-kicker {
+  color: var(--primary-strong);
+}
+
+.transaction-search-panel {
+  border-color: color-mix(in srgb, var(--border) 90%, transparent);
+  background: var(--surface);
+}
+
 .period-switcher {
   background: var(--surface-muted);
 }
@@ -1138,6 +1151,61 @@ summary:focus-visible {
   margin-top: .1rem;
   border-top: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
   padding-top: 1rem;
+}
+
+.transaction-form-header {
+  border: 1px solid color-mix(in srgb, var(--primary) 34%, var(--border));
+  border-inline-start: .25rem solid var(--primary);
+  border-radius: var(--radius-card);
+  background: color-mix(in srgb, var(--primary-soft) 56%, var(--surface));
+  box-shadow: var(--shadow-card);
+  padding: 1rem;
+}
+
+.transaction-back-action {
+  color: var(--primary-strong);
+  transition: background-color .16s ease, color .16s ease;
+}
+
+.transaction-back-action:hover {
+  background: color-mix(in srgb, var(--primary-soft) 78%, var(--surface));
+  color: var(--primary);
+}
+
+.transaction-form-kicker {
+  margin-top: .85rem;
+}
+
+.transaction-form-mode-chip {
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
+  background: var(--primary-soft);
+  color: var(--primary-strong);
+}
+
+.transaction-entry-panel {
+  border-color: color-mix(in srgb, var(--primary) 30%, var(--border));
+  background: color-mix(in srgb, var(--primary-soft) 22%, var(--surface));
+  box-shadow: var(--shadow-interactive);
+}
+
+.transaction-entry-panel .field {
+  background: var(--surface);
+}
+
+.transaction-entry-actions {
+  position: relative;
+}
+
+@media (max-width: 767px) {
+  .transaction-entry-actions {
+    position: sticky;
+    bottom: calc(4.5rem + max(1rem, env(safe-area-inset-bottom)));
+    z-index: 10;
+    border-top-color: color-mix(in srgb, var(--primary) 24%, var(--border));
+    background: color-mix(in srgb, var(--surface) 94%, transparent);
+    box-shadow: 0 -8px 24px color-mix(in srgb, var(--text) 12%, transparent);
+    backdrop-filter: blur(14px);
+  }
 }
 
 .form-ai-summary {
