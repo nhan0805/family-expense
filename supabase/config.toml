@@ -2,8 +2,9 @@ project_id = "family-expense"
 
 [auth]
 enabled = true
-site_url = "https://family-expense-8fo.pages.dev"
+site_url = "https://fafin.pages.dev"
 additional_redirect_urls = [
+  "https://fafin.pages.dev/**",
   "https://family-expense-8fo.pages.dev/**",
   "https://84cefd79.family-expense-8fo.pages.dev/**",
   "http://127.0.0.1:5173/**",
