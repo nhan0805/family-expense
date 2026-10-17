@@ -119,14 +119,13 @@ Deno.serve(async (req) => {
 
     const { data: membership, error: membershipError } = await db
       .from('family_members')
-      .select('role')
+      .select('user_id')
       .eq('family_id', familyId)
       .eq('user_id', userData.user.id)
       .eq('status', 'active')
       .maybeSingle();
     if (membershipError) return json({ error: 'MEMBERSHIP_QUERY_FAILED' }, 500);
     if (!membership) return json({ error: 'FORBIDDEN' }, 403);
-    if (membership.role !== 'owner') return json({ error: 'OWNER_REQUIRED' }, 403);
 
     const allRows: TransactionRow[] = [];
     const batchSize = 500;

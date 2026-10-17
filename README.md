@@ -68,7 +68,7 @@ Function kiểm tra JWT, membership theo `family_id`, validate request/response 
 
 ## Gửi danh sách giao dịch qua Brevo
 
-Tính năng **Dữ liệu → Gửi danh sách giao dịch** gọi Edge Function `email-transactions`. Function chỉ cho owner gửi danh sách giao dịch chưa bị xóa tới email tài khoản hiện tại, tự query theo `family_id` và gửi file CSV qua Brevo. Không đặt API key Brevo ở frontend.
+Tính năng **Dữ liệu → Gửi danh sách giao dịch** gọi Edge Function `email-transactions`. Function cho thành viên active gửi danh sách giao dịch chưa bị xóa của gia đình tới email tài khoản hiện tại, tự query theo `family_id` và gửi file CSV qua Brevo. Không đặt API key Brevo ở frontend.
 
 Tạo API key có quyền gửi trong Brevo, xác minh sender email, rồi lưu secret ở Supabase:
 

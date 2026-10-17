@@ -43,7 +43,6 @@ export function ImportExport() {
     familyId,
     currentUserEmail,
     currentUserId,
-    currentUserRole,
     transactions,
     setTransactions,
     purposes,
@@ -392,10 +391,6 @@ export function ImportExport() {
       setEmailMessage(en ? 'Email sending requires a Supabase connection.' : 'Tính năng gửi email cần kết nối Supabase.');
       return;
     }
-    if (currentUserRole !== 'owner') {
-      setEmailMessage(en ? 'Only the family owner can send the transaction list.' : 'Chỉ chủ gia đình mới có thể gửi danh sách giao dịch.');
-      return;
-    }
     if (!currentUserEmail) {
       setEmailMessage(en ? 'The current account email could not be found.' : 'Không tìm thấy email của tài khoản hiện tại.');
       return;
@@ -505,7 +500,7 @@ export function ImportExport() {
         <DataCard
           icon={<Mail size={24} />}
           title={en ? 'Send by email' : 'Gửi qua email'}
-          description={en ? 'Send all active transactions to the family owner’s account email.' : 'Gửi toàn bộ giao dịch đang hoạt động tới email tài khoản của chủ gia đình.'}
+          description={en ? 'Send all active family transactions to your account email.' : 'Gửi toàn bộ giao dịch đang hoạt động của gia đình tới email tài khoản của bạn.'}
           tone="blue"
         >
           <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -517,21 +512,18 @@ export function ImportExport() {
             disabled={
               emailBusy ||
               !isSupabaseConfigured ||
-              !familyId ||
-              currentUserRole !== 'owner'
+              !familyId
             }
             onClick={() => void sendTransactionsByEmail()}
           >
             <Mail size={18} />
             {emailBusy ? (en ? 'Sending…' : 'Đang gửi…') : (en ? 'Send transaction list' : 'Gửi danh sách giao dịch')}
           </button>
-          {(!isSupabaseConfigured || !familyId || currentUserRole !== 'owner') && (
+          {(!isSupabaseConfigured || !familyId) && (
             <p className="mt-2 text-xs text-[var(--muted)]" role="note">
               {!isSupabaseConfigured
                 ? (en ? 'Connect Supabase to enable email export.' : 'Kết nối Supabase để bật xuất dữ liệu qua email.')
-                : currentUserRole !== 'owner'
-                  ? (en ? 'Only the family owner can send this export.' : 'Chỉ chủ gia đình mới có thể gửi bản xuất này.')
-                  : (en ? 'An active family is required.' : 'Cần có gia đình đang hoạt động.')}
+                : (en ? 'An active family is required.' : 'Cần có gia đình đang hoạt động.')}
             </p>
           )}
           {emailMessage && (

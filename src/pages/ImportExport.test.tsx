@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useApp } from '../context/AppContext';
 import type { Transaction } from '../lib/domain';
 import { ImportExport } from './ImportExport';
@@ -27,6 +27,10 @@ const appState = (role: 'owner' | 'member') =>
   }) as unknown as ReturnType<typeof useApp>;
 
 describe('Gửi danh sách giao dịch qua email', () => {
+  beforeEach(() => {
+    invoke.mockReset();
+  });
+
   it('owner gửi tới email tài khoản hiện tại', async () => {
     mockedUseApp.mockReturnValue(appState('owner'));
     invoke.mockResolvedValue({
@@ -58,14 +62,29 @@ describe('Gửi danh sách giao dịch qua email', () => {
     ).toBeInTheDocument();
   });
 
-  it('member không được bật nút gửi email', () => {
+  it('member cũng gửi tới email tài khoản hiện tại', async () => {
     mockedUseApp.mockReturnValue(appState('member'));
+    invoke.mockResolvedValue({
+      data: { sent: true, transactionCount: 5 },
+      error: null,
+    });
     render(<ImportExport />);
 
     expect(screen.getByRole('heading', { name: 'Dữ liệu' })).toHaveClass('page-title');
     expect(screen.queryByLabelText('Chế độ')).not.toBeInTheDocument();
+    const sendButton = screen.getByRole('button', { name: 'Gửi danh sách giao dịch' });
+    expect(sendButton).toBeEnabled();
+    fireEvent.click(sendButton);
+
+    await waitFor(() =>
+      expect(invoke).toHaveBeenCalledWith('email-transactions', {
+        body: { familyId: '11111111-1111-4111-8111-111111111111' },
+      }),
+    );
     expect(
-      screen.getByRole('button', { name: 'Gửi danh sách giao dịch' }),
-    ).toBeDisabled();
+      await screen.findByText(
+        'Đã gửi 5 giao dịch tới owner@example.com.',
+      ),
+    ).toBeInTheDocument();
   });
 });
