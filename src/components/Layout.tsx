@@ -11,6 +11,11 @@ import { useFocusTrap } from './ui/Dialog';
 
 const links = [['/', 'overview', House], ['/giao-dich', 'transactions', WalletCards], ['/tai-san', 'assets', Gem], ['/ngan-sach', 'budgets', PiggyBank], ['/chi-phi-dinh-ky', 'recurringExpenses', Repeat2], ['/danh-muc', 'catalogs', Tags], ['/thanh-vien', 'members', UsersRound], ['/du-lieu', 'data', BookOpen]] as const;
 const mobilePrimaryLinks = [links[0], links[1], links[2], links[3]] as const;
+const navigationSections = [
+  { id: 'track', label: 'Theo dõi', labelEn: 'Track', links: [links[0], links[1]] as const },
+  { id: 'plan', label: 'Tài chính', labelEn: 'Finance', links: [links[2], links[3]] as const },
+  { id: 'setup', label: 'Thiết lập', labelEn: 'Set up', links: [links[4], links[5], links[6], links[7]] as const },
+] as const;
 
 export function Layout() {
   const [open, setOpen] = useState(false);
@@ -87,7 +92,16 @@ export function Layout() {
           <p className="text-xs font-bold uppercase tracking-[.12em] text-gray-500 dark:text-gray-400">{en ? 'Menu' : 'Trình đơn'}</p>
           <button className="icon-button" aria-label={en ? 'Close menu' : 'Đóng trình đơn'} onClick={() => setOpen(false)}><X aria-hidden="true" /></button>
         </div>
-        <nav className="mt-1 space-y-1 md:mt-2">{links.map(([to, label, Icon]) => <NavLink key={to} to={to} end={to === '/'} onClick={() => setOpen(false)} className={({ isActive }) => `app-nav-link flex items-center gap-3 rounded-xl px-3 py-3 font-semibold ${isActive ? 'app-nav-link-active' : ''}`}><Icon size={19} aria-hidden="true" />{t(label)}</NavLink>)}<NavLink to="/cai-dat" end onClick={() => setOpen(false)} className={({ isActive }) => `app-nav-link flex items-center gap-3 rounded-xl px-3 py-3 font-semibold ${isActive ? 'app-nav-link-active' : ''}`}><Settings2 size={19} aria-hidden="true" />{en ? 'Settings' : 'Cài đặt'}</NavLink></nav>
+        <nav className="app-nav mt-1 space-y-4 md:mt-2" aria-label={en ? 'Main navigation' : 'Điều hướng chính'}>
+          {navigationSections.map((section) => <div key={section.id} className="app-nav-section">
+            <p className="app-nav-section-label">{en ? section.labelEn : section.label}</p>
+            <div className="space-y-1">{section.links.map(([to, label, Icon]) => <NavLink key={to} to={to} end={to === '/'} onClick={() => setOpen(false)} className={({ isActive }) => `app-nav-link flex items-center gap-3 rounded-xl px-3 py-3 font-semibold ${isActive ? 'app-nav-link-active' : ''}`}><Icon size={19} aria-hidden="true" />{t(label)}</NavLink>)}</div>
+          </div>)}
+          <div className="app-nav-section">
+            <p className="app-nav-section-label">{en ? 'Preferences' : 'Tùy chỉnh'}</p>
+            <NavLink to="/cai-dat" end onClick={() => setOpen(false)} className={({ isActive }) => `app-nav-link flex items-center gap-3 rounded-xl px-3 py-3 font-semibold ${isActive ? 'app-nav-link-active' : ''}`}><Settings2 size={19} aria-hidden="true" />{en ? 'Settings' : 'Cài đặt'}</NavLink>
+          </div>
+        </nav>
         <div className="app-sidebar-footer mt-auto space-y-2 border-t pt-4">
           <ThemeSelect/>
           <button className="flex w-full items-center gap-3 rounded-xl px-3 py-3 font-medium text-red-700 hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-950/30 md:hidden" disabled={signingOut} onClick={signOut}><LogOut size={19} aria-hidden="true"/>{signingOut ? t('loggingOut') : t('logout')}</button>

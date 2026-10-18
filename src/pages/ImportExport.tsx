@@ -548,11 +548,11 @@ export function ImportExport() {
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               {en ? 'Choose an .xlsx file downloaded from the app. Data is saved only after you review and confirm it.' : 'Chọn file .xlsx được tải từ ứng dụng. Dữ liệu chỉ được ghi sau khi bạn kiểm tra và xác nhận.'}
             </p>
-            <ol className="mt-3 grid gap-1 text-xs text-[var(--muted)] sm:grid-cols-4" aria-label={en ? 'Import steps' : 'Các bước import'}>
-              <li className={fileName ? 'font-semibold text-[var(--success-strong)]' : 'font-semibold text-[var(--primary)]'}>{en ? '1. Choose' : '1. Chọn file'}</li>
-              <li className={checkingFile || validRows.length > 0 || importErrors.length > 0 ? 'font-semibold text-[var(--primary)]' : ''}>{en ? '2. Validate' : '2. Kiểm tra'}</li>
-              <li className={validRows.length > 0 || importErrors.length > 0 ? 'font-semibold text-[var(--primary)]' : ''}>{en ? '3. Review' : '3. Xem lại'}</li>
-              <li className={validRows.length > 0 && !checkingFile ? 'font-semibold text-[var(--primary)]' : ''}>{en ? '4. Confirm' : '4. Xác nhận'}</li>
+            <ol className="data-import-steps mt-3 text-xs" aria-label={en ? 'Import steps' : 'Các bước import'}>
+              <li data-step="1" className={`data-import-step ${fileName ? 'is-done' : 'is-current'}`}>{en ? 'Choose file' : 'Chọn file'}</li>
+              <li data-step="2" className={`data-import-step ${checkingFile ? 'is-current' : validRows.length > 0 || importErrors.length > 0 ? 'is-done' : ''}`}>{en ? 'Validate' : 'Kiểm tra'}</li>
+              <li data-step="3" className={`data-import-step ${validRows.length > 0 || importErrors.length > 0 ? 'is-current' : ''}`}>{en ? 'Review' : 'Xem lại'}</li>
+              <li data-step="4" className={`data-import-step ${validRows.length > 0 && !checkingFile ? 'is-current' : ''}`}>{en ? 'Confirm' : 'Xác nhận'}</li>
             </ol>
           </div>
         </div>

@@ -583,6 +583,35 @@ export function Dashboard() {
         </div>
       </header>
 
+      <section className="dashboard-hero card" aria-labelledby="dashboard-hero-title">
+        <div className="dashboard-hero-copy">
+          <p className="dashboard-hero-eyebrow">{en ? 'Money pulse' : 'Nhịp tài chính'}</p>
+          <h3 id="dashboard-hero-title" className="dashboard-hero-title">{en ? 'Your financial position' : 'Bức tranh tài chính của bạn'}</h3>
+          <p className="dashboard-hero-period" title={periodLabel}>{en ? 'Selected period' : 'Kỳ đang xem'}</p>
+        </div>
+        <div className="dashboard-hero-balance">
+          <span className="dashboard-hero-label">{en ? 'Net value' : 'Giá trị ròng'}</span>
+          <Amount value={selectedIncome - selectedExpense} className="dashboard-hero-value" label={en ? 'Net value' : 'Giá trị ròng'} />
+          <span className={`dashboard-hero-status ${selectedIncome >= selectedExpense ? 'dashboard-hero-status-positive' : 'dashboard-hero-status-negative'}`}>
+            {selectedIncome >= selectedExpense ? (en ? 'Income is ahead' : 'Thu đang cao hơn chi') : (en ? 'Expenses are ahead' : 'Chi đang cao hơn thu')}
+          </span>
+        </div>
+        <div className="dashboard-hero-stats" aria-label={en ? 'Period totals' : 'Tổng quan trong kỳ'}>
+          <Link className="dashboard-hero-stat dashboard-hero-stat-income" to={periodFilterLink('Thu nhập')}>
+            <span className="dashboard-hero-stat-label"><ArrowDownToLine size={15} aria-hidden="true" />{en ? 'Income' : 'Thu nhập'}</span>
+            <Amount value={selectedIncome} variant="compact" className="dashboard-hero-stat-value" label={en ? 'Income' : 'Thu nhập'} />
+          </Link>
+          <Link className="dashboard-hero-stat dashboard-hero-stat-expense" to={periodFilterLink('Chi tiêu')}>
+            <span className="dashboard-hero-stat-label"><ArrowUpFromLine size={15} aria-hidden="true" />{en ? 'Expenses' : 'Chi tiêu'}</span>
+            <Amount value={selectedExpense} variant="compact" className="dashboard-hero-stat-value" label={en ? 'Expenses' : 'Chi tiêu'} />
+          </Link>
+        </div>
+        <Link className="dashboard-hero-cta btn-secondary inline-flex items-center justify-center gap-2" to={periodFilterLink()}>
+          <WalletCards size={17} aria-hidden="true" />
+          {en ? 'View transactions' : 'Xem giao dịch'}
+        </Link>
+      </section>
+
       <section className="card dashboard-controls space-y-4 p-4 sm:p-5" aria-label={en ? 'Dashboard period controls' : 'Bộ lọc kỳ Dashboard'}>
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <div className="period-switcher flex min-w-0 max-w-full flex-nowrap gap-1 overflow-x-auto overscroll-x-contain rounded-xl p-1" role="group" aria-label={en ? 'View periods' : 'Kỳ xem'}>
