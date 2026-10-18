@@ -1,5 +1,17 @@
 # Nhật ký thay đổi Family Expense
 
+## 2026-10-18
+
+### Triển khai pass giao diện Modern Finance
+
+- Làm mới visual system toàn app theo hướng finance hiện đại, rõ và nhẹ: nền ivory/slate, navy làm màu tin cậy, mint cho thu nhập, amber cho cảnh báo và coral cho chi tiêu; dark mode chuyển sang charcoal/navy, bỏ cảm giác Dracula/pink ở các surface dùng chung.
+- Dashboard có hero `Bức tranh tài chính của bạn` với giá trị ròng, thu/chi và drill-down trực tiếp; sidebar desktop được nhóm thành Theo dõi, Tài chính, Thiết lập và Tùy chỉnh.
+- Tinh chỉnh transaction search/filter, form nhập giao dịch, card/KPI, tab, notification popover và Import theo stepper; giữ nguyên mobile-first, touch target, keyboard focus, reduced motion, bilingual behavior và demo fallback.
+- Files chính: `src/index.css`, `src/components/Layout.tsx`, `src/components/BudgetNotifications.tsx`, `src/pages/Dashboard.tsx`, `src/pages/ImportExport.tsx`.
+- Không đổi schema, RLS/RPC, Edge Function, dependency hoặc dữ liệu production.
+- Kiểm thử local: TypeScript, ESLint, Vitest `49 file / 253 test`, Vite build, performance budget và `git diff --check` pass; build chỉ còn cảnh báo chunk lớn XLSX/ExcelJS/chart đã biết. E2E local không chạy được vì máy thiếu browser binary Playwright, nhưng E2E CI pass.
+- Triển khai: PR [#263](https://github.com/nhan0805/family-expense/pull/263) merge vào `main` tại commit `519c154cfc5aefdffc1b7b2594909e036dbea0b8`; CI hậu merge [run 39146781374](https://github.com/nhan0805/family-expense/actions/runs/39146781374) pass quality, coverage, E2E, db-security và performance budget. Không chạy Supabase Production Deploy vì không có thay đổi `supabase/`. Production smoke `https://family-expense-8fo.pages.dev/`, `/dang-nhap` và `/thanh-vien` đều trả HTTP 200; live CSS đã xác nhận token mới và `dashboard-hero`.
+
 ## 2026-10-14
 
 ### Triển khai batch hiện đại hóa UI/UX toàn app

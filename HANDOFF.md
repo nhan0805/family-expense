@@ -1,15 +1,15 @@
 # Family Finance — Development Handoff
 
-> Cập nhật: **14/10/2026** (`Asia/Ho_Chi_Minh`)
+> Cập nhật: **18/10/2026** (`Asia/Ho_Chi_Minh`)
 
 ## Current state
 
-- Batch UI/UX đã được merge vào `main` qua PR [#257](https://github.com/nhan0805/family-expense/pull/257), sau đó chip bộ lọc giao dịch được thu gọn qua PR [#259](https://github.com/nhan0805/family-expense/pull/259): semantic token mới, shared Tabs/IconButton/Field, focus contract được củng cố, Settings/Danh mục dùng Tabs chung, auth có theme/language compact, menu mobile và filter giao dịch được tinh chỉnh. Không có thay đổi schema, RLS/RPC, Edge Function, dependency hoặc dữ liệu production.
-- Quality gate local của batch UI/UX và filter chip: TypeScript, ESLint, Vitest `49 file/253 test`, Vite build và `git diff --check` pass. CI hậu merge cũng pass quality, coverage, E2E, db-security và performance budget. Build vẫn có cảnh báo chunk lớn XLSX/ExcelJS/chart như known issue.
-- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; `main` hiện có merge commit `404e7f5` sau PR [#259](https://github.com/nhan0805/family-expense/pull/259). [Cloudflare Pages production check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/465d6f35-b09e-4406-8661-180855fc27bb) pass; smoke `/`, `/dang-nhap` và `/thanh-vien` đều trả HTTP 200.
+- Pass Modern Finance toàn app đã merge vào `main` qua PR [#263](https://github.com/nhan0805/family-expense/pull/263) tại commit `519c154cfc5aefdffc1b7b2594909e036dbea0b8`: semantic palette ivory/slate + navy/mint/amber/coral, dark charcoal/navy, Dashboard financial-position hero, sidebar desktop có nhóm chức năng, filter/form/card/import/notification surfaces được làm gọn và thống nhất. Không có thay đổi schema, RLS/RPC, Edge Function, dependency hoặc dữ liệu production.
+- Quality gate local và CI của pass Modern Finance: TypeScript, ESLint, Vitest `49 file/253 test`, coverage, Vite build, performance budget, E2E và db-security đều pass; build vẫn có cảnh báo chunk lớn XLSX/ExcelJS/chart như known issue. E2E local không chạy vì thiếu browser binary Playwright, nhưng E2E CI pass.
+- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; CI hậu merge [run 39146781374](https://github.com/nhan0805/family-expense/actions/runs/39146781374) pass. Live production `/`, `/dang-nhap` và `/thanh-vien` đều trả HTTP 200, asset CSS live chứa token mới và `dashboard-hero`; không chạy Supabase Production Deploy vì không có thay đổi `supabase/`.
 - Code trên `main` đã gồm PR [#234](https://github.com/nhan0805/family-expense/pull/234), cho owner đặt bộ mục đích/danh mục/phương thức thanh toán hiện tại làm mặc định cho gia đình tạo mới; các PR [#238](https://github.com/nhan0805/family-expense/pull/238), [#239](https://github.com/nhan0805/family-expense/pull/239) và [#241](https://github.com/nhan0805/family-expense/pull/241) đồng bộ thứ tự/lịch sử migration để production apply được thay đổi; cùng các release trước.
 - CI hậu merge [run 38508609460](https://github.com/nhan0805/family-expense/actions/runs/38508609460) của merge commit `404e7f5` pass quality, coverage, E2E, db-security và performance budget. Release này không có migration Supabase, Edge Function hoặc thay đổi dữ liệu production nên không chạy Supabase Production Deploy.
-- Nhánh release/status hiện tại: `codex/release-status-compact-filters-20261014`, được đồng bộ từ `origin/main` sau deploy để ghi nhận release; thay đổi trong nhánh này chỉ là tài liệu.
+- Nhánh release/status hiện tại: `codex/release-status-modernize-ui-20261018`, được đồng bộ từ `origin/main` sau deploy để ghi nhận release; thay đổi trong nhánh này chỉ là tài liệu.
 - Đã cập nhật CI/preview cho `merge_group`, thu hẹp trigger Supabase và chuẩn hóa single-writer cho tài liệu release; chưa bật Merge Queue/branch protection trên GitHub.
 - Bản đồ kiến trúc ổn định nằm trong [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md); quy tắc phân loại tài liệu nằm trong [`docs/AI_CONTEXT_GUIDE.md`](docs/AI_CONTEXT_GUIDE.md).
 
