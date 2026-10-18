@@ -808,38 +808,6 @@ summary:focus-visible {
   border-color: color-mix(in srgb, var(--border) 92%, transparent);
 }
 
-.kpi-card {
-  position: relative;
-  overflow: hidden;
-}
-
-.kpi-card::after {
-  position: absolute;
-  right: -2rem;
-  bottom: -3.5rem;
-  width: 7rem;
-  height: 7rem;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--primary-soft) 60%, transparent);
-  content: '';
-  pointer-events: none;
-}
-
-.kpi-icon {
-  position: relative;
-  z-index: 1;
-}
-
-.kpi-value,
-.kpi-meta {
-  position: relative;
-  z-index: 1;
-}
-
-.kpi-meta {
-  color: var(--muted);
-}
-
 .list-toolbar {
   border-color: color-mix(in srgb, var(--border) 90%, transparent);
   background: color-mix(in srgb, var(--surface) 90%, var(--surface-muted));
@@ -1944,13 +1912,16 @@ a:active {
 
 .dashboard-hero-value {
   display: block;
-  overflow-wrap: anywhere;
+  min-width: 0;
+  max-width: 100%;
+  overflow: visible;
   color: var(--text-primary);
-  font-size: clamp(1.7rem, 4vw, 2.35rem);
+  font-size: clamp(1.3rem, 4vw, 2.35rem);
   font-weight: 900;
   letter-spacing: -.055em;
   line-height: 1.1;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .dashboard-hero-status {
@@ -2008,29 +1979,28 @@ a:active {
 
 .dashboard-hero-stat-value {
   display: block;
-  overflow-wrap: anywhere;
+  min-width: 0;
+  max-width: 100%;
   font-size: 1.02rem;
   font-weight: 850;
   line-height: 1.15;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.dashboard-hero-stat-meta {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .3rem;
+  color: var(--muted);
+  font-size: .68rem;
+  line-height: 1.2;
 }
 
 .dashboard-hero-cta {
   width: 100%;
-}
-
-.dashboard-kpi-grid .kpi-card {
-  border-radius: .95rem;
-}
-
-.kpi-card::after {
-  width: 5.5rem;
-  height: 5.5rem;
-  opacity: .7;
-}
-
-.kpi-icon {
-  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
 }
 
 .dashboard-controls,
@@ -2201,7 +2171,7 @@ a:active {
 
 @media (min-width: 720px) {
   .dashboard-hero {
-    grid-template-columns: minmax(0, 1.1fr) minmax(0, .95fr) minmax(0, 1.25fr) auto;
+    grid-template-columns: minmax(0, 1fr) minmax(18rem, 1.6fr);
     align-items: center;
     padding: 1.35rem 1.5rem;
   }
@@ -2221,6 +2191,12 @@ a:active {
   .data-import-steps {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: .75rem;
+  }
+}
+
+@media (min-width: 1100px) {
+  .dashboard-hero {
+    grid-template-columns: minmax(0, 1.05fr) minmax(19rem, 1.45fr) minmax(0, 1.15fr) auto;
   }
 }
 
