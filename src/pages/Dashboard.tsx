@@ -14,7 +14,7 @@ import {
 } from 'recharts';
 import type { PieLabelRenderProps } from 'recharts';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   ArrowDownToLine,
@@ -32,7 +32,6 @@ import {
   TrendingUp,
   WalletCards,
 } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
 import { EmptyState, PageSkeleton } from '../components/AsyncStates';
 import { Amount } from '../components/ui/Amount';
 import { useApp } from '../context/AppContext';
@@ -55,7 +54,6 @@ import {
 type DashboardMode = 'month' | '6m' | '12m' | 'year' | 'custom';
 type Period = { key: string; label: string };
 type DateRange = { from: string; to: string };
-type Tone = 'emerald' | 'rose' | 'sky' | 'violet';
 type TrendSeriesKey = 'expense' | 'income' | 'net';
 
 const trendSeriesMeta: Record<TrendSeriesKey, { vi: string; en: string; color: string }> = {
@@ -254,7 +252,6 @@ function groupTransactions(
     .sort((a, b) => b.value - a.value)
     .map((item, index) => ({ ...item, fill: chartColors[index % chartColors.length] || 'var(--chart-1)' }));
 }
-
 type ExpenseChartItem = { id: string; name: string; value: number; fill: string };
 type PieChartItem = ExpenseChartItem & { isOther?: boolean; hiddenItems?: ExpenseChartItem[] };
 
@@ -333,7 +330,6 @@ export function Dashboard() {
     : customRangeTooLong
       ? (en ? `Dashboard supports custom ranges up to ${MAX_DASHBOARD_RANGE_DAYS} days. Please choose a shorter range.` : `Dashboard chỉ hỗ trợ khoảng tùy chỉnh tối đa ${MAX_DASHBOARD_RANGE_DAYS} ngày. Vui lòng chọn khoảng ngắn hơn.`)
       : (en ? 'Choose a valid date range.' : 'Vui lòng chọn khoảng ngày hợp lệ.');
-  const hasMultiMonthView = selectedPeriods.length > 1;
   const queryFrom = [selectedRange.from, compareRange.from, chartRange.from].filter(Boolean).sort()[0] || '';
   const queryTo = selectedRange.to || '';
   const localAvailableYears = useMemo(() => Array.from(new Set([
@@ -458,10 +454,6 @@ export function Dashboard() {
     const income = sumIncome(periodTransactions);
     return { ...period, expense, income, net: income - expense };
   });
-  const periodCount = Math.max(selectedPeriods.length, 1);
-  const averageExpense = selectedExpense / periodCount;
-  const highestMonth = trend.reduce((highest, item) => item.expense > highest.expense ? item : highest, trend[0] || { key: '', label: '', expense: 0, income: 0, net: 0 });
-  const lowestMonth = trend.filter((item) => item.expense > 0).reduce((lowest, item) => item.expense < lowest.expense ? item : lowest, highestMonth);
   const trendHasData = trend.some((item) => item.expense || item.income);
   const trendSummary = trendHasData
     ? trend.map((item) => `${formatPeriodKey(item.key, en)}: ${en ? 'expenses' : 'chi'} ${formatVnd(item.expense)}, ${en ? 'income' : 'thu'} ${formatVnd(item.income)}`).join('; ')
@@ -492,16 +484,7 @@ export function Dashboard() {
       ? Number(comparisonAggregate.byExpenseType.find((entry) => (entry.id || 'uncategorized') === item.id)?.value || 0)
       : comparisonTransactions.filter((transaction) => transaction.expenseTypeId === item.id).reduce((total, transaction) => total + expenseValue(transaction), 0),
   }));
-  const insightTrend = mode === 'month' ? [] : trend;
-  const insights = buildInsights({
-    en,
-    topCategories,
-    highestMonth: mode === 'month' ? { key: '', expense: 0 } : highestMonth,
-    lowestMonth: mode === 'month' ? { key: '', expense: 0 } : lowestMonth,
-    expenseChange,
-    selectedExpense,
-    trend: insightTrend,
-  });
+  const insights = buildInsights({ en, trend: mode === 'month' ? [] : trend });
   const error = dashboardQuery.isError || yearsQuery.isError;
   const aiSummaryQueryKey = [
     'ai-dashboard-summary',
@@ -590,8 +573,8 @@ export function Dashboard() {
           <p className="dashboard-hero-period" title={periodLabel}>{en ? 'Selected period' : 'Kỳ đang xem'}</p>
         </div>
         <div className="dashboard-hero-balance">
-          <span className="dashboard-hero-label">{en ? 'Net value' : 'Giá trị ròng'}</span>
-          <Amount value={selectedIncome - selectedExpense} className="dashboard-hero-value" label={en ? 'Net value' : 'Giá trị ròng'} />
+          <span className="dashboard-hero-label">{en ? 'Net for selected period' : 'Giá trị ròng trong kỳ'}</span>
+          <Amount value={selectedIncome - selectedExpense} className="dashboard-hero-value whitespace-nowrap" label={en ? 'Net for selected period' : 'Giá trị ròng trong kỳ'} />
           <span className={`dashboard-hero-status ${selectedIncome >= selectedExpense ? 'dashboard-hero-status-positive' : 'dashboard-hero-status-negative'}`}>
             {selectedIncome >= selectedExpense ? (en ? 'Income is ahead' : 'Thu đang cao hơn chi') : (en ? 'Expenses are ahead' : 'Chi đang cao hơn thu')}
           </span>
@@ -599,11 +582,13 @@ export function Dashboard() {
         <div className="dashboard-hero-stats" aria-label={en ? 'Period totals' : 'Tổng quan trong kỳ'}>
           <Link className="dashboard-hero-stat dashboard-hero-stat-income" to={periodFilterLink('Thu nhập')}>
             <span className="dashboard-hero-stat-label"><ArrowDownToLine size={15} aria-hidden="true" />{en ? 'Income' : 'Thu nhập'}</span>
-            <Amount value={selectedIncome} variant="compact" className="dashboard-hero-stat-value" label={en ? 'Income' : 'Thu nhập'} />
+            <Amount value={selectedIncome} variant="compact" className="dashboard-hero-stat-value whitespace-nowrap" label={en ? 'Income' : 'Thu nhập'} />
+            <span className="dashboard-hero-stat-meta"><ChangeBadge value={incomeChange} en={en} />{incomeChange !== null && <span>{en ? 'vs previous period' : 'so với kỳ trước'}</span>}</span>
           </Link>
           <Link className="dashboard-hero-stat dashboard-hero-stat-expense" to={periodFilterLink('Chi tiêu')}>
             <span className="dashboard-hero-stat-label"><ArrowUpFromLine size={15} aria-hidden="true" />{en ? 'Expenses' : 'Chi tiêu'}</span>
-            <Amount value={selectedExpense} variant="compact" className="dashboard-hero-stat-value" label={en ? 'Expenses' : 'Chi tiêu'} />
+            <Amount value={selectedExpense} variant="compact" className="dashboard-hero-stat-value whitespace-nowrap" label={en ? 'Expenses' : 'Chi tiêu'} />
+            <span className="dashboard-hero-stat-meta"><ChangeBadge value={expenseChange} en={en} />{expenseChange !== null && <span>{en ? 'vs previous period' : 'so với kỳ trước'}</span>}</span>
           </Link>
         </div>
         <Link className="dashboard-hero-cta btn-secondary inline-flex items-center justify-center gap-2" to={periodFilterLink()}>
@@ -628,17 +613,6 @@ export function Dashboard() {
 
       {(!validRange || error) && <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300"><span>{customRangeError ? customRangeErrorMessage : !validRange ? (en ? 'Choose a valid date range.' : 'Vui lòng chọn khoảng ngày hợp lệ.') : (dashboardQuery.data ? (en ? 'Showing the last loaded dashboard data. Refresh failed.' : 'Đang hiển thị dữ liệu Dashboard đã tải trước đó. Lần làm mới vừa thất bại.') : (en ? 'Could not load part of the dashboard.' : 'Không thể tải một phần Dashboard.'))}</span>{validRange && <button type="button" className="btn-secondary px-3 py-1.5 text-xs" onClick={() => { void dashboardQuery.refetch(); void yearsQuery.refetch(); }}>{en ? 'Retry' : 'Thử lại'}</button>}</div>}
 
-      <section className={`ui-stagger dashboard-kpi-grid grid grid-cols-2 gap-3 sm:gap-4 ${hasMultiMonthView ? 'xl:grid-cols-6' : 'xl:grid-cols-3'}`} aria-label={en ? 'Financial summary' : 'Tóm tắt tài chính'}>
-        <Kpi en={en} label={en ? 'Total income' : 'Tổng thu'} value={selectedIncome} icon={ArrowDownToLine} tone="emerald" meta={renderChange(incomeChange, en, 'vs previous period')} to={periodFilterLink('Thu nhập')} />
-        <Kpi en={en} label={en ? 'Total expenses' : 'Tổng chi'} value={selectedExpense} icon={ArrowUpFromLine} tone="rose" meta={renderChange(expenseChange, en, 'vs previous period')} to={periodFilterLink('Chi tiêu')} />
-        <div className={hasMultiMonthView ? 'min-w-0' : 'col-span-2 min-w-0 xl:col-span-1'}><Kpi en={en} label={en ? 'Net value' : 'Giá trị ròng'} value={selectedIncome - selectedExpense} icon={Scale} tone={selectedIncome >= selectedExpense ? 'emerald' : 'rose'} meta={en ? 'Income minus expenses' : 'Thu nhập trừ chi tiêu'} to={periodFilterLink()} /></div>
-        {hasMultiMonthView && <>
-          <Kpi en={en} label={en ? 'Average / month' : 'Trung bình / tháng'} value={averageExpense} icon={BarChart3} tone="sky" meta={en ? `${periodCount} mo.` : `${periodCount} tháng`} to={periodFilterLink('Chi tiêu')} />
-          <Kpi en={en} label={en ? 'Peak month' : 'Tháng cao nhất'} value={highestMonth.expense} icon={TrendingUp} tone="violet" meta={highestMonth.expense > 0 ? `T${highestMonth.key.slice(5, 7)}/${highestMonth.key.slice(0, 4)}` : (en ? 'No data' : 'Chưa có dữ liệu')} to={periodFilterLink('Chi tiêu', highestMonth.expense > 0 ? rangeForPeriods([{ key: highestMonth.key, label: highestMonth.label }]) : selectedRange)} />
-          <Kpi en={en} label={en ? 'Lowest month' : 'Tháng thấp nhất'} value={lowestMonth.expense} icon={TrendingDown} tone="sky" meta={lowestMonth.expense > 0 ? `T${lowestMonth.key.slice(5, 7)}/${lowestMonth.key.slice(0, 4)}` : (en ? 'No data' : 'Chưa có dữ liệu')} to={periodFilterLink('Chi tiêu', lowestMonth.expense > 0 ? rangeForPeriods([{ key: lowestMonth.key, label: lowestMonth.label }]) : selectedRange)} />
-        </>}
-      </section>
-
       {budgetQuery.isError && <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/20 dark:text-amber-200"><span>{en ? 'Budget data could not be loaded.' : 'Không thể tải dữ liệu ngân sách.'}</span><button type="button" className="btn-secondary px-3 py-1.5 text-xs" onClick={() => void budgetQuery.refetch()}>{en ? 'Retry' : 'Thử lại'}</button></div>}
       {!budgetQuery.isError && <BudgetSnapshot summary={budgetSummary} en={en} month={selectedMonth} year={selectedYear} />}
       {assetSummaryQuery.isError && <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/20 dark:text-amber-200"><span>{en ? 'Asset data could not be loaded.' : 'Không thể tải dữ liệu tài sản.'}</span><button type="button" className="btn-secondary px-3 py-1.5 text-xs" onClick={() => void assetSummaryQuery.refetch()}>{en ? 'Retry' : 'Thử lại'}</button></div>}
@@ -649,13 +623,7 @@ export function Dashboard() {
             <h3 id="dashboard-trend-title" className="text-lg font-bold">{en ? 'Spending and income trend' : 'Xu hướng thu chi'}</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">{mode === 'month' ? (en ? 'Six months ending in the selected month' : 'Sáu tháng kết thúc tại tháng đang chọn') : (en ? 'Monthly breakdown for this view' : 'Phân bổ theo từng tháng trong kỳ xem')}</p>
           </div>
-          <div className="flex items-start justify-between gap-3 sm:justify-end">
-            <div className="text-right text-sm">
-              <p className="font-bold text-[var(--chart-expense)]">{formatVnd(selectedExpense)}</p>
-              <p className="text-gray-500 dark:text-gray-400">{en ? 'expenses in view' : 'chi trong kỳ xem'}</p>
-            </div>
-            {trendHasData && <button type="button" className="btn-secondary shrink-0 px-2.5 py-1.5 text-xs" aria-expanded={showTrendTable} aria-controls="dashboard-trend-table" onClick={() => setShowTrendTable((value) => !value)}>{showTrendTable ? (en ? 'Hide table' : 'Ẩn bảng') : (en ? 'View table' : 'Xem dạng bảng')}</button>}
-          </div>
+          {trendHasData && <button type="button" className="btn-secondary shrink-0 px-2.5 py-1.5 text-xs" aria-expanded={showTrendTable} aria-controls="dashboard-trend-table" onClick={() => setShowTrendTable((value) => !value)}>{showTrendTable ? (en ? 'Hide table' : 'Ẩn bảng') : (en ? 'View table' : 'Xem dạng bảng')}</button>}
         </div>
         {trendHasData && <div className="mb-2 border-t border-black/5 pt-2 dark:border-white/10"><TrendLegend en={en} hiddenSeries={hiddenTrendSeries} onToggle={toggleTrendSeries} /></div>}
         <p id="dashboard-trend-summary" className="sr-only">{trendSummary}{trendHasData ? (en ? ' Use View table for the same values without hover.' : ' Chọn Xem dạng bảng để đọc cùng dữ liệu mà không cần rê chuột.') : ''}</p>
@@ -670,8 +638,8 @@ export function Dashboard() {
       <details className="group card dashboard-breakdown-card min-w-0 overflow-hidden">
         <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 p-4 sm:p-5 [&::-webkit-details-marker]:hidden">
           <div className="min-w-0">
-            <h3 className="text-lg font-bold">{en ? 'Top categories over time' : 'Top danh mục theo thời gian'}</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{en ? 'Click a row to inspect the filtered transactions.' : 'Bấm vào một dòng để xem các giao dịch đã lọc.'}</p>
+            <h3 className="text-lg font-bold">{en ? 'Category trends' : 'Xu hướng theo danh mục'}</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{en ? 'Open a row to compare category movement over time.' : 'Mở một dòng để xem biến động danh mục theo thời gian.'}</p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <span className="ui-chip">{topCategories.length ? `${topCategories.length} ${en ? 'categories' : 'danh mục'}` : (en ? 'No data' : 'Chưa có dữ liệu')}</span>
@@ -705,9 +673,8 @@ export function Dashboard() {
         </summary>
         <div className="px-4 pb-4 sm:px-5 sm:pb-5">
           <div className="mb-3 flex justify-end"><button type="button" className="btn-secondary inline-flex shrink-0 items-center gap-2 text-sm" disabled={!isSupabaseConfigured || !validRange || aiSummaryBusy} onClick={() => void runAiSummary()} title={!isSupabaseConfigured ? (en ? 'Connect Supabase to use AI' : 'Cần kết nối Supabase để dùng AI') : undefined}><Sparkles size={16} aria-hidden="true" />{aiSummaryBusy ? (en ? 'Summarizing…' : 'Đang tóm tắt…') : aiSummaryQuery.isError ? (en ? 'Retry AI summary' : 'Thử lại tóm tắt AI') : (en ? 'Summarize with AI' : 'Tóm tắt bằng AI')}</button></div>
-          {insights.length ? <ul className="grid gap-2 text-sm sm:grid-cols-2">{insights.map((insight) => <li key={insight} className="rounded-xl border border-amber-100 bg-white/70 p-3 dark:border-amber-900/40 dark:bg-white/5">{insight}</li>)}</ul> : <p className="text-sm text-gray-600 dark:text-gray-300">{en ? 'Insights will appear when there is enough actual data.' : 'Nhận xét sẽ xuất hiện khi có đủ dữ liệu giao dịch thực tế.'}</p>}
+          {aiSummaryQuery.data ? <div className="rounded-xl border border-amber-200 bg-white/75 p-3 text-sm dark:border-amber-900/60 dark:bg-white/5"><p className="mb-2 text-xs font-bold uppercase tracking-wide text-amber-700 dark:text-amber-300">{en ? 'AI summary' : 'Tóm tắt bằng AI'}</p><p className="leading-6">{aiSummaryQuery.data.summary}</p>{aiSummaryQuery.data.highlights.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5 text-gray-700 dark:text-gray-300">{aiSummaryQuery.data.highlights.map((highlight) => <li key={highlight}>{highlight}</li>)}</ul>}</div> : insights.length ? <ul className="grid gap-2 text-sm sm:grid-cols-2">{insights.map((insight) => <li key={insight} className="rounded-xl border border-amber-100 bg-white/70 p-3 dark:border-amber-900/40 dark:bg-white/5">{insight}</li>)}</ul> : <p className="text-sm text-gray-600 dark:text-gray-300">{en ? 'Insights will appear when there is enough actual data.' : 'Nhận xét sẽ xuất hiện khi có đủ dữ liệu giao dịch thực tế.'}</p>}
           {aiSummaryQuery.isError && <div role="alert" className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-red-100/70 p-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300"><span>{aiErrorMessage(aiSummaryQuery.error, en, 'summary')}</span><button type="button" className="btn-secondary px-3 py-1.5 text-xs" onClick={() => void runAiSummary()}>{en ? 'Retry' : 'Thử lại'}</button></div>}
-          {aiSummaryQuery.data && <div className="mt-3 rounded-xl border border-amber-200 bg-white/75 p-3 text-sm dark:border-amber-900/60 dark:bg-white/5"><p className="leading-6">{aiSummaryQuery.data.summary}</p>{aiSummaryQuery.data.highlights.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5 text-gray-700 dark:text-gray-300">{aiSummaryQuery.data.highlights.map((highlight) => <li key={highlight}>{highlight}</li>)}</ul>}</div>}
         </div>
       </details>
     </div>
@@ -723,15 +690,6 @@ function formatDate(value: string) {
 function formatPeriodKey(value: string, en: boolean) {
   if (!value) return en ? 'No data' : 'Chưa có dữ liệu';
   return `${en ? 'Month' : 'Tháng'} ${value.slice(5, 7)}/${value.slice(0, 4)}`;
-}
-
-function renderChange(value: number | null, en: boolean, suffix: string) {
-  if (value === null) return en ? 'No comparison data' : 'Chưa có kỳ so sánh';
-  if (value === 0) return `${en ? 'No change' : 'Không đổi'} · ${en ? suffix : 'so với kỳ trước'}`;
-  const direction = value > 0 ? (en ? 'Up' : 'Tăng') : (en ? 'Down' : 'Giảm');
-  const Icon = value > 0 ? TrendingUp : TrendingDown;
-  const fullText = `${direction} ${formatPercent(value)}% · ${en ? suffix : 'so với kỳ trước'}`;
-  return <span className="inline-flex min-w-0 items-center gap-1" aria-label={fullText}><Icon size={13} aria-hidden="true" /><span>{formatPercent(value)}%</span><span className="sr-only"> · {en ? suffix : 'so với kỳ trước'}</span></span>;
 }
 
 function formatSignedVnd(value: number) {
@@ -767,7 +725,7 @@ function AssetSnapshot({ summary, en, loading }: { summary?: AssetSummary; en: b
     </div>
     <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
       <div className="asset-summary-card asset-summary-card-total"><div className="flex items-center gap-2 text-sm font-semibold"><Gem size={17} aria-hidden="true" />{en ? 'Total assets' : 'Tổng tài sản'}</div><p className="mt-2 break-words text-xl font-extrabold tabular-nums">{formatVnd(totalAssets)}</p><p className="mt-1 text-xs opacity-75">{en ? 'Net cash + savings + gold estimate' : 'Tiền ròng + tiết kiệm + vàng ước tính'}</p></div>
-      <div className="asset-summary-card asset-summary-card-cash"><div className="flex items-center gap-2 text-sm font-semibold"><WalletCards size={17} aria-hidden="true" />{en ? 'Net cash' : 'Tiền ròng'}</div><p className="mt-2 break-words text-xl font-extrabold tabular-nums">{formatVnd(summary.netCash)}</p><p className="mt-1 text-xs opacity-75">{en ? 'Income − actual expenses' : 'Tổng thu nhập − chi tiêu thực tế'}</p></div>
+      <div className="asset-summary-card asset-summary-card-cash"><div className="flex items-center gap-2 text-sm font-semibold"><WalletCards size={17} aria-hidden="true" />{en ? 'Cash on hand' : 'Tiền ròng hiện có'}</div><p className="mt-2 break-words text-xl font-extrabold tabular-nums">{formatVnd(summary.netCash)}</p><p className="mt-1 text-xs opacity-75">{en ? 'All actual transactions · income − expenses' : 'Toàn bộ giao dịch thực tế · thu nhập − chi tiêu'}</p></div>
       <div className="asset-summary-card asset-summary-card-savings"><div className="flex items-center gap-2 text-sm font-semibold"><Landmark size={17} aria-hidden="true" />{en ? 'Savings' : 'Sổ tiết kiệm'}</div><p className="mt-2 break-words text-xl font-extrabold tabular-nums">{formatVnd(summary.savingsTotal)}</p><p className="mt-1 text-xs opacity-75">{summary.savingsCount} {en ? 'book(s)' : 'sổ'}</p><div className="mt-1 grid gap-0.5 text-xs font-semibold"><span className="inline-flex max-w-full items-center gap-1"><SavingsPnlIcon size={14} aria-hidden="true" /><span>{en ? 'Interest to date' : 'Lãi đến hiện tại'} {formatSignedVnd(savingsInterestToDate)}</span></span><span className="pl-5">{en ? 'Full term' : 'Toàn kỳ'} {formatSignedVnd(savingsInterestFullTerm)}</span></div></div>
       <div className="asset-summary-card asset-summary-card-gold"><div className="flex items-center gap-2 text-sm font-semibold"><Crown size={17} aria-hidden="true" />{en ? 'Gold estimate' : 'Vàng ước tính'}</div><p className="mt-2 break-words text-xl font-extrabold tabular-nums">{formatVnd(summary.goldEstimatedTotal)}</p><p className="mt-1 text-xs opacity-75">{quantityLabel}</p><p className="mt-1 text-xs opacity-75">{en ? 'Avg. cost' : 'Giá vốn bình quân'} {averageCostLabel}{summary.goldMissingEstimateCount ? ` · ${en ? 'missing price' : 'chưa có giá'}` : ''}</p><p className={`mt-1 inline-flex max-w-full items-center gap-1 text-xs font-semibold ${goldPnlClass}`}><GoldPnlIcon size={14} aria-hidden="true" /><span>{en ? 'Est. P/L' : 'Lãi/lỗ ước tính'} {goldPnl === null ? '—' : formatSignedVnd(goldPnl)}</span></p></div>
     </div>
@@ -791,31 +749,20 @@ function BudgetSnapshot({ summary, en, month, year }: { summary?: BudgetSummary;
 
 function buildInsights({
   en,
-  topCategories,
-  highestMonth,
-  lowestMonth,
-  expenseChange,
-  selectedExpense,
   trend,
 }: {
   en: boolean;
-  topCategories: Array<ExpenseChartItem & { trend: number[]; previousValue: number }>;
-  highestMonth: { key: string; expense: number };
-  lowestMonth: { key: string; expense: number };
-  expenseChange: number | null;
-  selectedExpense: number;
   trend: Array<{ key: string; expense: number; income: number; net: number }>;
 }) {
   const insights: string[] = [];
-  const top = topCategories[0];
-  if (top) insights.push(en ? `${top.name} is the largest category at ${formatVnd(top.value)}.` : `${top.name} là danh mục chi nhiều nhất với ${formatVnd(top.value)}.`);
-  if (highestMonth?.key && highestMonth.expense > 0) insights.push(en ? `${formatPeriodKey(highestMonth.key, true)} has the highest spending in view.` : `${formatPeriodKey(highestMonth.key, false)} có mức chi cao nhất trong kỳ xem.`);
-  if (lowestMonth?.key && lowestMonth.expense > 0 && lowestMonth.key !== highestMonth.key) insights.push(en ? `${formatPeriodKey(lowestMonth.key, true)} has the lowest spending in view.` : `${formatPeriodKey(lowestMonth.key, false)} có mức chi thấp nhất trong kỳ xem.`);
-  if (expenseChange !== null && selectedExpense > 0) insights.push(en ? `Expenses are ${expenseChange >= 0 ? 'up' : 'down'} ${formatPercent(expenseChange)}% versus the previous period.` : `Chi tiêu ${expenseChange >= 0 ? 'tăng' : 'giảm'} ${formatPercent(expenseChange)}% so với kỳ trước.`);
   const recent = trend.slice(-3);
-  if (recent.length >= 3 && recent.every((item, index) => index === 0 || item.expense >= recent[index - 1]!.expense) && recent[recent.length - 1]!.expense > recent[0]!.expense)
+  const spendingIncreased = recent.length >= 3 && recent.every((item, index) => index === 0 || item.expense >= recent[index - 1]!.expense) && recent[recent.length - 1]!.expense > recent[0]!.expense;
+  const spendingDecreased = recent.length >= 3 && recent.every((item, index) => index === 0 || item.expense <= recent[index - 1]!.expense) && recent[recent.length - 1]!.expense < recent[0]!.expense;
+  if (spendingIncreased)
     insights.push(en ? 'Spending has risen for three consecutive points.' : 'Chi tiêu tăng trong ba mốc liên tiếp.');
-  return insights.slice(0, 4);
+  else if (spendingDecreased)
+    insights.push(en ? 'Spending has fallen for three consecutive points.' : 'Chi tiêu giảm trong ba mốc liên tiếp.');
+  return insights.slice(0, 2);
 }
 
 function ChangeBadge({ value, en }: { value: number | null; en: boolean }) {
@@ -877,9 +824,4 @@ function PieTooltip({ active, payload }: { active?: boolean; payload?: Array<{ p
   const item = payload[0]?.payload;
   if (!item) return null;
   return <div className="rounded-xl border border-black/10 bg-white px-3 py-2 text-xs shadow-lg dark:border-white/10 dark:bg-[var(--surface)]"><p className="font-bold">{item.name}: {formatVnd(item.value)}</p>{item.hiddenItems?.length ? <ul className="mt-1 space-y-0.5 text-gray-600 dark:text-gray-300">{item.hiddenItems.map((hiddenItem) => <li key={hiddenItem.id}>{hiddenItem.name}: {formatVnd(hiddenItem.value)}</li>)}</ul> : null}</div>;
-}
-
-function Kpi({ en, label, value, icon: Icon, tone, meta, to }: { en: boolean; label: string; value: number; icon: LucideIcon; tone: Tone; meta: ReactNode; to: string }) {
-  const toneClass = `kpi-tone-${tone}`;
-  return <Link to={to} className="card card-interactive kpi-card group block h-full min-w-0 p-3 transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] sm:p-4" aria-label={`${en ? 'Open transactions filtered by' : 'Mở giao dịch theo'} ${label}`}><div className="min-w-0"><div className="flex items-center gap-2"><span className={`kpi-icon grid size-9 shrink-0 place-items-center rounded-xl ${toneClass}`}><Icon size={18} aria-hidden="true" /></span><p className="min-h-8 min-w-0 flex-1 text-xs font-semibold leading-4 text-gray-500 dark:text-gray-400">{label}</p></div><Amount value={value} variant="compact" className="kpi-value mt-2 block max-w-full break-words whitespace-normal text-lg font-extrabold leading-tight sm:text-xl" label={label} /></div><p className="kpi-meta mt-3 flex min-w-0 items-center gap-1 truncate text-xs leading-4">{meta}</p></Link>;
 }
