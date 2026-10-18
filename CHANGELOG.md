@@ -1,5 +1,16 @@
 # Nhật ký thay đổi Family Expense
 
+## 2026-10-19
+
+### Gộp insight trùng lặp và sửa hiển thị giá trị ròng Dashboard
+
+- Giữ Hero làm nguồn tổng quan duy nhất; bỏ các KPI `Tổng thu`, `Tổng chi`, `Giá trị ròng` lặp lại và các thẻ tháng cao nhất/thấp nhất khỏi Dashboard.
+- Đưa so sánh kỳ trước vào ngay thẻ Thu nhập/Chi tiêu; rút gọn insight cục bộ còn tín hiệu xu hướng tăng/giảm liên tiếp. Khi có tóm tắt AI, chỉ hiển thị nguồn AI để không lặp cùng một nhận xét.
+- Đổi tên phần danh mục thành `Xu hướng theo danh mục`, làm rõ phạm vi `Tiền ròng hiện có`, và giữ giá trị ròng trên một dòng bằng layout responsive cho desktop/mobile.
+- Files: `src/pages/Dashboard.tsx`, `src/pages/Dashboard.test.tsx`, `src/index.css`. Không đổi schema, RLS/RPC, Edge Function, dependency hoặc dữ liệu production.
+- Kiểm thử local: TypeScript, ESLint, Vitest `49 file / 253 test`, Vite build, responsive QA ở `375x812` và `812x375`, cùng `git diff --check` pass. CI hậu merge [run 39149288874](https://github.com/nhan0805/family-expense/actions/runs/39149288874) pass quality, E2E, db-security và performance budget.
+- Triển khai: PR [#265](https://github.com/nhan0805/family-expense/pull/265) merge vào `main` tại commit `e0c1ae6a5be9e240f87cec8892a099f8fd4f26b0`; [Cloudflare Pages production check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/f7c20582-3b48-4a74-a049-ce74085bf712) pass. Production smoke `https://family-expense-8fo.pages.dev/`, `/dang-nhap` và `/thanh-vien` đều trả HTTP 200. Không chạy Supabase Production Deploy vì không có thay đổi `supabase/`.
+
 ## 2026-10-18
 
 ### Triển khai pass giao diện Modern Finance

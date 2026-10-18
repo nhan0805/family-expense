@@ -1,15 +1,17 @@
 # Family Finance — Development Handoff
 
-> Cập nhật: **18/10/2026** (`Asia/Ho_Chi_Minh`)
+> Cập nhật: **19/10/2026** (`Asia/Ho_Chi_Minh`)
 
 ## Current state
 
 - Pass Modern Finance toàn app đã merge vào `main` qua PR [#263](https://github.com/nhan0805/family-expense/pull/263) tại commit `519c154cfc5aefdffc1b7b2594909e036dbea0b8`: semantic palette ivory/slate + navy/mint/amber/coral, dark charcoal/navy, Dashboard financial-position hero, sidebar desktop có nhóm chức năng, filter/form/card/import/notification surfaces được làm gọn và thống nhất. Không có thay đổi schema, RLS/RPC, Edge Function, dependency hoặc dữ liệu production.
+- Dashboard refinement đã merge qua PR [#265](https://github.com/nhan0805/family-expense/pull/265) tại merge commit `e0c1ae6a5be9e240f87cec8892a099f8fd4f26b0`: giữ Hero làm nguồn tổng quan duy nhất, bỏ KPI/insight lặp, tách rõ so sánh kỳ trước, và giữ giá trị ròng trên một dòng ở desktop/mobile. Không có thay đổi schema, RLS/RPC, Edge Function, dependency hoặc dữ liệu production.
 - Quality gate local và CI của pass Modern Finance: TypeScript, ESLint, Vitest `49 file/253 test`, coverage, Vite build, performance budget, E2E và db-security đều pass; build vẫn có cảnh báo chunk lớn XLSX/ExcelJS/chart như known issue. E2E local không chạy vì thiếu browser binary Playwright, nhưng E2E CI pass.
-- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; CI hậu merge [run 39146781374](https://github.com/nhan0805/family-expense/actions/runs/39146781374) pass. Live production `/`, `/dang-nhap` và `/thanh-vien` đều trả HTTP 200, asset CSS live chứa token mới và `dashboard-hero`; không chạy Supabase Production Deploy vì không có thay đổi `supabase/`.
+- Quality gate Dashboard refinement local và CI: TypeScript, ESLint, Vitest `49 file/253 test`, Vite build, performance budget, E2E và db-security đều pass. CI hậu merge [run 39149288874](https://github.com/nhan0805/family-expense/actions/runs/39149288874) và [Cloudflare Pages production check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/f7c20582-3b48-4a74-a049-ce74085bf712) pass; smoke `/`, `/dang-nhap` và `/thanh-vien` đều trả HTTP 200. Không chạy Supabase Production Deploy vì không có thay đổi `supabase/`.
+- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; asset live đã được smoke-test sau merge commit Dashboard refinement.
 - Code trên `main` đã gồm PR [#234](https://github.com/nhan0805/family-expense/pull/234), cho owner đặt bộ mục đích/danh mục/phương thức thanh toán hiện tại làm mặc định cho gia đình tạo mới; các PR [#238](https://github.com/nhan0805/family-expense/pull/238), [#239](https://github.com/nhan0805/family-expense/pull/239) và [#241](https://github.com/nhan0805/family-expense/pull/241) đồng bộ thứ tự/lịch sử migration để production apply được thay đổi; cùng các release trước.
 - CI hậu merge [run 38508609460](https://github.com/nhan0805/family-expense/actions/runs/38508609460) của merge commit `404e7f5` pass quality, coverage, E2E, db-security và performance budget. Release này không có migration Supabase, Edge Function hoặc thay đổi dữ liệu production nên không chạy Supabase Production Deploy.
-- Nhánh release/status hiện tại: `codex/release-status-modernize-ui-20261018`, được đồng bộ từ `origin/main` sau deploy để ghi nhận release; thay đổi trong nhánh này chỉ là tài liệu.
+- Nhánh release/status hiện tại: `codex/release-status-dashboard-20261019`, được đồng bộ từ `origin/main` sau deploy để ghi nhận release; thay đổi trong nhánh này chỉ là tài liệu.
 - Đã cập nhật CI/preview cho `merge_group`, thu hẹp trigger Supabase và chuẩn hóa single-writer cho tài liệu release; chưa bật Merge Queue/branch protection trên GitHub.
 - Bản đồ kiến trúc ổn định nằm trong [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md); quy tắc phân loại tài liệu nằm trong [`docs/AI_CONTEXT_GUIDE.md`](docs/AI_CONTEXT_GUIDE.md).
 
@@ -37,6 +39,15 @@
 - Semantic embedding/search production path đã bị loại bỏ; không đưa lại nếu chưa có quyết định kiến trúc mới.
 
 ## Recently completed
+
+### Gộp insight trùng lặp và giữ giá trị ròng trên một dòng
+
+- Dashboard chỉ còn một nguồn tổng quan chính ở Hero; bỏ các thẻ KPI lặp `Tổng thu`, `Tổng chi`, `Giá trị ròng`, cùng các thẻ tháng cao nhất/thấp nhất. So sánh kỳ trước nằm ngay trong thẻ Thu nhập/Chi tiêu và không lặp lại trong insight.
+- Insight cục bộ chỉ giữ tín hiệu xu hướng tăng/giảm liên tiếp; khi có tóm tắt AI thì chỉ hiển thị nguồn AI, tránh hai khối nhận xét nói cùng một điều. Phần `Tiền ròng hiện có` cũng ghi rõ phạm vi toàn bộ giao dịch thực tế.
+- Giá trị ròng dùng `nowrap` và layout Hero responsive theo breakpoint; đã kiểm tra portrait `375x812` và landscape `812x375`, không có horizontal overflow. Đổi tên phần `Top danh mục theo thời gian` thành `Xu hướng theo danh mục` để tránh cảm giác trùng với insight.
+- Files: `src/pages/Dashboard.tsx`, `src/pages/Dashboard.test.tsx`, `src/index.css`. Không đổi schema, RLS/RPC, Edge Function, dependency hoặc dữ liệu production.
+- Kiểm thử: local TypeScript, ESLint, Vitest `49 file/253 test`, Vite build và `git diff --check` pass; CI hậu merge [run 39149288874](https://github.com/nhan0805/family-expense/actions/runs/39149288874) pass quality, E2E, db-security và performance budget.
+- Triển khai: PR [#265](https://github.com/nhan0805/family-expense/pull/265) merge tại commit `e0c1ae6a5be9e240f87cec8892a099f8fd4f26b0`; [Cloudflare Pages production check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/f7c20582-3b48-4a74-a049-ce74085bf712) pass; smoke production `/`, `/dang-nhap` và `/thanh-vien` đều trả HTTP 200.
 
 ### Sổ đã tất toán không còn hiển thị quá hạn
 
