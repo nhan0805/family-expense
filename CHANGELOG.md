@@ -2,6 +2,15 @@
 
 ## 2026-10-19
 
+### Làm mới giao diện Neo-Fintech toàn app
+
+- Làm mới visual system dùng chung theo hướng tương lai nhưng vẫn đáng tin cậy: navy/teal, surface glass có kiểm soát, nền grid nhẹ, shadow phân lớp, trạng thái focus/hover rõ và CTA có gradient tiết chế.
+- Dashboard Hero có depth bằng halo/grid; sidebar/bottom nav, card, field, button, upload zone, disclosure và toast được đồng bộ; auth page có hero/feature/form surface riêng. Dark mode và PWA `theme-color` chuyển sang nền navy + accent mint/teal.
+- Giữ nguyên business logic, API, schema, dependency, mobile-first, bilingual behavior và `prefers-reduced-motion`.
+- Files: `index.html`, `src/index.css`, `src/components/AuthShell.tsx`, `src/pages/Login.tsx`, `src/context/ThemeContext.tsx`, `src/context/ThemeContext.test.tsx`.
+- Kiểm thử local: Vitest `49 file / 253 test`, TypeScript, ESLint, Vite build và `git diff --check` pass; visual QA light/dark ở `375px` và `1280px`, console không có lỗi.
+- Triển khai: PR [#269](https://github.com/nhan0805/family-expense/pull/269) merge vào `main` tại commit `3233fc56a224ed73d6b559c2f92f0eca6e0297c2`; CI hậu merge [run 39187051471](https://github.com/nhan0805/family-expense/actions/runs/39187051471) pass quality, coverage, E2E, db-security và performance budget. [Cloudflare Pages production check của fafin](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/fafin/45f81772-6274-4cd5-a334-43c6390bdfd7) pass; smoke `https://family-expense-8fo.pages.dev/` và `/dang-nhap` đều trả HTTP 200. Không chạy Supabase Production Deploy vì không có thay đổi `supabase/`.
+
 ### Thêm motion tinh tế cho Dashboard
 
 - Hero Dashboard có hiệu ứng xuất hiện nhẹ theo nhịp; các panel chi tiết mở rộng có chuyển tiếp ngắn, easing enter/exit được chuẩn hóa và `prefers-reduced-motion` vẫn tắt toàn bộ motion.
