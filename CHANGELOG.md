@@ -2,6 +2,14 @@
 
 ## 2026-10-19
 
+### Thiết kế lại icon app theo Neo-Fintech
+
+- Thay icon ngôi nhà cũ bằng SVG ví/thẻ tài chính với đường tăng trưởng amber, nền navy/grid và accent mint; dùng chung cho favicon và PWA `any maskable` icon, có văn bản mô tả cho accessibility.
+- Đồng bộ `theme-color`/`background_color` manifest với hệ màu mới; không đổi schema, API, business logic, dependency hoặc dữ liệu production.
+- Files: `index.html`, `public/icons/icon.svg`, `vite.config.ts`.
+- Kiểm thử local: Vitest `49 file / 253 test`, TypeScript, ESLint, Vite build và `git diff --check` pass; visual QA icon SVG pass.
+- Triển khai: PR [#271](https://github.com/nhan0805/family-expense/pull/271) merge vào `main` tại commit `043b662104fae31f544b93b40bf7ff531281905d`; CI hậu merge [run 39188154059](https://github.com/nhan0805/family-expense/actions/runs/39188154059) pass quality, coverage, E2E, db-security và performance budget. [Cloudflare Pages production check của fafin](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/fafin/724a9599-5217-4db3-ae3b-de8732b09e86) pass; smoke `https://family-expense-8fo.pages.dev/` và `/dang-nhap` đều trả HTTP 200, live icon/manifest đã xác nhận. Không chạy Supabase Production Deploy vì không có thay đổi `supabase/`.
+
 ### Làm mới giao diện Neo-Fintech toàn app
 
 - Làm mới visual system dùng chung theo hướng tương lai nhưng vẫn đáng tin cậy: navy/teal, surface glass có kiểm soát, nền grid nhẹ, shadow phân lớp, trạng thái focus/hover rõ và CTA có gradient tiết chế.

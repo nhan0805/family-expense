@@ -4,6 +4,8 @@
 
 ## Current state
 
+- Icon app đã được thiết kế lại theo Neo-Fintech và merge vào `main` qua PR [#271](https://github.com/nhan0805/family-expense/pull/271) tại merge commit `043b662104fae31f544b93b40bf7ff531281905d`: SVG ví/thẻ tài chính có đường tăng trưởng, nền navy/grid, accent mint/amber; dùng chung cho favicon và PWA `any maskable` icon. `theme-color`/`background_color` manifest cũng đã đồng bộ với hệ màu mới. Không đổi schema, API, business logic, dependency, dữ liệu production hoặc `supabase/`.
+- Quality gate local: Vitest `49 file / 253 test`, TypeScript, ESLint, Vite build và `git diff --check` pass; visual QA icon SVG pass. CI hậu merge [run 39188154059](https://github.com/nhan0805/family-expense/actions/runs/39188154059) pass quality, coverage, E2E, db-security và performance budget; [Cloudflare Pages production check của fafin](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/fafin/724a9599-5217-4db3-ae3b-de8732b09e86) pass. Smoke production `/` và `/dang-nhap` trả HTTP 200; live icon và manifest đã xác nhận. Không chạy Supabase Production Deploy vì không có thay đổi `supabase/`.
 - Neo-Fintech visual refresh đã merge vào `main` qua PR [#269](https://github.com/nhan0805/family-expense/pull/269) tại merge commit `3233fc56a224ed73d6b559c2f92f0eca6e0297c2`: semantic token chuyển sang navy/teal có chiều sâu, glass surface có kiểm soát, grid/halo cho Hero, nav/CTA/field/focus states rõ hơn, auth screen đồng bộ, và dark/PWA theme-color được cập nhật. Không có thay đổi business logic, schema, RLS/RPC, Edge Function, dependency hoặc dữ liệu production.
 - Quality gate release: local `CI=true pnpm test --run` pass `49 file / 253 test`, TypeScript, ESLint, Vite build và `git diff --check`; visual QA light/dark ở `375px` và `1280px` không có lỗi console. CI hậu merge [run 39187051471](https://github.com/nhan0805/family-expense/actions/runs/39187051471) pass quality, coverage, E2E, db-security và performance budget; [Cloudflare Pages production check của fafin](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/fafin/45f81772-6274-4cd5-a334-43c6390bdfd7) pass. Không chạy Supabase Production Deploy vì không có thay đổi `supabase/`.
 - Pass Modern Finance toàn app đã merge vào `main` qua PR [#263](https://github.com/nhan0805/family-expense/pull/263) tại commit `519c154cfc5aefdffc1b7b2594909e036dbea0b8`: semantic palette ivory/slate + navy/mint/amber/coral, dark charcoal/navy, Dashboard financial-position hero, sidebar desktop có nhóm chức năng, filter/form/card/import/notification surfaces được làm gọn và thống nhất. Không có thay đổi schema, RLS/RPC, Edge Function, dependency hoặc dữ liệu production.
@@ -43,6 +45,14 @@
 - Semantic embedding/search production path đã bị loại bỏ; không đưa lại nếu chưa có quyết định kiến trúc mới.
 
 ## Recently completed
+
+### Thiết kế lại icon app theo Neo-Fintech
+
+- Thay icon ngôi nhà cũ bằng SVG ví/thẻ tài chính có đường tăng trưởng amber, nền navy/grid và accent mint; SVG có `title`/`desc`, bố cục an toàn cho maskable icon và được dùng chung cho favicon cùng PWA manifest.
+- Đồng bộ `theme-color` trong HTML shell và `theme_color`/`background_color` của manifest với visual system mới; không đổi schema, API, business logic, dependency, `supabase/` hoặc dữ liệu production.
+- Files: `index.html`, `public/icons/icon.svg`, `vite.config.ts`.
+- Kiểm thử: local Vitest `49 file/253 test`, TypeScript, ESLint, Vite build và `git diff --check` pass; visual QA icon SVG pass.
+- Triển khai: PR [#271](https://github.com/nhan0805/family-expense/pull/271) merge tại commit `043b662104fae31f544b93b40bf7ff531281905d`; CI hậu merge [run 39188154059](https://github.com/nhan0805/family-expense/actions/runs/39188154059), Cloudflare Pages production `fafin` và smoke `/`, `/dang-nhap` pass. Live icon `/icons/icon.svg` và `/manifest.webmanifest` đã xác nhận.
 
 ### Làm mới giao diện Neo-Fintech toàn app
 
