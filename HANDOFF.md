@@ -4,6 +4,8 @@
 
 ## Current state
 
+- Rà soát wording trung tính đã merge vào `main` qua PR [#275](https://github.com/nhan0805/family-expense/pull/275) tại merge commit `4807882a323448d27fe517e2d5967dbc1138d475`: thay các tiêu đề/mô tả thiên về marketing ở Login, Tạo gia đình, Dashboard, Tài sản, Ngân sách, Danh mục, Thành viên, Giao dịch tự động, Dữ liệu và Chi phí định kỳ bằng nhãn mô tả chức năng; giữ nguyên logic, API, schema, dependency, `supabase/` và dữ liệu production.
+- Quality gate local: Vitest `49 file / 253 test`, TypeScript, ESLint, Vite build và `git diff --check` pass. CI hậu merge [run 39221897990](https://github.com/nhan0805/family-expense/actions/runs/39221897990) pass quality, E2E và db-security; [Cloudflare Pages production check của fafin](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/fafin/bca42e21-30b4-4d81-9ce3-05910f58cea7) và [family-expense](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/f9ffc30e-3583-40ff-be8e-a40d5ec08bd7) pass. Smoke production `/` và `/dang-nhap` trả HTTP 200. Không chạy Supabase Production Deploy vì không có thay đổi `supabase/`.
 - Sửa tương phản tab và tag trong dark theme đã merge vào `main` qua PR [#273](https://github.com/nhan0805/family-expense/pull/273) tại commit `ed687a7146b85c9511e1ca2a6b72b7556f4ef7e4`: tab đang chọn của Catalogs/Settings dùng màu text rõ hơn trên nền tint, tag metadata Chi phí định kỳ có nền dịu hơn và tag tần suất dùng teal. Không đổi schema, API, business logic, dependency, `supabase/` hoặc dữ liệu production.
 - Quality gate local: Vitest `49 file / 253 test`, TypeScript, ESLint, Vite build và `git diff --check` pass; visual QA dark demo `/cai-dat` và `/chi-phi-dinh-ky` pass. CI hậu merge [run 39193612534](https://github.com/nhan0805/family-expense/actions/runs/39193612534) pass quality, E2E, db-security và performance budget; [Cloudflare Pages production check của fafin](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/fafin/bb260987-4475-4763-8218-cb767ed80b01) pass. Smoke production `/` và `/dang-nhap` trả HTTP 200. Không chạy Supabase Production Deploy vì không có thay đổi `supabase/`.
 - Icon app đã được thiết kế lại theo Neo-Fintech và merge vào `main` qua PR [#271](https://github.com/nhan0805/family-expense/pull/271) tại merge commit `043b662104fae31f544b93b40bf7ff531281905d`: SVG ví/thẻ tài chính có đường tăng trưởng, nền navy/grid, accent mint/amber; dùng chung cho favicon và PWA `any maskable` icon. `theme-color`/`background_color` manifest cũng đã đồng bộ với hệ màu mới. Không đổi schema, API, business logic, dependency, dữ liệu production hoặc `supabase/`.
@@ -19,7 +21,7 @@
 - Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; smoke `/` và `/dang-nhap` đều trả HTTP 200 sau merge commit `3233fc56a224ed73d6b559c2f92f0eca6e0297c2`, live HTML/CSS đã xác nhận theme-color và visual asset Neo-Fintech. Không chạy Supabase Production Deploy vì không có thay đổi `supabase/`.
 - Code trên `main` đã gồm PR [#234](https://github.com/nhan0805/family-expense/pull/234), cho owner đặt bộ mục đích/danh mục/phương thức thanh toán hiện tại làm mặc định cho gia đình tạo mới; các PR [#238](https://github.com/nhan0805/family-expense/pull/238), [#239](https://github.com/nhan0805/family-expense/pull/239) và [#241](https://github.com/nhan0805/family-expense/pull/241) đồng bộ thứ tự/lịch sử migration để production apply được thay đổi; cùng các release trước.
 - CI hậu merge [run 38508609460](https://github.com/nhan0805/family-expense/actions/runs/38508609460) của merge commit `404e7f5` pass quality, coverage, E2E, db-security và performance budget. Release này không có migration Supabase, Edge Function hoặc thay đổi dữ liệu production nên không chạy Supabase Production Deploy.
-- Nhánh release/status hiện tại: `codex/release-status-contrast-tags-20261019`, được đồng bộ từ `origin/main` sau deploy để ghi nhận release; thay đổi trong nhánh này chỉ là tài liệu.
+- Nhánh release/status hiện tại: `codex/release-status-neutral-copy-20261019`, được đồng bộ từ `origin/main` sau deploy để ghi nhận release; thay đổi trong nhánh này chỉ là tài liệu.
 - Đã cập nhật CI/preview cho `merge_group`, thu hẹp trigger Supabase và chuẩn hóa single-writer cho tài liệu release; chưa bật Merge Queue/branch protection trên GitHub.
 - Bản đồ kiến trúc ổn định nằm trong [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md); quy tắc phân loại tài liệu nằm trong [`docs/AI_CONTEXT_GUIDE.md`](docs/AI_CONTEXT_GUIDE.md).
 
@@ -47,6 +49,14 @@
 - Semantic embedding/search production path đã bị loại bỏ; không đưa lại nếu chưa có quyết định kiến trúc mới.
 
 ## Recently completed
+
+### Rà soát wording trung tính sau thay đổi giao diện
+
+- Thay các cụm mang tính quảng bá như `Money pulse`, `Bức tranh tài chính`, `Family space`, `Data center`, `What stands out` và các mô tả hứa hẹn bằng nhãn trực tiếp như `Tổng quan kỳ`, `Tóm tắt tài chính`, `Quản lý dữ liệu` và `Nhận xét`.
+- Đồng bộ wording tiếng Việt/Anh trên các màn hình xác thực, khởi tạo gia đình, Dashboard, tài sản, ngân sách, danh mục, thành viên, giao dịch tự động, dữ liệu và chi phí định kỳ. Giữ `AI summary` vì đây là tên chức năng cụ thể.
+- Files: `src/pages/{Assets,AutomaticTransactionSettings,Budgets,Catalogs,CreateFamily,Dashboard,ImportExport,Login,Members,RecurringExpenses}.tsx` và test copy liên quan. Không đổi schema, API, business logic, dependency, `supabase/` hoặc dữ liệu production.
+- Kiểm thử: local Vitest `49 file / 253 test`, TypeScript, ESLint, Vite build và `git diff --check` pass.
+- Triển khai: PR [#275](https://github.com/nhan0805/family-expense/pull/275) merge tại commit `4807882a323448d27fe517e2d5967dbc1138d475`; CI hậu merge [run 39221897990](https://github.com/nhan0805/family-expense/actions/runs/39221897990), Cloudflare Pages production và smoke `/`, `/dang-nhap` pass.
 
 ### Sửa tương phản tab và tag trong dark theme
 
