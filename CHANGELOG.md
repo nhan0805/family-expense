@@ -2,6 +2,15 @@
 
 ## 2026-10-19
 
+### Thiết kế lại notification center
+
+- Thay notification popover bằng center responsive đồng bộ theme: header có icon/title, summary chip cho unread/due/read, nhóm giao dịch dự kiến tới hạn và cảnh báo ngân sách với semantic accent, progress bar, trạng thái đọc và empty state rõ hơn.
+- Mobile dùng bottom sheet có scrim, focus trap và vùng cuộn riêng; overlay chuyển qua portal để không bị sticky glass header cắt. Toast success/info/error cũng dùng surface, icon và accent semantic thống nhất.
+- Giảm toast lặp cho cảnh báo ngân sách gần hạn; chỉ toast ngay khi ngân sách thực sự vượt giới hạn, còn cảnh báo gần hạn nằm trong center để người dùng chủ động xem.
+- Files: `src/components/BudgetNotifications.tsx`, `src/components/BudgetNotifications.test.tsx`, `src/components/Feedback.tsx`, `src/index.css`. Không đổi schema, API, business logic, dependency, `supabase/` hoặc dữ liệu production.
+- Kiểm thử local: Vitest `49 file / 253 test`, TypeScript, ESLint, Vite build và `git diff --check` pass; visual QA demo dark mobile pass.
+- Triển khai: PR [#279](https://github.com/nhan0805/family-expense/pull/279) merge vào `main` tại commit `f1ebcb191f6855521405a30751caa160bc1c5de1`; CI hậu merge [run 39269449108](https://github.com/nhan0805/family-expense/actions/runs/39269449108), [Cloudflare Pages production check của fafin](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/fafin/7c734443-2999-4b7c-ad55-3672de5866ab) và [family-expense](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/e45e3f70-f446-408f-976e-0c42fd1ca77c) pass. Smoke `https://family-expense-8fo.pages.dev/` và `/dang-nhap` đều trả HTTP 200. Không chạy Supabase Production Deploy vì không có thay đổi `supabase/`.
+
 ### Tinh chỉnh palette KPI màn hình Tài sản
 
 - Làm dịu nền các KPI theo semantic token để bốn nhóm tài sản không cạnh tranh thị giác; giữ icon làm điểm nhấn, tăng phản hồi hover và làm amber của vàng sáng hơn. Các summary card cùng nhóm cũng được hạ độ đậm tint cho light/dark theme.
