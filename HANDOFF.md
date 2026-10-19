@@ -4,6 +4,8 @@
 
 ## Current state
 
+- Sửa tương phản tab và tag trong dark theme đã merge vào `main` qua PR [#273](https://github.com/nhan0805/family-expense/pull/273) tại commit `ed687a7146b85c9511e1ca2a6b72b7556f4ef7e4`: tab đang chọn của Catalogs/Settings dùng màu text rõ hơn trên nền tint, tag metadata Chi phí định kỳ có nền dịu hơn và tag tần suất dùng teal. Không đổi schema, API, business logic, dependency, `supabase/` hoặc dữ liệu production.
+- Quality gate local: Vitest `49 file / 253 test`, TypeScript, ESLint, Vite build và `git diff --check` pass; visual QA dark demo `/cai-dat` và `/chi-phi-dinh-ky` pass. CI hậu merge [run 39193612534](https://github.com/nhan0805/family-expense/actions/runs/39193612534) pass quality, E2E, db-security và performance budget; [Cloudflare Pages production check của fafin](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/fafin/bb260987-4475-4763-8218-cb767ed80b01) pass. Smoke production `/` và `/dang-nhap` trả HTTP 200. Không chạy Supabase Production Deploy vì không có thay đổi `supabase/`.
 - Icon app đã được thiết kế lại theo Neo-Fintech và merge vào `main` qua PR [#271](https://github.com/nhan0805/family-expense/pull/271) tại merge commit `043b662104fae31f544b93b40bf7ff531281905d`: SVG ví/thẻ tài chính có đường tăng trưởng, nền navy/grid, accent mint/amber; dùng chung cho favicon và PWA `any maskable` icon. `theme-color`/`background_color` manifest cũng đã đồng bộ với hệ màu mới. Không đổi schema, API, business logic, dependency, dữ liệu production hoặc `supabase/`.
 - Quality gate local: Vitest `49 file / 253 test`, TypeScript, ESLint, Vite build và `git diff --check` pass; visual QA icon SVG pass. CI hậu merge [run 39188154059](https://github.com/nhan0805/family-expense/actions/runs/39188154059) pass quality, coverage, E2E, db-security và performance budget; [Cloudflare Pages production check của fafin](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/fafin/724a9599-5217-4db3-ae3b-de8732b09e86) pass. Smoke production `/` và `/dang-nhap` trả HTTP 200; live icon và manifest đã xác nhận. Không chạy Supabase Production Deploy vì không có thay đổi `supabase/`.
 - Neo-Fintech visual refresh đã merge vào `main` qua PR [#269](https://github.com/nhan0805/family-expense/pull/269) tại merge commit `3233fc56a224ed73d6b559c2f92f0eca6e0297c2`: semantic token chuyển sang navy/teal có chiều sâu, glass surface có kiểm soát, grid/halo cho Hero, nav/CTA/field/focus states rõ hơn, auth screen đồng bộ, và dark/PWA theme-color được cập nhật. Không có thay đổi business logic, schema, RLS/RPC, Edge Function, dependency hoặc dữ liệu production.
@@ -17,7 +19,7 @@
 - Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; smoke `/` và `/dang-nhap` đều trả HTTP 200 sau merge commit `3233fc56a224ed73d6b559c2f92f0eca6e0297c2`, live HTML/CSS đã xác nhận theme-color và visual asset Neo-Fintech. Không chạy Supabase Production Deploy vì không có thay đổi `supabase/`.
 - Code trên `main` đã gồm PR [#234](https://github.com/nhan0805/family-expense/pull/234), cho owner đặt bộ mục đích/danh mục/phương thức thanh toán hiện tại làm mặc định cho gia đình tạo mới; các PR [#238](https://github.com/nhan0805/family-expense/pull/238), [#239](https://github.com/nhan0805/family-expense/pull/239) và [#241](https://github.com/nhan0805/family-expense/pull/241) đồng bộ thứ tự/lịch sử migration để production apply được thay đổi; cùng các release trước.
 - CI hậu merge [run 38508609460](https://github.com/nhan0805/family-expense/actions/runs/38508609460) của merge commit `404e7f5` pass quality, coverage, E2E, db-security và performance budget. Release này không có migration Supabase, Edge Function hoặc thay đổi dữ liệu production nên không chạy Supabase Production Deploy.
-- Nhánh release/status hiện tại: `codex/release-status-neo-fintech-20261019`, được đồng bộ từ `origin/main` sau deploy để ghi nhận release; thay đổi trong nhánh này chỉ là tài liệu.
+- Nhánh release/status hiện tại: `codex/release-status-contrast-tags-20261019`, được đồng bộ từ `origin/main` sau deploy để ghi nhận release; thay đổi trong nhánh này chỉ là tài liệu.
 - Đã cập nhật CI/preview cho `merge_group`, thu hẹp trigger Supabase và chuẩn hóa single-writer cho tài liệu release; chưa bật Merge Queue/branch protection trên GitHub.
 - Bản đồ kiến trúc ổn định nằm trong [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md); quy tắc phân loại tài liệu nằm trong [`docs/AI_CONTEXT_GUIDE.md`](docs/AI_CONTEXT_GUIDE.md).
 
@@ -45,6 +47,13 @@
 - Semantic embedding/search production path đã bị loại bỏ; không đưa lại nếu chưa có quyết định kiến trúc mới.
 
 ## Recently completed
+
+### Sửa tương phản tab và tag trong dark theme
+
+- Tab đang chọn của Catalogs/Settings dùng `var(--text)` trên nền tint để không còn chữ tối chìm; tag metadata của Chi phí định kỳ dùng nền/border pha theo tone để giảm độ gắt, còn tag tần suất chuyển về teal cùng visual system Neo-Fintech.
+- Files: `src/index.css`, `src/pages/RecurringExpenses.tsx`. Không đổi schema, API, business logic, dependency, `supabase/` hoặc dữ liệu production.
+- Kiểm thử: local Vitest `49 file / 253 test`, TypeScript, ESLint, Vite build và `git diff --check` pass; visual QA dark demo `/cai-dat` và `/chi-phi-dinh-ky` pass.
+- Triển khai: PR [#273](https://github.com/nhan0805/family-expense/pull/273) merge tại commit `ed687a7146b85c9511e1ca2a6b72b7556f4ef7e4`; CI hậu merge [run 39193612534](https://github.com/nhan0805/family-expense/actions/runs/39193612534), Cloudflare Pages production `fafin` và smoke `/`, `/dang-nhap` pass.
 
 ### Thiết kế lại icon app theo Neo-Fintech
 

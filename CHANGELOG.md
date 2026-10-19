@@ -2,6 +2,13 @@
 
 ## 2026-10-19
 
+### Sửa tương phản tab và tag trong dark theme
+
+- Sửa chữ của tab đang chọn trong Catalogs/Settings để dùng màu text rõ trên nền tint; làm dịu nền tag metadata của Chi phí định kỳ và đưa tag tần suất về teal đồng bộ với Neo-Fintech theme.
+- Files: `src/index.css`, `src/pages/RecurringExpenses.tsx`. Không đổi schema, API, business logic, dependency, `supabase/` hoặc dữ liệu production.
+- Kiểm thử local: Vitest `49 file / 253 test`, TypeScript, ESLint, Vite build và `git diff --check` pass; visual QA dark demo `/cai-dat` và `/chi-phi-dinh-ky` pass.
+- Triển khai: PR [#273](https://github.com/nhan0805/family-expense/pull/273) merge vào `main` tại commit `ed687a7146b85c9511e1ca2a6b72b7556f4ef7e4`; CI hậu merge [run 39193612534](https://github.com/nhan0805/family-expense/actions/runs/39193612534) pass quality, E2E, db-security và performance budget. [Cloudflare Pages production check của fafin](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/fafin/bb260987-4475-4763-8218-cb767ed80b01) và check `family-expense` pass; smoke `https://family-expense-8fo.pages.dev/` và `/dang-nhap` đều trả HTTP 200. Không chạy Supabase Production Deploy vì không có thay đổi `supabase/`.
+
 ### Thiết kế lại icon app theo Neo-Fintech
 
 - Thay icon ngôi nhà cũ bằng SVG ví/thẻ tài chính với đường tăng trưởng amber, nền navy/grid và accent mint; dùng chung cho favicon và PWA `any maskable` icon, có văn bản mô tả cho accessibility.
