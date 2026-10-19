@@ -2,6 +2,14 @@
 
 ## 2026-10-19
 
+### Thêm motion tinh tế cho Dashboard
+
+- Hero Dashboard có hiệu ứng xuất hiện nhẹ theo nhịp; các panel chi tiết mở rộng có chuyển tiếp ngắn, easing enter/exit được chuẩn hóa và `prefers-reduced-motion` vẫn tắt toàn bộ motion.
+- Files: `src/index.css`, `src/pages/Dashboard.tsx`. Không đổi schema, RLS/RPC, Edge Function, dependency hoặc dữ liệu production.
+- Kiểm thử local: Vitest `49 file / 253 test`, TypeScript, ESLint, Vite build và `git diff --check` pass; build chỉ còn cảnh báo chunk lớn XLSX/ExcelJS/chart đã biết.
+- Triển khai: PR [#267](https://github.com/nhan0805/family-expense/pull/267) merge vào `main` tại commit `72206593d89376470b6d5fb479a01e3470ef83d1`; CI PR [run 39183084661](https://github.com/nhan0805/family-expense/actions/runs/39183084661) và CI hậu merge [run 39183337460](https://github.com/nhan0805/family-expense/actions/runs/39183337460) pass quality, E2E, db-security và performance budget. [Cloudflare Pages production check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/653dcc6b-81a1-4af4-bbea-0bb801e89494) pass; live CSS đã xác nhận hero/disclosure motion và reduced-motion. Smoke production `/`, `/dang-nhap`, `/dashboard` và `/giao-dich` đều trả HTTP 200.
+- Không chạy Supabase Production Deploy vì không có thay đổi `supabase/`.
+
 ### Gộp insight trùng lặp và sửa hiển thị giá trị ròng Dashboard
 
 - Giữ Hero làm nguồn tổng quan duy nhất; bỏ các KPI `Tổng thu`, `Tổng chi`, `Giá trị ròng` lặp lại và các thẻ tháng cao nhất/thấp nhất khỏi Dashboard.
