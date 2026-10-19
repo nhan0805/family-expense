@@ -568,8 +568,8 @@ export function Dashboard() {
 
       <section className="dashboard-hero card" aria-labelledby="dashboard-hero-title">
         <div className="dashboard-hero-copy">
-          <p className="dashboard-hero-eyebrow">{en ? 'Money pulse' : 'Nhịp tài chính'}</p>
-          <h3 id="dashboard-hero-title" className="dashboard-hero-title">{en ? 'Your financial position' : 'Bức tranh tài chính của bạn'}</h3>
+          <p className="dashboard-hero-eyebrow">{en ? 'Period overview' : 'Tổng quan kỳ'}</p>
+          <h3 id="dashboard-hero-title" className="dashboard-hero-title">{en ? 'Financial summary' : 'Tóm tắt tài chính'}</h3>
           <p className="dashboard-hero-period" title={periodLabel}>{en ? 'Selected period' : 'Kỳ đang xem'}</p>
         </div>
         <div className="dashboard-hero-balance">
@@ -665,15 +665,15 @@ export function Dashboard() {
           <div className="flex min-w-0 items-center gap-2">
             <Sparkles size={19} className="shrink-0 text-amber-600" aria-hidden="true" />
             <div className="min-w-0">
-              <h3 id="dashboard-insights-title" className="font-bold">{en ? 'What stands out' : 'Điểm đáng chú ý'}</h3>
-              <p className="text-xs text-gray-600 dark:text-gray-300">{insights.length ? `${insights.length} ${en ? 'insights available' : 'nhận xét sẵn có'}` : (en ? 'Open to see insights and AI summary.' : 'Mở để xem nhận xét và tóm tắt AI.')}</p>
+              <h3 id="dashboard-insights-title" className="font-bold">{en ? 'Observations' : 'Nhận xét'}</h3>
+              <p className="text-xs text-gray-600 dark:text-gray-300">{insights.length ? `${insights.length} ${en ? 'observations available' : 'nhận xét sẵn có'}` : (en ? 'Open to view observations and AI summary.' : 'Mở để xem nhận xét và tóm tắt AI.')}</p>
             </div>
           </div>
           <ChevronDown size={18} aria-hidden="true" className="shrink-0 transition-transform group-open:rotate-180" />
         </summary>
         <div className="dashboard-disclosure-panel px-4 pb-4 sm:px-5 sm:pb-5">
           <div className="mb-3 flex justify-end"><button type="button" className="btn-secondary inline-flex shrink-0 items-center gap-2 text-sm" disabled={!isSupabaseConfigured || !validRange || aiSummaryBusy} onClick={() => void runAiSummary()} title={!isSupabaseConfigured ? (en ? 'Connect Supabase to use AI' : 'Cần kết nối Supabase để dùng AI') : undefined}><Sparkles size={16} aria-hidden="true" />{aiSummaryBusy ? (en ? 'Summarizing…' : 'Đang tóm tắt…') : aiSummaryQuery.isError ? (en ? 'Retry AI summary' : 'Thử lại tóm tắt AI') : (en ? 'Summarize with AI' : 'Tóm tắt bằng AI')}</button></div>
-          {aiSummaryQuery.data ? <div className="rounded-xl border border-amber-200 bg-white/75 p-3 text-sm dark:border-amber-900/60 dark:bg-white/5"><p className="mb-2 text-xs font-bold uppercase tracking-wide text-amber-700 dark:text-amber-300">{en ? 'AI summary' : 'Tóm tắt bằng AI'}</p><p className="leading-6">{aiSummaryQuery.data.summary}</p>{aiSummaryQuery.data.highlights.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5 text-gray-700 dark:text-gray-300">{aiSummaryQuery.data.highlights.map((highlight) => <li key={highlight}>{highlight}</li>)}</ul>}</div> : insights.length ? <ul className="grid gap-2 text-sm sm:grid-cols-2">{insights.map((insight) => <li key={insight} className="rounded-xl border border-amber-100 bg-white/70 p-3 dark:border-amber-900/40 dark:bg-white/5">{insight}</li>)}</ul> : <p className="text-sm text-gray-600 dark:text-gray-300">{en ? 'Insights will appear when there is enough actual data.' : 'Nhận xét sẽ xuất hiện khi có đủ dữ liệu giao dịch thực tế.'}</p>}
+          {aiSummaryQuery.data ? <div className="rounded-xl border border-amber-200 bg-white/75 p-3 text-sm dark:border-amber-900/60 dark:bg-white/5"><p className="mb-2 text-xs font-bold uppercase tracking-wide text-amber-700 dark:text-amber-300">{en ? 'AI summary' : 'Tóm tắt bằng AI'}</p><p className="leading-6">{aiSummaryQuery.data.summary}</p>{aiSummaryQuery.data.highlights.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5 text-gray-700 dark:text-gray-300">{aiSummaryQuery.data.highlights.map((highlight) => <li key={highlight}>{highlight}</li>)}</ul>}</div> : insights.length ? <ul className="grid gap-2 text-sm sm:grid-cols-2">{insights.map((insight) => <li key={insight} className="rounded-xl border border-amber-100 bg-white/70 p-3 dark:border-amber-900/40 dark:bg-white/5">{insight}</li>)}</ul> : <p className="text-sm text-gray-600 dark:text-gray-300">{en ? 'Observations will appear when there is enough actual data.' : 'Nhận xét sẽ xuất hiện khi có đủ dữ liệu giao dịch thực tế.'}</p>}
           {aiSummaryQuery.isError && <div role="alert" className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-red-100/70 p-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300"><span>{aiErrorMessage(aiSummaryQuery.error, en, 'summary')}</span><button type="button" className="btn-secondary px-3 py-1.5 text-xs" onClick={() => void runAiSummary()}>{en ? 'Retry' : 'Thử lại'}</button></div>}
         </div>
       </details>
@@ -720,7 +720,7 @@ function AssetSnapshot({ summary, en, loading }: { summary?: AssetSummary; en: b
     : `${formatVnd(goldHolding.averageCostPerChi)}/${en ? 'mace' : 'chỉ'}`;
   return <section className="card overflow-hidden p-4 sm:p-5" aria-labelledby="dashboard-assets-title">
     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-      <div className="flex min-w-0 items-start gap-3"><span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-[var(--primary-soft)] text-[var(--primary)]"><Gem size={20} aria-hidden="true" /></span><div className="min-w-0"><h3 id="dashboard-assets-title" className="text-lg font-extrabold">{en ? 'Assets' : 'Tài sản'}</h3><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{en ? 'All actual transactions · simple current snapshot' : 'Tổng hợp theo giao dịch thực tế · số dư hiện tại'}</p></div></div>
+      <div className="flex min-w-0 items-start gap-3"><span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-[var(--primary-soft)] text-[var(--primary)]"><Gem size={20} aria-hidden="true" /></span><div className="min-w-0"><h3 id="dashboard-assets-title" className="text-lg font-extrabold">{en ? 'Assets' : 'Tài sản'}</h3><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{en ? 'Actual transactions · current balance' : 'Tổng hợp theo giao dịch thực tế · số dư hiện tại'}</p></div></div>
       <Link className="btn-secondary inline-flex items-center justify-center text-sm" to="/tai-san">{en ? 'Manage assets' : 'Quản lý tài sản'}</Link>
     </div>
     <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">

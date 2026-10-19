@@ -149,7 +149,7 @@ export function Catalogs() {
   ];
   return <div className="catalogs-page space-y-5">
     <div className="page-header">
-      <p className="page-kicker"><Tags size={16} aria-hidden="true" />{isEnglish ? 'Family setup' : 'Thiết lập gia đình'}</p>
+      <p className="page-kicker"><Tags size={16} aria-hidden="true" />{isEnglish ? 'Catalog setup' : 'Thiết lập danh mục'}</p>
       <h2 className="page-title">{isEnglish ? 'Categories' : 'Danh mục'}</h2>
       <p className="page-subtitle">{canManage
         ? (isEnglish ? 'You can add, rename and delete unused categories.' : 'Bạn có thể thêm, đổi tên và xóa danh mục chưa được sử dụng.')

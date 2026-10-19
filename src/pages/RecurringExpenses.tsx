@@ -708,7 +708,7 @@ export function RecurringExpenses() {
         <div className="min-w-0">
           <p className="page-kicker">
             <Repeat2 size={16} aria-hidden="true" />
-            {en ? 'Automatic planning' : 'Tự động lập kế hoạch'}
+            {en ? 'Recurring setup' : 'Thiết lập định kỳ'}
           </p>
           <h2 className="page-title">
             {en ? 'Recurring expenses' : 'Chi phí định kỳ'}

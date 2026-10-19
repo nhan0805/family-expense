@@ -160,7 +160,7 @@ export function AutomaticTransactionSettings() {
     <section className="automatic-transaction-settings card flex flex-col gap-5 p-4 sm:p-5" aria-labelledby="automatic-transaction-settings-title">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="page-kicker"><Settings2 size={16} aria-hidden="true" />{en ? 'Family automation' : 'Tự động hóa gia đình'}</p>
+          <p className="page-kicker"><Settings2 size={16} aria-hidden="true" />{en ? 'Automatic transactions' : 'Giao dịch tự động'}</p>
           <h2 id="automatic-transaction-settings-title" className="page-title">{en ? 'Automatic transaction defaults' : 'Mặc định giao dịch tự động'}</h2>
           <p className="page-subtitle">{en ? 'Choose the purpose, category and payment method for new transactions created by savings and gold workflows.' : 'Chọn mục đích, danh mục và phương thức thanh toán cho giao dịch mới được tạo từ sổ tiết kiệm và vàng.'}</p>
         </div>

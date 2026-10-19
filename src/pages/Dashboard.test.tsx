@@ -227,7 +227,7 @@ describe('Dashboard', () => {
     renderDashboard();
 
     const topCategories = screen.getByText('Xu hướng theo danh mục').closest('details');
-    const insights = screen.getByText('Điểm đáng chú ý').closest('details');
+    const insights = screen.getByText('Nhận xét').closest('details');
 
     expect(topCategories).toBeInTheDocument();
     expect(topCategories).not.toHaveAttribute('open');
