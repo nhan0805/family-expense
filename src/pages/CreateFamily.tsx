@@ -19,7 +19,7 @@ export function CreateFamily() {
     return (
       <AuthShell maxWidth="max-w-2xl" showCompactThemeIcon={false} showCompactLanguage>
         <div className="space-y-5" role="status" aria-live="polite">
-          <span className="sr-only">{en ? 'Preparing your family space…' : 'Đang chuẩn bị không gian gia đình…'}</span>
+          <span className="sr-only">{en ? 'Preparing family setup…' : 'Đang chuẩn bị thiết lập gia đình…'}</span>
           <div className="h-3 w-32 animate-pulse rounded-full bg-[var(--primary-soft)] motion-reduce:animate-none" aria-hidden="true" />
           <div className="h-9 w-3/4 max-w-sm animate-pulse rounded-lg bg-[var(--surface-muted)] motion-reduce:animate-none" aria-hidden="true" />
           <div className="h-14 w-full animate-pulse rounded-2xl bg-[var(--surface-muted)] motion-reduce:animate-none" aria-hidden="true" />
@@ -64,23 +64,23 @@ export function CreateFamily() {
     window.location.assign('/dang-nhap');
   };
   const benefits = en
-    ? ['Default categories are ready from the start.', 'Add the people you trust after setup.', 'Everyone sees the same family picture.']
-    : ['Có sẵn danh mục mặc định ngay từ đầu.', 'Thêm những người bạn tin tưởng sau khi thiết lập.', 'Cả gia đình cùng theo dõi một bức tranh chung.'];
+    ? ['Default categories are available after setup.', 'Invite members after setup.', 'Members share the same family data.']
+    : ['Danh mục mặc định có sẵn sau khi thiết lập.', 'Bạn có thể thêm thành viên sau khi thiết lập.', 'Các thành viên dùng chung dữ liệu gia đình.'];
 
   return (
     <AuthShell maxWidth="max-w-3xl" showCompactThemeIcon={false} showCompactLanguage>
       <div className="mb-8">
         <div>
           <p className="page-kicker"><Sparkles size={15} aria-hidden="true" />{en ? 'First-time setup' : 'Thiết lập ban đầu'}</p>
-          <p className="mt-2 text-xs font-semibold text-[var(--muted)]">{en ? 'One small step to get started' : 'Một bước nhỏ để bắt đầu'}</p>
+          <p className="mt-2 text-xs font-semibold text-[var(--muted)]">{en ? 'Enter the family name to continue.' : 'Nhập tên gia đình để tiếp tục.'}</p>
         </div>
       </div>
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1.08fr)_minmax(15rem,.92fr)] lg:items-start lg:gap-10">
         <section aria-labelledby="create-family-title">
-          <h1 id="create-family-title" className="page-title text-3xl sm:text-4xl">{en ? 'Create your family space' : 'Tạo không gian gia đình'}</h1>
+          <h1 id="create-family-title" className="page-title text-3xl sm:text-4xl">{en ? 'Create a family' : 'Tạo gia đình'}</h1>
           <p className="page-subtitle max-w-xl text-base">
-            {en ? 'Give your shared finances a home. You will become the family owner and can invite members when everything is ready.' : 'Đặt tên cho không gian tài chính chung. Bạn sẽ là Chủ gia đình và có thể thêm thành viên sau khi hoàn tất.'}
+            {en ? 'Set the family name. You will be the owner and can invite members after creation.' : 'Đặt tên gia đình. Bạn sẽ là Chủ gia đình và có thể thêm thành viên sau khi tạo.'}
           </p>
 
           <form className="mt-8 space-y-5" onSubmit={submit}>
@@ -142,8 +142,8 @@ export function CreateFamily() {
           <div className="mb-5 flex items-start gap-3">
             <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-[var(--primary)] text-[var(--primary-contrast)] shadow-sm" aria-hidden="true"><UsersRound size={20} /></span>
             <div>
-              <h2 id="create-family-benefits-title" className="font-extrabold leading-6">{en ? 'Built for shared money decisions' : 'Cùng nhau quản lý, nhẹ nhàng hơn'}</h2>
-              <p className="mt-1 text-sm leading-5 text-[var(--muted)]">{en ? 'A simple starting point for your household.' : 'Một điểm bắt đầu đơn giản cho cả gia đình.'}</p>
+              <h2 id="create-family-benefits-title" className="font-extrabold leading-6">{en ? 'Shared family data' : 'Dữ liệu dùng chung'}</h2>
+              <p className="mt-1 text-sm leading-5 text-[var(--muted)]">{en ? 'Available after the family is created.' : 'Có sẵn sau khi tạo gia đình.'}</p>
             </div>
           </div>
 
@@ -164,7 +164,7 @@ export function CreateFamily() {
       </div>
 
       <p className="mt-8 border-t border-[var(--border)] pt-5 text-center text-xs leading-5 text-[var(--muted)]">
-        {en ? 'You can invite members and adjust categories after this step.' : 'Sau bước này, bạn có thể thêm thành viên và điều chỉnh danh mục.'}
+        {en ? 'After creation, you can add members and edit categories.' : 'Sau khi tạo, bạn có thể thêm thành viên và chỉnh sửa danh mục.'}
       </p>
     </AuthShell>
   );

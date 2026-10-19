@@ -259,12 +259,12 @@ export function Budgets() {
     return <PageSkeleton label={en ? 'Loading budgets…' : 'Đang tải ngân sách…'} />;
 
   if (isSupabaseConfigured && summaryQuery.isError)
-    return <div className="space-y-5"><header className="page-header"><p className="page-kicker"><PiggyBank size={16} aria-hidden="true" />{en ? 'Family planning' : 'Lập kế hoạch gia đình'}</p><h2 className="page-title">{en ? 'Budgets' : 'Ngân sách'}</h2></header><div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--danger)] bg-[var(--danger-soft)] p-4 text-sm text-[var(--danger-strong)]"><span>{errorMessage(summaryQuery.error, en, en ? 'Could not load budgets.' : 'Không thể tải ngân sách.')}</span><button type="button" className="btn-secondary px-3 py-1.5 text-xs" onClick={() => void summaryQuery.refetch()}>{en ? 'Retry' : 'Thử lại'}</button></div></div>;
+    return <div className="space-y-5"><header className="page-header"><p className="page-kicker"><PiggyBank size={16} aria-hidden="true" />{en ? 'Budget tracking' : 'Theo dõi ngân sách'}</p><h2 className="page-title">{en ? 'Budgets' : 'Ngân sách'}</h2></header><div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--danger)] bg-[var(--danger-soft)] p-4 text-sm text-[var(--danger-strong)]"><span>{errorMessage(summaryQuery.error, en, en ? 'Could not load budgets.' : 'Không thể tải ngân sách.')}</span><button type="button" className="btn-secondary px-3 py-1.5 text-xs" onClick={() => void summaryQuery.refetch()}>{en ? 'Retry' : 'Thử lại'}</button></div></div>;
 
   return <div className="budgets-page space-y-5">
     <header className="page-header flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
       <div>
-        <p className="page-kicker"><PiggyBank size={16} aria-hidden="true" />{en ? 'Family planning' : 'Lập kế hoạch gia đình'}</p>
+        <p className="page-kicker"><PiggyBank size={16} aria-hidden="true" />{en ? 'Budget tracking' : 'Theo dõi ngân sách'}</p>
         <h2 className="page-title">{en ? 'Budgets' : 'Ngân sách'}</h2>
         <p className="page-subtitle">{canManage ? (en ? 'Set a monthly limit by purpose and track actual expenses.' : 'Đặt hạn mức theo mục đích và theo dõi chi tiêu thực tế từng tháng.') : (en ? 'View the family budget. Only the owner can make changes.' : 'Xem ngân sách gia đình. Chỉ chủ gia đình mới có quyền chỉnh sửa.')}</p>
       </div>

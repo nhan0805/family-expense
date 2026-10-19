@@ -282,7 +282,7 @@ export function Members() {
   return (
     <section className="members-page space-y-6">
       <div className="page-header">
-        <p className="page-kicker"><UsersRound size={16} aria-hidden="true" />{en ? 'Family space' : 'Không gian gia đình'}</p>
+        <p className="page-kicker"><UsersRound size={16} aria-hidden="true" />{en ? 'Family members' : 'Thành viên gia đình'}</p>
         {editingFamily ? (
           <form className="family-name-editor" onSubmit={saveFamilyName}>
             <input
