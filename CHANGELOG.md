@@ -2,6 +2,13 @@
 
 ## 2026-10-19
 
+### Tinh chỉnh palette KPI màn hình Tài sản
+
+- Làm dịu nền các KPI theo semantic token để bốn nhóm tài sản không cạnh tranh thị giác; giữ icon làm điểm nhấn, tăng phản hồi hover và làm amber của vàng sáng hơn. Các summary card cùng nhóm cũng được hạ độ đậm tint cho light/dark theme.
+- Files: `src/index.css`, `src/pages/Assets.tsx`. Không đổi schema, API, business logic, dependency, `supabase/` hoặc dữ liệu production.
+- Kiểm thử local: Vitest `49 file / 253 test`, TypeScript, ESLint, Vite build và `git diff --check` pass. E2E local không chạy được vì máy thiếu browser binary Playwright; E2E CI pass.
+- Triển khai: PR [#277](https://github.com/nhan0805/family-expense/pull/277) merge vào `main` tại commit `648ff24d91d258582be2263529fba87d7b38867e`; CI hậu merge [run 39225342941](https://github.com/nhan0805/family-expense/actions/runs/39225342941), [Cloudflare Pages production check của fafin](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/fafin/5c388c90-c534-4dfd-9725-168b3f056c5e) và [family-expense](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/bb1cbf59-6a17-4030-960f-f39fc2ab551e) pass. Smoke `https://family-expense-8fo.pages.dev/` và `/dang-nhap` đều trả HTTP 200; live CSS đã xác nhận selector `asset-kpi` và amber polish. Không chạy Supabase Production Deploy vì không có thay đổi `supabase/`.
+
 ### Giảm wording thiên về marketing trong giao diện
 
 - Thay các tiêu đề/mô tả mang tính quảng bá bằng wording mô tả chức năng trực tiếp trên Login, Tạo gia đình, Dashboard, Tài sản, Ngân sách, Danh mục, Thành viên, Giao dịch tự động, Dữ liệu và Chi phí định kỳ; giữ nguyên thuật ngữ chức năng như `AI summary`.
