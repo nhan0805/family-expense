@@ -60,6 +60,8 @@
   --motion-fast: 150ms;
   --motion-normal: 200ms;
   --motion-slow: 280ms;
+  --motion-enter-ease: cubic-bezier(.22, .8, .25, 1);
+  --motion-exit-ease: cubic-bezier(.4, 0, 1, 1);
   --shadow-card: 0 1px 2px #102a2110, 0 8px 24px #102a2109;
   --shadow-card-hover: 0 10px 28px #102a2114;
   --shadow-interactive: 0 12px 32px #102a2112;
@@ -1108,39 +1110,39 @@ summary:focus-visible {
 }
 
 .ui-enter {
-  animation: ui-enter .18s ease-out both;
+  animation: ui-enter .18s var(--motion-enter-ease) both;
 }
 
 .ui-overlay-enter {
-  animation: ui-fade-in .18s ease-out both;
+  animation: ui-fade-in .18s var(--motion-enter-ease) both;
 }
 
 .ui-overlay-exit {
-  animation: ui-fade-out .18s ease-in both;
+  animation: ui-fade-out .18s var(--motion-exit-ease) both;
 }
 
 .ui-drawer-enter {
-  animation: ui-drawer-in .22s cubic-bezier(.22, .8, .25, 1) both;
+  animation: ui-drawer-in .22s var(--motion-enter-ease) both;
 }
 
 .ui-drawer-exit {
-  animation: ui-drawer-out .18s ease-in both;
+  animation: ui-drawer-out .18s var(--motion-exit-ease) both;
 }
 
 .ui-dialog-enter {
-  animation: ui-dialog-in .2s cubic-bezier(.22, .8, .25, 1) both;
+  animation: ui-dialog-in .2s var(--motion-enter-ease) both;
 }
 
 .ui-dialog-exit {
-  animation: ui-dialog-out .18s ease-in both;
+  animation: ui-dialog-out .18s var(--motion-exit-ease) both;
 }
 
 .ui-toast-exit {
-  animation: ui-toast-out .18s ease-in both;
+  animation: ui-toast-out .18s var(--motion-exit-ease) both;
 }
 
 .ui-stagger > * {
-  animation: ui-enter .2s ease-out both;
+  animation: ui-enter .2s var(--motion-enter-ease) both;
 }
 
 .ui-stagger > :nth-child(2) {
@@ -1228,6 +1230,30 @@ summary:focus-visible {
   to {
     opacity: 0;
     transform: translateY(-6px) scale(.985);
+  }
+}
+
+@keyframes ui-hero-content-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes ui-disclosure-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
   }
 }
 
@@ -1866,6 +1892,28 @@ a:active {
   padding: 1.15rem;
 }
 
+.dashboard-hero > :not(.dashboard-hero-cta) {
+  animation: ui-hero-content-in 360ms var(--motion-enter-ease) both;
+}
+
+.dashboard-hero > :nth-child(1) {
+  animation-delay: 20ms;
+}
+
+.dashboard-hero > :nth-child(2) {
+  animation-delay: 60ms;
+}
+
+.dashboard-hero > :nth-child(3) {
+  animation-delay: 100ms;
+}
+
+.dashboard-breakdown-card[open] > .dashboard-disclosure-panel,
+.dashboard-details[open] > .dashboard-disclosure-panel,
+.dashboard-insights-card[open] > .dashboard-disclosure-panel {
+  animation: ui-disclosure-in var(--motion-normal) var(--motion-enter-ease) both;
+}
+
 .dashboard-hero-copy,
 .dashboard-hero-balance,
 .dashboard-hero-stats,
@@ -2226,7 +2274,11 @@ a:active {
   .ui-dialog-enter,
   .ui-dialog-exit,
   .ui-toast-exit,
-  .ui-stagger > * {
+  .ui-stagger > *,
+  .dashboard-hero > :not(.dashboard-hero-cta),
+  .dashboard-breakdown-card[open] > .dashboard-disclosure-panel,
+  .dashboard-details[open] > .dashboard-disclosure-panel,
+  .dashboard-insights-card[open] > .dashboard-disclosure-panel {
     animation: none;
   }
 
