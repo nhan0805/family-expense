@@ -120,12 +120,12 @@ export function Login() {
   ];
 
   return (
-    <main className="relative isolate min-h-dvh overflow-hidden bg-[var(--app-bg)] px-4 py-6 sm:px-6 lg:px-8">
+    <main className="auth-page relative isolate min-h-dvh overflow-hidden bg-[var(--app-bg)] px-4 py-6 sm:px-6 lg:px-8">
       <div className="pointer-events-none absolute -left-40 -top-40 -z-10 size-[28rem] rounded-full bg-[var(--primary-soft)] opacity-70 blur-3xl" aria-hidden="true" />
       <div className="pointer-events-none absolute -bottom-48 -right-32 -z-10 size-[25rem] rounded-full bg-[var(--surface-muted)] opacity-60 blur-3xl" aria-hidden="true" />
 
       <div className="mx-auto grid min-h-[calc(100dvh-3rem)] max-w-6xl items-center gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(27rem,31rem)] lg:gap-16">
-        <section className="hidden max-w-xl lg:block" aria-labelledby="auth-hero-title">
+        <section className="auth-hero hidden max-w-xl lg:block" aria-labelledby="auth-hero-title">
           <div className="mb-10 flex items-center gap-3">
             <span className="brand-mark" aria-hidden="true"><WalletCards size={22} /></span>
             <p className="brand-wordmark text-sm">FAMILY FINANCE</p>
@@ -142,7 +142,7 @@ export function Login() {
 
           <div className="mt-10 grid gap-3 sm:grid-cols-3">
             {featureCards.map(({ icon: Icon, title: featureTitle, body }) => (
-              <div key={featureTitle} className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm">
+              <div key={featureTitle} className="auth-feature-card rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm">
                 <span className="mb-5 grid size-9 place-items-center rounded-xl bg-[var(--primary-soft)] text-[var(--primary)]" aria-hidden="true"><Icon size={17} /></span>
                 <p className="text-sm font-bold text-[var(--text)]">{featureTitle}</p>
                 <p className="mt-1 text-xs leading-5 text-[var(--muted)]">{body}</p>
@@ -151,7 +151,7 @@ export function Login() {
           </div>
         </section>
 
-        <section className="card relative w-full max-w-[31rem] justify-self-end overflow-hidden rounded-[1.75rem] border-[color-mix(in_srgb,var(--border)_90%,transparent)] p-5 shadow-[var(--shadow-card-hover)] sm:p-8 lg:p-9" aria-labelledby="auth-form-title">
+        <section className="auth-form-card card relative w-full max-w-[31rem] justify-self-end overflow-hidden rounded-[1.75rem] border-[color-mix(in_srgb,var(--border)_90%,transparent)] p-5 shadow-[var(--shadow-card-hover)] sm:p-8 lg:p-9" aria-labelledby="auth-form-title">
           <div className="absolute inset-x-0 top-0 h-1 bg-[var(--primary)]" aria-hidden="true" />
           <div className="mb-8 flex items-center gap-3 lg:hidden">
             <span className="brand-mark" aria-hidden="true"><WalletCards size={22} /></span>

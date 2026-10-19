@@ -52,7 +52,7 @@ describe('ThemeProvider', () => {
     expect(window.localStorage.getItem('family-expense-theme')).toBeNull();
   });
 
-  it('dùng nền Dracula cho màu thanh hệ thống', () => {
+  it('dùng màu nền thương hiệu cho thanh hệ thống', () => {
     const meta = document.createElement('meta');
     meta.name = 'theme-color';
     document.head.append(meta);
@@ -60,7 +60,7 @@ describe('ThemeProvider', () => {
 
     render(<ThemeProvider><ThemeSelect/></ThemeProvider>);
 
-    expect(meta.content).toBe('#282a36');
+    expect(meta.content).toBe('#06111f');
     meta.remove();
   });
 });

@@ -1,53 +1,56 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
 :root {
-  --app-bg: #f5f8f7;
-  --surface: #ffffff;
+  --app-bg: #eef4f8;
+  --surface: #f8fbfd;
   --surface-elevated: #ffffff;
-  --surface-hover: #f1f5f3;
-  --surface-muted: #edf3f0;
-  --surface-subtle: #f8faf9;
-  --border: #dce6e2;
-  --border-strong: #b9cbc3;
-  --text: #14212b;
-  --text-primary: #14212b;
-  --muted: #50606c;
-  --text-secondary: #50606c;
-  --text-tertiary: #6b7b86;
+  --surface-hover: #e6f0f5;
+  --surface-muted: #e3edf2;
+  --surface-subtle: #f5f9fb;
+  --border: #cddbe5;
+  --border-strong: #9bb4c5;
+  --text: #102336;
+  --text-primary: #102336;
+  --muted: #435a6b;
+  --text-secondary: #435a6b;
+  --text-tertiary: #6c8190;
   --text-on-primary: #ffffff;
-  --primary: #1f4b78;
-  --primary-hover: #193b60;
-  --primary-strong: #173d63;
-  --primary-soft: #e8f1f7;
+  --primary: #0f5f78;
+  --primary-hover: #0a4558;
+  --primary-strong: #0b4a63;
+  --primary-soft: #dff3f7;
   --primary-contrast: #ffffff;
-  --success: #147d69;
-  --success-soft: #dff4ec;
-  --success-strong: #0f6757;
-  --warning: #a86516;
-  --warning-soft: #fbefd8;
-  --warning-strong: #8c5313;
-  --danger: #c24d4d;
-  --danger-soft: #fae5e3;
-  --danger-strong: #a83f42;
-  --info: #3d72ae;
-  --info-soft: #e3eff9;
-  --info-strong: #2f5d95;
-  --accent-soft: #f6eddc;
-  --accent-strong: #a26217;
-  --focus-ring: #2563a6;
-  --overlay: rgb(15 23 42 / 45%);
-  --chart-1: #1f4b78;
-  --chart-2: #147d69;
-  --chart-3: #c27a20;
-  --chart-4: #c65d4b;
-  --chart-5: #a26217;
-  --chart-6: #338aa3;
-  --chart-expense: #c65d4b;
-  --chart-income: #147d69;
-  --chart-net: #3d72ae;
-  --chart-grid: #dce6e2;
-  --chart-axis: #50606c;
-  --chart-cursor: #edf3f0;
+  --primary-action: #0f5f78;
+  --primary-action-hover: #0a4558;
+  --primary-action-text: #ffffff;
+  --success: #087f6a;
+  --success-soft: #d9f3eb;
+  --success-strong: #07604f;
+  --warning: #a15f0a;
+  --warning-soft: #fff0d5;
+  --warning-strong: #7c4707;
+  --danger: #bd4a53;
+  --danger-soft: #fde4e7;
+  --danger-strong: #96343e;
+  --info: #2563a6;
+  --info-soft: #e2effa;
+  --info-strong: #194d82;
+  --accent-soft: #ede9fe;
+  --accent-strong: #5b21b6;
+  --focus-ring: #0ea5e9;
+  --overlay: rgb(9 25 40 / 52%);
+  --chart-1: #0e7490;
+  --chart-2: #0f8a75;
+  --chart-3: #bd7a15;
+  --chart-4: #d0575d;
+  --chart-5: #6857d9;
+  --chart-6: #2563a6;
+  --chart-expense: #d0575d;
+  --chart-income: #0f8a75;
+  --chart-net: #2563a6;
+  --chart-grid: #cbd9e3;
+  --chart-axis: #4b6372;
+  --chart-cursor: #e3edf2;
   --radius-card: 1.05rem;
   --radius-control: .75rem;
   --radius-dialog: 1.25rem;
@@ -62,64 +65,67 @@
   --motion-slow: 280ms;
   --motion-enter-ease: cubic-bezier(.22, .8, .25, 1);
   --motion-exit-ease: cubic-bezier(.4, 0, 1, 1);
-  --shadow-card: 0 1px 2px #102a2110, 0 8px 24px #102a2109;
-  --shadow-card-hover: 0 10px 28px #102a2114;
-  --shadow-interactive: 0 12px 32px #102a2112;
-  --shadow-overlay: 0 18px 48px #102a2128;
+  --shadow-card: 0 1px 0 rgb(255 255 255 / 70%) inset, 0 12px 26px rgb(25 65 88 / 8%);
+  --shadow-card-hover: 0 1px 0 rgb(255 255 255 / 80%) inset, 0 16px 34px rgb(25 65 88 / 14%);
+  --shadow-interactive: 0 18px 40px rgb(25 65 88 / 12%);
+  --shadow-overlay: 0 24px 64px rgb(3 24 38 / 30%);
 }
 
 .dark {
-  --app-bg: #101822;
-  --surface: #182230;
-  --surface-elevated: #202d3d;
-  --surface-hover: #263547;
-  --surface-muted: #202e3d;
-  --surface-subtle: #151f2b;
-  --border: rgba(223, 239, 234, .14);
-  --border-strong: #48637c;
-  --text: #f5faf9;
-  --text-primary: #f5faf9;
-  --muted: #b7c4cf;
-  --text-secondary: #b7c4cf;
-  --text-tertiary: #8fa1af;
-  --text-on-primary: #10233a;
-  --primary: #91adff;
-  --primary-hover: #a8bcff;
-  --primary-strong: #a8bcff;
-  --primary-soft: #293757;
-  --primary-contrast: #10233a;
-  --success: #5bd5af;
-  --success-soft: #183e3a;
-  --success-strong: #75e2c0;
-  --warning: #f3bf73;
-  --warning-soft: #493724;
-  --warning-strong: #f5ca88;
-  --danger: #ff8a82;
-  --danger-soft: #4a2d33;
-  --danger-strong: #ffaaa2;
-  --info: #7dc5f5;
-  --info-soft: #1f3748;
-  --info-strong: #9ad6fb;
-  --accent-soft: #443d2c;
-  --accent-strong: #f2c178;
-  --focus-ring: #90c2ff;
-  --overlay: rgb(3 10 18 / 70%);
-  --chart-1: #91adff;
-  --chart-2: #5bd5af;
-  --chart-3: #f3bf73;
-  --chart-4: #ff8a82;
-  --chart-5: #f2c178;
-  --chart-6: #7dc5f5;
-  --chart-expense: #ff9b7c;
-  --chart-income: #5bd5af;
-  --chart-net: #91adff;
-  --chart-grid: #304255;
-  --chart-axis: #dbe7e9;
-  --chart-cursor: #263547;
-  --shadow-card: 0 1px 2px #030a123d, 0 8px 24px #030a1228;
-  --shadow-card-hover: 0 10px 28px #030a1245;
-  --shadow-interactive: 0 12px 32px #030a123d;
-  --shadow-overlay: 0 18px 48px #030a1266;
+  --app-bg: #06111f;
+  --surface: #0c1d2e;
+  --surface-elevated: #10263a;
+  --surface-hover: #17334a;
+  --surface-muted: #10263a;
+  --surface-subtle: #091a2b;
+  --border: rgb(161 199 218 / 16%);
+  --border-strong: #406b82;
+  --text: #e9f7fa;
+  --text-primary: #e9f7fa;
+  --muted: #a8c1cf;
+  --text-secondary: #a8c1cf;
+  --text-tertiary: #7793a3;
+  --text-on-primary: #06221e;
+  --primary: #62e6d0;
+  --primary-hover: #83f4df;
+  --primary-strong: #a0f7e8;
+  --primary-soft: #123c43;
+  --primary-contrast: #06221e;
+  --primary-action: #117c88;
+  --primary-action-hover: #0e9ca2;
+  --primary-action-text: #efffff;
+  --success: #65e4b9;
+  --success-soft: #103b36;
+  --success-strong: #92f4d4;
+  --warning: #f5c36a;
+  --warning-soft: #3b2e1e;
+  --warning-strong: #ffd78c;
+  --danger: #ff8995;
+  --danger-soft: #452431;
+  --danger-strong: #ffb1b8;
+  --info: #78c9f3;
+  --info-soft: #12354c;
+  --info-strong: #9addfa;
+  --accent-soft: #2b2550;
+  --accent-strong: #b7a7ff;
+  --focus-ring: #70d9ff;
+  --overlay: rgb(2 10 19 / 76%);
+  --chart-1: #62d9f5;
+  --chart-2: #65e4b9;
+  --chart-3: #f5c36a;
+  --chart-4: #ff8995;
+  --chart-5: #a99aff;
+  --chart-6: #78c9f3;
+  --chart-expense: #ff9c9f;
+  --chart-income: #65e4b9;
+  --chart-net: #78c9f3;
+  --chart-grid: #28465b;
+  --chart-axis: #d7edf4;
+  --chart-cursor: #17334a;
+  --shadow-card: 0 1px 0 rgb(255 255 255 / 5%) inset, 0 14px 30px rgb(0 5 15 / 35%);
+  --shadow-card-hover: 0 1px 0 rgb(255 255 255 / 8%) inset, 0 18px 38px rgb(0 5 15 / 48%);
+  --shadow-interactive: 0 20px 46px rgb(0 5 15 / 42%);
+  --shadow-overlay: 0 24px 64px rgb(0 5 15 / 65%);
   color-scheme: dark;
 }
 
@@ -2296,6 +2302,510 @@ a:active {
 
   button:active,
   a:active {
+    transform: none;
+  }
+}
+
+/* Neo-Fintech visual layer: depth, focus and a restrained futuristic signal. */
+::selection {
+  background: color-mix(in srgb, var(--primary) 28%, transparent);
+  color: var(--text);
+}
+
+body::before {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--border) 18%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--border) 18%, transparent) 1px, transparent 1px),
+    radial-gradient(circle at 8% 0%, color-mix(in srgb, var(--primary) 10%, transparent), transparent 32rem),
+    radial-gradient(circle at 92% 22%, color-mix(in srgb, var(--info) 8%, transparent), transparent 28rem);
+  background-size: 48px 48px, 48px 48px, auto, auto;
+  content: '';
+  opacity: .26;
+}
+
+.app-shell,
+.auth-page,
+.auth-shell {
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
+}
+
+.app-shell {
+  background: transparent;
+}
+
+.app-header {
+  border-color: color-mix(in srgb, var(--border-strong) 42%, transparent);
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--border) 62%, transparent), 0 10px 30px color-mix(in srgb, var(--app-bg) 22%, transparent);
+  backdrop-filter: blur(20px) saturate(150%);
+}
+
+.app-header::after {
+  position: absolute;
+  inset-inline: 0;
+  bottom: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--primary) 58%, transparent), transparent);
+  content: '';
+  opacity: .7;
+}
+
+.brand-mark {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--primary-action), var(--info));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 38%, transparent), 0 10px 24px color-mix(in srgb, var(--primary) 28%, transparent);
+}
+
+.brand-mark::after {
+  position: absolute;
+  top: -35%;
+  right: -35%;
+  width: 80%;
+  height: 80%;
+  border: 1px solid rgb(255 255 255 / 48%);
+  border-radius: 999px;
+  content: '';
+  opacity: .62;
+}
+
+.dark .brand-mark {
+  background: linear-gradient(135deg, var(--primary-action-hover), var(--primary-action));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 42%, transparent), 0 10px 28px color-mix(in srgb, var(--primary) 30%, transparent);
+}
+
+.app-sidebar {
+  border-color: color-mix(in srgb, var(--border-strong) 42%, transparent);
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  box-shadow: 14px 0 40px color-mix(in srgb, var(--app-bg) 24%, transparent);
+  backdrop-filter: blur(18px) saturate(140%);
+}
+
+.app-sidebar-open {
+  box-shadow: 18px 0 44px color-mix(in srgb, var(--app-bg) 48%, transparent);
+}
+
+.app-nav-link {
+  border-color: transparent;
+  border-radius: .8rem;
+  transition: background-color var(--motion-normal) ease, border-color var(--motion-normal) ease, color var(--motion-normal) ease, transform var(--motion-fast) ease;
+}
+
+.app-nav-link:hover {
+  border-color: color-mix(in srgb, var(--border-strong) 48%, transparent);
+  background: color-mix(in srgb, var(--surface-hover) 72%, transparent);
+  transform: translateX(2px);
+}
+
+.app-nav-link-active {
+  border-color: color-mix(in srgb, var(--primary) 30%, var(--border));
+  background: linear-gradient(90deg, color-mix(in srgb, var(--primary-soft) 92%, transparent), color-mix(in srgb, var(--primary-soft) 42%, transparent));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--surface) 72%, transparent), 0 6px 18px color-mix(in srgb, var(--primary) 9%, transparent);
+}
+
+.app-nav-link-active::before {
+  width: .24rem;
+  background: linear-gradient(180deg, var(--primary), var(--info));
+  box-shadow: 0 0 14px color-mix(in srgb, var(--primary) 64%, transparent);
+}
+
+.app-bottom-nav {
+  border-color: color-mix(in srgb, var(--border-strong) 46%, transparent);
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  box-shadow: 0 -12px 32px color-mix(in srgb, var(--app-bg) 34%, transparent);
+  backdrop-filter: blur(20px) saturate(150%);
+}
+
+.app-bottom-nav-link {
+  border: 1px solid transparent;
+  border-radius: .8rem;
+  transition: background-color var(--motion-normal) ease, border-color var(--motion-normal) ease, color var(--motion-normal) ease, transform var(--motion-fast) ease;
+}
+
+.app-bottom-nav-link-active {
+  border-color: color-mix(in srgb, var(--primary) 28%, transparent);
+  background: color-mix(in srgb, var(--primary-soft) 82%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--surface) 70%, transparent);
+}
+
+.app-main {
+  background: transparent;
+}
+
+.page-kicker {
+  letter-spacing: .14em;
+  text-shadow: 0 0 18px color-mix(in srgb, var(--primary) 20%, transparent);
+}
+
+.page-title,
+.dashboard-hero-title {
+  text-shadow: 0 1px 0 color-mix(in srgb, var(--surface) 62%, transparent);
+}
+
+.card,
+.dashboard-controls,
+.filter-panel,
+.dashboard-chart-card,
+.dashboard-pie-card,
+.dashboard-breakdown-card,
+.transactions-table,
+.transaction-card,
+.form-panel,
+.data-card,
+.data-import-card,
+.catalog-card,
+.member-invite-card,
+.member-list-card,
+.gold-price-card,
+.budget-card,
+.attention-card {
+  border-color: color-mix(in srgb, var(--border-strong) 42%, var(--border));
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(12px) saturate(125%);
+}
+
+.card-interactive:hover,
+.transaction-card:hover,
+.dashboard-hero-stat:hover,
+.catalog-item:hover,
+.member-row:hover {
+  border-color: color-mix(in srgb, var(--primary) 42%, var(--border-strong));
+  box-shadow: var(--shadow-card-hover);
+}
+
+.field {
+  border-color: color-mix(in srgb, var(--border-strong) 74%, var(--border));
+  background: color-mix(in srgb, var(--surface-elevated) 82%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--surface) 52%, transparent);
+}
+
+.field:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--primary) 36%, var(--border-strong));
+}
+
+.field:focus {
+  border-color: var(--focus-ring);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus-ring) 20%, transparent), 0 0 22px color-mix(in srgb, var(--focus-ring) 12%, transparent), inset 0 1px 0 color-mix(in srgb, var(--surface) 56%, transparent);
+}
+
+.btn-primary {
+  border-color: color-mix(in srgb, var(--primary-action) 78%, var(--info));
+  background: linear-gradient(135deg, var(--primary-action), var(--info));
+  color: var(--primary-action-text);
+  box-shadow: 0 9px 20px color-mix(in srgb, var(--primary-action) 24%, transparent), inset 0 1px 0 rgb(255 255 255 / 22%);
+}
+
+.btn-primary:hover:not(:disabled) {
+  border-color: var(--primary-action-hover);
+  background: linear-gradient(135deg, var(--primary-action-hover), var(--info));
+  box-shadow: 0 12px 26px color-mix(in srgb, var(--primary-action) 32%, transparent), inset 0 1px 0 rgb(255 255 255 / 25%);
+  filter: saturate(1.08);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  border-color: color-mix(in srgb, var(--border-strong) 78%, var(--border));
+  background: color-mix(in srgb, var(--surface-elevated) 72%, var(--surface-muted));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--surface) 72%, transparent);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--primary) 54%, var(--border-strong));
+  background: color-mix(in srgb, var(--primary-soft) 48%, var(--surface-elevated));
+  box-shadow: 0 7px 16px color-mix(in srgb, var(--primary) 10%, transparent), inset 0 1px 0 color-mix(in srgb, var(--surface) 75%, transparent);
+  transform: translateY(-1px);
+}
+
+.icon-button:hover {
+  border-color: color-mix(in srgb, var(--primary) 34%, transparent);
+  background: color-mix(in srgb, var(--primary-soft) 72%, transparent);
+  color: var(--primary-strong);
+}
+
+.fab {
+  background: linear-gradient(135deg, var(--primary-action), var(--info));
+  box-shadow: 0 14px 28px color-mix(in srgb, var(--primary-action) 32%, transparent), inset 0 1px 0 rgb(255 255 255 / 22%);
+}
+
+.fab:hover {
+  box-shadow: 0 18px 36px color-mix(in srgb, var(--primary-action) 40%, transparent), inset 0 1px 0 rgb(255 255 255 / 25%);
+  transform: translateY(-2px) scale(1.02);
+}
+
+.dark .fab {
+  background: linear-gradient(135deg, var(--primary-action-hover), var(--primary-action));
+  color: var(--primary-action-text);
+}
+
+.dashboard-hero {
+  position: relative;
+  isolation: isolate;
+  border-color: color-mix(in srgb, var(--primary) 36%, var(--border-strong));
+  background:
+    radial-gradient(circle at 88% 18%, color-mix(in srgb, var(--info) 24%, transparent), transparent 18rem),
+    radial-gradient(circle at 12% 115%, color-mix(in srgb, var(--primary) 22%, transparent), transparent 20rem),
+    linear-gradient(135deg, color-mix(in srgb, var(--primary-soft) 92%, var(--surface)), color-mix(in srgb, var(--surface) 88%, transparent));
+  box-shadow: var(--shadow-card-hover), inset 0 1px 0 color-mix(in srgb, var(--surface) 72%, transparent);
+}
+
+.dashboard-hero::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: linear-gradient(color-mix(in srgb, var(--primary) 10%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in srgb, var(--primary) 10%, transparent) 1px, transparent 1px);
+  background-size: 30px 30px;
+  content: '';
+  mask-image: linear-gradient(135deg, black, transparent 82%);
+  opacity: .5;
+}
+
+.dashboard-hero::after {
+  position: absolute;
+  top: -5rem;
+  right: 11%;
+  z-index: -1;
+  width: 12rem;
+  height: 12rem;
+  border: 1px solid color-mix(in srgb, var(--primary) 28%, transparent);
+  border-radius: 999px;
+  box-shadow: 0 0 0 1.4rem color-mix(in srgb, var(--primary) 6%, transparent), 0 0 0 2.8rem color-mix(in srgb, var(--primary) 4%, transparent);
+  content: '';
+  opacity: .7;
+  animation: ui-ambient-pulse 8s ease-in-out infinite;
+}
+
+.dashboard-hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+.dashboard-hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+}
+
+.dashboard-hero-eyebrow::before {
+  width: .42rem;
+  height: .42rem;
+  border-radius: 999px;
+  background: var(--primary);
+  box-shadow: 0 0 0 .22rem color-mix(in srgb, var(--primary) 18%, transparent), 0 0 14px color-mix(in srgb, var(--primary) 62%, transparent);
+  content: '';
+}
+
+.dashboard-hero-value,
+.dashboard-hero-stat-value,
+.kpi-value,
+.stat-value,
+.amount,
+.amount-value {
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-hero-stat {
+  border-color: color-mix(in srgb, var(--border-strong) 54%, var(--border));
+  background: color-mix(in srgb, var(--surface-elevated) 58%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--surface) 48%, transparent);
+}
+
+.dashboard-controls,
+.filter-panel,
+.transaction-entry-panel,
+.list-toolbar {
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  box-shadow: var(--shadow-interactive);
+}
+
+.period-switcher,
+.catalog-tabs,
+.filter-summary {
+  border-color: color-mix(in srgb, var(--border-strong) 56%, var(--border));
+  background: color-mix(in srgb, var(--surface-muted) 76%, transparent);
+}
+
+.catalog-tabs {
+  padding: .3rem;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--surface) 58%, transparent);
+}
+
+.catalog-tab {
+  transition: background-color var(--motion-normal) ease, border-color var(--motion-normal) ease, box-shadow var(--motion-normal) ease, color var(--motion-normal) ease, transform var(--motion-fast) ease;
+}
+
+.catalog-tab[aria-selected='true'] {
+  border-color: color-mix(in srgb, var(--primary) 30%, transparent);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primary-soft) 86%, var(--surface)), color-mix(in srgb, var(--surface) 82%, transparent));
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--primary) 16%, transparent), inset 0 1px 0 color-mix(in srgb, var(--surface) 72%, transparent);
+}
+
+.transaction-income-row {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--success-soft) 62%, var(--surface)), color-mix(in srgb, var(--surface) 88%, transparent));
+}
+
+.transaction-expense-row {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--danger-soft) 62%, var(--surface)), color-mix(in srgb, var(--surface) 88%, transparent));
+}
+
+details.card > summary {
+  transition: background-color var(--motion-normal) ease, color var(--motion-normal) ease;
+}
+
+details.card > summary:hover {
+  background: color-mix(in srgb, var(--primary-soft) 34%, transparent);
+}
+
+details.card[open] > summary {
+  border-bottom-color: color-mix(in srgb, var(--primary) 22%, var(--border));
+}
+
+.data-upload-zone {
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--border-strong));
+  background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--primary-soft) 42%, transparent), color-mix(in srgb, var(--primary-soft) 42%, transparent) 10px, transparent 10px, transparent 20px), color-mix(in srgb, var(--surface-subtle) 82%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--surface) 48%, transparent);
+}
+
+.data-upload-zone:hover {
+  border-color: var(--primary);
+  background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--primary-soft) 58%, transparent), color-mix(in srgb, var(--primary-soft) 58%, transparent) 10px, transparent 10px, transparent 20px), color-mix(in srgb, var(--surface) 82%, transparent);
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--primary) 10%, transparent), inset 0 0 0 1px color-mix(in srgb, var(--primary) 18%, transparent);
+}
+
+.auth-page,
+.auth-shell {
+  background: transparent;
+}
+
+.auth-hero {
+  position: relative;
+}
+
+.auth-hero::before {
+  position: absolute;
+  top: 2rem;
+  right: 5%;
+  width: 7rem;
+  height: 7rem;
+  border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
+  border-radius: 999px;
+  box-shadow: 0 0 0 1rem color-mix(in srgb, var(--primary) 5%, transparent), 0 0 0 2rem color-mix(in srgb, var(--primary) 3%, transparent);
+  content: '';
+  opacity: .65;
+}
+
+.auth-form-card,
+.auth-shell-card {
+  position: relative;
+  overflow: hidden;
+  border-color: color-mix(in srgb, var(--primary) 26%, var(--border-strong));
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  box-shadow: var(--shadow-card-hover);
+  backdrop-filter: blur(18px) saturate(135%);
+}
+
+.auth-form-card::before,
+.auth-shell-card::before {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: .2rem;
+  background: linear-gradient(90deg, var(--primary), var(--info), var(--accent-strong));
+  content: '';
+}
+
+.auth-feature-card {
+  border-color: color-mix(in srgb, var(--border-strong) 52%, var(--border));
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(10px);
+  transition: border-color var(--motion-normal) ease, box-shadow var(--motion-normal) ease, transform var(--motion-fast) ease;
+}
+
+.auth-feature-card:hover {
+  border-color: color-mix(in srgb, var(--primary) 42%, var(--border-strong));
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-2px);
+}
+
+[role='dialog'],
+[role='alertdialog'] {
+  border-color: color-mix(in srgb, var(--primary) 28%, var(--border-strong));
+  box-shadow: var(--shadow-overlay);
+  backdrop-filter: blur(18px) saturate(135%);
+}
+
+.fixed[aria-live='polite'] > div,
+.fixed[aria-live='assertive'] > div {
+  border-color: color-mix(in srgb, var(--primary) 24%, var(--border-strong));
+  background: color-mix(in srgb, var(--surface-elevated) 88%, transparent);
+  box-shadow: var(--shadow-overlay);
+  backdrop-filter: blur(16px) saturate(135%);
+}
+
+@keyframes ui-ambient-pulse {
+  0%, 100% {
+    transform: scale(.96);
+    opacity: .48;
+  }
+
+  50% {
+    transform: scale(1.04);
+    opacity: .78;
+  }
+}
+
+@media (max-width: 719px) {
+  body::before {
+    background-size: 36px 36px, 36px 36px, auto, auto;
+    opacity: .18;
+  }
+
+  .app-main {
+    padding-bottom: calc(6.5rem + env(safe-area-inset-bottom));
+  }
+
+  .dashboard-hero::after {
+    right: -4rem;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .app-header,
+  .app-sidebar,
+  .app-bottom-nav,
+  .card,
+  .dashboard-controls,
+  .filter-panel,
+  .dashboard-chart-card,
+  .dashboard-pie-card,
+  .dashboard-breakdown-card,
+  .transactions-table,
+  .transaction-card,
+  .form-panel,
+  .auth-form-card,
+  .auth-shell-card {
+    background: var(--surface);
+    backdrop-filter: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-hero::after {
+    animation: none;
+  }
+
+  .app-nav-link:hover,
+  .btn-primary:hover:not(:disabled),
+  .btn-secondary:hover:not(:disabled),
+  .fab:hover,
+  .auth-feature-card:hover {
     transform: none;
   }
 }
