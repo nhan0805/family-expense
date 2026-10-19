@@ -1033,7 +1033,7 @@ export function Assets() {
 }
 
 function AssetKpi({ label, value, icon: Icon, tone, meta }: { label: string; value: number; icon: typeof Landmark; tone: 'emerald' | 'amber' | 'violet' | 'sky'; meta: string }) {
-  return <div className="card min-w-0 p-3 sm:p-4"><div className="flex items-start gap-2"><span className={`grid size-9 shrink-0 place-items-center rounded-xl kpi-tone-${tone}`}><Icon size={18} aria-hidden="true" /></span><p className="min-w-0 flex-1 break-words text-xs font-semibold leading-tight text-gray-500 dark:text-gray-400">{label}</p></div><Amount value={value} className="mt-2 block break-words text-lg font-extrabold leading-tight sm:text-xl" label={label} /><p className="mt-2 break-words text-xs leading-tight text-gray-500 dark:text-gray-400">{meta}</p></div>;
+  return <div className={`card asset-kpi asset-kpi-${tone} min-w-0 p-3 sm:p-4`}><div className="flex items-start gap-2"><span className={`grid size-9 shrink-0 place-items-center rounded-xl kpi-tone-${tone}`}><Icon size={18} aria-hidden="true" /></span><p className="min-w-0 flex-1 break-words text-xs font-semibold leading-tight text-gray-500 dark:text-gray-400">{label}</p></div><Amount value={value} className="mt-2 block break-words text-lg font-extrabold leading-tight sm:text-xl" label={label} /><p className="mt-2 break-words text-xs leading-tight text-gray-500 dark:text-gray-400">{meta}</p></div>;
 }
 
 function GoldHoldingStat({ label, value, tone = 'neutral' }: { label: string; value: string; tone?: 'neutral' | 'positive' | 'negative' }) {
