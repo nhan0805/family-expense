@@ -647,7 +647,7 @@ export function Dashboard() {
             <ChevronDown size={18} aria-hidden="true" className="transition-transform group-open:rotate-180" />
           </div>
         </summary>
-        <div className="px-4 pb-4 sm:px-5 sm:pb-5">
+        <div className="dashboard-disclosure-panel px-4 pb-4 sm:px-5 sm:pb-5">
           {topCategories.length ? <div className="space-y-2">{topCategories.map((item) => <Link key={item.id} to={`${periodFilterLink(undefined)}&expenseTypeId=${encodeURIComponent(item.id)}`} className="card-interactive grid grid-cols-[minmax(0,1fr)_minmax(120px,1.6fr)_auto] items-center gap-3 rounded-xl border border-black/5 p-3 hover:bg-black/[.025] focus-visible:outline focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] dark:border-white/10 dark:hover:bg-white/5"><div className="min-w-0"><p className="break-words font-semibold [overflow-wrap:anywhere]">{item.name}</p><p className="text-xs text-gray-500">{formatVnd(item.value)}</p></div><MiniTrend values={item.trend} label={`${item.name}: ${formatVnd(item.value)}`} /><ChangeBadge value={changePercent(item.value, item.previousValue)} en={en} /></Link>)}</div> : <div className="rounded-xl bg-black/[.025] px-4 py-7 text-center text-sm text-gray-500 dark:bg-white/[.04]">{en ? 'No category data in this period.' : 'Chưa có dữ liệu danh mục trong kỳ này.'}</div>}
         </div>
       </details>
@@ -657,10 +657,10 @@ export function Dashboard() {
           <span>{en ? 'Income breakdown' : 'Phân bổ thu nhập'}</span>
           <ChevronDown size={18} aria-hidden="true" className="transition-transform group-open:rotate-180" />
         </summary>
-        <div className="ui-stagger mt-4 grid gap-4 lg:grid-cols-2"><div className="card dashboard-pie-card min-w-0 overflow-hidden p-4 sm:p-5"><ExpensePieChart title={en ? 'Income by purpose' : 'Thu nhập theo mục đích'} data={incomeByPurpose} to={periodFilterLink('Thu nhập')} filterKey="purposeId" en={en} income /></div><div className="card dashboard-pie-card min-w-0 overflow-hidden p-4 sm:p-5"><ExpensePieChart title={en ? 'Income by category' : 'Thu nhập theo danh mục'} data={incomeByExpenseType} to={periodFilterLink('Thu nhập')} filterKey="expenseTypeId" en={en} income /></div></div>
+        <div className="dashboard-disclosure-panel ui-stagger mt-4 grid gap-4 lg:grid-cols-2"><div className="card dashboard-pie-card min-w-0 overflow-hidden p-4 sm:p-5"><ExpensePieChart title={en ? 'Income by purpose' : 'Thu nhập theo mục đích'} data={incomeByPurpose} to={periodFilterLink('Thu nhập')} filterKey="purposeId" en={en} income /></div><div className="card dashboard-pie-card min-w-0 overflow-hidden p-4 sm:p-5"><ExpensePieChart title={en ? 'Income by category' : 'Thu nhập theo danh mục'} data={incomeByExpenseType} to={periodFilterLink('Thu nhập')} filterKey="expenseTypeId" en={en} income /></div></div>
       </details>
 
-      <details className="group card attention-card overflow-hidden border-amber-200 bg-amber-50/60 dark:border-amber-900/60 dark:bg-amber-950/20" aria-labelledby="dashboard-insights-title">
+      <details className="group card attention-card dashboard-insights-card overflow-hidden border-amber-200 bg-amber-50/60 dark:border-amber-900/60 dark:bg-amber-950/20" aria-labelledby="dashboard-insights-title">
         <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 p-4 sm:p-5 [&::-webkit-details-marker]:hidden">
           <div className="flex min-w-0 items-center gap-2">
             <Sparkles size={19} className="shrink-0 text-amber-600" aria-hidden="true" />
@@ -671,7 +671,7 @@ export function Dashboard() {
           </div>
           <ChevronDown size={18} aria-hidden="true" className="shrink-0 transition-transform group-open:rotate-180" />
         </summary>
-        <div className="px-4 pb-4 sm:px-5 sm:pb-5">
+        <div className="dashboard-disclosure-panel px-4 pb-4 sm:px-5 sm:pb-5">
           <div className="mb-3 flex justify-end"><button type="button" className="btn-secondary inline-flex shrink-0 items-center gap-2 text-sm" disabled={!isSupabaseConfigured || !validRange || aiSummaryBusy} onClick={() => void runAiSummary()} title={!isSupabaseConfigured ? (en ? 'Connect Supabase to use AI' : 'Cần kết nối Supabase để dùng AI') : undefined}><Sparkles size={16} aria-hidden="true" />{aiSummaryBusy ? (en ? 'Summarizing…' : 'Đang tóm tắt…') : aiSummaryQuery.isError ? (en ? 'Retry AI summary' : 'Thử lại tóm tắt AI') : (en ? 'Summarize with AI' : 'Tóm tắt bằng AI')}</button></div>
           {aiSummaryQuery.data ? <div className="rounded-xl border border-amber-200 bg-white/75 p-3 text-sm dark:border-amber-900/60 dark:bg-white/5"><p className="mb-2 text-xs font-bold uppercase tracking-wide text-amber-700 dark:text-amber-300">{en ? 'AI summary' : 'Tóm tắt bằng AI'}</p><p className="leading-6">{aiSummaryQuery.data.summary}</p>{aiSummaryQuery.data.highlights.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5 text-gray-700 dark:text-gray-300">{aiSummaryQuery.data.highlights.map((highlight) => <li key={highlight}>{highlight}</li>)}</ul>}</div> : insights.length ? <ul className="grid gap-2 text-sm sm:grid-cols-2">{insights.map((insight) => <li key={insight} className="rounded-xl border border-amber-100 bg-white/70 p-3 dark:border-amber-900/40 dark:bg-white/5">{insight}</li>)}</ul> : <p className="text-sm text-gray-600 dark:text-gray-300">{en ? 'Insights will appear when there is enough actual data.' : 'Nhận xét sẽ xuất hiện khi có đủ dữ liệu giao dịch thực tế.'}</p>}
           {aiSummaryQuery.isError && <div role="alert" className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-red-100/70 p-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300"><span>{aiErrorMessage(aiSummaryQuery.error, en, 'summary')}</span><button type="button" className="btn-secondary px-3 py-1.5 text-xs" onClick={() => void runAiSummary()}>{en ? 'Retry' : 'Thử lại'}</button></div>}
