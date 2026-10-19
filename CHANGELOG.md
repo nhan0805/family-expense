@@ -2,6 +2,14 @@
 
 ## 2026-10-19
 
+### Giảm wording thiên về marketing trong giao diện
+
+- Thay các tiêu đề/mô tả mang tính quảng bá bằng wording mô tả chức năng trực tiếp trên Login, Tạo gia đình, Dashboard, Tài sản, Ngân sách, Danh mục, Thành viên, Giao dịch tự động, Dữ liệu và Chi phí định kỳ; giữ nguyên thuật ngữ chức năng như `AI summary`.
+- Đồng bộ nội dung tiếng Việt/Anh và cập nhật regression assertion liên quan. Không đổi schema, API, business logic, dependency, `supabase/` hoặc dữ liệu production.
+- Files: `src/pages/{Assets,AutomaticTransactionSettings,Budgets,Catalogs,CreateFamily,Dashboard,ImportExport,Login,Members,RecurringExpenses}.tsx` và test liên quan.
+- Kiểm thử local: Vitest `49 file / 253 test`, TypeScript, ESLint, Vite build và `git diff --check` pass. CI hậu merge [run 39221897990](https://github.com/nhan0805/family-expense/actions/runs/39221897990) pass quality, E2E và db-security.
+- Triển khai: PR [#275](https://github.com/nhan0805/family-expense/pull/275) merge vào `main` tại commit `4807882a323448d27fe517e2d5967dbc1138d475`; [Cloudflare Pages production check của fafin](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/fafin/bca42e21-30b4-4d81-9ce3-05910f58cea7) và [family-expense](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/f9ffc30e-3583-40ff-be8e-a40d5ec08bd7) pass; smoke `https://family-expense-8fo.pages.dev/` và `/dang-nhap` đều trả HTTP 200. Không chạy Supabase Production Deploy vì không có thay đổi `supabase/`.
+
 ### Sửa tương phản tab và tag trong dark theme
 
 - Sửa chữ của tab đang chọn trong Catalogs/Settings để dùng màu text rõ trên nền tint; làm dịu nền tag metadata của Chi phí định kỳ và đưa tag tần suất về teal đồng bộ với Neo-Fintech theme.
