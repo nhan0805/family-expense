@@ -69,20 +69,21 @@ describe('BudgetNotifications', () => {
     vi.clearAllMocks();
   });
 
-  it('hiển thị toast, badge chưa đọc và đánh dấu đã đọc từ chuông', async () => {
+  it('hiển thị badge, notification center và đánh dấu đã đọc từ chuông', async () => {
     const [year = '2000', month = '1'] = monthKey().split('-');
     upsertLocalBudget({ year: Number(year), month: Number(month), purposeId: 'p1', amount: 1_000_000, warningThreshold: 0.8 });
     renderNotifications();
 
-    await waitFor(() => expect(screen.getByText(/Sinh hoạt đã dùng 80% ngân sách/)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole('button', { name: /Thông báo, 1 mục cần chú ý/ })).toBeInTheDocument());
     expect(screen.getByRole('button', { name: /Thông báo/ })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /Thông báo/ }));
     expect(screen.getByRole('dialog', { name: 'Thông báo' })).toBeInTheDocument();
-    expect(screen.getByText('Sắp vượt ngân sách: Sinh hoạt')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Sắp vượt ngân sách.*Sinh hoạt/ })).toBeInTheDocument();
+    expect(screen.getByText(/Sinh hoạt đã dùng 80% ngân sách/)).toBeInTheDocument();
     expect(screen.getByText('1 mục cần chú ý')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('link', { name: /Sắp vượt ngân sách: Sinh hoạt/ }));
+    fireEvent.click(screen.getByRole('link', { name: /Sắp vượt ngân sách.*Sinh hoạt/ }));
     await waitFor(() => expect(screen.queryByText('1 mục cần chú ý')).not.toBeInTheDocument());
   });
 
@@ -91,9 +92,10 @@ describe('BudgetNotifications', () => {
     upsertLocalBudget({ year: Number(year), month: Number(month), purposeId: 'p1', amount: 1_000_000, warningThreshold: 0.8 });
     renderNotifications('en');
 
-    await waitFor(() => expect(screen.getByText(/Family living has reached 80%/)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole('button', { name: /Notifications, 1 items need attention/ })).toBeInTheDocument());
     fireEvent.click(screen.getByRole('button', { name: /Notifications/ }));
-    expect(screen.getByText('Near limit: Family living')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Near limit.*Family living/ })).toBeInTheDocument();
+    expect(screen.getByText(/Family living has reached 80%/)).toBeInTheDocument();
   });
 
   it('đóng panel khi bấm ra ngoài vùng thông báo', async () => {
@@ -101,7 +103,7 @@ describe('BudgetNotifications', () => {
     upsertLocalBudget({ year: Number(year), month: Number(month), purposeId: 'p1', amount: 1_000_000, warningThreshold: 0.8 });
     renderNotifications();
 
-    await waitFor(() => expect(screen.getByText(/Sinh hoạt đã dùng 80% ngân sách/)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole('button', { name: /Thông báo, 1 mục cần chú ý/ })).toBeInTheDocument());
     fireEvent.click(screen.getByRole('button', { name: /Thông báo/ }));
     expect(screen.getByRole('dialog', { name: 'Thông báo' })).toBeInTheDocument();
 
@@ -115,13 +117,13 @@ describe('BudgetNotifications', () => {
     upsertLocalBudget({ year: Number(year), month: Number(month), purposeId: 'p1', amount: 1_000_000, warningThreshold: 0.8 });
     renderNotifications();
 
-    await waitFor(() => expect(screen.getByText(/Sinh hoạt đã dùng 80% ngân sách/)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole('button', { name: /Thông báo, 1 mục cần chú ý/ })).toBeInTheDocument());
     fireEvent.click(screen.getByRole('button', { name: /Thông báo/ }));
-    fireEvent.click(screen.getByRole('link', { name: /Sắp vượt ngân sách: Sinh hoạt/ }));
+    fireEvent.click(screen.getByRole('link', { name: /Sắp vượt ngân sách.*Sinh hoạt/ }));
     fireEvent.click(screen.getByRole('button', { name: /Thông báo/ }));
 
     fireEvent.click(screen.getByRole('button', { name: 'Xóa đã đọc' }));
-    expect(screen.queryByText('Sắp vượt ngân sách: Sinh hoạt')).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Sắp vượt ngân sách.*Sinh hoạt/ })).not.toBeInTheDocument();
     expect(screen.getByText('Chưa có cảnh báo ngân sách.')).toBeInTheDocument();
   });
 
@@ -142,7 +144,7 @@ describe('BudgetNotifications', () => {
     renderNotifications();
 
     fireEvent.click(screen.getByRole('button', { name: /Thông báo/ }));
-    expect(screen.getByRole('heading', { name: 'Giao dịch dự kiến tới hạn' })).toHaveClass('break-words');
+    expect(screen.getByRole('heading', { name: 'Giao dịch dự kiến tới hạn' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Xác nhận' }));
     const dialog = screen.getByRole('alertdialog');
     fireEvent.click(within(dialog).getByRole('button', { name: 'Xác nhận' }));
@@ -167,8 +169,8 @@ describe('BudgetNotifications', () => {
     renderNotifications();
 
     fireEvent.click(screen.getByRole('button', { name: /Thông báo/ }));
-    const dueList = screen.getByRole('list', { name: 'Danh sách giao dịch dự kiến tới hạn' });
-    expect(dueList).toHaveClass('max-h-64', 'overflow-y-auto', 'overscroll-contain');
+    const notificationRegion = screen.getByRole('region', { name: 'Danh sách thông báo' });
+    expect(notificationRegion).toHaveClass('budget-notifications-scroll');
     plannedTransactions.forEach(({ description }) => expect(screen.getByText(description)).toBeInTheDocument());
     expect(screen.getByText('Cuộn để xem tất cả 8 giao dịch.')).toBeInTheDocument();
   });
