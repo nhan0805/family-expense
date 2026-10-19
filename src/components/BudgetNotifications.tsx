@@ -1,6 +1,7 @@
-import { Bell, Check, CircleAlert, Trash2, TriangleAlert, X } from 'lucide-react';
+import { Bell, CalendarClock, CheckCircle2, CircleAlert, Trash2, TriangleAlert, X } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { useFeedback } from './Feedback';
 import { useApp } from '../context/AppContext';
@@ -96,8 +97,13 @@ function notificationLabel(notification: BudgetNotification, language: 'vi' | 'e
 
 function notificationTone(notification: BudgetNotification) {
   return notification.kind === 'over'
-    ? 'border-[var(--danger)] bg-[var(--danger-soft)]'
-    : 'border-[var(--warning)] bg-[var(--warning-soft)]';
+    ? 'is-danger'
+    : 'is-warning';
+}
+
+function notificationUsagePercent(notification: BudgetNotification) {
+  if (notification.budget <= 0) return 0;
+  return Math.min(100, Math.max(0, (notification.spent / notification.budget) * 100));
 }
 
 export function BudgetNotifications() {
@@ -170,26 +176,30 @@ export function BudgetNotifications() {
     if (!familyId || !summary) return;
     const result = syncBudgetNotifications(familyId, summary);
     setNotifications(result.notifications);
-    result.newNotifications.slice(0, 3).forEach((notification) => {
-      notify(notificationMessage(notification, language), notification.kind === 'over' ? 'error' : 'info');
-    });
+    result.newNotifications
+      .filter((notification) => notification.kind === 'over')
+      .slice(0, 3)
+      .forEach((notification) => {
+        notify(notificationMessage(notification, language), 'error');
+      });
   }, [familyId, language, notify, summary]);
 
   useEffect(() => {
     if (!open) return;
     const closeOnOutsidePointer = (event: PointerEvent) => {
       const target = event.target;
-      if (target instanceof Node && !containerRef.current?.contains(target)) setOpen(false);
+      if (target instanceof Node && !containerRef.current?.contains(target) && !panelRef.current?.contains(target)) setOpen(false);
     };
     document.addEventListener('pointerdown', closeOnOutsidePointer);
     return () => document.removeEventListener('pointerdown', closeOnOutsidePointer);
-  }, [open]);
+  }, [open, panelRef]);
 
   if (!familyId) return null;
 
   const unreadCount = notifications.filter((notification) => !notification.readAt).length;
   const readCount = notifications.length - unreadCount;
   const attentionCount = unreadCount + dueTransactions.length;
+  const hasCriticalAlert = notifications.some((notification) => notification.kind === 'over' && !notification.readAt);
   const notificationTitle = en ? 'Notifications' : 'Thông báo';
   const notificationButtonLabel = attentionCount > 0
     ? `${notificationTitle}, ${attentionCount} ${en ? 'items need attention' : 'mục cần chú ý'}`
@@ -262,103 +272,146 @@ export function BudgetNotifications() {
         <Bell size={19} aria-hidden="true" />
         {attentionCount > 0 && (
           <span
-            className="absolute -right-0.5 -top-0.5 grid min-w-5 -translate-y-1/4 translate-x-1/4 place-items-center rounded-full bg-[var(--danger)] px-1 text-[10px] font-extrabold leading-5 text-white"
+            className={`budget-notification-badge ${hasCriticalAlert ? 'is-alert' : ''}`}
             aria-hidden="true"
           >
             {attentionCount > 99 ? '99+' : attentionCount}
           </span>
         )}
       </button>
-      {open && (
-        <section
-          id="budget-notifications-panel"
-          role="dialog"
-          ref={panelRef}
-          aria-modal="false"
-          tabIndex={-1}
-          aria-label={notificationTitle}
-          aria-describedby="budget-notifications-description"
-          className="budget-notifications-panel absolute right-0 top-12 z-50 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-2xl"
-        >
-          <div className="flex items-center justify-between gap-3 border-b border-[var(--border)] px-4 py-3">
-            <div>
-              <h2 className="font-extrabold">{notificationTitle}</h2>
-              <p id="budget-notifications-description" className="mt-0.5 text-xs text-gray-500 dark:text-gray-300">
-                {attentionCount > 0 ? `${attentionCount} ${en ? 'items need attention' : 'mục cần chú ý'}` : t('allBudgetNotificationsRead')}
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center justify-end gap-1">
-              {(unreadCount > 0 || readCount > 0) && <div className="flex flex-wrap items-center justify-end gap-2">
-                {unreadCount > 0 && <button type="button" className="min-h-11 rounded-lg px-2 text-xs font-bold text-[var(--primary)] hover:bg-[var(--primary-soft)] hover:underline" onClick={markAllRead}>
-                  {t('markAllRead')}
-                </button>}
-                {readCount > 0 && <button type="button" className="inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-xs font-bold text-[var(--danger-strong)] hover:bg-[var(--danger-soft)] hover:underline" onClick={deleteRead}>
-                  <Trash2 size={14} aria-hidden="true" />
-                  {t('deleteRead')}
-                </button>}
-              </div>}
+      {open && typeof document !== 'undefined' && createPortal(
+        <>
+          <button type="button" className="budget-notifications-scrim" aria-label={t('closeNotification')} onClick={() => setOpen(false)} />
+          <section
+            id="budget-notifications-panel"
+            role="dialog"
+            ref={panelRef}
+            aria-modal="true"
+            tabIndex={-1}
+            aria-labelledby="budget-notifications-title"
+            aria-describedby="budget-notifications-description"
+            className="budget-notifications-panel"
+          >
+            <span className="budget-notifications-handle" aria-hidden="true" />
+            <div className="budget-notifications-header">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="budget-notifications-title-icon" aria-hidden="true"><Bell size={17} /></span>
+                  <h2 id="budget-notifications-title" className="font-extrabold">{notificationTitle}</h2>
+                </div>
+                <p id="budget-notifications-description" className="mt-1 text-xs">
+                  {attentionCount > 0 ? `${attentionCount} ${en ? 'items need attention' : 'mục cần chú ý'}` : t('allBudgetNotificationsRead')}
+                </p>
+              </div>
               <IconButton icon={X} label={t('closeNotification')} data-dialog-autofocus onClick={() => setOpen(false)} />
             </div>
-          </div>
-          {dueTransactions.length > 0 && <div className="border-b border-[var(--warning)] bg-[var(--warning-soft)] p-3">
-            <div className="flex flex-col gap-2">
-              <div className="min-w-0">
-                <h3 className="break-words font-bold">{en ? 'Planned transactions due' : 'Giao dịch dự kiến tới hạn'}</h3>
-                <p className="mt-0.5 text-xs text-[var(--warning-strong)]">{en ? `${dueTransactions.length} transaction(s) need confirmation.` : `${dueTransactions.length} giao dịch cần xác nhận.`}</p>
-              </div>
-              {dueTransactions.length > 1 && <button type="button" className="btn-primary self-start px-3 py-2 text-xs" disabled={Boolean(confirmingId)} onClick={() => void confirmDueTransactions(dueTransactions)}>
-                {en ? 'Confirm all' : 'Xác nhận tất cả'}
-              </button>}
+
+            <div className="budget-notifications-summary" aria-label={en ? 'Notification summary' : 'Tóm tắt thông báo'}>
+              <span className={`budget-notifications-summary-chip ${unreadCount > 0 ? 'is-active' : ''}`}>
+                <span className="budget-notifications-summary-count">{unreadCount}</span>
+                {en ? 'Unread' : 'Chưa đọc'}
+              </span>
+              {dueTransactions.length > 0 && <span className="budget-notifications-summary-chip is-warning">
+                <CalendarClock size={14} aria-hidden="true" />
+                <span className="budget-notifications-summary-count">{dueTransactions.length}</span>
+                {en ? 'To confirm' : 'Cần xác nhận'}
+              </span>}
+              {readCount > 0 && <span className="budget-notifications-summary-chip">
+                <span className="budget-notifications-summary-count">{readCount}</span>
+                {en ? 'Read' : 'Đã đọc'}
+              </span>}
             </div>
-            {dueError && <p role="alert" className="mt-2 rounded-lg border border-[var(--danger)] bg-[var(--danger-soft)] p-2 text-xs text-[var(--danger-strong)]">{dueError}</p>}
-            <ul aria-label={en ? 'Due planned transactions' : 'Danh sách giao dịch dự kiến tới hạn'} className="mt-2 max-h-64 overflow-y-auto overscroll-contain pr-1 divide-y divide-[var(--warning)]">
-              {dueTransactions.map((transaction) => <li key={transaction.id} className="flex flex-wrap items-center justify-between gap-3 py-2">
-                <div className="min-w-0">
-                  <p className="break-words text-sm font-semibold [overflow-wrap:anywhere]">{transaction.description}</p>
-                  <p className="text-[11px] text-[var(--warning-strong)]">{formatDueDate(transaction.transactionDate, language)} · {formatMoney(transaction.amount, language)}</p>
+
+            <div className="budget-notifications-scroll" role="region" aria-label={en ? 'Notification list' : 'Danh sách thông báo'}>
+              {dueTransactions.length > 0 && <section className="budget-notifications-section budget-notifications-section-priority" aria-labelledby="budget-due-title">
+                <div className="budget-notifications-section-heading">
+                  <div>
+                    <h3 id="budget-due-title">{en ? 'Planned transactions due' : 'Giao dịch dự kiến tới hạn'}</h3>
+                    <p>{en ? `${dueTransactions.length} transaction(s) need confirmation.` : `${dueTransactions.length} giao dịch cần xác nhận.`}</p>
+                  </div>
+                  {dueTransactions.length > 1 && <button type="button" className="btn-primary budget-notifications-confirm-all" disabled={Boolean(confirmingId)} onClick={() => void confirmDueTransactions(dueTransactions)}>
+                    {en ? 'Confirm all' : 'Xác nhận tất cả'}
+                  </button>}
                 </div>
-                <button type="button" className="min-h-11 shrink-0 rounded-lg px-3 py-2 text-xs font-bold text-[var(--warning-strong)] hover:bg-[var(--surface-hover)]" disabled={Boolean(confirmingId)} onClick={() => void confirmDueTransactions([transaction])}>
-                  {confirmingId === transaction.id ? (en ? 'Confirming…' : 'Đang xác nhận…') : (en ? 'Confirm' : 'Xác nhận')}
-                </button>
-              </li>)}
-            </ul>
-            {dueTransactions.length > 5 && <p className="mt-2 text-[11px] text-[var(--warning-strong)]">{en ? `Scroll to view all ${dueTransactions.length} transactions.` : `Cuộn để xem tất cả ${dueTransactions.length} giao dịch.`}</p>}
-          </div>}
-          {visibleNotifications.length > 0 ? (
-            <ul className="max-h-[min(28rem,calc(100vh-10rem))] overflow-y-auto p-2">
-              {visibleNotifications.map((notification) => {
-                const name = language === 'en'
-                  ? notification.purposeNameEn || notification.purposeName
-                  : notification.purposeName;
-                const Icon = notification.kind === 'over' ? CircleAlert : TriangleAlert;
-                return (
-                  <li key={notification.id}>
-                    <Link
-                      to={buildBudgetFilterLink(notification.purposeId, notification.year, notification.month)}
-                      className={`block rounded-xl border p-3 transition hover:brightness-95 dark:hover:brightness-110 ${notificationTone(notification)} ${notification.readAt ? 'opacity-70' : ''}`}
-                      onClick={() => { markRead(notification.id); setOpen(false); }}
-                    >
-                      <div className="flex items-start gap-2">
-                        <Icon size={18} className={notification.kind === 'over' ? 'mt-0.5 shrink-0 text-[var(--danger-strong)]' : 'mt-0.5 shrink-0 text-[var(--warning-strong)]'} aria-hidden="true" />
-                        <div className="min-w-0 flex-1">
-                          <p className="font-bold leading-snug">{notificationLabel(notification, language)}: {name}</p>
-                          <p className="mt-1 text-xs text-gray-700 dark:text-gray-200">{notificationMessage(notification, language)}</p>
-                          <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-300">{formatPeriod(notification, language)} · {t('viewTransactions')}</p>
-                        </div>
-                        {!notification.readAt && <span className="mt-1 size-2 shrink-0 rounded-full bg-[var(--primary)]" aria-label={t('unreadBudgetNotification')} />}
-                      </div>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          ) : (
-            <div className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-300">
-              <Check size={24} className="mx-auto mb-2 text-[var(--success-strong)]" aria-hidden="true" />
-              {t('noBudgetNotifications')}
+                {dueError && <p role="alert" className="budget-notification-error">{dueError}</p>}
+                <ul aria-label={en ? 'Due planned transactions' : 'Danh sách giao dịch dự kiến tới hạn'} className="budget-notifications-due-list">
+                  {dueTransactions.map((transaction) => <li key={transaction.id} className="budget-notification-due-item">
+                    <span className="budget-notification-due-icon" aria-hidden="true"><CalendarClock size={17} /></span>
+                    <div className="min-w-0 flex-1">
+                      <p className="break-words text-sm font-semibold [overflow-wrap:anywhere]">{transaction.description}</p>
+                      <p className="budget-notification-meta">{formatDueDate(transaction.transactionDate, language)} · {formatMoney(transaction.amount, language)}</p>
+                    </div>
+                    <button type="button" className="budget-notification-action" disabled={Boolean(confirmingId)} onClick={() => void confirmDueTransactions([transaction])}>
+                      {confirmingId === transaction.id ? (en ? 'Confirming…' : 'Đang xác nhận…') : (en ? 'Confirm' : 'Xác nhận')}
+                    </button>
+                  </li>)}
+                </ul>
+                {dueTransactions.length > 5 && <p className="budget-notification-hint">{en ? `Scroll to view all ${dueTransactions.length} transactions.` : `Cuộn để xem tất cả ${dueTransactions.length} giao dịch.`}</p>}
+              </section>}
+
+              <section className="budget-notifications-section" aria-labelledby="budget-alerts-title">
+                {visibleNotifications.length > 0 && <div className="budget-notifications-section-heading">
+                  <div>
+                    <h3 id="budget-alerts-title">{en ? 'Budget alerts' : 'Cảnh báo ngân sách'}</h3>
+                    <p>{en ? 'Keep an eye on spending limits.' : 'Theo dõi các khoản chi đang gần giới hạn.'}</p>
+                  </div>
+                  <span className="budget-notifications-section-count">{visibleNotifications.length}</span>
+                </div>}
+                {visibleNotifications.length > 0 ? (
+                  <ul className="budget-notifications-list">
+                    {visibleNotifications.map((notification) => {
+                      const name = language === 'en'
+                        ? notification.purposeNameEn || notification.purposeName
+                        : notification.purposeName;
+                      const Icon = notification.kind === 'over' ? CircleAlert : TriangleAlert;
+                      const usagePercent = notificationUsagePercent(notification);
+                      return (
+                        <li key={notification.id}>
+                          <Link
+                            to={buildBudgetFilterLink(notification.purposeId, notification.year, notification.month)}
+                            className={`budget-notification-item ${notificationTone(notification)} ${notification.readAt ? 'is-read' : 'is-unread'}`}
+                            onClick={() => { markRead(notification.id); setOpen(false); }}
+                          >
+                            <span className="budget-notification-item-icon" aria-hidden="true"><Icon size={17} /></span>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="min-w-0">
+                                  <p className="budget-notification-item-label">{notificationLabel(notification, language)}</p>
+                                  <p className="budget-notification-item-title">{name}</p>
+                                </div>
+                                {!notification.readAt && <span className="budget-notification-unread" aria-label={t('unreadBudgetNotification')} />}
+                              </div>
+                              <p className="budget-notification-message">{notificationMessage(notification, language)}</p>
+                              <div className="budget-notification-progress" aria-hidden="true"><span style={{ width: `${usagePercent}%` }} /></div>
+                              <p className="budget-notification-meta">{formatPeriod(notification, language)} · {t('viewTransactions')}</p>
+                            </div>
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : (
+                  <div className="budget-notifications-empty">
+                    <span className="budget-notifications-empty-icon" aria-hidden="true"><CheckCircle2 size={22} /></span>
+                    <p>{t('noBudgetNotifications')}</p>
+                    <span>{en ? 'New alerts will appear here.' : 'Cảnh báo mới sẽ xuất hiện tại đây.'}</span>
+                  </div>
+                )}
+              </section>
             </div>
-          )}
-        </section>
+
+            {(unreadCount > 0 || readCount > 0) && <div className="budget-notifications-footer">
+              {unreadCount > 0 && <button type="button" className="budget-notifications-footer-action" onClick={markAllRead}>
+                {t('markAllRead')}
+              </button>}
+              {readCount > 0 && <button type="button" className="budget-notifications-footer-action is-danger" onClick={deleteRead}>
+                <Trash2 size={14} aria-hidden="true" />
+                {t('deleteRead')}
+              </button>}
+            </div>}
+          </section>
+        </>,
+        document.body,
       )}
     </div>
   );
