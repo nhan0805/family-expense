@@ -25,7 +25,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const root = document.documentElement;
     root.classList.toggle('dark', resolvedTheme === 'dark');
     root.dataset.theme = resolvedTheme;
-    const themeColor = resolvedTheme === 'dark' ? '#282a36' : '#1e40af';
+    const themeColor = resolvedTheme === 'dark' ? '#06111f' : '#eef4f8';
     document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')?.setAttribute('content', themeColor);
   }, [resolvedTheme]);
 
