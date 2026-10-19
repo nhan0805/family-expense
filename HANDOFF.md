@@ -6,9 +6,11 @@
 
 - Pass Modern Finance toàn app đã merge vào `main` qua PR [#263](https://github.com/nhan0805/family-expense/pull/263) tại commit `519c154cfc5aefdffc1b7b2594909e036dbea0b8`: semantic palette ivory/slate + navy/mint/amber/coral, dark charcoal/navy, Dashboard financial-position hero, sidebar desktop có nhóm chức năng, filter/form/card/import/notification surfaces được làm gọn và thống nhất. Không có thay đổi schema, RLS/RPC, Edge Function, dependency hoặc dữ liệu production.
 - Dashboard refinement đã merge qua PR [#265](https://github.com/nhan0805/family-expense/pull/265) tại merge commit `e0c1ae6a5be9e240f87cec8892a099f8fd4f26b0`: giữ Hero làm nguồn tổng quan duy nhất, bỏ KPI/insight lặp, tách rõ so sánh kỳ trước, và giữ giá trị ròng trên một dòng ở desktop/mobile. Không có thay đổi schema, RLS/RPC, Edge Function, dependency hoặc dữ liệu production.
+- Dashboard motion polish đã merge qua PR [#267](https://github.com/nhan0805/family-expense/pull/267) tại merge commit `72206593d89376470b6d5fb479a01e3470ef83d1`: thêm xuất hiện nhẹ cho Hero, chuyển tiếp cho các panel chi tiết và easing enter/exit dùng chung; `prefers-reduced-motion` vẫn được tôn trọng. Không có thay đổi schema, RLS/RPC, Edge Function, dependency hoặc dữ liệu production.
 - Quality gate local và CI của pass Modern Finance: TypeScript, ESLint, Vitest `49 file/253 test`, coverage, Vite build, performance budget, E2E và db-security đều pass; build vẫn có cảnh báo chunk lớn XLSX/ExcelJS/chart như known issue. E2E local không chạy vì thiếu browser binary Playwright, nhưng E2E CI pass.
 - Quality gate Dashboard refinement local và CI: TypeScript, ESLint, Vitest `49 file/253 test`, Vite build, performance budget, E2E và db-security đều pass. CI hậu merge [run 39149288874](https://github.com/nhan0805/family-expense/actions/runs/39149288874) và [Cloudflare Pages production check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/f7c20582-3b48-4a74-a049-ce74085bf712) pass; smoke `/`, `/dang-nhap` và `/thanh-vien` đều trả HTTP 200. Không chạy Supabase Production Deploy vì không có thay đổi `supabase/`.
-- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; asset live đã được smoke-test sau merge commit Dashboard refinement.
+- Quality gate motion Dashboard: local Vitest `49 file/253 test`, TypeScript, ESLint, Vite build và `git diff --check` pass; CI PR [run 39183084661](https://github.com/nhan0805/family-expense/actions/runs/39183084661) và CI hậu merge [run 39183337460](https://github.com/nhan0805/family-expense/actions/runs/39183337460) pass quality, E2E, db-security và performance budget. [Cloudflare Pages production check](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/653dcc6b-81a1-4af4-bbea-0bb801e89494) pass; live asset đã xác nhận motion Hero/disclosure và reduced-motion.
+- Production frontend đang hoạt động tại <https://family-expense-8fo.pages.dev> trên Cloudflare Pages; smoke `/`, `/dang-nhap`, `/dashboard` và `/giao-dich` đều trả HTTP 200 sau merge commit `72206593d89376470b6d5fb479a01e3470ef83d1`. Không chạy Supabase Production Deploy vì không có thay đổi `supabase/`.
 - Code trên `main` đã gồm PR [#234](https://github.com/nhan0805/family-expense/pull/234), cho owner đặt bộ mục đích/danh mục/phương thức thanh toán hiện tại làm mặc định cho gia đình tạo mới; các PR [#238](https://github.com/nhan0805/family-expense/pull/238), [#239](https://github.com/nhan0805/family-expense/pull/239) và [#241](https://github.com/nhan0805/family-expense/pull/241) đồng bộ thứ tự/lịch sử migration để production apply được thay đổi; cùng các release trước.
 - CI hậu merge [run 38508609460](https://github.com/nhan0805/family-expense/actions/runs/38508609460) của merge commit `404e7f5` pass quality, coverage, E2E, db-security và performance budget. Release này không có migration Supabase, Edge Function hoặc thay đổi dữ liệu production nên không chạy Supabase Production Deploy.
 - Nhánh release/status hiện tại: `codex/release-status-dashboard-20261019`, được đồng bộ từ `origin/main` sau deploy để ghi nhận release; thay đổi trong nhánh này chỉ là tài liệu.
@@ -39,6 +41,13 @@
 - Semantic embedding/search production path đã bị loại bỏ; không đưa lại nếu chưa có quyết định kiến trúc mới.
 
 ## Recently completed
+
+### Thêm motion tinh tế cho Dashboard
+
+- Hero Dashboard xuất hiện nhẹ theo nhịp; nội dung của các panel `details` được reveal ngắn khi mở. Easing enter/exit được gom thành token dùng chung và toàn bộ hiệu ứng được vô hiệu hóa khi người dùng bật `prefers-reduced-motion`.
+- Files: `src/index.css`, `src/pages/Dashboard.tsx`. Không đổi schema, RLS/RPC, Edge Function, dependency hoặc dữ liệu production.
+- Kiểm thử: local Vitest `49 file/253 test`, TypeScript, ESLint, Vite build và `git diff --check` pass; CI PR và hậu merge pass quality, E2E, db-security và performance budget.
+- Triển khai: PR [#267](https://github.com/nhan0805/family-expense/pull/267) merge tại commit `72206593d89376470b6d5fb479a01e3470ef83d1`; Cloudflare Pages production check pass; smoke production `/`, `/dang-nhap`, `/dashboard` và `/giao-dich` đều trả HTTP 200.
 
 ### Gộp insight trùng lặp và giữ giá trị ròng trên một dòng
 
