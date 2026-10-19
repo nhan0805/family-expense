@@ -15,8 +15,8 @@ export default defineConfig({
         name: 'Family Finance',
         short_name: 'Tài chính',
         description: 'Quản lý tài chính gia đình',
-        theme_color: '#124e3b',
-        background_color: '#f7f7f2',
+        theme_color: '#06111f',
+        background_color: '#eef4f8',
         display: 'standalone',
         lang: 'vi',
         icons: [
