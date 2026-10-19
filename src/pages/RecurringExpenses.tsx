@@ -1228,7 +1228,7 @@ type RecurringTone = 'violet' | 'blue' | 'amber' | 'green' | 'neutral';
 
 const recurringToneClasses: Record<RecurringTone, string> = {
   violet:
-    'border-[var(--border)] bg-[var(--accent-soft)] text-[var(--accent-strong)]',
+    'border-[var(--border)] bg-[var(--primary-soft)] text-[var(--primary-strong)]',
   blue: 'border-[var(--border)] bg-[var(--info-soft)] text-[var(--info-strong)]',
   amber:
     'border-[var(--border)] bg-[var(--warning-soft)] text-[var(--warning-strong)]',
@@ -1268,7 +1268,7 @@ function MetaChip({
 }) {
   return (
     <span
-      className={`flex min-w-0 items-center gap-1.5 rounded-xl border px-2.5 py-2 text-xs font-semibold ${recurringToneClasses[tone]}`}
+      className={`recurring-meta-chip flex min-w-0 items-center gap-1.5 rounded-xl border px-2.5 py-2 text-xs font-semibold ${recurringToneClasses[tone]}`}
       title={label}
     >
       <Icon size={14} className="shrink-0" aria-hidden="true" />

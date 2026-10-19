@@ -1493,7 +1493,7 @@ summary:focus-visible {
 .catalog-tab[aria-selected='true'] {
   border-color: var(--primary);
   background: var(--primary);
-  color: var(--primary-contrast);
+  color: var(--text);
   box-shadow: 0 5px 12px color-mix(in srgb, var(--primary) 25%, transparent);
 }
 
@@ -2094,6 +2094,18 @@ a:active {
   box-shadow: none;
 }
 
+.recurring-meta-chip {
+  border-color: color-mix(in srgb, currentColor 38%, var(--border));
+  background: color-mix(in srgb, currentColor 12%, var(--surface));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--surface) 72%, transparent);
+}
+
+.dark .recurring-meta-chip {
+  border-color: color-mix(in srgb, currentColor 46%, var(--border-strong));
+  background: color-mix(in srgb, currentColor 16%, var(--surface));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 7%);
+}
+
 .transactions-table,
 .transaction-card {
   border-color: color-mix(in srgb, var(--border-strong) 50%, var(--border));
@@ -2643,6 +2655,7 @@ body::before {
 .catalog-tab[aria-selected='true'] {
   border-color: color-mix(in srgb, var(--primary) 30%, transparent);
   background: linear-gradient(135deg, color-mix(in srgb, var(--primary-soft) 86%, var(--surface)), color-mix(in srgb, var(--surface) 82%, transparent));
+  color: var(--text);
   box-shadow: 0 6px 16px color-mix(in srgb, var(--primary) 16%, transparent), inset 0 1px 0 color-mix(in srgb, var(--surface) 72%, transparent);
 }
 
