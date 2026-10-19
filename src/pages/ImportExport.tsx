@@ -441,7 +441,7 @@ export function ImportExport() {
   return (
     <div className="data-page space-y-6">
       <div className="page-header">
-        <p className="page-kicker"><Database size={16} aria-hidden="true" />{en ? 'Data center' : 'Trung tâm dữ liệu'}</p>
+        <p className="page-kicker"><Database size={16} aria-hidden="true" />{en ? 'Data management' : 'Quản lý dữ liệu'}</p>
         <h2 className="page-title">{en ? 'Data' : 'Dữ liệu'}</h2>
         <p className="page-subtitle">{en ? 'Excel currently uses Vietnamese templates for compatibility with existing files.' : 'Excel hiện dùng template tiếng Việt để tương thích với các file hiện có.'}</p>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">

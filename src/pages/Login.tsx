@@ -100,23 +100,23 @@ export function Login() {
 
   const title = en ? (mode === 'login' ? 'Log in' : mode === 'signup' ? 'Create account' : mode === 'magic' ? 'Magic link' : 'Forgot password') : (mode === 'login' ? 'Đăng nhập' : mode === 'signup' ? 'Tạo tài khoản' : mode === 'magic' ? 'Liên kết đăng nhập' : 'Quên mật khẩu');
   const modeEyebrow = en
-    ? mode === 'login' ? 'Welcome back' : mode === 'signup' ? 'Start simply' : mode === 'magic' ? 'Passwordless sign in' : 'Recover access'
-    : mode === 'login' ? 'Chào mừng bạn trở lại' : mode === 'signup' ? 'Bắt đầu thật đơn giản' : mode === 'magic' ? 'Đăng nhập không cần mật khẩu' : 'Khôi phục quyền truy cập';
+    ? mode === 'login' ? 'Log in to your account' : mode === 'signup' ? 'Create an account' : mode === 'magic' ? 'Sign in with a link' : 'Reset your password'
+    : mode === 'login' ? 'Đăng nhập vào tài khoản' : mode === 'signup' ? 'Tạo tài khoản' : mode === 'magic' ? 'Đăng nhập bằng liên kết' : 'Đặt lại mật khẩu';
   const formDescription = en
     ? mode === 'login' || mode === 'signup'
-      ? 'A clear view of your family’s money, one transaction at a time.'
+      ? 'Track family income, expenses, savings and gold.'
       : mode === 'magic'
         ? 'Enter your email and we will send you a sign-in link.'
         : 'Enter your account email to receive a password reset link.'
     : mode === 'login' || mode === 'signup'
-      ? 'Theo dõi tài chính gia đình rõ ràng, từng giao dịch một.'
+      ? 'Theo dõi thu nhập, chi tiêu, sổ tiết kiệm và vàng của gia đình.'
       : mode === 'magic'
         ? 'Nhập email để nhận liên kết đăng nhập.'
         : 'Nhập email tài khoản để nhận liên kết đặt lại mật khẩu.';
   const featureCards = [
-    { icon: WalletCards, title: en ? 'One clear view' : 'Một góc nhìn rõ ràng', body: en ? 'Income, expenses and assets' : 'Thu, chi và tài sản' },
-    { icon: TrendingUp, title: en ? 'Stay on track' : 'Luôn chủ động', body: en ? 'Simple, useful insights' : 'Thông tin vừa đủ dùng' },
-    { icon: ShieldCheck, title: en ? 'Made for families' : 'Dành cho gia đình', body: en ? 'Shared with the right people' : 'Chia sẻ đúng người' },
+    { icon: WalletCards, title: en ? 'Overview' : 'Tổng quan', body: en ? 'Income, expenses and assets' : 'Thu nhập, chi tiêu và tài sản' },
+    { icon: TrendingUp, title: en ? 'Review by period' : 'Theo dõi theo kỳ', body: en ? 'Compare amounts over time' : 'So sánh các khoản theo thời gian' },
+    { icon: ShieldCheck, title: en ? 'Shared family access' : 'Dùng chung trong gia đình', body: en ? 'Share with invited members' : 'Chia sẻ với thành viên được mời' },
   ];
 
   return (
@@ -131,13 +131,13 @@ export function Login() {
             <p className="brand-wordmark text-sm">FAMILY FINANCE</p>
           </div>
           <p className="mb-4 text-xs font-extrabold uppercase tracking-[.18em] text-[var(--primary)]">
-            {en ? 'A calmer way to manage money' : 'Quản lý tài chính nhẹ nhàng hơn'}
+            {en ? 'Family finances' : 'Tài chính gia đình'}
           </p>
           <h2 id="auth-hero-title" className="max-w-lg text-4xl font-black leading-[1.08] tracking-[-.045em] text-[var(--text)] xl:text-5xl">
-            {en ? <>Clarity for every <span className="text-[var(--primary)]">family decision.</span></> : <>Rõ ràng từng khoản, <span className="text-[var(--primary)]">chủ động mỗi ngày.</span></>}
+            {en ? <>Family financial <span className="text-[var(--primary)]">overview.</span></> : <>Tổng quan <span className="text-[var(--primary)]">tài chính gia đình.</span></>}
           </h2>
           <p className="mt-6 max-w-md text-base leading-7 text-[var(--muted)]">
-            {en ? 'A simple place to follow income, expenses, savings and gold without losing sight of the bigger picture.' : 'Một nơi đơn giản để theo dõi thu nhập, chi tiêu, sổ tiết kiệm và vàng mà không bỏ quên bức tranh tổng thể.'}
+            {en ? 'Track income, expenses, savings books and gold in one place.' : 'Theo dõi thu nhập, chi tiêu, sổ tiết kiệm và vàng trong cùng một nơi.'}
           </p>
 
           <div className="mt-10 grid gap-3 sm:grid-cols-3">
