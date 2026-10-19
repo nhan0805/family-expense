@@ -515,7 +515,7 @@ textarea {
 }
 
 .kpi-tone-amber {
-  background: var(--warning-soft);
+  background: color-mix(in srgb, var(--warning) 18%, var(--warning-soft));
   color: var(--warning-strong);
 }
 
@@ -534,6 +534,39 @@ textarea {
   color: var(--accent-strong);
 }
 
+.asset-kpi {
+  --asset-kpi-accent: var(--border-strong);
+  --asset-kpi-soft: var(--surface-muted);
+  border-color: color-mix(in srgb, var(--asset-kpi-accent) 26%, var(--border));
+  background: color-mix(in srgb, var(--asset-kpi-soft) 30%, var(--surface));
+  transition: border-color var(--motion-normal) ease, background-color var(--motion-normal) ease, box-shadow var(--motion-normal) ease;
+}
+
+.asset-kpi:hover {
+  border-color: color-mix(in srgb, var(--asset-kpi-accent) 52%, var(--border-strong));
+  background: color-mix(in srgb, var(--asset-kpi-soft) 42%, var(--surface));
+}
+
+.asset-kpi-emerald {
+  --asset-kpi-accent: var(--success);
+  --asset-kpi-soft: var(--success-soft);
+}
+
+.asset-kpi-amber {
+  --asset-kpi-accent: var(--warning);
+  --asset-kpi-soft: var(--warning-soft);
+}
+
+.asset-kpi-violet {
+  --asset-kpi-accent: var(--accent-strong);
+  --asset-kpi-soft: var(--accent-soft);
+}
+
+.asset-kpi-sky {
+  --asset-kpi-accent: var(--info);
+  --asset-kpi-soft: var(--info-soft);
+}
+
 .asset-summary-card {
   min-width: 0;
   border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
@@ -543,25 +576,25 @@ textarea {
 
 .asset-summary-card-total {
   border-color: color-mix(in srgb, var(--accent-strong) 28%, var(--border));
-  background: color-mix(in srgb, var(--accent-soft) 68%, var(--surface));
+  background: color-mix(in srgb, var(--accent-soft) 46%, var(--surface));
   color: var(--accent-strong);
 }
 
 .asset-summary-card-cash {
   border-color: color-mix(in srgb, var(--info) 28%, var(--border));
-  background: color-mix(in srgb, var(--info-soft) 68%, var(--surface));
+  background: color-mix(in srgb, var(--info-soft) 46%, var(--surface));
   color: var(--info-strong);
 }
 
 .asset-summary-card-savings {
   border-color: color-mix(in srgb, var(--success) 28%, var(--border));
-  background: color-mix(in srgb, var(--success-soft) 68%, var(--surface));
+  background: color-mix(in srgb, var(--success-soft) 46%, var(--surface));
   color: var(--success-strong);
 }
 
 .asset-summary-card-gold {
-  border-color: color-mix(in srgb, var(--warning) 32%, var(--border));
-  background: color-mix(in srgb, var(--warning-soft) 68%, var(--surface));
+  border-color: color-mix(in srgb, var(--warning) 42%, var(--border));
+  background: color-mix(in srgb, var(--warning-soft) 46%, var(--surface));
   color: var(--warning-strong);
 }
 
