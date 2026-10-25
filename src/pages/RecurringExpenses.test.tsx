@@ -163,7 +163,7 @@ describe('Chi phí định kỳ', () => {
     expect(within(card).getByText('Chuyển khoản')).toBeInTheDocument();
   });
 
-  it('đưa card có menu thao tác lên trên card kế bên khi mở trên mobile', async () => {
+  it('đưa card có menu thao tác lên trên card kế bên và thanh đáy khi mở trên mobile', async () => {
     mockedUseApp.mockReturnValue(appState('owner'));
     const recurringTemplate = {
       template: {
@@ -191,7 +191,7 @@ describe('Chi phí định kỳ', () => {
 
     const firstCard = await screen.findByRole('article', { name: 'Youtube' });
     const secondCard = screen.getByRole('article', { name: 'Netflix' });
-    expect(firstCard).not.toHaveClass('z-20');
+    expect(firstCard).not.toHaveClass('z-40');
 
     const moreActions = firstCard.querySelector(
       'summary[aria-label="Thao tác khác"]',
@@ -199,8 +199,8 @@ describe('Chi phí định kỳ', () => {
     expect(moreActions).toBeInTheDocument();
     fireEvent.click(moreActions!);
 
-    expect(firstCard).toHaveClass('z-20');
-    expect(secondCard).not.toHaveClass('z-20');
+    expect(firstCard).toHaveClass('z-40');
+    expect(secondCard).not.toHaveClass('z-40');
     expect(
       within(firstCard).getByRole('button', { name: 'Lịch sử kỳ chạy' }),
     ).toBeInTheDocument();
@@ -209,7 +209,7 @@ describe('Chi phí định kỳ', () => {
       within(firstCard).getByRole('button', { name: 'Lịch sử kỳ chạy' }),
     );
 
-    expect(firstCard).not.toHaveClass('z-20');
+    expect(firstCard).not.toHaveClass('z-40');
     expect(
       within(firstCard).getByText(
         'Lịch sử kỳ chạy sẽ có khi kết nối Supabase.',
