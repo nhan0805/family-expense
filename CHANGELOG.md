@@ -2,6 +2,13 @@
 
 ## 2026-10-25
 
+### Đưa nút Xóa menu chi phí định kỳ lên trên thanh điều hướng mobile
+
+- Card chi phí định kỳ đang mở menu `...` dùng stacking layer `z-40`, cao hơn thanh điều hướng cố định `z-30`, nên các nút `Lịch sử kỳ chạy`, `Bỏ qua` và `Xóa` đều nhìn thấy và bấm được ở cuối viewport mobile.
+- Files: `src/pages/RecurringExpenses.tsx`, `src/pages/RecurringExpenses.test.tsx`. Không đổi schema, API, business logic, dependency, `supabase/` hoặc dữ liệu production.
+- Kiểm thử local: Vitest `49 file / 254 test`, TypeScript, ESLint, Vite build và `git diff --check` pass; CI hậu merge [run 40204447474](https://github.com/nhan0805/family-expense/actions/runs/40204447474) pass quality, E2E, db-security và performance budget.
+- Triển khai: PR [#283](https://github.com/nhan0805/family-expense/pull/283) merge vào `main` tại commit `85014aceced373f268dbabffaab2b0eb591db521`; [Cloudflare Pages production check của fafin](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/fafin/41bc864d-6462-44c7-8403-135c1a5465ad) và [family-expense](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/69ac0811-a86a-43fd-ac4b-4612252d6c85) pass. Smoke production `https://family-expense-8fo.pages.dev/` và `/dang-nhap` đều trả HTTP 200; live chunk `RecurringExpenses-CFKokJIV.js` đã chứa `z-40`. Không chạy Supabase Production Deploy vì không có thay đổi `supabase/`.
+
 ### Sửa menu thao tác chi phí định kỳ trên mobile
 
 - Card chi phí định kỳ đang mở menu `...` được đưa lên trên card kế bên, tránh stacking context của hiệu ứng glass phủ lên các nút `Lịch sử kỳ chạy`, `Bỏ qua` và `Xóa`; trạng thái menu cũng được đồng bộ với thao tác click và native `details` toggle.
