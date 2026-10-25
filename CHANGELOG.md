@@ -2,6 +2,13 @@
 
 ## 2026-10-25
 
+### Mở menu thao tác chi phí định kỳ lên trên ở mobile
+
+- Menu `...` của card chi phí định kỳ mở lên phía trên trên mobile (`bottom-full`) để nút `Xóa` luôn nằm trong viewport; từ breakpoint `sm`, menu vẫn mở xuống (`sm:top-full`) như trước.
+- Files: `src/pages/RecurringExpenses.tsx`, `src/pages/RecurringExpenses.test.tsx`. Không đổi schema, API, business logic, dependency, `supabase/` hoặc dữ liệu production.
+- Kiểm thử local: Vitest `49 file / 254 test`, TypeScript, ESLint, Vite build và `git diff --check` pass; CI hậu merge [run 40206702587](https://github.com/nhan0805/family-expense/actions/runs/40206702587) pass quality, E2E, db-security và performance budget.
+- Triển khai: PR [#285](https://github.com/nhan0805/family-expense/pull/285) merge vào `main` tại commit `9fe218b2448e7995a8a94115793e9c2a7c78c7a9`; [Cloudflare Pages production check của fafin](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/fafin/bb029163-6fbc-483e-b0c0-56eba2482f04) và [family-expense](https://dash.cloudflare.com/?to=/07ec67956cee45221fb1e3c98510c65a/pages/view/family-expense/037e9f30-6852-4f5e-8ad0-4259306b54bf) pass. Smoke production `https://family-expense-8fo.pages.dev/` và `/dang-nhap` đều trả HTTP 200; live chunk `RecurringExpenses-Aaxrjw7v.js` đã chứa `bottom-full` và `sm:top-full`. Không chạy Supabase Production Deploy vì không có thay đổi `supabase/`.
+
 ### Đưa nút Xóa menu chi phí định kỳ lên trên thanh điều hướng mobile
 
 - Card chi phí định kỳ đang mở menu `...` dùng stacking layer `z-40`, cao hơn thanh điều hướng cố định `z-30`, nên các nút `Lịch sử kỳ chạy`, `Bỏ qua` và `Xóa` đều nhìn thấy và bấm được ở cuối viewport mobile.
