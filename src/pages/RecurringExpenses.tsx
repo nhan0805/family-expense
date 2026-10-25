@@ -1358,7 +1358,7 @@ function RecurringRow({
   return (
     <article
       aria-labelledby={`recurring-${item.id}-title`}
-      className={`card card-interactive relative overflow-visible p-4 sm:p-5 ${actionMenuOpen ? 'z-20' : ''} ${deleted || !item.active ? 'opacity-75' : ''}`}
+      className={`card card-interactive relative overflow-visible p-4 sm:p-5 ${actionMenuOpen ? 'z-40' : ''} ${deleted || !item.active ? 'opacity-75' : ''}`}
     >
       <span
         aria-hidden="true"
