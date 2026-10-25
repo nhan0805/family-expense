@@ -163,6 +163,60 @@ describe('Chi phí định kỳ', () => {
     expect(within(card).getByText('Chuyển khoản')).toBeInTheDocument();
   });
 
+  it('đưa card có menu thao tác lên trên card kế bên khi mở trên mobile', async () => {
+    mockedUseApp.mockReturnValue(appState('owner'));
+    const recurringTemplate = {
+      template: {
+        transactionType: 'Chi tiêu' as const,
+        description: 'Khoản định kỳ',
+        amount: 88000,
+        purposeId: 'p1',
+        expenseTypeId: 'e1',
+        paymentMethodId: 'm1',
+        note: null,
+      },
+      frequency: 'monthly' as const,
+      nextRunDate: '2099-09-05',
+      endDate: null,
+    };
+    upsertLocalRecurringExpense('local-family', {
+      ...recurringTemplate,
+      name: 'Youtube',
+    });
+    upsertLocalRecurringExpense('local-family', {
+      ...recurringTemplate,
+      name: 'Netflix',
+    });
+    renderPage();
+
+    const firstCard = await screen.findByRole('article', { name: 'Youtube' });
+    const secondCard = screen.getByRole('article', { name: 'Netflix' });
+    expect(firstCard).not.toHaveClass('z-20');
+
+    const moreActions = firstCard.querySelector(
+      'summary[aria-label="Thao tác khác"]',
+    );
+    expect(moreActions).toBeInTheDocument();
+    fireEvent.click(moreActions!);
+
+    expect(firstCard).toHaveClass('z-20');
+    expect(secondCard).not.toHaveClass('z-20');
+    expect(
+      within(firstCard).getByRole('button', { name: 'Lịch sử kỳ chạy' }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      within(firstCard).getByRole('button', { name: 'Lịch sử kỳ chạy' }),
+    );
+
+    expect(firstCard).not.toHaveClass('z-20');
+    expect(
+      within(firstCard).getByText(
+        'Lịch sử kỳ chạy sẽ có khi kết nối Supabase.',
+      ),
+    ).toBeInTheDocument();
+  });
+
   it('giữ màn hình ở chế độ chỉ xem cho member', async () => {
     mockedUseApp.mockReturnValue(appState('member'));
     renderPage();

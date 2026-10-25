@@ -1320,6 +1320,7 @@ function RecurringRow({
     4,
   );
   const [showHistory, setShowHistory] = useState(false);
+  const [actionMenuOpen, setActionMenuOpen] = useState(false);
   const historyQuery = useQuery({
     queryKey: ['recurring-runs', familyId, item.id],
     queryFn: () => fetchRecurringRuns(familyId, item.id),
@@ -1329,7 +1330,10 @@ function RecurringRow({
   });
   const history = historyQuery.data || [];
   const actionMenuRef = useRef<HTMLDetailsElement | null>(null);
-  const closeActionMenu = () => actionMenuRef.current?.removeAttribute('open');
+  const closeActionMenu = () => {
+    actionMenuRef.current?.removeAttribute('open');
+    setActionMenuOpen(false);
+  };
   const statusTone: RecurringTone =
     deleted || !item.active ? 'neutral' : 'green';
   const statusIcon = deleted ? Trash2 : item.active ? PlayCircle : PauseCircle;
@@ -1354,7 +1358,7 @@ function RecurringRow({
   return (
     <article
       aria-labelledby={`recurring-${item.id}-title`}
-      className={`card card-interactive relative overflow-visible p-4 sm:p-5 ${deleted || !item.active ? 'opacity-75' : ''}`}
+      className={`card card-interactive relative overflow-visible p-4 sm:p-5 ${actionMenuOpen ? 'z-20' : ''} ${deleted || !item.active ? 'opacity-75' : ''}`}
     >
       <span
         aria-hidden="true"
@@ -1538,12 +1542,17 @@ function RecurringRow({
                   ? 'Resume'
                   : 'Tiếp tục'}
             </button>
-            <details ref={actionMenuRef} className="group relative">
+            <details
+              ref={actionMenuRef}
+              className="group relative"
+              onToggle={(event) => setActionMenuOpen(event.currentTarget.open)}
+            >
               <summary
                 className="icon-button shrink-0 list-none border border-[var(--border-strong)] bg-[var(--surface)] [&::-webkit-details-marker]:hidden"
                 aria-label={
                   en ? 'More recurring expense actions' : 'Thao tác khác'
                 }
+                onClick={() => setActionMenuOpen((value) => !value)}
               >
                 <MoreHorizontal size={19} aria-hidden="true" />
               </summary>
