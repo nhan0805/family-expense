@@ -163,7 +163,7 @@ describe('Chi phí định kỳ', () => {
     expect(within(card).getByText('Chuyển khoản')).toBeInTheDocument();
   });
 
-  it('đưa card có menu thao tác lên trên card kế bên và thanh đáy khi mở trên mobile', async () => {
+  it('đưa card có menu thao tác lên trên card kế bên và mở menu lên khỏi thanh đáy trên mobile', async () => {
     mockedUseApp.mockReturnValue(appState('owner'));
     const recurringTemplate = {
       template: {
@@ -204,6 +204,10 @@ describe('Chi phí định kỳ', () => {
     expect(
       within(firstCard).getByRole('button', { name: 'Lịch sử kỳ chạy' }),
     ).toBeInTheDocument();
+    const actionMenu = within(firstCard).getByRole('button', {
+      name: 'Xóa',
+    }).parentElement;
+    expect(actionMenu).toHaveClass('bottom-full', 'sm:top-full');
 
     fireEvent.click(
       within(firstCard).getByRole('button', { name: 'Lịch sử kỳ chạy' }),

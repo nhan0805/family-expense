@@ -1556,7 +1556,7 @@ function RecurringRow({
               >
                 <MoreHorizontal size={19} aria-hidden="true" />
               </summary>
-              <div className="absolute right-0 top-full z-20 mt-2 grid w-56 gap-1 rounded-xl border border-[var(--border-strong)] bg-[var(--surface)] p-1.5 shadow-xl">
+              <div className="absolute right-0 bottom-full z-20 mb-2 grid w-56 gap-1 rounded-xl border border-[var(--border-strong)] bg-[var(--surface)] p-1.5 shadow-xl sm:bottom-auto sm:top-full sm:mb-0 sm:mt-2">
                 <button
                   type="button"
                   className="btn-secondary inline-flex w-full items-center justify-start gap-2 text-sm"
