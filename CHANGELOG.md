@@ -1,5 +1,14 @@
 # Nhật ký thay đổi Family Expense
 
+## 2026-10-25
+
+### Sửa menu thao tác chi phí định kỳ trên mobile
+
+- Card chi phí định kỳ đang mở menu `...` được đưa lên trên card kế bên, tránh stacking context của hiệu ứng glass phủ lên các nút `Lịch sử kỳ chạy`, `Bỏ qua` và `Xóa`; trạng thái menu cũng được đồng bộ với thao tác click và native `details` toggle.
+- Files: `src/pages/RecurringExpenses.tsx`, `src/pages/RecurringExpenses.test.tsx`. Không đổi schema, API, business logic, dependency, `supabase/` hoặc dữ liệu production.
+- Kiểm thử local: Vitest `49 file / 254 test`, TypeScript, ESLint, Vite build và `git diff --check` pass.
+- Triển khai: PR [#281](https://github.com/nhan0805/family-expense/pull/281) merge vào `main` tại commit `f7580e290456620346e5ece7d5d685443f99fd72`; CI hậu merge [run 40201456448](https://github.com/nhan0805/family-expense/actions/runs/40201456448) pass quality, E2E, db-security và performance budget. Smoke production `https://family-expense-8fo.pages.dev/` và `/dang-nhap` đều trả HTTP 200; production asset `RecurringExpenses-DX9oxFNd.js` đã chứa marker của bản sửa. Không chạy Supabase Production Deploy vì không có thay đổi `supabase/`.
+
 ## 2026-10-19
 
 ### Thiết kế lại notification center
