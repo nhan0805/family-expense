@@ -421,6 +421,8 @@ export function ImportExport() {
                 ? (en ? 'The email sending limit was reached. Please try again later.' : 'Đã vượt giới hạn gửi email. Vui lòng thử lại sau.')
                 : errorCode === 'FILE_TOO_LARGE'
                   ? (en ? 'The transaction list is too large to attach to an email.' : 'Danh sách giao dịch quá lớn để gửi kèm email.')
+                : errorCode === 'EMAIL_PROVIDER_TIMEOUT'
+                  ? (en ? 'The email provider took too long to respond. Please try again later.' : 'Nhà cung cấp email phản hồi quá lâu. Vui lòng thử lại sau.')
                 : (en ? 'Could not send email. Check the Brevo configuration or try again later.' : 'Không thể gửi email. Hãy kiểm tra cấu hình Brevo hoặc thử lại sau.'),
         );
         return;

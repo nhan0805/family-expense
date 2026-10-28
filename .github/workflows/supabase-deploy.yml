@@ -9,6 +9,7 @@ on:
       - 'supabase/functions/parse-expense/**'
       - 'supabase/functions/search-transactions/**'
       - 'supabase/functions/summarize-dashboard/**'
+      - 'supabase/functions/_shared/**'
       - 'supabase/config.toml'
   workflow_dispatch:
     inputs:

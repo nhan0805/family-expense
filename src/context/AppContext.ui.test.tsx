@@ -25,7 +25,35 @@ function Probe() {
   );
 }
 
+function PersistenceProbe() {
+  const { purposes, transactions, addCatalogItem, setTransactions } = useApp();
+  return (
+    <div>
+      <output data-testid="purpose-count">{purposes.length}</output>
+      <output data-testid="transaction-count">{transactions.length}</output>
+      <button type="button" onClick={() => void addCatalogItem('purpose', 'Danh mục bền vững')}>Thêm danh mục bền vững</button>
+      <button type="button" onClick={() => setTransactions([{ id: 'local-transaction', familyId: 'local-family', transactionDate: '2026-08-25', transactionType: 'Chi tiêu', status: 'Thực tế', description: 'Giao dịch bền vững', amount: 100000, purposeId: 'purpose-1', expenseTypeId: 'expense-1', paymentMethodId: 'payment-1', note: null, source: 'manual', sourceReference: null, aiGenerated: false }])}>Thêm giao dịch bền vững</button>
+      <span>{purposes.some((item) => item.name === 'Danh mục bền vững') ? 'Đã có danh mục bền vững' : ''}</span>
+      <span>{transactions.some((item) => item.description === 'Giao dịch bền vững') ? 'Đã có giao dịch bền vững' : ''}</span>
+    </div>
+  );
+}
+
 describe('AppProvider demo fallback', () => {
+  it('giữ danh mục và giao dịch demo sau khi khởi tạo lại provider', async () => {
+    localStorage.clear();
+    const first = render(<AppProvider><PersistenceProbe /></AppProvider>);
+    fireEvent.click(screen.getByRole('button', { name: 'Thêm danh mục bền vững' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Thêm giao dịch bền vững' }));
+    await waitFor(() => expect(screen.getByText('Đã có giao dịch bền vững')).toBeInTheDocument());
+    first.unmount();
+
+    render(<AppProvider><PersistenceProbe /></AppProvider>);
+    expect(await screen.findByText('Đã có danh mục bền vững')).toBeInTheDocument();
+    expect(screen.getByText('Đã có giao dịch bền vững')).toBeInTheDocument();
+    localStorage.clear();
+  });
+
   it('mở thẳng không gian demo và thêm danh mục mà không gọi Supabase', async () => {
     render(<AppProvider><Probe /></AppProvider>);
 

@@ -7,6 +7,12 @@ export type TransactionType = (typeof transactionTypes)[number];
 export const transactionTypeLabel = (type: string) => type === 'Chi tiêu' ? 'Tiền ra' : type === 'Thu nhập' ? 'Tiền vào' : type;
 export const statuses = ['Thực tế', 'Dự kiến'] as const;
 export const transactionSources = ['manual', 'ai', 'excel_import', 'recurring', 'asset'] as const;
+export const isValidCalendarDate = (value: string) => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T00:00:00Z`);
+  return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
+};
+export const calendarDateSchema = z.string().refine(isValidCalendarDate, 'Ngày không hợp lệ');
 export const statusForTransactionDate = (
   transactionDate: string,
   today: string,
@@ -24,7 +30,7 @@ export const transactionSchema = z
   .object({
     id: z.string().optional(),
     familyId: z.string().optional(),
-    transactionDate: z.string().min(1, 'Vui lòng chọn ngày'),
+    transactionDate: z.string().min(1, 'Vui lòng chọn ngày').refine(isValidCalendarDate, 'Ngày không hợp lệ'),
     transactionType: z.enum(transactionTypes),
     status: z.enum(statuses),
     description: z.string().trim().min(1, 'Vui lòng nhập nội dung'),

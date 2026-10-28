@@ -1,15 +1,11 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.56.1';
 import { z } from 'npm:zod@4.1.5';
 import { normalizeAiDescription } from './description.ts';
+import { isValidCalendarDate } from '../_shared/date.ts';
+import { jsonResponse, optionsResponse, parseJsonBody } from '../_shared/http.ts';
 
 declare const EdgeRuntime: { waitUntil: (promise: Promise<unknown>) => void };
 
-const cors = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers':
-    'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
 const GEMINI_TIMEOUT_MS = 25_000;
 const fetchGemini = async (input: string, init: RequestInit) => {
   const controller = new AbortController();
@@ -29,7 +25,7 @@ const requestSchema = z.object({
   timezone: z.literal('Asia/Ho_Chi_Minh').default('Asia/Ho_Chi_Minh'),
 });
 const suggestionSchema = z.object({
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  date: z.string().refine(isValidCalendarDate, 'INVALID_DATE'),
   description: z.string().min(1),
   amount: z.number().positive().nullable(),
   transactionType: z.enum(['Chi tiêu', 'Thu nhập']),
@@ -99,14 +95,9 @@ type GeminiResponse = {
     content?: { parts?: Array<{ text?: string }> };
   }>;
 };
-const json = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { ...cors, 'Content-Type': 'application/json' },
-  });
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
-  if (req.method !== 'POST') return json({ error: 'METHOD_NOT_ALLOWED' }, 405);
+  if (req.method === 'OPTIONS') return optionsResponse(req);
+  if (req.method !== 'POST') return jsonResponse(req, { error: 'METHOD_NOT_ALLOWED' }, 405);
   const started = Date.now();
   let contextMs = 0;
   let historyMs = 0;
@@ -124,11 +115,11 @@ Deno.serve(async (req) => {
       throw new Error('SERVER_NOT_CONFIGURED');
     const auth = req.headers.get('Authorization');
     if (!auth?.startsWith('Bearer '))
-      return json({ error: 'UNAUTHORIZED' }, 401);
+      return jsonResponse(req, { error: 'UNAUTHORIZED' }, 401);
     const db = createClient(url, anon, {
       global: { headers: { Authorization: auth } },
     });
-    const parsed = requestSchema.parse(await req.json());
+    const parsed = requestSchema.parse(await parseJsonBody(req));
     familyId = parsed.familyId;
     inputLength = parsed.text.length;
     const contextStarted = Date.now();
@@ -139,9 +130,9 @@ Deno.serve(async (req) => {
     contextMs = Date.now() - contextStarted;
     if (contextError) {
       if (contextError.message.includes('FORBIDDEN'))
-        return json({ error: 'FORBIDDEN' }, 403);
+        return jsonResponse(req, { error: 'FORBIDDEN' }, 403);
       if (contextError.message.includes('RATE_LIMITED'))
-        return json({ error: 'RATE_LIMITED' }, 429);
+        return jsonResponse(req, { error: 'RATE_LIMITED' }, 429);
       throw new Error('CATALOG_QUERY_FAILED');
     }
     userId = (context as Catalog).userId;
@@ -286,9 +277,25 @@ Deno.serve(async (req) => {
             if (logError) console.error('AI_USAGE_LOG_FAILED', logError.message);
           }),
       );
-    return json({ suggestion });
+    return jsonResponse(req, { suggestion });
   } catch (error) {
     const code = error instanceof Error ? error.message : 'UNKNOWN';
+    const errorCode =
+      error instanceof z.ZodError
+        ? 'INVALID_SCHEMA'
+        : error instanceof Error &&
+            [
+              'FORBIDDEN',
+              'RATE_LIMITED',
+              'INVALID_REQUEST_BODY',
+              'GEMINI_TIMEOUT',
+              'EMPTY_AI_RESPONSE',
+              'UNKNOWN_PURPOSE',
+              'UNKNOWN_EXPENSE_TYPE',
+              'UNKNOWN_PAYMENT_METHOD',
+            ].includes(code)
+          ? code
+          : 'INTERNAL_ERROR';
     if (familyId && userId) {
       try {
         const url = Deno.env.get('SUPABASE_URL')!,
@@ -303,23 +310,24 @@ Deno.serve(async (req) => {
             p_status: 'error',
             p_latency_ms: Date.now() - started,
             p_input_length: inputLength,
-            p_error_code: code,
+            p_error_code: errorCode,
           });
       } catch {
         /* Không làm lộ lỗi log */
       }
     }
     if (code.includes('429') || code === 'RATE_LIMITED')
-      return json({ error: 'RATE_LIMITED' }, 429);
-    if (code === 'GEMINI_TIMEOUT') return json({ error: code }, 504);
-    if (error instanceof z.ZodError)
-      return json(
+      return jsonResponse(req, { error: 'RATE_LIMITED' }, 429);
+    if (code === 'GEMINI_TIMEOUT') return jsonResponse(req, { error: code }, 504);
+    if (error instanceof z.ZodError || code === 'INVALID_REQUEST_BODY')
+      return jsonResponse(
+        req,
         {
           error: 'INVALID_SCHEMA',
           details: error.issues.map((i) => i.message),
         },
         422,
       );
-    return json({ error: code }, 500);
+    return jsonResponse(req, { error: 'INTERNAL_ERROR' }, 500);
   }
 });

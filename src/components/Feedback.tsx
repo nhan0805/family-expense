@@ -6,6 +6,7 @@ import { Dialog } from './ui/Dialog';
 type ToastTone = 'success' | 'error' | 'info';
 type Toast = { id: number; message: string; tone: ToastTone };
 type ConfirmOptions = { title: string; description: string; confirmLabel?: string; danger?: boolean };
+type ConfirmRequest = { options: ConfirmOptions; resolve: (value: boolean) => void };
 type FeedbackValue = { notify: (message: string, tone?: ToastTone) => void; askConfirm: (options: ConfirmOptions) => Promise<boolean> };
 
 const FeedbackContext = createContext<FeedbackValue | null>(null);
@@ -17,7 +18,9 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
   const [closingToastIds, setClosingToastIds] = useState<Set<number>>(new Set());
   const [dialog, setDialog] = useState<ConfirmOptions | null>(null);
   const [dialogClosing, setDialogClosing] = useState(false);
-  const resolver = useRef<((value: boolean) => void) | null>(null);
+  const activeConfirm = useRef<ConfirmRequest | null>(null);
+  const confirmQueue = useRef<ConfirmRequest[]>([]);
+  const dialogClosingRef = useRef(false);
   const closingToastIdsRef = useRef(new Set<number>());
   const timeoutIdsRef = useRef(new Set<number>());
   const nextId = useRef(1);
@@ -33,8 +36,10 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
   useEffect(() => () => {
     timeoutIdsRef.current.forEach((timeoutId) => window.clearTimeout(timeoutId));
     timeoutIdsRef.current.clear();
-    resolver.current?.(false);
-    resolver.current = null;
+    activeConfirm.current?.resolve(false);
+    confirmQueue.current.forEach((request) => request.resolve(false));
+    activeConfirm.current = null;
+    confirmQueue.current = [];
   }, []);
 
   const dismissToast = useCallback((id: number) => {
@@ -57,21 +62,37 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
     setToasts((items) => [...items, { id, message, tone }]);
     scheduleTimeout(() => dismissToast(id), 3500);
   }, [dismissToast, scheduleTimeout]);
-  const askConfirm = useCallback((options: ConfirmOptions) => new Promise<boolean>((resolve) => {
-    resolver.current = resolve;
+  const activateNextConfirm = useCallback(() => {
+    const next = confirmQueue.current.shift();
+    if (!next) {
+      activeConfirm.current = null;
+      setDialog(null);
+      return;
+    }
+    activeConfirm.current = next;
+    dialogClosingRef.current = false;
     setDialogClosing(false);
-    setDialog(options);
-  }), []);
+    setDialog(next.options);
+  }, []);
+  const askConfirm = useCallback((options: ConfirmOptions) => new Promise<boolean>((resolve) => {
+    confirmQueue.current.push({ options, resolve });
+    if (!activeConfirm.current && !dialogClosingRef.current) activateNextConfirm();
+  }), [activateNextConfirm]);
   const closeDialog = useCallback((result: boolean) => {
     if (dialogClosing) return;
-    resolver.current?.(result);
-    resolver.current = null;
+    activeConfirm.current?.resolve(result);
+    dialogClosingRef.current = true;
     setDialogClosing(true);
     scheduleTimeout(() => {
-      setDialog(null);
-      setDialogClosing(false);
+      dialogClosingRef.current = false;
+      activeConfirm.current = null;
+      if (confirmQueue.current.length) activateNextConfirm();
+      else {
+        setDialog(null);
+        setDialogClosing(false);
+      }
     }, 180);
-  }, [dialogClosing, scheduleTimeout]);
+  }, [activateNextConfirm, dialogClosing, scheduleTimeout]);
   const value = useMemo(() => ({ notify, askConfirm }), [notify, askConfirm]);
 
   return <FeedbackContext.Provider value={value}>{children}

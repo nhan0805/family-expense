@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   canDeleteTransaction,
+  isValidCalendarDate,
   findDuplicates,
   formatCompactVnd,
   formatDateOnlyVi,
@@ -60,6 +61,24 @@ describe('định dạng và quy tắc giao dịch', () => {
   it('định dạng ngày chỉ theo lịch Việt Nam, không phụ thuộc múi giờ thiết bị', () => {
     expect(formatDateOnlyVi('2026-08-30')).toBe('30/08/2026');
     expect(formatDateOnlyVi('not-a-date')).toBe('not-a-date');
+  });
+  it('kiểm tra ngày thực tế thay vì chỉ kiểm tra chuỗi ISO', () => {
+    expect(isValidCalendarDate('2026-02-28')).toBe(true);
+    expect(isValidCalendarDate('2026-02-29')).toBe(false);
+    expect(isValidCalendarDate('2026-13-01')).toBe(false);
+    expect(isValidCalendarDate('2026-2-1')).toBe(false);
+    expect(transactionSchema.safeParse({
+      transactionDate: '2026-02-31',
+      transactionType: 'Chi tiêu',
+      status: 'Thực tế',
+      description: 'Ngày không tồn tại',
+      amount: 100,
+      purposeId: 'p',
+      expenseTypeId: 'e',
+      paymentMethodId: 'm',
+      source: 'manual',
+      aiGenerated: false,
+    }).success).toBe(false);
   });
   it('viết gọn số tiền KPI theo K và M', () => {
     expect(formatCompactVnd(850000)).toBe('850K ₫');

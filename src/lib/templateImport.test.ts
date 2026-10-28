@@ -97,4 +97,16 @@ describe('template import', () => {
     XLSX.utils.book_append_sheet(wb, ws, 'Giao dịch');
     await expect(parseTemplate(XLSX.write(wb, { type: 'array', bookType: 'xlsx' }), purposes, types, methods, [])).rejects.toThrow('FILE_ROW_LIMIT_EXCEEDED');
   });
+
+  it('đưa ngày không tồn tại vào lỗi theo dòng', async () => {
+    const ws = XLSX.utils.aoa_to_sheet([
+      [...templateHeaders],
+      ['2026-02-31', 100000, 'Tiền ra', 'Thực tế', 'Ăn trưa', 'Chuyển khoản', 'Sinh hoạt', 'Ăn uống', '', ''],
+    ]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Giao dịch');
+    const result = await parseTemplate(XLSX.write(wb, { type: 'array', bookType: 'xlsx' }), purposes, types, methods, []);
+    expect(result.valid).toHaveLength(0);
+    expect(result.errors[0]?.messages.join(' ')).toContain('date');
+  });
 });
