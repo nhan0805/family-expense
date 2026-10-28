@@ -26,6 +26,11 @@ import {
 } from '../lib/catalogIcons';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { userFacingError } from '../lib/errorRecovery';
+import {
+  clearLocalDemoData,
+  readLocalDemoState,
+  saveLocalDemoState,
+} from '../lib/localDemoStorage';
 
 type AppState = {
   familyId: string;
@@ -80,6 +85,7 @@ const localDemoDisplayName = 'Chủ gia đình';
 
 const clearLocalFamilyData = (familyId: string) => {
   if (typeof window === 'undefined') return;
+  clearLocalDemoData(familyId);
   try {
     const scopedKeys = [
       `family-expense:savings-accounts:${familyId}`,
@@ -138,10 +144,15 @@ export function shouldReloadAppForAuthEvent(event: AuthChangeEvent) {
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
+  const [initialLocalState] = useState(() =>
+    isSupabaseConfigured ? null : readLocalDemoState(localFamilyId),
+  );
   const [familyId, setFamilyId] = useState(
     isSupabaseConfigured ? '' : localFamilyId,
   );
-  const [familyName, setFamilyName] = useState('Gia đình của tôi');
+  const [familyName, setFamilyName] = useState(
+    initialLocalState?.familyName || 'Gia đình của tôi',
+  );
   const [currentUserEmail, setCurrentUserEmail] = useState(
     isSupabaseConfigured ? '' : localDemoEmail,
   );
@@ -155,15 +166,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     'owner' | 'member' | null
   >(isSupabaseConfigured ? null : 'owner');
   const [purposes, setPurposes] = useState<CatalogItem[]>(
-    isSupabaseConfigured ? [] : fallbackPurposes,
+    isSupabaseConfigured ? [] : initialLocalState?.purposes ?? fallbackPurposes,
   );
   const [expenseTypes, setExpenseTypes] = useState<CatalogItem[]>(
-    isSupabaseConfigured ? [] : fallbackExpenseTypes,
+    isSupabaseConfigured ? [] : initialLocalState?.expenseTypes ?? fallbackExpenseTypes,
   );
   const [paymentMethods, setPaymentMethods] = useState<CatalogItem[]>(
-    isSupabaseConfigured ? [] : fallbackPaymentMethods,
+    isSupabaseConfigured ? [] : initialLocalState?.paymentMethods ?? fallbackPaymentMethods,
   );
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>(
+    isSupabaseConfigured ? [] : initialLocalState?.transactions ?? [],
+  );
   const [loading, setLoading] = useState(isSupabaseConfigured);
   const [authenticated, setAuthenticated] = useState(!isSupabaseConfigured);
   const [error, setError] = useState<string | null>(null);
@@ -184,6 +197,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
       window.removeEventListener('offline', updateOnline);
     };
   }, []);
+
+  useEffect(() => {
+    if (isSupabaseConfigured || familyId !== localFamilyId) return;
+    saveLocalDemoState(localFamilyId, {
+      familyName,
+      purposes,
+      expenseTypes,
+      paymentMethods,
+      transactions,
+    });
+  }, [expenseTypes, familyId, familyName, paymentMethods, purposes, transactions]);
 
   useEffect(() => {
     if (!isSupabaseConfigured) return;
@@ -657,6 +681,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (!name) return 'Vui lòng nhập tên gia đình.';
     if (name.length > 100) return 'Tên gia đình không được dài quá 100 ký tự.';
     if (!isSupabaseConfigured) {
+      clearLocalDemoData(localFamilyId);
       setFamilyId(localFamilyId);
       setFamilyName(name);
       setCurrentUserId('local-user');
@@ -667,6 +692,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setPurposes(fallbackPurposes);
       setExpenseTypes(fallbackExpenseTypes);
       setPaymentMethods(fallbackPaymentMethods);
+      setTransactions([]);
       setError(null);
       return null;
     }

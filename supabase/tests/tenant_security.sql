@@ -1,7 +1,7 @@
 -- Structural tenant-security tests chạy trong Supabase local/staging có pgTAP.
 -- Fixture-level cross-family negative tests nên dùng dữ liệu test riêng của môi trường.
 begin;
-select plan(38);
+select plan(42);
 select ok(exists (select 1 from pg_constraint where connamespace = 'public'::regnamespace and conrelid = 'public.transactions'::regclass and conname = 'transactions_purpose_same_family_fkey' and contype = 'f'),'transactions có purpose FK cùng family');
 select ok(exists (select 1 from pg_constraint where connamespace = 'public'::regnamespace and conrelid = 'public.transactions'::regclass and conname = 'transactions_expense_type_same_family_fkey' and contype = 'f'),'transactions có expense type FK cùng family');
 select ok(exists (select 1 from pg_constraint where connamespace = 'public'::regnamespace and conrelid = 'public.transactions'::regclass and conname = 'transactions_payment_method_same_family_fkey' and contype = 'f'),'transactions có payment method FK cùng family');
@@ -72,6 +72,10 @@ select ok(not has_table_privilege('authenticated','public.ai_summary_cache','INS
 select ok(exists(select 1 from pg_constraint where conname='suggestions_purpose_same_family_fkey'),'gợi ý purpose có FK cùng family');
 select ok(exists(select 1 from pg_constraint where conname='suggestions_expense_type_same_family_fkey'),'gợi ý expense type có FK cùng family');
 select has_function('public','get_dashboard_aggregate',ARRAY['uuid','date','date'],'dashboard có RPC aggregate theo khoảng ngày');
+select ok(exists(select 1 from pg_class where relnamespace = 'public'::regnamespace and relname = 'email_export_usage_logs' and relrowsecurity),'email export usage log bật RLS');
+select ok(not has_table_privilege('authenticated','public.email_export_usage_logs','SELECT'),'authenticated không đọc trực tiếp được email export usage log');
+select has_function('public','consume_email_export_slot',ARRAY['uuid'],'email export có rate limit nguyên tử');
+select ok(has_function_privilege('authenticated','public.consume_email_export_slot(uuid)','EXECUTE'),'authenticated được gọi RPC rate limit email export');
 select ok(exists(select 1 from information_schema.columns where table_schema='public' and table_name='import_batches' and column_name='import_key'),'import batch có khóa retry ổn định');
 select ok(exists(select 1 from pg_indexes where schemaname='public' and indexname='import_batches_family_key_uidx'),'import batch có unique key theo family');
 select * from finish();

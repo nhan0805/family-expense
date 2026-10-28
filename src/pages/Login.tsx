@@ -42,9 +42,9 @@ export function Login() {
       setFeedback(en ? 'Enter your email.' : 'Vui lòng nhập email.', 'error');
       return;
     }
-    if (mode !== 'magic' && mode !== 'forgot' && password.length < 6) {
+    if (mode === 'signup' && password.length < 8) {
       setFieldError('password');
-      setFeedback(en ? 'Password must be at least 6 characters.' : 'Mật khẩu phải có ít nhất 6 ký tự.', 'error');
+      setFeedback(en ? 'Password must be at least 8 characters.' : 'Mật khẩu phải có ít nhất 8 ký tự.', 'error');
       return;
     }
     setFieldError(null);
@@ -187,7 +187,7 @@ export function Login() {
                 <span className="label">{en ? 'Password' : 'Mật khẩu'}</span>
                 <span className="relative block">
                   <LockKeyhole className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" size={17} aria-hidden="true" />
-                  <input id="auth-password" name="password" className="field min-h-12 pl-10 pr-12" type={showPassword ? 'text' : 'password'} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} minLength={6} required aria-invalid={fieldError === 'password'} aria-describedby={fieldError === 'password' ? 'auth-message' : undefined} value={password} onChange={(event) => { setPassword(event.target.value); setFieldError(null); }} />
+                  <input id="auth-password" name="password" className="field min-h-12 pl-10 pr-12" type={showPassword ? 'text' : 'password'} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} minLength={mode === 'signup' ? 8 : undefined} required aria-invalid={fieldError === 'password'} aria-describedby={fieldError === 'password' ? 'auth-message' : undefined} value={password} onChange={(event) => { setPassword(event.target.value); setFieldError(null); }} />
                   <button type="button" className="icon-button absolute inset-y-0 right-1" aria-label={showPassword ? (en ? 'Hide password' : 'Ẩn mật khẩu') : (en ? 'Show password' : 'Hiện mật khẩu')} aria-pressed={showPassword} onClick={() => setShowPassword((value) => !value)}>{showPassword ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}</button>
                 </span>
               </label>

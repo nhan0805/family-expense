@@ -6,16 +6,13 @@ import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { EmptyState, Skeleton } from '../components/AsyncStates';
 import { useFeedback } from '../components/Feedback';
 import { userFacingError } from '../lib/errorRecovery';
+import {
+  readLocalDemoMembers,
+  saveLocalDemoMembers,
+  type LocalDemoMember,
+} from '../lib/localDemoStorage';
 
-type Member = {
-  id: string;
-  user_id: string;
-  display_name: string;
-  email: string;
-  role: 'owner' | 'member';
-  status: 'active' | 'invited' | 'disabled';
-  created_at: string;
-};
+type Member = LocalDemoMember;
 
 const friendlyError = (message: string) => {
   if (message.includes('USER_NOT_FOUND'))
@@ -37,6 +34,7 @@ export function Members() {
     familyId,
     familyName,
     currentUserEmail,
+    currentUserDisplayName,
     currentUserId,
     currentUserRole,
     transactions = [],
@@ -72,17 +70,22 @@ export function Members() {
     setMessage('');
     try {
       if (!isSupabaseConfigured) {
-        setMembers([
-          {
+        const savedMembers = readLocalDemoMembers(familyId);
+        if (savedMembers.length) {
+          setMembers(savedMembers);
+        } else {
+          const owner: Member = {
             id: 'local',
             user_id: 'local-user',
-            display_name: 'Chủ gia đình',
+            display_name: currentUserDisplayName || 'Chủ gia đình',
             email: currentUserEmail || 'demo@family.local',
             role: 'owner',
             status: 'active',
             created_at: new Date().toISOString(),
-          },
-        ]);
+          };
+          saveLocalDemoMembers(familyId, [owner]);
+          setMembers([owner]);
+        }
         return;
       }
       const { data, error } = await supabase.rpc('get_family_members', {
@@ -103,7 +106,7 @@ export function Members() {
     } finally {
       setLoadingMembers(false);
     }
-  }, [currentUserEmail, en, familyId, isOwner]);
+  }, [currentUserDisplayName, currentUserEmail, en, familyId, isOwner]);
 
   useEffect(() => {
     void loadMembers();
@@ -125,18 +128,20 @@ export function Members() {
         setMessage('Email này đã có trong danh sách thành viên.');
         return;
       }
-      setMembers((items) => [
-        ...items,
-        {
-          id: `local-member-${crypto.randomUUID()}`,
-          user_id: `local-user-${crypto.randomUUID()}`,
-          display_name: displayName.trim() || normalizedEmail,
-          email: normalizedEmail,
-          role: 'member',
-          status: 'active',
-          created_at: new Date().toISOString(),
-        },
-      ]);
+      const newMember: Member = {
+        id: `local-member-${crypto.randomUUID()}`,
+        user_id: `local-user-${crypto.randomUUID()}`,
+        display_name: displayName.trim() || normalizedEmail,
+        email: normalizedEmail,
+        role: 'member',
+        status: 'active',
+        created_at: new Date().toISOString(),
+      };
+      setMembers((items) => {
+        const next = [...items, newMember];
+        saveLocalDemoMembers(familyId, next);
+        return next;
+      });
       setEmail('');
       setDisplayName('');
       setBusy(false);
@@ -173,7 +178,11 @@ export function Members() {
         setMessage('Tên hiển thị không được để trống.');
         return;
       }
-      setMembers((items) => items.map((member) => member.id === editingId ? { ...member, display_name: name } : member));
+      setMembers((items) => {
+        const next = items.map((member) => member.id === editingId ? { ...member, display_name: name } : member);
+        saveLocalDemoMembers(familyId, next);
+        return next;
+      });
       setEditingId(null);
       setEditingName('');
       setBusy(false);
@@ -213,7 +222,11 @@ export function Members() {
     setBusy(true);
     setMessage('');
     if (!isSupabaseConfigured) {
-      setMembers((items) => items.filter((item) => item.id !== member.id));
+      setMembers((items) => {
+        const next = items.filter((item) => item.id !== member.id);
+        saveLocalDemoMembers(familyId, next);
+        return next;
+      });
       setBusy(false);
       setMessage('Đã xóa thành viên demo khỏi gia đình.');
       return;

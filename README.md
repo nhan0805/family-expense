@@ -66,6 +66,8 @@ Production migration/function deployment chạy qua GitHub workflow sau khi thay
 
 Function kiểm tra JWT, membership theo `family_id`, validate request/response bằng Zod, giới hạn 10 request/user/phút, không retry vô hạn khi 429 và không log token/API key. Log chỉ chứa metadata tối thiểu. Gemini Free Tier có quota/rate limit và dữ liệu có thể được dùng để cải thiện sản phẩm theo chính sách Google; xem pricing hiện hành trước khi đưa dữ liệu thật vào.
 
+CORS của Edge Functions chỉ cho các origin production/preview của Cloudflare Pages và local development. Có thể ghi đè allowlist bằng secret/environment `CORS_ALLOWED_ORIGINS` dạng danh sách phân cách bằng dấu phẩy khi môi trường triển khai cần domain riêng.
+
 ## Gửi danh sách giao dịch qua Brevo
 
 Tính năng **Dữ liệu → Gửi danh sách giao dịch** gọi Edge Function `email-transactions`. Function cho thành viên active gửi danh sách giao dịch chưa bị xóa của gia đình tới email tài khoản hiện tại, tự query theo `family_id` và gửi file CSV qua Brevo. Không đặt API key Brevo ở frontend.
@@ -76,7 +78,7 @@ Tạo API key có quyền gửi trong Brevo, xác minh sender email, rồi lưu 
 supabase secrets set BREVO_API_KEY=<key> BREVO_SENDER_EMAIL=<sender-email> BREVO_SENDER_NAME="Family Finance"
 ```
 
-Production deploy `email-transactions` chạy qua workflow Supabase sau khi thay đổi được merge vào `main`. Gói Brevo Free có giới hạn gửi hằng ngày; kiểm tra quota và lỗi provider trước khi dùng dữ liệu thật.
+Production deploy `email-transactions` chạy qua workflow Supabase sau khi thay đổi được merge vào `main`. Ngoài quota Brevo, ứng dụng giới hạn mỗi tài khoản tối đa 3 lần gửi export trong một giờ; request tới provider có timeout 15 giây. Gói Brevo Free có giới hạn gửi hằng ngày; kiểm tra quota và lỗi provider trước khi dùng dữ liệu thật.
 
 ## Chạy local
 
@@ -84,7 +86,7 @@ Production deploy `email-transactions` chạy qua workflow Supabase sau khi thay
 pnpm dev
 ```
 
-Nếu chưa cấu hình Supabase, app vẫn mở với dữ liệu demo để kiểm tra UI; đăng nhập, lưu cloud và AI cần project Supabase thật.
+Nếu chưa cấu hình Supabase, app vẫn mở ở chế độ demo để kiểm tra UI. Các giao dịch, danh mục, tên gia đình và thành viên demo được lưu cục bộ trên trình duyệt theo `local-family`; chúng không đồng bộ lên cloud và có thể mất nếu người dùng xóa dữ liệu trang web. Đăng nhập, lưu cloud, gửi email và AI cần project Supabase thật.
 
 Khi người dùng bấm **Gợi ý AI** trên trang **Giao dịch**, `search-transactions` tách câu tự nhiên thành các bộ lọc có cấu trúc như loại giao dịch, trạng thái, mục đích, danh mục, phương thức thanh toán, số tiền và thời gian. Các cụm “trừ”, “ngoại trừ”, “không gồm” được chuyển thành bộ lọc loại trừ tương ứng; frontend áp dụng bằng `list_family_transactions_v2` và nếu còn từ khóa nội dung thì dùng tìm kiếm chuỗi không phân biệt dấu trên mô tả và ghi chú. Không có bước tạo embedding, backfill hoặc gọi Edge Function semantic.
 

@@ -1,14 +1,10 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.56.1';
 import { z } from 'npm:zod@4.1.5';
+import { isValidCalendarDate } from '../_shared/date.ts';
+import { jsonResponse, optionsResponse, parseJsonBody } from '../_shared/http.ts';
 
 declare const EdgeRuntime: { waitUntil: (promise: Promise<unknown>) => void };
 
-const cors = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers':
-    'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
 const GEMINI_TIMEOUT_MS = 25_000;
 const fetchGemini = async (input: string, init: RequestInit) => {
   const controller = new AbortController();
@@ -22,7 +18,7 @@ const fetchGemini = async (input: string, init: RequestInit) => {
     clearTimeout(timeoutId);
   }
 };
-const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+const isoDate = z.string().refine(isValidCalendarDate, 'INVALID_DATE');
 const filterSchema = z.object({
   query: z.string().trim().max(240),
   transactionType: z.enum(['Chi tiêu', 'Thu nhập']).nullable(),
@@ -133,22 +129,9 @@ type GeminiResponse = {
     content?: { parts?: Array<{ text?: string }> };
   }>;
 };
-const json = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { ...cors, 'Content-Type': 'application/json' },
-  });
-const validCalendarDate = (value: string | null) => {
-  if (!value) return true;
-  const date = new Date(`${value}T00:00:00Z`);
-  return (
-    Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value
-  );
-};
-
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
-  if (req.method !== 'POST') return json({ error: 'METHOD_NOT_ALLOWED' }, 405);
+  if (req.method === 'OPTIONS') return optionsResponse(req);
+  if (req.method !== 'POST') return jsonResponse(req, { error: 'METHOD_NOT_ALLOWED' }, 405);
 
   const started = Date.now();
   let familyId = '';
@@ -163,11 +146,11 @@ Deno.serve(async (req) => {
     const url = Deno.env.get('SUPABASE_URL');
     const anon = Deno.env.get('SUPABASE_ANON_KEY');
     if (!apiKey || !model || !url || !anon)
-      return json({ error: 'SERVER_NOT_CONFIGURED' }, 500);
+      return jsonResponse(req, { error: 'SERVER_NOT_CONFIGURED' }, 500);
     const auth = req.headers.get('Authorization');
     if (!auth?.startsWith('Bearer '))
-      return json({ error: 'UNAUTHORIZED' }, 401);
-    const parsed = requestSchema.parse(await req.json());
+      return jsonResponse(req, { error: 'UNAUTHORIZED' }, 401);
+    const parsed = requestSchema.parse(await parseJsonBody(req));
     familyId = parsed.familyId;
     inputLength = parsed.text.length;
     db = createClient(url, anon, {
@@ -179,9 +162,9 @@ Deno.serve(async (req) => {
     );
     if (contextError) {
       if (contextError.message.includes('FORBIDDEN'))
-        return json({ error: 'FORBIDDEN' }, 403);
+        return jsonResponse(req, { error: 'FORBIDDEN' }, 403);
       if (contextError.message.includes('RATE_LIMITED'))
-        return json({ error: 'RATE_LIMITED' }, 429);
+        return jsonResponse(req, { error: 'RATE_LIMITED' }, 429);
       throw new Error('CATALOG_QUERY_FAILED');
     }
     const catalog = context as Catalog;
@@ -243,11 +226,8 @@ Deno.serve(async (req) => {
     const response = responseSchema.parse(JSON.parse(responseText));
     const { filters } = response;
     if (
-      !validCalendarDate(filters.dateFrom) ||
-      !validCalendarDate(filters.dateTo) ||
       (filters.dateFrom && filters.dateTo && filters.dateFrom > filters.dateTo)
-    )
-      throw new Error('INVALID_AI_FILTERS');
+    ) throw new Error('INVALID_AI_FILTERS');
     if (
       (filters.amountMin !== null && !Number.isFinite(filters.amountMin)) ||
       (filters.amountMax !== null && !Number.isFinite(filters.amountMax)) ||
@@ -302,7 +282,7 @@ Deno.serve(async (req) => {
             if (error) console.error('AI_USAGE_LOG_FAILED', error.message);
           }),
       );
-    return json(response);
+    return jsonResponse(req, response);
   } catch (error) {
     const code =
       error instanceof z.ZodError
@@ -312,6 +292,7 @@ Deno.serve(async (req) => {
           ? error.message
           : error instanceof Error &&
               [
+                'INVALID_REQUEST_BODY',
                 'CATALOG_QUERY_FAILED',
                 'INVALID_AUTH_CONTEXT',
                 'EMPTY_AI_RESPONSE',
@@ -339,10 +320,11 @@ Deno.serve(async (req) => {
         /* Không làm lộ lỗi log */
       }
     }
-    if (code === 'FORBIDDEN') return json({ error: code }, 403);
-    if (code === 'RATE_LIMITED') return json({ error: code }, 429);
-    if (code === 'GEMINI_TIMEOUT') return json({ error: code }, 504);
-    if (code === 'INVALID_SCHEMA') return json({ error: code }, 422);
-    return json({ error: code }, 500);
+    if (code === 'FORBIDDEN') return jsonResponse(req, { error: code }, 403);
+    if (code === 'RATE_LIMITED') return jsonResponse(req, { error: code }, 429);
+    if (code === 'GEMINI_TIMEOUT') return jsonResponse(req, { error: code }, 504);
+    if (code === 'INVALID_SCHEMA' || code === 'INVALID_REQUEST_BODY')
+      return jsonResponse(req, { error: 'INVALID_SCHEMA' }, 422);
+    return jsonResponse(req, { error: 'INTERNAL_ERROR' }, 500);
   }
 });

@@ -8,6 +8,7 @@ import { ThemeSelect } from './ThemeSelect';
 import { useLanguage } from '../context/LanguageContext';
 import { BudgetNotifications } from './BudgetNotifications';
 import { useFocusTrap } from './ui/Dialog';
+import { useFeedback } from './Feedback';
 
 const links = [['/', 'overview', House], ['/giao-dich', 'transactions', WalletCards], ['/tai-san', 'assets', Gem], ['/ngan-sach', 'budgets', PiggyBank], ['/chi-phi-dinh-ky', 'recurringExpenses', Repeat2], ['/danh-muc', 'catalogs', Tags], ['/thanh-vien', 'members', UsersRound], ['/du-lieu', 'data', BookOpen]] as const;
 const mobilePrimaryLinks = [links[0], links[1], links[2], links[3]] as const;
@@ -25,6 +26,7 @@ export function Layout() {
   const drawerRef = useFocusTrap<HTMLElement>(open && menuMounted, { onEscape: () => setOpen(false) });
   const { familyId, familyName, currentUserEmail, currentUserDisplayName, loading, authenticated, error, online, reloadApp } = useApp();
   const { t, language } = useLanguage();
+  const { notify } = useFeedback();
   const en = language === 'en';
   const userDisplayName = currentUserDisplayName || currentUserEmail;
   const { pathname } = useLocation();
@@ -59,9 +61,28 @@ export function Layout() {
       navigate('/dang-nhap', { replace: true });
       return;
     }
-    const { error: signOutError } = await supabase.auth.signOut();
-    setSigningOut(false);
-    if (!signOutError) navigate('/dang-nhap', { replace: true });
+    try {
+      const { error: signOutError } = await supabase.auth.signOut();
+      if (signOutError) {
+        notify(
+          en
+            ? 'Could not sign out. Check your connection and try again.'
+            : 'Không thể đăng xuất. Hãy kiểm tra kết nối rồi thử lại.',
+          'error',
+        );
+        return;
+      }
+      navigate('/dang-nhap', { replace: true });
+    } catch {
+      notify(
+        en
+          ? 'Could not sign out. Check your connection and try again.'
+          : 'Không thể đăng xuất. Hãy kiểm tra kết nối rồi thử lại.',
+        'error',
+      );
+    } finally {
+      setSigningOut(false);
+    }
   };
 
   return <div className="app-shell">
@@ -85,6 +106,7 @@ export function Layout() {
       </div>
     </header>
     {!online && <div role="status" aria-live="polite" className="flex items-center justify-center gap-2 bg-amber-100 px-3 py-2 text-sm text-amber-900 dark:bg-amber-950/50 dark:text-amber-100"><WifiOff size={16} />{t('offline')}</div>}
+    {!isSupabaseConfigured && <div role="note" className="border-b border-[var(--warning)]/30 bg-[var(--warning-soft)] px-3 py-2 text-center text-xs font-semibold text-[var(--warning-strong)]">{en ? 'Demo mode: changes are saved only in this browser and are not synced to the cloud.' : 'Chế độ demo: thay đổi chỉ được lưu trên trình duyệt này và không đồng bộ lên cloud.'}</div>}
     <div className="mx-auto flex max-w-7xl">
       {menuMounted && <button type="button" className={`app-scrim md:hidden ${open ? 'ui-overlay-enter' : 'ui-overlay-exit'}`} aria-label={en ? 'Close menu overlay' : 'Đóng lớp trình đơn'} onClick={() => setOpen(false)} />}
       <aside ref={drawerRef} className={`app-sidebar ${open ? 'app-sidebar-open ui-drawer-enter fixed inset-y-0 left-0 z-50 flex' : menuMounted ? 'ui-drawer-exit fixed inset-y-0 left-0 z-50 flex' : 'hidden'} w-72 flex-col border-r p-4 md:sticky md:top-[68px] md:flex md:h-[calc(100vh-68px)] md:w-64`}>

@@ -98,7 +98,7 @@ Generated/dependency output such as `node_modules/`, `dist/`, `coverage/`, Playw
 
 ### Import/export and data tools
 
-- `src/pages/ImportExport.tsx` handles Excel template import, CSV export, data summary and active-member email export.
+- `src/pages/ImportExport.tsx` handles Excel template import, CSV export, data summary and active-member email export. Khi chưa cấu hình Supabase, `src/lib/localDemoStorage.ts` lưu dữ liệu demo theo `local-family` trên trình duyệt.
 - `src/lib/importExcel.ts`, `src/lib/templateImport.ts`, `src/lib/importSummary.ts` and `src/lib/templateTypes.ts` implement parsing, normalization, duplicate handling and validation.
 - `supabase/functions/email-transactions/` sends active-member-requested CSV exports through Brevo; credentials remain server-side.
 
@@ -111,7 +111,7 @@ Generated/dependency output such as `node_modules/`, `dist/`, `coverage/`, Playw
 | `summarize-dashboard` | Generate a dashboard summary from aggregate facts | Gemini; sends aggregate facts rather than raw transaction lists |
 | `email-transactions` | Email active-member-authorized CSV export | Brevo; queries by authenticated user/family |
 
-All functions verify JWT and membership, validate inputs, enforce rate/timeout behavior and read secrets with `Deno.env.get`. Semantic embedding functions/tables were removed from the current production path; do not reintroduce them without an explicit design decision.
+All functions verify JWT and membership, validate inputs, use the shared CORS/HTTP helpers in `supabase/functions/_shared/`, enforce rate/timeout behavior and read secrets with `Deno.env.get`. Email export is additionally limited by `consume_email_export_slot` to three sends per user per hour. Semantic embedding functions/tables were removed from the current production path; do not reintroduce them without an explicit design decision.
 
 ## Data flow
 
@@ -216,7 +216,7 @@ The authoritative schema and policy definitions are the ordered SQL migrations, 
 ### Backend entry points
 
 - Migrations and RPCs: `supabase/migrations/`.
-- Edge Functions: `supabase/functions/*/index.ts`.
+- Edge Functions: `supabase/functions/*/index.ts`; shared date/CORS/HTTP helpers: `supabase/functions/_shared/`.
 - Local DB/security tests: `supabase/tests/*.sql` through `supabase test db --local`.
 - GitHub deploy entry: `.github/workflows/supabase-deploy.yml`.
 
@@ -226,7 +226,8 @@ The authoritative schema and policy definitions are the ordered SQL migrations, 
 |---|---|---|---|
 | Supabase Auth/Postgres | Login, tenant data, RLS, RPC, cron | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, workflow Supabase secrets/vars | Membership, RLS and network errors must be surfaced; demo fallback only applies when cloud is not configured |
 | Gemini | AI suggestion/search/summary | `GEMINI_API_KEY`, `GEMINI_MODEL` in Supabase secrets | Quota, timeout, malformed JSON and rate limit; allow manual fallback |
-| Brevo | Active-member email export | `BREVO_API_KEY`, `BREVO_SENDER_EMAIL`, `BREVO_SENDER_NAME` in Supabase secrets | Provider/quota failure must not expose credentials or financial data |
+| Brevo | Active-member email export | `BREVO_API_KEY`, `BREVO_SENDER_EMAIL`, `BREVO_SENDER_NAME` in Supabase secrets | Provider/quota failure must not expose credentials or financial data; app quota is 3 sends/user/hour and provider timeout is 15 seconds |
+| Edge CORS | Browser access to verified functions | Optional `CORS_ALLOWED_ORIGINS` environment value | Defaults to known Pages/local origins; unknown origins do not receive CORS permission |
 | Cloudflare Pages | Frontend preview/production hosting | Pages dashboard build settings and `VITE_*` deploy environment values | Git integration builds from PR/main; verify merge-commit deployment and HTTP 200 |
 
 Never put secret values in this map, changelog, handoff or source code.

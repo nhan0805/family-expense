@@ -1,5 +1,16 @@
 # Nhật ký thay đổi Family Expense
 
+## 2026-10-28
+
+### Củng cố dữ liệu demo, xác thực đầu vào và các Edge Function
+
+- Demo/local fallback giờ lưu giao dịch, danh mục và thành viên theo `family_id` trong `localStorage`, đồng thời hiển thị cảnh báo rõ ràng rằng dữ liệu không đồng bộ lên cloud; thêm test khôi phục dữ liệu sau khi tải lại.
+- Dùng validator lịch nghiêm ngặt cho ngày giao dịch, dữ liệu import và kết quả AI; hàng đợi dialog xác nhận để không làm mất các yêu cầu xác nhận liên tiếp; lỗi đăng xuất được hiển thị thay vì điều hướng như thể đã thành công.
+- Edge Functions dùng CORS allowlist thay vì wildcard, không trả raw error nội bộ, có timeout cho Brevo, chống CSV formula injection và giới hạn email export ở 3 lần/người/giờ qua migration `202610280001_email_export_rate_limit.sql`.
+- Workflow Supabase đã nhận cả thay đổi trong `supabase/functions/_shared/**` để helper dùng chung luôn kích hoạt production deploy đúng lúc.
+- Thêm security headers cho Cloudflare Pages và nâng mật khẩu tối thiểu phía giao diện lên 8 ký tự. Migration mới chưa được áp dụng vào database production.
+- Chưa deploy; Vitest `50 file / 263 test`, TypeScript, ESLint, Vite build, performance budget và `git diff --check` pass. E2E local chưa chạy được vì thiếu browser binary Playwright; pgTAP local chưa chạy được vì không có Postgres/Docker tại `127.0.0.1:54322`.
+
 ## 2026-10-25
 
 ### Mở menu thao tác chi phí định kỳ lên trên ở mobile

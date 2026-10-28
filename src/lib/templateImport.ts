@@ -2,6 +2,7 @@ import { z } from 'zod';
 import * as XLSX from 'xlsx';
 import {
   statuses,
+  calendarDateSchema,
   getCatalogDisplayName,
   normalizeText,
   type CatalogItem,
@@ -32,7 +33,7 @@ export const templateHeaders = [
 ] as const;
 const schema = z.object({
   id: z.string().uuid().or(z.literal('')),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  date: calendarDateSchema,
   amount: z.number().int().positive(),
   type: z.enum(templateTransactionTypes),
   status: z.enum(statuses),

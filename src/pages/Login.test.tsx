@@ -81,4 +81,16 @@ describe('xác thực tài khoản', () => {
     expect(screen.getByRole('button', { name: 'Tiếp tục' })).toBeEnabled();
     expect(screen.queryByText('Invalid login credentials')).not.toBeInTheDocument();
   });
+
+  it('không chặn tài khoản cũ có mật khẩu ngắn khi đăng nhập', async () => {
+    signInWithPassword.mockResolvedValueOnce({ data: { session: null, user: null }, error: null });
+    renderLogin();
+    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'legacy@example.com' } });
+    const passwordInput = screen.getByLabelText('Mật khẩu');
+    expect(passwordInput).not.toHaveAttribute('minlength');
+    fireEvent.change(passwordInput, { target: { value: 'short6' } });
+    fireEvent.submit(screen.getByRole('button', { name: 'Tiếp tục' }).closest('form')!);
+
+    await waitFor(() => expect(signInWithPassword).toHaveBeenCalledWith({ email: 'legacy@example.com', password: 'short6' }));
+  });
 });

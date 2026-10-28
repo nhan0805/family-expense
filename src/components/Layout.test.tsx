@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Link, MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useApp } from '../context/AppContext';
+import { supabase } from '../lib/supabase';
 import { FeedbackProvider } from './Feedback';
 import { Layout } from './Layout';
 
@@ -40,11 +41,18 @@ vi.mock('../context/LanguageContext', () => ({
     }[key] || key),
   }),
 }));
-vi.mock('../lib/supabase', () => ({ isSupabaseConfigured: false, supabase: { auth: { signOut: vi.fn() } } }));
+const supabaseMode = vi.hoisted(() => ({ configured: false }));
+vi.mock('../lib/supabase', () => ({
+  get isSupabaseConfigured() {
+    return supabaseMode.configured;
+  },
+  supabase: { auth: { signOut: vi.fn() } },
+}));
 vi.mock('./ThemeSelect', () => ({ ThemeSelect: () => null }));
 
 describe('Layout mobile navigation', () => {
   beforeEach(() => {
+    supabaseMode.configured = false;
     vi.mocked(useApp).mockReturnValue({
       familyId: 'family-1',
       familyName: 'Gia đình của tôi',
@@ -60,6 +68,8 @@ describe('Layout mobile navigation', () => {
   });
 
   afterEach(() => {
+    supabaseMode.configured = false;
+    vi.clearAllMocks();
     vi.restoreAllMocks();
   });
 
@@ -147,5 +157,29 @@ describe('Layout mobile navigation', () => {
     fireEvent.click(screen.getByRole('link', { name: 'Sửa' }));
     expect(await screen.findByText('Form sửa giao dịch')).toBeInTheDocument();
     await waitFor(() => expect(window.scrollTo).toHaveBeenLastCalledWith({ top: 0, left: 0, behavior: 'auto' }));
+  });
+
+  it('hiển thị lỗi nếu đăng xuất từ Supabase thất bại', async () => {
+    supabaseMode.configured = true;
+    vi.mocked(supabase.auth.signOut).mockResolvedValue({
+      error: { message: 'network request failed' },
+    } as never);
+    render(
+      <FeedbackProvider>
+        <QueryClientProvider client={new QueryClient()}>
+          <MemoryRouter initialEntries={['/']}>
+            <Routes>
+              <Route element={<Layout />}>
+                <Route path="*" element={<div>Trang hiện tại</div>} />
+              </Route>
+            </Routes>
+          </MemoryRouter>
+        </QueryClientProvider>
+      </FeedbackProvider>,
+    );
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Đăng xuất' })[0]!);
+    expect(await screen.findByRole('alert')).toHaveTextContent('Không thể đăng xuất');
+    expect(screen.getByText('Trang hiện tại')).toBeInTheDocument();
   });
 });

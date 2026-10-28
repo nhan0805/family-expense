@@ -1,9 +1,8 @@
 import { z } from 'zod';
-
-const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+import { calendarDateSchema } from './domain';
 
 export const aiSuggestionSchema = z.object({
-  date: isoDateSchema,
+  date: calendarDateSchema,
   description: z.string().min(1),
   amount: z.number().positive().nullable(),
   transactionType: z.enum(['Chi tiêu', 'Thu nhập']),
@@ -35,8 +34,8 @@ export const transactionSearchFiltersSchema = z.object({
   amountMax: z.number().nonnegative().nullable(),
   month: z.number().int().min(1).max(12).nullable(),
   year: z.number().int().min(2000).max(2200).nullable(),
-  dateFrom: isoDateSchema.nullable(),
-  dateTo: isoDateSchema.nullable(),
+  dateFrom: calendarDateSchema.nullable(),
+  dateTo: calendarDateSchema.nullable(),
   sort: z.enum([
     'date-desc',
     'date-asc',
