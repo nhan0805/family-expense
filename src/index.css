@@ -2164,9 +2164,11 @@ a:active {
 }
 
 .transaction-entry-panel #transaction-amount {
-  min-height: 3.25rem;
-  font-size: 1.35rem;
-  letter-spacing: -.02em;
+  min-height: 2.75rem;
+  padding-block: .5rem;
+  font-size: 1.125rem;
+  line-height: 1.25rem;
+  letter-spacing: -.01em;
 }
 
 .transaction-entry-panel #transaction-type {
