@@ -46,6 +46,8 @@ describe('Form giao dịch hợp nhất', () => {
     expect(screen.getByLabelText(/Số tiền/)).not.toHaveAttribute('placeholder');
     expect(screen.getByLabelText(/Nội dung/)).toHaveFocus();
     expect(screen.getByLabelText(/Số tiền/)).not.toHaveFocus();
+    expect(screen.getByText('Nhập số tiền giao dịch.')).toBeInTheDocument();
+    expect(screen.queryByText('Nhập số tiền và nội dung giao dịch.')).not.toBeInTheDocument();
     const aiButton = screen.getByRole('button', { name: 'Phân tích nội dung bằng AI' });
     expect(aiButton).toBeDisabled();
     fireEvent.change(screen.getByLabelText(/Nội dung/), { target: { value: 'Hôm nay mua sữa 450 nghìn' } });
