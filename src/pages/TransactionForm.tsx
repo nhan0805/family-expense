@@ -679,7 +679,7 @@ export function TransactionForm() {
                 />
               )}
             />
-            <span className="mt-1 block text-xs text-gray-500 dark:text-gray-400">{en ? 'Enter the amount and the transaction context.' : 'Nhập số tiền và nội dung giao dịch.'}</span>
+            <span className="mt-1 block text-xs text-gray-500 dark:text-gray-400">{en ? 'Enter the transaction amount.' : 'Nhập số tiền giao dịch.'}</span>
           </Field>
           <Field fieldId="transaction-date" label={en ? 'Date' : 'Ngày'} required error={errors.transactionDate?.message} {...aiFieldProps('transactionDate')}>
             <input
