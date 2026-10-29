@@ -39,7 +39,7 @@ export function Settings() {
     <div className="settings-page flex flex-col gap-6">
       <header className="page-header">
         <p className="page-kicker"><Settings2 size={16} aria-hidden="true" />{en ? 'Preferences' : 'Tùy chọn'}</p>
-        <h2 className="page-title">{en ? 'Settings' : 'Cài đặt'}</h2>
+        <h1 className="page-title">{en ? 'Settings' : 'Cài đặt'}</h1>
         <p className="page-subtitle">{en ? 'Control your first view and the catalogs used by automatic transactions.' : 'Quản lý màn hình mở đầu và danh mục dùng cho các giao dịch tự động.'}</p>
       </header>
 

@@ -134,7 +134,7 @@ export function Dialog({
         tabIndex={-1}
         aria-labelledby={titleId}
         aria-describedby={description ? descriptionId : undefined}
-        className={`max-h-[min(90dvh,48rem)] w-full max-w-md overflow-y-auto rounded-t-[var(--radius-dialog)] bg-[var(--surface)] p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-[var(--shadow-overlay)] sm:rounded-[var(--radius-dialog)] sm:pb-5 ${closing ? 'ui-dialog-exit' : 'ui-dialog-enter'} ${panelClassName}`}
+        className={`max-h-[min(90dvh,48rem)] w-full max-w-md overflow-y-auto overscroll-contain rounded-t-[var(--radius-dialog)] bg-[var(--surface)] p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-[var(--shadow-overlay)] sm:rounded-[var(--radius-dialog)] sm:pb-5 ${closing ? 'ui-dialog-exit' : 'ui-dialog-enter'} ${panelClassName}`}
       >
         <h2 id={titleId} className="text-lg font-extrabold">{title}</h2>
         {description && <p id={descriptionId} className="mt-2 text-sm text-[var(--muted)]">{description}</p>}

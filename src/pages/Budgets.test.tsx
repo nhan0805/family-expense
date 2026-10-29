@@ -77,7 +77,7 @@ describe('Quản lý ngân sách V1', () => {
     mockedUseApp.mockReturnValue(appState('owner'));
     renderBudgets();
 
-    expect(screen.getByRole('heading', { name: 'Ngân sách', level: 2 })).toHaveClass('page-title');
+    expect(screen.getByRole('heading', { name: 'Ngân sách', level: 1 })).toHaveClass('page-title');
     const setBudgetButton = screen.getByRole('button', { name: 'Đặt ngân sách' });
     expect(setBudgetButton).toHaveClass('asset-action-button', 'asset-icon-action');
     expect(setBudgetButton).toHaveAttribute('title', 'Đặt ngân sách');
@@ -104,7 +104,7 @@ describe('Quản lý ngân sách V1', () => {
     mockedUseApp.mockReturnValue(appState('member'));
     renderBudgets('en');
 
-    expect(screen.getByRole('heading', { name: 'Budgets', level: 2 })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Budgets', level: 1 })).toBeInTheDocument();
     expect(screen.getByText('Actual expenses only')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Set budget' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Copy previous month' })).toBeDisabled();

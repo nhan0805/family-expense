@@ -62,7 +62,7 @@ describe('Quản lý danh mục', () => {
     mockedUseApp.mockReturnValue(appState('owner'));
     renderCatalogs();
 
-    expect(screen.getByRole('heading', { name: 'Danh mục', level: 2 })).toHaveClass('page-title');
+    expect(screen.getByRole('heading', { name: 'Danh mục', level: 1 })).toHaveClass('page-title');
     expect(screen.getAllByRole('tab')).toHaveLength(3);
     expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(1);
     expect(screen.getByRole('tab', { name: 'Mục đích' })).toHaveAttribute('aria-selected', 'true');

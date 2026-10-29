@@ -227,7 +227,7 @@ describe('Chi phí định kỳ', () => {
 
     await waitFor(() =>
       expect(
-        screen.getByRole('heading', { name: 'Chi phí định kỳ', level: 2 }),
+        screen.getByRole('heading', { name: 'Chi phí định kỳ', level: 1 }),
       ).toBeInTheDocument(),
     );
     expect(
