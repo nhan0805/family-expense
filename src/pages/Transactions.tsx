@@ -168,7 +168,7 @@ export const getInitialTransactionPeriod = (
 };
 
 export const getInitialTransactionType = (value: string | null) =>
-  value === 'Chi tiêu' || value === 'Thu nhập' ? value : 'Chi tiêu';
+  value === '' || value === 'all' ? '' : value === 'Chi tiêu' || value === 'Thu nhập' ? value : 'Chi tiêu';
 
 export const getInitialExcludePurposeIds = (
   searchParams: URLSearchParams,
@@ -323,6 +323,7 @@ export function Transactions() {
     currentUserRole,
   } = useApp();
   const [searchParams, setSearchParams] = useSearchParams();
+  const allTransactionTypesFromUrl = searchParams.get('transactionType') === 'all';
   const [hasExplicitUrlFilters] = useState(() => {
     const hasUrlFilters = hasExplicitTransactionFilterParams(searchParams);
     return hasUrlFilters && !hasOnlySystemDefaultTransactionFilterParams(searchParams);
@@ -457,6 +458,7 @@ export function Transactions() {
     const params = new URLSearchParams();
     if (debouncedQuery) params.set('query', debouncedQuery);
     if (transactionType) params.set('transactionType', transactionType);
+    else if (allTransactionTypesFromUrl) params.set('transactionType', 'all');
     if (status) params.set('status', status);
     purposeIds.forEach((id) => params.append('purposeId', id));
     expenseTypeIds.forEach((id) => params.append('expenseTypeId', id));
@@ -475,7 +477,7 @@ export function Transactions() {
     }
     if (sort !== 'date-desc') params.set('sort', sort);
     setSearchParams(params, { replace: true });
-  }, [amountMax, amountMin, dateFrom, dateTo, debouncedQuery, excludeExpenseTypeIds, excludePaymentMethodIds, excludePurposeIds, expenseTypeIds, filtersInitialized, month, paymentMethodIds, purposeIds, setSearchParams, shouldSyncFiltersToUrl, sort, status, transactionType, year]);
+  }, [allTransactionTypesFromUrl, amountMax, amountMin, dateFrom, dateTo, debouncedQuery, excludeExpenseTypeIds, excludePaymentMethodIds, excludePurposeIds, expenseTypeIds, filtersInitialized, month, paymentMethodIds, purposeIds, setSearchParams, shouldSyncFiltersToUrl, sort, status, transactionType, year]);
   const localAvailableYears = Array.from(
     new Set(
       transactions

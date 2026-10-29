@@ -189,9 +189,14 @@ const rangeForPeriod = (period: Period, mode: DashboardMode, customFrom: string,
   to: mode === 'custom' ? (customTo < monthEnd(period.key) ? customTo : monthEnd(period.key)) : monthEnd(period.key),
 });
 
-export const buildDashboardDrilldownLink = (type: string | undefined, range: DateRange) => {
+export const buildDashboardDrilldownLink = (
+  type: string | undefined,
+  range: DateRange,
+  options: { allTransactionTypes?: boolean } = {},
+) => {
   const params = new URLSearchParams();
   if (type) params.set('transactionType', type);
+  else if (options.allTransactionTypes) params.set('transactionType', 'all');
   params.set('status', 'Thực tế');
   if (range.from) params.set('dateFrom', range.from);
   if (range.to) params.set('dateTo', range.to);
@@ -658,9 +663,13 @@ export function Dashboard() {
             <span className="dashboard-hero-stat-meta"><ChangeBadge value={expenseChange} en={en} metric="expense" />{expenseChange !== null && <span>{en ? 'vs previous period' : 'so với kỳ trước'}</span>}</span>
           </Link>
         </div>
-        <Link className="dashboard-hero-cta btn-secondary inline-flex items-center justify-center gap-2" to={periodFilterLink()}>
-          <WalletCards size={17} aria-hidden="true" />
-          {en ? 'View transactions' : 'Xem giao dịch'}
+        <Link
+          className="dashboard-hero-cta btn-secondary inline-flex items-center justify-center"
+          to={buildDashboardDrilldownLink(undefined, selectedRange, { allTransactionTypes: true })}
+          aria-label={en ? 'View transactions' : 'Xem giao dịch'}
+          title={en ? 'View transactions' : 'Xem giao dịch'}
+        >
+          <WalletCards size={18} aria-hidden="true" />
         </Link>
       </section>
 
