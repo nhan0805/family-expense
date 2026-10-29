@@ -130,6 +130,62 @@ describe('Dashboard', () => {
     expect(screen.getByTestId('location-search')).toHaveTextContent('dashboardMode=year');
   });
 
+  it('tô màu biến động theo ngữ nghĩa thu nhập và chi tiêu', () => {
+    const currentMonth = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Ho_Chi_Minh',
+      year: 'numeric',
+      month: '2-digit',
+    }).format(new Date());
+    const [currentYear, currentMonthNumber] = currentMonth.split('-').map(Number);
+    const previousDate = new Date(Date.UTC(currentYear || 1970, (currentMonthNumber || 1) - 2, 1));
+    const previousMonth = `${previousDate.getUTCFullYear()}-${String(previousDate.getUTCMonth() + 1).padStart(2, '0')}`;
+    vi.mocked(useApp).mockReturnValue({
+      transactions: [
+        transaction('Thu kỳ trước', `${previousMonth}-10`, 100_000, 'Thực tế', 'Thu nhập'),
+        transaction('Thu kỳ này', `${currentMonth}-10`, 200_000, 'Thực tế', 'Thu nhập'),
+        transaction('Chi kỳ trước', `${previousMonth}-11`, 400_000),
+        transaction('Chi kỳ này', `${currentMonth}-11`, 200_000),
+      ],
+      purposes: [{ id: 'p1', name: 'Sinh hoạt' }],
+      expenseTypes: [{ id: 'e1', name: 'Thực phẩm' }],
+      confirmPlannedTransaction,
+    } as unknown as ReturnType<typeof useApp>);
+    renderDashboard();
+
+    const incomeLink = screen.getByRole('link', { name: /^Thu nhập Thu nhập/ });
+    const expenseLink = screen.getByRole('link', { name: /^Chi tiêu Chi tiêu/ });
+    expect(within(incomeLink).getByText('+100%')).toHaveClass('text-emerald-700', 'dark:text-emerald-300');
+    expect(within(expenseLink).getByText('-50%')).toHaveClass('text-emerald-700', 'dark:text-emerald-300');
+  });
+
+  it('dùng màu cảnh báo khi thu nhập giảm hoặc chi tiêu tăng', () => {
+    const currentMonth = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Ho_Chi_Minh',
+      year: 'numeric',
+      month: '2-digit',
+    }).format(new Date());
+    const [currentYear, currentMonthNumber] = currentMonth.split('-').map(Number);
+    const previousDate = new Date(Date.UTC(currentYear || 1970, (currentMonthNumber || 1) - 2, 1));
+    const previousMonth = `${previousDate.getUTCFullYear()}-${String(previousDate.getUTCMonth() + 1).padStart(2, '0')}`;
+    vi.mocked(useApp).mockReturnValue({
+      transactions: [
+        transaction('Thu kỳ trước', `${previousMonth}-10`, 200_000, 'Thực tế', 'Thu nhập'),
+        transaction('Thu kỳ này', `${currentMonth}-10`, 100_000, 'Thực tế', 'Thu nhập'),
+        transaction('Chi kỳ trước', `${previousMonth}-11`, 200_000),
+        transaction('Chi kỳ này', `${currentMonth}-11`, 400_000),
+      ],
+      purposes: [{ id: 'p1', name: 'Sinh hoạt' }],
+      expenseTypes: [{ id: 'e1', name: 'Thực phẩm' }],
+      confirmPlannedTransaction,
+    } as unknown as ReturnType<typeof useApp>);
+    renderDashboard();
+
+    const incomeLink = screen.getByRole('link', { name: /^Thu nhập Thu nhập/ });
+    const expenseLink = screen.getByRole('link', { name: /^Chi tiêu Chi tiêu/ });
+    expect(within(incomeLink).getByText('-50%')).toHaveClass('text-rose-600', 'dark:text-rose-300');
+    expect(within(expenseLink).getByText('+100%')).toHaveClass('text-rose-600', 'dark:text-rose-300');
+  });
+
   it('giữ đúng khoảng ngày và bao gồm mọi mục đích khi mở giao dịch từ cột xu hướng', () => {
     const link = buildDashboardDrilldownLink('Chi tiêu', {
       from: '2026-02-10',
