@@ -644,13 +644,18 @@ export function Dashboard() {
           <h3 id="dashboard-hero-title" className="dashboard-hero-title">{en ? 'Financial summary' : 'Tóm tắt tài chính'}</h3>
           <p className="dashboard-hero-period" title={periodLabel}>{en ? 'Selected period' : 'Kỳ đang xem'}</p>
         </div>
-        <div className="dashboard-hero-balance">
+        <Link
+          className="dashboard-hero-balance dashboard-hero-balance-link"
+          to={buildDashboardDrilldownLink(undefined, selectedRange, { allTransactionTypes: true })}
+          aria-label={en ? 'View all transactions for this period' : 'Xem toàn bộ giao dịch trong kỳ'}
+          title={en ? 'View all transactions for this period' : 'Xem toàn bộ giao dịch trong kỳ'}
+        >
           <span className="dashboard-hero-label">{en ? 'Net for selected period' : 'Giá trị ròng trong kỳ'}</span>
           <Amount value={selectedIncome - selectedExpense} className="dashboard-hero-value whitespace-nowrap" label={en ? 'Net for selected period' : 'Giá trị ròng trong kỳ'} />
           <span className={`dashboard-hero-status ${selectedIncome >= selectedExpense ? 'dashboard-hero-status-positive' : 'dashboard-hero-status-negative'}`}>
             {selectedIncome >= selectedExpense ? (en ? 'Income is ahead' : 'Thu đang cao hơn chi') : (en ? 'Expenses are ahead' : 'Chi đang cao hơn thu')}
           </span>
-        </div>
+        </Link>
         <div className="dashboard-hero-stats" aria-label={en ? 'Period totals' : 'Tổng quan trong kỳ'}>
           <Link className="dashboard-hero-stat dashboard-hero-stat-income" to={periodFilterLink('Thu nhập')}>
             <span className="dashboard-hero-stat-label"><ArrowDownToLine size={15} aria-hidden="true" />{en ? 'Income' : 'Thu nhập'}</span>
@@ -663,14 +668,6 @@ export function Dashboard() {
             <span className="dashboard-hero-stat-meta"><ChangeBadge value={expenseChange} en={en} metric="expense" />{expenseChange !== null && <span>{en ? 'vs previous period' : 'so với kỳ trước'}</span>}</span>
           </Link>
         </div>
-        <Link
-          className="dashboard-hero-cta btn-secondary inline-flex items-center justify-center"
-          to={buildDashboardDrilldownLink(undefined, selectedRange, { allTransactionTypes: true })}
-          aria-label={en ? 'View transactions' : 'Xem giao dịch'}
-          title={en ? 'View transactions' : 'Xem giao dịch'}
-        >
-          <WalletCards size={18} aria-hidden="true" />
-        </Link>
       </section>
 
       <section className="card dashboard-controls space-y-4 p-4 sm:p-5" aria-label={en ? 'Dashboard period controls' : 'Bộ lọc kỳ Dashboard'}>

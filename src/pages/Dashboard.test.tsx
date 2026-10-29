@@ -90,12 +90,11 @@ describe('Dashboard', () => {
     expect(screen.queryByRole('button', { name: 'Tháng này' })).not.toBeInTheDocument();
     const incomeLink = screen.getByRole('link', { name: /^Thu nhập Thu nhập/ });
     const expenseLink = screen.getByRole('link', { name: /^Chi tiêu Chi tiêu/ });
-    const dashboardTransactionsLink = screen.getByRole('link', { name: 'Xem giao dịch' });
+    const dashboardTransactionsLink = screen.getByRole('link', { name: 'Xem toàn bộ giao dịch trong kỳ' });
     expect(expenseLink).toHaveTextContent('250K');
     expect(incomeLink).toHaveAccessibleName(/Thu nhập/);
     expect(expenseLink).toHaveAccessibleName(/Chi tiêu/);
-    expect(dashboardTransactionsLink).toHaveClass('dashboard-hero-cta');
-    expect(dashboardTransactionsLink).not.toHaveTextContent('Xem giao dịch');
+    expect(dashboardTransactionsLink).toHaveClass('dashboard-hero-balance-link');
     expect(dashboardTransactionsLink).toHaveAttribute(
       'href',
       buildDashboardDrilldownLink(undefined, { from: '2026-02-01', to: '2026-02-28' }, { allTransactionTypes: true }),
