@@ -2975,6 +2975,7 @@ details.card[open] > summary {
   font-size: .68rem;
   font-weight: 750;
   line-height: 1.2;
+  white-space: nowrap;
 }
 
 .budget-notifications-summary-chip.is-active {
@@ -2989,7 +2990,18 @@ details.card[open] > summary {
   color: var(--warning-strong);
 }
 
+.budget-notifications-summary-chip.is-total {
+  border-color: color-mix(in srgb, var(--info) 35%, var(--border));
+  background: color-mix(in srgb, var(--info-soft) 74%, var(--surface));
+  color: var(--info-strong);
+}
+
 .budget-notifications-summary-count {
+  font-variant-numeric: tabular-nums;
+  font-weight: 850;
+}
+
+.budget-notifications-summary-value {
   font-variant-numeric: tabular-nums;
   font-weight: 850;
 }

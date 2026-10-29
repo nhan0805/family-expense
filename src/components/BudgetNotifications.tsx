@@ -1,4 +1,4 @@
-import { Bell, CalendarClock, CheckCircle2, CircleAlert, Trash2, TriangleAlert, X } from 'lucide-react';
+import { Bell, CalendarClock, CheckCircle2, CircleAlert, Trash2, TriangleAlert, WalletCards, X } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -161,7 +161,14 @@ export function BudgetNotifications() {
       : false,
     refetchOnWindowFocus: true,
   });
-  const dueTransactions = isSupabaseConfigured ? dueTransactionsData || [] : localDueTransactions;
+  const dueTransactions = useMemo(
+    () => isSupabaseConfigured ? dueTransactionsData || [] : localDueTransactions,
+    [dueTransactionsData, localDueTransactions],
+  );
+  const plannedTotal = useMemo(
+    () => dueTransactions.reduce((total, transaction) => total + transaction.amount, 0),
+    [dueTransactions],
+  );
 
   useEffect(() => {
     setNotifications(familyId ? getBudgetNotifications(familyId) : []);
@@ -315,6 +322,12 @@ export function BudgetNotifications() {
                 <CalendarClock size={14} aria-hidden="true" />
                 <span className="budget-notifications-summary-count">{dueTransactions.length}</span>
                 {en ? 'To confirm' : 'Cần xác nhận'}
+              </span>}
+              {dueTransactions.length > 0 && <span className="budget-notifications-summary-chip is-total">
+                <WalletCards size={14} aria-hidden="true" />
+                <span className="budget-notifications-summary-value">
+                  {en ? 'Planned total' : 'Tổng dự kiến'}: {formatMoney(plannedTotal, language)}
+                </span>
               </span>}
               {readCount > 0 && <span className="budget-notifications-summary-chip">
                 <span className="budget-notifications-summary-count">{readCount}</span>

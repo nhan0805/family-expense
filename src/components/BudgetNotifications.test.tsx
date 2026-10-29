@@ -145,6 +145,7 @@ describe('BudgetNotifications', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Thông báo/ }));
     expect(screen.getByRole('heading', { name: 'Giao dịch dự kiến tới hạn' })).toBeInTheDocument();
+    expect(screen.getByText('Tổng dự kiến: 800.000 ₫')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Xác nhận' }));
     const dialog = screen.getByRole('alertdialog');
     fireEvent.click(within(dialog).getByRole('button', { name: 'Xác nhận' }));
@@ -156,6 +157,7 @@ describe('BudgetNotifications', () => {
     const plannedTransactions = Array.from({ length: 8 }, (_, index) => ({
       ...transaction,
       id: `planned-${index + 1}`,
+      amount: (index + 1) * 100_000,
       transactionDate: '2020-01-10',
       status: 'Dự kiến' as const,
       description: `Khoản dự kiến ${index + 1}`,
@@ -172,6 +174,7 @@ describe('BudgetNotifications', () => {
     const notificationRegion = screen.getByRole('region', { name: 'Danh sách thông báo' });
     expect(notificationRegion).toHaveClass('budget-notifications-scroll');
     plannedTransactions.forEach(({ description }) => expect(screen.getByText(description)).toBeInTheDocument());
+    expect(screen.getByText('Tổng dự kiến: 3.600.000 ₫')).toBeInTheDocument();
     expect(screen.getByText('Cuộn để xem tất cả 8 giao dịch.')).toBeInTheDocument();
   });
 });
