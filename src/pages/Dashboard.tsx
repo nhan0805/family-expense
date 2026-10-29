@@ -650,12 +650,12 @@ export function Dashboard() {
           <Link className="dashboard-hero-stat dashboard-hero-stat-income" to={periodFilterLink('Thu nhập')}>
             <span className="dashboard-hero-stat-label"><ArrowDownToLine size={15} aria-hidden="true" />{en ? 'Income' : 'Thu nhập'}</span>
             <Amount value={selectedIncome} variant="compact" className="dashboard-hero-stat-value whitespace-nowrap" label={en ? 'Income' : 'Thu nhập'} />
-            <span className="dashboard-hero-stat-meta"><ChangeBadge value={incomeChange} en={en} />{incomeChange !== null && <span>{en ? 'vs previous period' : 'so với kỳ trước'}</span>}</span>
+            <span className="dashboard-hero-stat-meta"><ChangeBadge value={incomeChange} en={en} metric="income" />{incomeChange !== null && <span>{en ? 'vs previous period' : 'so với kỳ trước'}</span>}</span>
           </Link>
           <Link className="dashboard-hero-stat dashboard-hero-stat-expense" to={periodFilterLink('Chi tiêu')}>
             <span className="dashboard-hero-stat-label"><ArrowUpFromLine size={15} aria-hidden="true" />{en ? 'Expenses' : 'Chi tiêu'}</span>
             <Amount value={selectedExpense} variant="compact" className="dashboard-hero-stat-value whitespace-nowrap" label={en ? 'Expenses' : 'Chi tiêu'} />
-            <span className="dashboard-hero-stat-meta"><ChangeBadge value={expenseChange} en={en} />{expenseChange !== null && <span>{en ? 'vs previous period' : 'so với kỳ trước'}</span>}</span>
+            <span className="dashboard-hero-stat-meta"><ChangeBadge value={expenseChange} en={en} metric="expense" />{expenseChange !== null && <span>{en ? 'vs previous period' : 'so với kỳ trước'}</span>}</span>
           </Link>
         </div>
         <Link className="dashboard-hero-cta btn-secondary inline-flex items-center justify-center gap-2" to={periodFilterLink()}>
@@ -715,7 +715,7 @@ export function Dashboard() {
           </div>
         </summary>
         <div className="dashboard-disclosure-panel px-4 pb-4 sm:px-5 sm:pb-5">
-          {topCategories.length ? <div className="space-y-2">{topCategories.map((item) => <Link key={item.id} to={`${periodFilterLink(undefined)}&expenseTypeId=${encodeURIComponent(item.id)}`} className="card-interactive grid grid-cols-[minmax(0,1fr)_minmax(120px,1.6fr)_auto] items-center gap-3 rounded-xl border border-black/5 p-3 hover:bg-black/[.025] focus-visible:outline focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] dark:border-white/10 dark:hover:bg-white/5"><div className="min-w-0"><p className="break-words font-semibold [overflow-wrap:anywhere]">{item.name}</p><p className="text-xs text-gray-500">{formatVnd(item.value)}</p></div><MiniTrend values={item.trend} label={`${item.name}: ${formatVnd(item.value)}`} /><ChangeBadge value={changePercent(item.value, item.previousValue)} en={en} /></Link>)}</div> : <div className="rounded-xl bg-black/[.025] px-4 py-7 text-center text-sm text-gray-500 dark:bg-white/[.04]">{en ? 'No category data in this period.' : 'Chưa có dữ liệu danh mục trong kỳ này.'}</div>}
+          {topCategories.length ? <div className="space-y-2">{topCategories.map((item) => <Link key={item.id} to={`${periodFilterLink(undefined)}&expenseTypeId=${encodeURIComponent(item.id)}`} className="card-interactive grid grid-cols-[minmax(0,1fr)_minmax(120px,1.6fr)_auto] items-center gap-3 rounded-xl border border-black/5 p-3 hover:bg-black/[.025] focus-visible:outline focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] dark:border-white/10 dark:hover:bg-white/5"><div className="min-w-0"><p className="break-words font-semibold [overflow-wrap:anywhere]">{item.name}</p><p className="text-xs text-gray-500">{formatVnd(item.value)}</p></div><MiniTrend values={item.trend} label={`${item.name}: ${formatVnd(item.value)}`} /><ChangeBadge value={changePercent(item.value, item.previousValue)} en={en} metric="expense" /></Link>)}</div> : <div className="rounded-xl bg-black/[.025] px-4 py-7 text-center text-sm text-gray-500 dark:bg-white/[.04]">{en ? 'No category data in this period.' : 'Chưa có dữ liệu danh mục trong kỳ này.'}</div>}
         </div>
       </details>
 
@@ -832,10 +832,16 @@ function buildInsights({
   return insights.slice(0, 2);
 }
 
-function ChangeBadge({ value, en }: { value: number | null; en: boolean }) {
+function ChangeBadge({ value, en, metric }: { value: number | null; en: boolean; metric: 'income' | 'expense' }) {
   if (value === null) return <span className="whitespace-nowrap text-xs text-gray-500">—</span>;
   const up = value > 0;
-  return <span className={`inline-flex items-center gap-1 whitespace-nowrap text-xs font-bold ${up ? 'text-rose-600 dark:text-rose-300' : value < 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-gray-500'}`}>{up ? <TrendingUp size={14} aria-hidden="true" /> : value < 0 ? <TrendingDown size={14} aria-hidden="true" /> : null}{value === 0 ? (en ? 'No change' : 'Không đổi') : `${value > 0 ? '+' : '-'}${formatPercent(value)}%`}</span>;
+  const favorable = metric === 'income' ? up : value < 0;
+  const tone = value === 0
+    ? 'text-gray-500'
+    : favorable
+      ? 'text-emerald-700 dark:text-emerald-300'
+      : 'text-rose-600 dark:text-rose-300';
+  return <span className={`inline-flex items-center gap-1 whitespace-nowrap text-xs font-bold ${tone}`}>{up ? <TrendingUp size={14} aria-hidden="true" /> : value < 0 ? <TrendingDown size={14} aria-hidden="true" /> : null}{value === 0 ? (en ? 'No change' : 'Không đổi') : `${value > 0 ? '+' : '-'}${formatPercent(value)}%`}</span>;
 }
 
 function MiniTrend({ values, label }: { values: number[]; label: string }) {
