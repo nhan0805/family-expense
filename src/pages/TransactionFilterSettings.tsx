@@ -215,7 +215,7 @@ export function TransactionFilterSettings({ embedded = false }: { embedded?: boo
       {!embedded && <div className="page-header flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="page-kicker"><Settings2 size={16} aria-hidden="true" />{en ? 'Personal preferences' : 'Tùy chọn cá nhân'}</p>
-          <h2 className="page-title">{en ? 'Default transaction filters' : 'Bộ lọc giao dịch mặc định'}</h2>
+          <h1 className="page-title">{en ? 'Default transaction filters' : 'Bộ lọc giao dịch mặc định'}</h1>
           <p className="page-subtitle">{en ? 'Choose what you want to see first when the Transactions screen opens.' : 'Chọn những gì bạn muốn xem đầu tiên khi mở màn hình Giao dịch.'}</p>
         </div>
         <Link to="/giao-dich" className="btn-secondary inline-flex items-center gap-2">

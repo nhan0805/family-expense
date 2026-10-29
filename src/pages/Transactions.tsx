@@ -1167,7 +1167,7 @@ export function Transactions() {
       <div className="page-header flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="page-kicker transaction-list-kicker"><Search size={16} aria-hidden="true" />{en ? 'Transaction search' : 'Tra cứu giao dịch'}</p>
-          <h2 className="page-title">{en ? 'Transactions' : 'Giao dịch'}</h2>
+          <h1 className="page-title">{en ? 'Transactions' : 'Giao dịch'}</h1>
           <p className="page-subtitle">{en ? 'Search, review and organize every family transaction.' : 'Tìm kiếm, rà soát và sắp xếp mọi giao dịch của gia đình.'}</p>
         </div>
         <div className="transaction-list-actions flex flex-wrap items-center gap-2">
@@ -1222,7 +1222,7 @@ export function Transactions() {
                 {voiceSupported && (
                   <button
                     type="button"
-                    className={`absolute inset-y-0 right-0 grid min-h-11 min-w-11 place-items-center rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)] ${voiceListening ? 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300' : 'text-gray-500 hover:bg-gray-100 hover:text-[var(--primary)] dark:text-gray-300 dark:hover:bg-white/10'}`}
+                    className={`absolute inset-y-0 right-0 grid min-h-11 min-w-11 place-items-center rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] ${voiceListening ? 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300' : 'text-gray-500 hover:bg-gray-100 hover:text-[var(--primary)] dark:text-gray-300 dark:hover:bg-white/10'}`}
                     aria-label={voiceListening ? (en ? 'Stop voice input' : 'Dừng nhập bằng giọng nói') : (en ? 'Enter search by voice' : 'Nhập tìm kiếm bằng giọng nói')}
                     aria-pressed={voiceListening}
                     title={voiceListening ? (en ? 'Stop listening' : 'Dừng nghe') : (en ? 'Enter search by voice' : 'Nhập tìm kiếm bằng giọng nói')}
@@ -1467,7 +1467,7 @@ export function Transactions() {
         <p className="text-base font-semibold text-gray-600 dark:text-gray-300">{showTrash ? (en ? 'Trash' : 'Thùng rác') : (en ? 'Transaction list' : 'Danh sách giao dịch')}</p>
         <div className="flex items-center gap-0">
           <button type="button" className={`grid size-11 place-items-center rounded-xl transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] ${selectMode ? 'bg-[var(--primary-soft)] text-[var(--primary)]' : 'text-gray-600 hover:bg-[var(--primary-soft)] hover:text-[var(--primary)] dark:text-gray-300 dark:hover:bg-white/10'}`} aria-label={selectMode ? (en ? 'Close multi-select' : 'Đóng chọn nhiều giao dịch') : (en ? 'Select multiple transactions' : 'Chọn nhiều giao dịch')} title={selectMode ? (en ? 'Close multi-select' : 'Đóng chọn nhiều') : (en ? 'Select multiple transactions' : 'Chọn nhiều giao dịch')} aria-pressed={selectMode} onClick={() => selectMode ? closeSelectMode() : setSelectMode(true)}><ListChecks size={21} aria-hidden="true"/></button>
-          <button type="button" className={`flex min-h-11 items-center justify-center gap-1 rounded-xl px-1 transition-colors focus:outline-none focus:ring-4 focus:ring-amber-200/50 ${showTrash ? 'text-amber-700 dark:text-amber-300' : 'text-gray-600 hover:bg-amber-50 hover:text-amber-700 dark:text-gray-300 dark:hover:bg-white/10'}`} aria-label={showTrash ? (en ? 'Close trash' : 'Đóng giao dịch đã xóa') : (en ? 'View trash' : 'Xem giao dịch đã xóa')} title={showTrash ? (en ? 'Close trash' : 'Đóng giao dịch đã xóa') : (en ? 'View trash' : 'Xem giao dịch đã xóa')} aria-pressed={showTrash} onClick={() => { closeSelectMode(); setShowTrash((value) => !value); }}><ArchiveRestore size={19} aria-hidden="true"/><span className="hidden text-sm font-semibold sm:inline">{en ? 'Trash' : 'Đã xóa'}</span></button>
+          <button type="button" className={`flex min-h-11 items-center justify-center gap-1 rounded-xl px-1 transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-200/50 ${showTrash ? 'text-amber-700 dark:text-amber-300' : 'text-gray-600 hover:bg-amber-50 hover:text-amber-700 dark:text-gray-300 dark:hover:bg-white/10'}`} aria-label={showTrash ? (en ? 'Close trash' : 'Đóng giao dịch đã xóa') : (en ? 'View trash' : 'Xem giao dịch đã xóa')} title={showTrash ? (en ? 'Close trash' : 'Đóng giao dịch đã xóa') : (en ? 'View trash' : 'Xem giao dịch đã xóa')} aria-pressed={showTrash} onClick={() => { closeSelectMode(); setShowTrash((value) => !value); }}><ArchiveRestore size={19} aria-hidden="true"/><span className="hidden text-sm font-semibold sm:inline">{en ? 'Trash' : 'Đã xóa'}</span></button>
         </div>
       </div>
       {selectMode && (
@@ -1480,7 +1480,7 @@ export function Transactions() {
       )}
       <div
         key={resultKey}
-        className="transactions-table min-w-0 max-w-full space-y-2 overflow-visible outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] md:space-y-0 md:rounded-2xl md:border"
+        className="transactions-table min-w-0 max-w-full space-y-2 overflow-visible focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] md:space-y-0 md:rounded-2xl md:border"
         role="region"
         aria-label={showTrash ? (en ? 'Deleted transactions table' : 'Bảng giao dịch đã xóa') : (en ? 'Transactions table' : 'Bảng giao dịch')}
         tabIndex={0}
@@ -1513,7 +1513,7 @@ export function Transactions() {
         {rows.length === 0 && !activeQueryIsPending && !activeQueryIsError && (
           hasFilters
             ? <EmptyState title={en ? 'No matching transactions' : 'Không tìm thấy giao dịch phù hợp'} description={en ? 'Try changing the search term, date range or category filter.' : 'Hãy thử thay đổi từ khóa, thời gian hoặc danh mục lọc.'} action={<button className="btn-secondary" onClick={resetFilters}>{en ? 'Clear filters' : 'Xóa bộ lọc'}</button>}/>
-            : <EmptyState title={en ? 'No transactions yet' : 'Chưa có giao dịch'} description={en ? 'Add your first transaction to start managing family finances.' : 'Thêm giao dịch đầu tiên để bắt đầu quản lý thu chi gia đình.'} action={<Link className="btn-primary inline-flex items-center gap-2" to="/giao-dich/moi"><Plus size={17}/>{en ? 'Add transaction' : 'Thêm giao dịch'}</Link>}/>
+            : <EmptyState title={en ? 'No transactions yet' : 'Chưa có giao dịch'} description={en ? 'Add your first transaction to start managing family finances.' : 'Thêm giao dịch đầu tiên để bắt đầu quản lý thu chi gia đình.'} action={<Link className="btn-primary inline-flex items-center gap-2" to="/giao-dich/moi"><Plus size={17} aria-hidden="true" />{en ? 'Add transaction' : 'Thêm giao dịch'}</Link>}/>
         )}
       </div>
       {!showTrash && isSupabaseConfigured && transactionQuery.hasNextPage && (

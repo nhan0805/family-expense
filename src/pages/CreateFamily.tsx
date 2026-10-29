@@ -92,7 +92,7 @@ export function CreateFamily() {
                   id="create-family-name"
                   name="familyName"
                   className="field min-h-14 pl-11"
-                  autoFocus
+                  autoFocus={!(window.matchMedia?.('(pointer: coarse)')?.matches ?? false)}
                   required
                   maxLength={100}
                   aria-invalid={Boolean(message)}

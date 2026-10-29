@@ -573,9 +573,9 @@ export function TransactionForm() {
           </span>
         </div>
         <p className="page-kicker transaction-form-kicker">{id ? <Pencil size={16} aria-hidden="true" /> : <FilePlus2 size={16} aria-hidden="true" />}{en ? 'Transaction entry' : 'Nhập giao dịch'}</p>
-        <h2 className="page-title">
+        <h1 className="page-title">
           {id ? (en ? 'Edit transaction' : 'Sửa giao dịch') : (en ? 'Add transaction' : 'Thêm giao dịch')}
-        </h2>
+        </h1>
         <p className="page-subtitle">
           {en ? 'Record the essentials first; optional details stay tucked away until you need them.' : 'Ghi nhận thông tin chính trước; các chi tiết nâng cao chỉ mở ra khi bạn cần.'}
         </p>
@@ -589,7 +589,7 @@ export function TransactionForm() {
           <p className="form-hint text-xs md:col-span-3">
             {en ? 'Fields marked with ' : 'Các trường có '}<span className="font-bold text-red-600">*</span>{en ? ' are required.' : ' là bắt buộc.'}
           </p>
-          {validationErrors.length > 0 && <div ref={errorSummaryRef} tabIndex={-1} role="alert" aria-labelledby="transaction-form-errors-title" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800 outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-200 md:col-span-3"><h3 id="transaction-form-errors-title" className="font-bold">{en ? 'Please fix these fields' : 'Vui lòng kiểm tra các trường sau'}</h3><ul className="mt-2 list-disc space-y-1 pl-5">{validationErrors.map((item) => <li key={item.id}><a className="underline underline-offset-2" href={`#${item.id}`} onClick={(event) => { if (item.id !== 'transaction-status' || extrasOpen) return; event.preventDefault(); setExtrasOpen(true); window.requestAnimationFrame(() => document.getElementById(item.id)?.focus()); }}>{item.label}: {item.message}</a></li>)}</ul></div>}
+          {validationErrors.length > 0 && <div ref={errorSummaryRef} tabIndex={-1} role="alert" aria-labelledby="transaction-form-errors-title" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-200 md:col-span-3"><h3 id="transaction-form-errors-title" className="font-bold">{en ? 'Please fix these fields' : 'Vui lòng kiểm tra các trường sau'}</h3><ul className="mt-2 list-disc space-y-1 pl-5">{validationErrors.map((item) => <li key={item.id}><a className="underline underline-offset-2" href={`#${item.id}`} onClick={(event) => { if (item.id !== 'transaction-status' || extrasOpen) return; event.preventDefault(); setExtrasOpen(true); window.requestAnimationFrame(() => document.getElementById(item.id)?.focus()); }}>{item.label}: {item.message}</a></li>)}</ul></div>}
           <div className="form-section-heading form-section-heading-primary md:col-span-3"><h3 className="font-bold">{en ? 'Basic information' : 'Thông tin chính'}</h3><p className="text-xs text-gray-500 dark:text-gray-400">{en ? 'Enter the information needed to record this transaction.' : 'Nhập các thông tin cần thiết để ghi nhận giao dịch.'}</p></div>
           <div className="md:col-span-3">
             <label className="label flex items-center gap-2" htmlFor="transaction-description">
@@ -604,13 +604,13 @@ export function TransactionForm() {
                   required
                   aria-invalid={Boolean(errors.description)}
                   aria-describedby={errors.description ? 'transaction-description-error' : undefined}
-                  autoFocus={!id}
+                  autoFocus={!id && !(window.matchMedia?.('(pointer: coarse)')?.matches ?? false)}
                   {...register('description')}
                 />
                 {voiceSupported && (
                   <button
                     type="button"
-                    className={`absolute inset-y-0 right-0 grid min-h-11 min-w-11 place-items-center rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)] ${voiceListening ? 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300' : 'text-gray-500 hover:bg-gray-100 hover:text-[var(--primary)] dark:text-gray-300 dark:hover:bg-white/10'}`}
+                    className={`absolute inset-y-0 right-0 grid min-h-11 min-w-11 place-items-center rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] ${voiceListening ? 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300' : 'text-gray-500 hover:bg-gray-100 hover:text-[var(--primary)] dark:text-gray-300 dark:hover:bg-white/10'}`}
                     aria-label={voiceListening ? (en ? 'Stop voice input' : 'Dừng nhập bằng giọng nói') : (en ? 'Enter description by voice' : 'Nhập nội dung bằng giọng nói')}
                     aria-pressed={voiceListening}
                     title={voiceListening ? (en ? 'Stop listening' : 'Dừng nghe') : (en ? 'Enter by voice' : 'Nhập bằng giọng nói')}
@@ -622,7 +622,7 @@ export function TransactionForm() {
               </div>
               <button
                 type="button"
-                className={`ai-action btn-secondary flex h-[46px] shrink-0 items-center justify-center gap-2 px-3 focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)] disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500 disabled:shadow-none dark:disabled:bg-gray-700 dark:disabled:text-gray-400 ${aiCompleted ? 'border-emerald-600 bg-emerald-50 text-emerald-800 dark:border-emerald-400 dark:bg-emerald-950/40 dark:text-emerald-200' : 'text-[var(--primary)]'}`}
+                className={`ai-action btn-secondary flex h-[46px] shrink-0 items-center justify-center gap-2 px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500 disabled:shadow-none dark:disabled:bg-gray-700 dark:disabled:text-gray-400 ${aiCompleted ? 'border-emerald-600 bg-emerald-50 text-emerald-800 dark:border-emerald-400 dark:bg-emerald-950/40 dark:text-emerald-200' : 'text-[var(--primary)]'}`}
                 aria-label={en ? 'Analyze description with AI' : 'Phân tích nội dung bằng AI'}
                 title={en ? 'Analyze description with AI' : 'Phân tích nội dung bằng AI'}
                 disabled={aiBusy || !description.trim()}

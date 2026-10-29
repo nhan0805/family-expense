@@ -299,9 +299,11 @@ export function Members() {
         {editingFamily ? (
           <form className="family-name-editor" onSubmit={saveFamilyName}>
             <input
+              id="family-name-editor"
+              name="familyName"
               aria-label={en ? 'New family name' : 'Tên gia đình mới'}
               className="field"
-              autoFocus
+              autoFocus={!(window.matchMedia?.('(pointer: coarse)')?.matches ?? false)}
               required
               maxLength={100}
               value={familyNameInput}
@@ -316,13 +318,13 @@ export function Members() {
               className="btn-secondary shrink-0"
               onClick={() => setEditingFamily(false)}
             >
-              <X size={17} />
+              <X size={17} aria-hidden="true" />
             </button>
           </form>
         ) : (
           <div className="family-header">
             <div className="min-w-0">
-              <h2 className="page-title mt-0">{en ? 'Family members' : 'Thành viên gia đình'}</h2>
+              <h1 className="page-title mt-0">{en ? 'Family members' : 'Thành viên gia đình'}</h1>
               <p className="mt-1 truncate text-sm font-semibold text-gray-600 dark:text-gray-300" title={familyName}>{familyName}</p>
             </div>
             {isOwner && (
@@ -336,7 +338,7 @@ export function Members() {
                   setEditingFamily(true);
                 }}
               >
-                <Pencil size={18} />
+                <Pencil size={18} aria-hidden="true" />
               </button>
             )}
           </div>
@@ -360,7 +362,7 @@ export function Members() {
         >
           <div className="form-section-heading form-section-heading-primary sm:col-span-2">
             <h3 className="flex items-center gap-2 font-bold">
-              <UserPlus size={20} />
+              <UserPlus size={20} aria-hidden="true" />
               {en ? 'Add member' : 'Thêm thành viên'}
             </h3>
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
@@ -372,6 +374,9 @@ export function Members() {
             <input
               className="field"
               type="email"
+              name="email"
+              autoComplete="email"
+              spellCheck={false}
               required
               value={email}
               onChange={(event) => setEmail(event.target.value)}
@@ -381,6 +386,8 @@ export function Members() {
             <span className="label">{en ? 'Display name' : 'Tên hiển thị'}</span>
             <input
               className="field"
+              name="displayName"
+              autoComplete="name"
               maxLength={100}
               value={displayName}
               onChange={(event) => setDisplayName(event.target.value)}
@@ -408,7 +415,7 @@ export function Members() {
                   <input
                     aria-label={en ? 'New display name' : 'Tên hiển thị mới'}
                     className="field"
-                    autoFocus
+                    autoFocus={!(window.matchMedia?.('(pointer: coarse)')?.matches ?? false)}
                     required
                     maxLength={100}
                     value={editingName}
@@ -423,7 +430,7 @@ export function Members() {
                     className="btn-secondary shrink-0"
                     onClick={() => setEditingId(null)}
                   >
-                    <X size={17} />
+                    <X size={17} aria-hidden="true" />
                   </button>
                 </form>
               ) : (
@@ -455,7 +462,7 @@ export function Members() {
                           setEditingName(member.display_name);
                         }}
                       >
-                        <Pencil size={16} />
+                        <Pencil size={16} aria-hidden="true" />
                       </button>
                     )}
                     {isOwner && member.role === 'member' && (
@@ -509,7 +516,7 @@ export function Members() {
             aria-busy={busy}
             onClick={() => void removeFamily()}
           >
-            <Trash2 className="mr-2 inline" size={17} />
+            <Trash2 className="mr-2 inline" size={17} aria-hidden="true" />
             {busy
               ? (en ? 'Deleting family…' : 'Đang xóa gia đình…')
               : deletionEligibility === null

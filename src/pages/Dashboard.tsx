@@ -14,8 +14,8 @@ import {
 } from 'recharts';
 import type { PieLabelRenderProps } from 'recharts';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ArrowDownToLine,
   ArrowUpFromLine,
@@ -94,6 +94,14 @@ const modeLabels: Record<DashboardMode, { vi: string; en: string }> = {
   '12m': { vi: '12 tháng', en: '12 months' },
   year: { vi: 'Năm', en: 'Year' },
   custom: { vi: 'Tùy chỉnh', en: 'Custom' },
+};
+
+const isDashboardMode = (value: string | null): value is DashboardMode => value === 'month' || value === '6m' || value === '12m' || value === 'year' || value === 'custom';
+
+const isIsoDate = (value: string | null): value is string => {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const parsed = new Date(`${value}T00:00:00Z`);
+  return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
 };
 
 const todayKey = () =>
@@ -296,19 +304,78 @@ export const summarizePieData = (data: ExpenseChartItem[], language: CatalogLang
 
 export function Dashboard() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlSyncRef = useRef(false);
+  const skipUrlWriteRef = useRef(false);
+  const lastSearchParamsRef = useRef(searchParams.toString());
   const queryClient = useQueryClient();
   const { language } = useOptionalLanguage();
   const en = language === 'en';
   const { familyId, transactions, purposes, expenseTypes } = useApp();
   const currentMonth = currentMonthKey();
   const [currentYear, currentMonthNumber] = currentMonth.split('-');
-  const [selectedYear, setSelectedYear] = useState(currentYear || '');
-  const [selectedMonth, setSelectedMonth] = useState(currentMonthNumber || '01');
-  const [mode, setMode] = useState<DashboardMode>('month');
-  const [customFrom, setCustomFrom] = useState(`${currentMonth}-01`);
-  const [customTo, setCustomTo] = useState(todayKey());
+  const requestedYear = searchParams.get('year');
+  const requestedMonth = searchParams.get('month');
+  const requestedMode = searchParams.get('dashboardMode');
+  const requestedFrom = searchParams.get('from');
+  const requestedTo = searchParams.get('to');
+  const [selectedYear, setSelectedYear] = useState(() => requestedYear && /^\d{4}$/.test(requestedYear) ? requestedYear : currentYear || '');
+  const [selectedMonth, setSelectedMonth] = useState(() => requestedMonth && /^(0[1-9]|1[0-2])$/.test(requestedMonth) ? requestedMonth : currentMonthNumber || '01');
+  const [mode, setMode] = useState<DashboardMode>(() => isDashboardMode(requestedMode) ? requestedMode : 'month');
+  const [customFrom, setCustomFrom] = useState(() => isIsoDate(requestedFrom) ? requestedFrom : `${currentMonth}-01`);
+  const [customTo, setCustomTo] = useState(() => isIsoDate(requestedTo) ? requestedTo : todayKey());
   const [showTrendTable, setShowTrendTable] = useState(false);
   const [hiddenTrendSeries, setHiddenTrendSeries] = useState<TrendSeriesKey[]>([]);
+  useEffect(() => {
+    if (urlSyncRef.current) {
+      urlSyncRef.current = false;
+      lastSearchParamsRef.current = searchParams.toString();
+      return;
+    }
+    const serialized = searchParams.toString();
+    if (lastSearchParamsRef.current === serialized) return;
+    lastSearchParamsRef.current = serialized;
+    skipUrlWriteRef.current = true;
+    const requestedUrlMode = searchParams.get('dashboardMode');
+    const requestedUrlYear = searchParams.get('year');
+    const requestedUrlMonth = searchParams.get('month');
+    const requestedUrlFrom = searchParams.get('from');
+    const requestedUrlTo = searchParams.get('to');
+    const nextMode: DashboardMode = isDashboardMode(requestedUrlMode) ? requestedUrlMode : 'month';
+    const nextYear = requestedUrlYear && /^\d{4}$/.test(requestedUrlYear) ? requestedUrlYear : currentYear || '';
+    const nextMonth = requestedUrlMonth && /^(0[1-9]|1[0-2])$/.test(requestedUrlMonth) ? requestedUrlMonth : currentMonthNumber || '01';
+    const nextFrom = isIsoDate(requestedUrlFrom) ? requestedUrlFrom : `${currentMonth}-01`;
+    const nextTo = isIsoDate(requestedUrlTo) ? requestedUrlTo : todayKey();
+    setMode(nextMode);
+    setSelectedYear(nextYear);
+    setSelectedMonth(nextMonth);
+    setCustomFrom(nextFrom);
+    setCustomTo(nextTo);
+  }, [currentMonth, currentMonthNumber, currentYear, searchParams]);
+  useEffect(() => {
+    if (skipUrlWriteRef.current) {
+      skipUrlWriteRef.current = false;
+      return;
+    }
+    const next = new URLSearchParams(searchParams);
+    next.set('dashboardMode', mode);
+    if (/^\d{4}$/.test(selectedYear)) next.set('year', selectedYear);
+    else next.delete('year');
+    if (/^(0[1-9]|1[0-2])$/.test(selectedMonth)) next.set('month', selectedMonth);
+    else next.delete('month');
+    if (mode === 'custom') {
+      if (isIsoDate(customFrom)) next.set('from', customFrom);
+      else next.delete('from');
+      if (isIsoDate(customTo)) next.set('to', customTo);
+      else next.delete('to');
+    } else {
+      next.delete('from');
+      next.delete('to');
+    }
+    if (next.toString() === searchParams.toString()) return;
+    urlSyncRef.current = true;
+    setSearchParams(next, { replace: true });
+  }, [customFrom, customTo, mode, searchParams, selectedMonth, selectedYear, setSearchParams]);
   const toggleTrendSeries = (series: TrendSeriesKey) => {
     setHiddenTrendSeries((current) => current.includes(series)
       ? current.filter((item) => item !== series)
@@ -546,7 +613,7 @@ export function Dashboard() {
       <div className="dashboard-page space-y-5">
         <header className="page-header">
           <p className="page-kicker"><BarChart3 size={16} aria-hidden="true" />{en ? 'Family spending analytics' : 'Phân tích chi tiêu gia đình'}</p>
-          <h2 className="page-title">{en ? 'Financial overview' : 'Tổng quan tài chính'}</h2>
+          <h1 className="page-title">{en ? 'Financial overview' : 'Tổng quan tài chính'}</h1>
         </header>
         <div role="alert" className="card border-red-200 bg-red-50 p-5 text-sm text-red-800 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-200">
           <p className="font-semibold">{en ? 'Could not load dashboard data.' : 'Không thể tải dữ liệu Dashboard.'}</p>
@@ -561,7 +628,7 @@ export function Dashboard() {
       <header className="page-header flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="page-kicker"><BarChart3 size={16} aria-hidden="true" />{en ? 'Family spending analytics' : 'Phân tích chi tiêu gia đình'}</p>
-          <h2 className="page-title">{en ? 'Financial overview' : 'Tổng quan tài chính'}</h2>
+          <h1 className="page-title">{en ? 'Financial overview' : 'Tổng quan tài chính'}</h1>
           <p className="page-subtitle">{en ? 'See what changed and where the money went.' : 'Theo dõi điều gì đã thay đổi và tiền đang đi đâu.'}</p>
         </div>
       </header>

@@ -186,7 +186,7 @@ textarea {
   transition: transform 150ms ease;
 }
 
-.skip-link:focus {
+.skip-link:focus-visible {
   transform: translateY(0);
 }
 
@@ -616,7 +616,8 @@ textarea {
     background: var(--surface);
     color: var(--text);
     padding: .7rem .8rem;
-    outline: none;
+    outline: 2px solid transparent;
+    outline-offset: 2px;
     font-size: 1rem;
     transition: border-color .16s ease, box-shadow .16s ease, background-color .16s ease;
   }
@@ -644,7 +645,7 @@ textarea {
   appearance: none;
 }
 
-.field:focus {
+.field:focus-visible {
   border-color: var(--primary);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent);
 }
@@ -654,7 +655,7 @@ textarea {
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 18%, transparent);
 }
 
-.dark .field:focus {
+.dark .field:focus-visible {
   border-color: var(--focus-ring);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus-ring) 20%, transparent);
 }
@@ -1817,6 +1818,7 @@ summary:focus-visible {
 button,
 a {
   transition: background-color .16s ease, color .16s ease, border-color .16s ease, opacity .16s ease, transform .12s ease;
+  touch-action: manipulation;
 }
 
 button:active,
@@ -2312,6 +2314,15 @@ a:active {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: .001ms !important;
+  }
+
   html {
     scroll-behavior: auto;
   }
@@ -2391,6 +2402,7 @@ body::before {
   background: color-mix(in srgb, var(--surface) 78%, transparent);
   box-shadow: 0 1px 0 color-mix(in srgb, var(--border) 62%, transparent), 0 10px 30px color-mix(in srgb, var(--app-bg) 22%, transparent);
   backdrop-filter: blur(20px) saturate(150%);
+  padding-top: max(.75rem, env(safe-area-inset-top));
 }
 
 .app-header::after {
@@ -2432,6 +2444,8 @@ body::before {
   background: color-mix(in srgb, var(--surface) 80%, transparent);
   box-shadow: 14px 0 40px color-mix(in srgb, var(--app-bg) 24%, transparent);
   backdrop-filter: blur(18px) saturate(140%);
+  overscroll-behavior: contain;
+  padding-top: max(1rem, env(safe-area-inset-top));
 }
 
 .app-sidebar-open {
@@ -2537,7 +2551,7 @@ body::before {
   border-color: color-mix(in srgb, var(--primary) 36%, var(--border-strong));
 }
 
-.field:focus {
+.field:focus-visible {
   border-color: var(--focus-ring);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus-ring) 20%, transparent), 0 0 22px color-mix(in srgb, var(--focus-ring) 12%, transparent), inset 0 1px 0 color-mix(in srgb, var(--surface) 56%, transparent);
 }

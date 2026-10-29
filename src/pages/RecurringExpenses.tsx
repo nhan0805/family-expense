@@ -290,9 +290,11 @@ export function RecurringExpenses() {
         behavior: prefersReducedMotion ? 'auto' : 'smooth',
         block: 'start',
       });
-      form
-        .querySelector<HTMLElement>('[data-editor-focus]')
-        ?.focus({ preventScroll: true });
+      if (!(window.matchMedia?.('(pointer: coarse)')?.matches ?? false)) {
+        form
+          .querySelector<HTMLElement>('[data-editor-focus]')
+          ?.focus({ preventScroll: true });
+      }
     });
     return () => window.cancelAnimationFrame(frame);
   }, [editorScrollRequest]);
@@ -710,9 +712,9 @@ export function RecurringExpenses() {
             <Repeat2 size={16} aria-hidden="true" />
             {en ? 'Recurring setup' : 'Thiết lập định kỳ'}
           </p>
-          <h2 className="page-title">
+          <h1 className="page-title">
             {en ? 'Recurring expenses' : 'Chi phí định kỳ'}
-          </h2>
+          </h1>
           <p className="page-subtitle">
             {canManage
               ? en
@@ -815,7 +817,7 @@ export function RecurringExpenses() {
               aria-label={en ? 'Close editor' : 'Đóng biểu mẫu'}
               onClick={closeEditor}
             >
-              <X size={19} />
+              <X size={19} aria-hidden="true" />
             </button>
           </div>
           <form

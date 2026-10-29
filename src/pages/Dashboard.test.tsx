@@ -6,7 +6,7 @@ import {
   within,
 } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useApp } from '../context/AppContext';
 import type { Transaction } from '../lib/domain';
@@ -35,13 +35,15 @@ const transaction = (
 });
 
 const confirmPlannedTransaction = vi.fn().mockResolvedValue(null);
-const renderDashboard = () => {
+const LocationProbe = () => <output data-testid="location-search">{useLocation().search}</output>;
+const renderDashboard = (initialEntries = ['/']) => {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
   return render(
     <QueryClientProvider client={client}>
-      <MemoryRouter>
+      <MemoryRouter initialEntries={initialEntries}>
+        <LocationProbe />
         <Dashboard />
       </MemoryRouter>
     </QueryClientProvider>,
@@ -113,6 +115,19 @@ describe('Dashboard', () => {
     expect(screen.queryByText('Giao dịch gần đây')).not.toBeInTheDocument();
     expect(screen.queryByText('Chi tháng 2')).not.toBeInTheDocument();
     expect(screen.queryByText('Chi tháng 1')).not.toBeInTheDocument();
+  });
+
+  it('khôi phục kỳ Dashboard từ URL để có thể chia sẻ hoặc quay lại đúng bộ lọc', () => {
+    vi.mocked(useApp).mockReturnValue({
+      transactions: [transaction('Chi năm 2026', '2026-02-10', 250_000)],
+      purposes: [{ id: 'p1', name: 'Sinh hoạt' }],
+      expenseTypes: [{ id: 'e1', name: 'Thực phẩm' }],
+      confirmPlannedTransaction,
+    } as unknown as ReturnType<typeof useApp>);
+    renderDashboard(['/?dashboardMode=year&year=2026&month=02']);
+
+    expect(screen.getByText('Năm 2026')).toBeInTheDocument();
+    expect(screen.getByTestId('location-search')).toHaveTextContent('dashboardMode=year');
   });
 
   it('giữ đúng khoảng ngày và bao gồm mọi mục đích khi mở giao dịch từ cột xu hướng', () => {

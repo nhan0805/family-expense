@@ -150,7 +150,7 @@ export function Catalogs() {
   return <div className="catalogs-page space-y-5">
     <div className="page-header">
       <p className="page-kicker"><Tags size={16} aria-hidden="true" />{isEnglish ? 'Catalog setup' : 'Thiết lập danh mục'}</p>
-      <h2 className="page-title">{isEnglish ? 'Categories' : 'Danh mục'}</h2>
+      <h1 className="page-title">{isEnglish ? 'Categories' : 'Danh mục'}</h1>
       <p className="page-subtitle">{canManage
         ? (isEnglish ? 'You can add, rename and delete unused categories.' : 'Bạn có thể thêm, đổi tên và xóa danh mục chưa được sử dụng.')
         : (isEnglish ? 'You can view categories. Only the family owner can edit them.' : 'Bạn có thể xem danh mục. Chỉ chủ gia đình mới có quyền chỉnh sửa.')}</p>
@@ -248,7 +248,9 @@ function Catalog({
       if (!form) return;
       const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
       form.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' });
-      form.querySelector<HTMLElement>('[data-editor-focus]')?.focus({ preventScroll: true });
+      if (!(window.matchMedia?.('(pointer: coarse)')?.matches ?? false)) {
+        form.querySelector<HTMLElement>('[data-editor-focus]')?.focus({ preventScroll: true });
+      }
     });
     return () => window.cancelAnimationFrame(frame);
   }, [editor, isEditingHere]);

@@ -161,7 +161,7 @@ export function AutomaticTransactionSettings() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="page-kicker"><Settings2 size={16} aria-hidden="true" />{en ? 'Automatic transactions' : 'Giao dịch tự động'}</p>
-          <h2 id="automatic-transaction-settings-title" className="page-title">{en ? 'Automatic transaction defaults' : 'Mặc định giao dịch tự động'}</h2>
+          <h1 id="automatic-transaction-settings-title" className="page-title">{en ? 'Automatic transaction defaults' : 'Mặc định giao dịch tự động'}</h1>
           <p className="page-subtitle">{en ? 'Choose the purpose, category and payment method for new transactions created by savings and gold workflows.' : 'Chọn mục đích, danh mục và phương thức thanh toán cho giao dịch mới được tạo từ sổ tiết kiệm và vàng.'}</p>
         </div>
         <span className={`inline-flex min-h-11 items-center gap-2 self-start rounded-xl px-3 py-2 text-sm font-semibold ${hasSavedDefaults ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200'}`}>
