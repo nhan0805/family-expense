@@ -29,6 +29,8 @@ describe('sắp xếp giao dịch theo ngày', () => {
   it('đọc đúng bộ lọc loại giao dịch từ URL KPI', () => {
     expect(getInitialTransactionType('Chi tiêu')).toBe('Chi tiêu');
     expect(getInitialTransactionType('Thu nhập')).toBe('Thu nhập');
+    expect(getInitialTransactionType('')).toBe('');
+    expect(getInitialTransactionType('all')).toBe('');
     expect(getInitialTransactionType(null)).toBe('Chi tiêu');
     expect(getInitialTransactionType('không hợp lệ')).toBe('Chi tiêu');
   });

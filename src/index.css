@@ -2089,7 +2089,10 @@ a:active {
 }
 
 .dashboard-hero-cta {
-  width: 100%;
+  width: 3rem;
+  min-width: 3rem;
+  min-height: 3rem;
+  padding: .65rem;
 }
 
 .dashboard-controls,
@@ -2287,7 +2290,8 @@ a:active {
   }
 
   .dashboard-hero-cta {
-    width: auto;
+    width: 3rem;
+    min-width: 3rem;
     white-space: nowrap;
   }
 
@@ -2314,9 +2318,9 @@ a:active {
   }
 
   .dashboard-hero-cta {
-    width: 100%;
-    min-width: 0;
-    justify-self: stretch;
+    width: 3rem;
+    min-width: 3rem;
+    justify-self: end;
   }
 }
 
