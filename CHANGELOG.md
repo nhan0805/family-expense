@@ -1,5 +1,16 @@
 # Nhật ký thay đổi Family Expense
 
+## 2026-11-01
+
+### Deploy tối ưu timeout và cache cho tính năng AI
+
+- PR [#297](https://github.com/nhan0805/family-expense/pull/297) đã merge vào `main` tại commit `598cee220eaf0d10444741be2d59ee99c1a81e53`.
+- Frontend dùng client Supabase riêng cho AI Edge Functions với ngân sách 30 giây; client AI chờ tối đa 28 giây, còn CRUD/RPC giữ ngân sách 15 giây. Khôi phục cache context danh mục 60 giây và thêm RPC `get_ai_dashboard_context` để trả summary cache 5 phút trước khi aggregate; cache hit không chiếm quota AI.
+- Files/DB objects: `src/lib/supabase.ts`, `src/lib/aiClient.ts`, `supabase/functions/summarize-dashboard/index.ts`, migration `supabase/migrations/202610310001_restore_ai_performance_caches.sql`, `public.get_ai_request_context`, `public.get_ai_dashboard_context` và test liên quan.
+- CI PR [run #41224648067](https://github.com/nhan0805/family-expense/actions/runs/41224648067) pass quality, coverage, build/performance, E2E và db-security; Preview [run #41224648065](https://github.com/nhan0805/family-expense/actions/runs/41224648065) pass.
+- Supabase Production Deploy [run #41224836389](https://github.com/nhan0805/family-expense/actions/runs/41224836389) pass: migration đã áp dụng và bốn Edge Functions đã deploy. CI hậu merge [run #41224836384](https://github.com/nhan0805/family-expense/actions/runs/41224836384) pass quality, coverage, build/performance, E2E và db-security.
+- Smoke production `https://family-expense-8fo.pages.dev/`, `/dang-nhap`, `https://fafin.pages.dev/` và `/dang-nhap` đều trả HTTP 200; live bundle đã chứa marker timeout mới. Chưa chạy thao tác AI có đăng nhập thật để tránh dùng credential hoặc thay đổi dữ liệu production.
+
 ## 2026-10-28
 
 ### Củng cố dữ liệu demo, xác thực đầu vào và các Edge Function
