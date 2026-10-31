@@ -1,7 +1,7 @@
 import { normalizeText } from './domain';
-import { supabase } from './supabase';
+import { supabaseAi } from './supabase';
 
-export const AI_REQUEST_TIMEOUT_MS = 25_000;
+export const AI_REQUEST_TIMEOUT_MS = 28_000;
 export const AI_SEARCH_CACHE_STALE_TIME_MS = 5 * 60_000;
 export const AI_SEARCH_CACHE_GC_TIME_MS = 30 * 60_000;
 
@@ -45,7 +45,7 @@ export const aiErrorMessage = (
   if (
     error instanceof AiRequestTimeoutError ||
     errorStatus(error) === 504 ||
-    (error instanceof Error && /AI_TIMEOUT|GEMINI_TIMEOUT/.test(error.message))
+    (error instanceof Error && /AI_TIMEOUT|GEMINI_TIMEOUT|SUPABASE_REQUEST_TIMEOUT/.test(error.message))
   )
     return en
       ? 'AI took too long to respond. Please try again.'
@@ -85,7 +85,7 @@ export async function invokeAiFunction<T>(
   }
 
   try {
-    const { data, error } = await supabase.functions.invoke<T>(functionName, {
+    const { data, error } = await supabaseAi.functions.invoke<T>(functionName, {
       body,
       signal: controller.signal,
     });

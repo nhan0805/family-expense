@@ -50,10 +50,11 @@ const responseJsonSchema = {
   required: ['summary', 'highlights'],
   additionalProperties: false,
 };
-type DashboardFactsResponse = {
+type DashboardContextResponse = {
   userId?: string;
   slotId?: string;
   facts?: Record<string, unknown>;
+  cached?: unknown;
 };
 type GeminiResponse = {
   candidates?: Array<{
@@ -86,57 +87,62 @@ Deno.serve(async (req) => {
       global: { headers: { Authorization: auth } },
     });
 
-    const { data: factsData, error: factsError } = await db.rpc(
-      'get_ai_dashboard_facts',
+    const { data: contextData, error: contextError } = await db.rpc(
+      'get_ai_dashboard_context',
       {
         p_family_id: familyId,
         p_date_from: parsed.dateFrom,
         p_date_to: parsed.dateTo,
+        p_period_label: parsed.periodLabel,
+        p_language: parsed.language,
       },
     );
-    if (factsError) {
-      if (factsError.message.includes('FORBIDDEN'))
+    if (contextError) {
+      if (contextError.message.includes('FORBIDDEN'))
         return jsonResponse(req, { error: 'FORBIDDEN' }, 403);
-      if (factsError.message.includes('RATE_LIMITED'))
+      if (contextError.message.includes('RATE_LIMITED'))
         return jsonResponse(req, { error: 'RATE_LIMITED' }, 429);
-      if (factsError.message.includes('INVALID_DATE_RANGE'))
+      if (contextError.message.includes('INVALID_DATE_RANGE'))
         return jsonResponse(req, { error: 'INVALID_DATE_RANGE' }, 422);
+      if (contextError.message.includes('INVALID_REQUEST_BODY'))
+        return jsonResponse(req, { error: 'INVALID_SCHEMA' }, 422);
       throw new Error('FACTS_QUERY_FAILED');
     }
-    const factsResponse = (factsData || {}) as DashboardFactsResponse;
-    userId = factsResponse.userId || '';
-    slotId = factsResponse.slotId || '';
+    const contextResponse = (contextData || {}) as DashboardContextResponse;
+    userId = contextResponse.userId || '';
+    slotId = contextResponse.slotId || '';
     if (!userId) throw new Error('INVALID_AUTH_CONTEXT');
-    const serviceRole = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    const cacheDb = serviceRole ? createClient(url, serviceRole) : null;
-    if (cacheDb) {
-      const { data: cachedSummary, error: cacheError } = await cacheDb
-        .from('ai_summary_cache')
-        .select('summary,highlights')
-        .eq('family_id', familyId)
-        .eq('date_from', parsed.dateFrom)
-        .eq('date_to', parsed.dateTo)
-        .eq('period_label', parsed.periodLabel)
-        .eq('language', parsed.language)
-        .gte('updated_at', new Date(Date.now() - 5 * 60_000).toISOString())
-        .maybeSingle();
-      if (cacheError) throw new Error('SUMMARY_CACHE_QUERY_FAILED');
-      if (cachedSummary) {
-        const cachedResponse = responseSchema.safeParse(cachedSummary);
-        if (cachedResponse.success) {
-          if (slotId)
-            await db.rpc('complete_ai_request', {
+    const cachedResponse = responseSchema.safeParse(contextResponse.cached);
+    if (cachedResponse.success) {
+      const latencyMs = Date.now() - started;
+      console.log(
+        'AI_DASHBOARD_SUMMARY',
+        JSON.stringify({
+          model,
+          latencyMs,
+          cacheHit: true,
+          region: Deno.env.get('SB_REGION') || 'unknown',
+        }),
+      );
+      if (slotId)
+        EdgeRuntime.waitUntil(
+          db
+            .rpc('complete_ai_request', {
               p_slot_id: slotId,
               p_model: model,
               p_status: 'success',
-              p_latency_ms: Date.now() - started,
+              p_latency_ms: latencyMs,
               p_input_length: 0,
-            });
-          return jsonResponse(req, cachedResponse.data);
-        }
-      }
+            })
+            .then(({ error }) => {
+              if (error) console.error('AI_USAGE_LOG_FAILED', error.message);
+            }),
+        );
+      return jsonResponse(req, cachedResponse.data);
     }
-    const facts = factsResponse.facts || {};
+    const serviceRole = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const cacheDb = serviceRole ? createClient(url, serviceRole) : null;
+    const facts = contextResponse.facts || {};
     const prompt =
       parsed.language === 'en'
         ? `Write a concise family-finance dashboard summary for the period "${parsed.periodLabel}". Use only the verified aggregate facts below. Do not invent causes, transactions, or advice that is not supported by the facts. Mention income, expenses, net value, the largest category when available, and the monthly direction when meaningful. Return 2-3 short sentences and up to 4 useful highlights. Facts: ${JSON.stringify(facts)}`
@@ -231,7 +237,6 @@ Deno.serve(async (req) => {
               [
                 'INVALID_REQUEST_BODY',
                 'FACTS_QUERY_FAILED',
-                'SUMMARY_CACHE_QUERY_FAILED',
                 'INVALID_AUTH_CONTEXT',
                 'EMPTY_AI_RESPONSE',
                 'GEMINI_UNAVAILABLE',

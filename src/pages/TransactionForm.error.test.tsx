@@ -10,6 +10,7 @@ vi.mock('../context/AppContext', () => ({ useApp: vi.fn() }));
 vi.mock('../lib/supabase', () => ({
   isSupabaseConfigured: true,
   supabase: { functions: { invoke: vi.fn() } },
+  supabaseAi: { functions: { invoke: vi.fn() } },
 }));
 
 it('không hiển thị loading vô hạn khi sửa giao dịch nhưng chưa có familyId', () => {
