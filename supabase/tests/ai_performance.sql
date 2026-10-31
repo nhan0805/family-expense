@@ -1,5 +1,5 @@
 begin;
-select plan(6);
+select plan(7);
 
 select ok(
   exists (
@@ -20,6 +20,10 @@ select ok(
 select has_function(
   'public', 'get_ai_dashboard_facts', array['uuid', 'date', 'date'],
   'Dashboard AI facts dùng aggregate RPC'
+);
+select has_function(
+  'public', 'get_ai_dashboard_context', array['uuid', 'date', 'date', 'text', 'text'],
+  'Dashboard AI context có thể trả cache trước khi aggregate'
 );
 select ok(
   exists (

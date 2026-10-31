@@ -3,14 +3,15 @@ const url=import.meta.env.VITE_SUPABASE_URL as string|undefined; const key=impor
 export const isSupabaseConfigured=Boolean(url&&key&&!url.includes('your-project'));
 
 export const SUPABASE_REQUEST_TIMEOUT_MS = 15_000;
+export const SUPABASE_FUNCTION_REQUEST_TIMEOUT_MS = 30_000;
 
-const fetchWithTimeout: typeof fetch = async (input, init) => {
+export const createFetchWithTimeout = (timeoutMs: number): typeof fetch => async (input, init) => {
   const controller = new AbortController();
   let timedOut = false;
   const timeoutId = globalThis.setTimeout(() => {
     timedOut = true;
     controller.abort();
-  }, SUPABASE_REQUEST_TIMEOUT_MS);
+  }, timeoutMs);
   const abortFromCaller = () => controller.abort();
   init?.signal?.addEventListener('abort', abortFromCaller, { once: true });
   if (init?.signal?.aborted) controller.abort();
@@ -26,4 +27,22 @@ const fetchWithTimeout: typeof fetch = async (input, init) => {
   }
 };
 
-export const supabase=createClient(url||'https://placeholder.supabase.co',key||'placeholder',{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true},global:{fetch: fetchWithTimeout}});
+const fetchWithTimeout = createFetchWithTimeout(SUPABASE_REQUEST_TIMEOUT_MS);
+const fetchForAiFunctions = createFetchWithTimeout(SUPABASE_FUNCTION_REQUEST_TIMEOUT_MS);
+const supabaseUrl = url || 'https://placeholder.supabase.co';
+const supabaseKey = key || 'placeholder';
+
+export const supabase=createClient(supabaseUrl,supabaseKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true},global:{fetch: fetchWithTimeout}});
+
+// AI Edge Functions may spend up to 25 seconds waiting for Gemini. Keep the
+// normal Supabase request budget for CRUD/RPC calls, but give AI its own
+// client and fetch budget. The access token still comes from the primary auth
+// client, so RLS and function JWT verification remain unchanged.
+export const supabaseAi = createClient(supabaseUrl, supabaseKey, {
+  accessToken: async () => {
+    const { data } = await supabase.auth.getSession();
+    return data.session?.access_token ?? null;
+  },
+  auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  global: { fetch: fetchForAiFunctions },
+});

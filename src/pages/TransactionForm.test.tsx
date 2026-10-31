@@ -12,6 +12,7 @@ const invokeMock = vi.hoisted(() => vi.fn());
 vi.mock('../lib/supabase', () => ({
   isSupabaseConfigured: true,
   supabase: { functions: { invoke: invokeMock } },
+  supabaseAi: { functions: { invoke: invokeMock } },
 }));
 
 const appValue = {

@@ -10,7 +10,7 @@ import {
 } from './aiClient';
 const { invokeMock } = vi.hoisted(() => ({ invokeMock: vi.fn() }));
 vi.mock('./supabase', () => ({
-  supabase: { functions: { invoke: invokeMock } },
+  supabaseAi: { functions: { invoke: invokeMock } },
 }));
 
 describe('aiClient', () => {
@@ -63,6 +63,9 @@ describe('aiClient', () => {
     ).toContain('limited');
     expect(
       aiErrorMessage({ context: { status: 504 } }, false, 'parse'),
+    ).toContain('quá lâu');
+    expect(
+      aiErrorMessage(new Error('SUPABASE_REQUEST_TIMEOUT'), false, 'search'),
     ).toContain('quá lâu');
   });
 });

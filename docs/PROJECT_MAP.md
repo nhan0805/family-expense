@@ -108,10 +108,12 @@ Generated/dependency output such as `node_modules/`, `dist/`, `coverage/`, Playw
 |---|---|---|
 | `parse-expense` | Suggest one transaction from natural language | Gemini; validates output; does not save automatically |
 | `search-transactions` | Turn natural language into structured transaction filters | Gemini when needed; results are applied by the frontend through family-scoped queries |
-| `summarize-dashboard` | Generate a dashboard summary from aggregate facts | Gemini; sends aggregate facts rather than raw transaction lists |
+| `summarize-dashboard` | Serve a fresh cached summary or generate one from aggregate facts | `get_ai_dashboard_context` validates the family/date scope and returns cache hits before aggregation; Gemini receives aggregate facts rather than raw transaction lists |
 | `email-transactions` | Email active-member-authorized CSV export | Brevo; queries by authenticated user/family |
 
 All functions verify JWT and membership, validate inputs, use the shared CORS/HTTP helpers in `supabase/functions/_shared/`, enforce rate/timeout behavior and read secrets with `Deno.env.get`. Email export is additionally limited by `consume_email_export_slot` to three sends per user per hour. Semantic embedding functions/tables were removed from the current production path; do not reintroduce them without an explicit design decision.
+
+The browser keeps the standard Supabase client on a 15-second request budget for CRUD/RPC traffic and uses a separate 30-second client for AI Edge Functions, whose Gemini calls may take up to 25 seconds. Catalog context is cached for 60 seconds and dashboard summaries for 5 minutes; cache hits do not consume an AI request slot.
 
 ## Data flow
 
